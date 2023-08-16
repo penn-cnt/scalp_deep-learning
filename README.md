@@ -16,22 +16,6 @@ In order to install any of the common library code, we provide instructions for 
 # Documentation
 TBD
 
-## Repository Structure
-
-A short description of some of the top-level directories and files are as follows:
-
-### core_libraries
-This folder contains the submodules and build files that make up the core libraries used for lab-wide projects.
-
-### documents
-This folder contains various research documents associated with a project (i.e. SoPs, Pipeline diagrams, etc.) as well as code documentation (e.g.document strings) for the various libraries.
-
-### scripts
-This folder contains user-defined scripts on a per project basis.
-
-### unit_tests
-This folder contains unit tests for validating new/altered code at both the machine level and model level.
-
 # License
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
