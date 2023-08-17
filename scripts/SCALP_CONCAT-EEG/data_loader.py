@@ -3,6 +3,9 @@ from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
+# Torch imports
+import torch
+
 # General libraries
 import re
 import argparse
@@ -73,9 +76,9 @@ class channel_mapping:
         Mapping used to eventually build a 1020 model using HUP data.
         """
 
-        channel_list = ['C03', 'C04', 'CZ', 'F03', 'F04', 'F07', 'F08', 'FZ', 'FP01', 'FP02', 'O01',
-                        'O02', 'P03', 'P04', 'T03', 'T04', 'T05', 'T06']
-        self.channel_map_out = np.intersect1d(self.clean_channel_map,channel_list)
+        self.master_channel_list = ['C03', 'C04', 'CZ', 'F03', 'F04', 'F07', 'F08', 'FZ', 'FP01', 'FP02', 'O01',
+                                    'O02', 'P03', 'P04', 'T03', 'T04', 'T05', 'T06']
+        self.channel_map_out = np.intersect1d(self.clean_channel_map,self.master_channel_list)
 
 class channel_montage:
     """
@@ -144,7 +147,7 @@ class dataframe_manager:
 
     def __init__(self):
 
-        self.dataframe = PD.DataFrame(index=range(self.nrow), columns=self.clean_channel_map)
+        self.dataframe = PD.DataFrame(index=range(self.nrow), columns=self.master_channel_list)
         for idx,icol in enumerate(self.clean_channel_map):
             ivals = self.raw_data[idx]
             self.dataframe.loc[range(ivals.size),icol] = ivals
@@ -172,7 +175,21 @@ class dataframe_manager:
 
         self.montaged_dataframe = PD.DataFrame(data,columns=columns)
 
-class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage):
+class tensor_manager:
+
+    def __init__(self):
+
+        self.input_tensor_list = []
+
+    def update_tensor_list(self,data):
+
+        self.input_tensor_list.append(data)
+
+    def create_tensor(self):
+
+        self.input_tensor = torch.tensor(np.array(self.input_tensor_list))
+
+class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, tensor_manager):
 
     def __init__(self, infiles, args):
         """
@@ -186,6 +203,9 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Make args visible across inheritance
         self.args = args
 
+        # Initialize the tensor list so it can be updated with each file
+        tensor_manager.__init__(self)
+
         # Loop over files to read and store each ones data
         for ifile in infiles:
             
@@ -195,6 +215,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             # Case statement the workflow
             if self.args.dtype == 'EDF':
                 self.edf_handler()
+        tensor_manager.create_tensor(self)
+        print(self.input_tensor)
 
     def edf_handler(self):
         """
@@ -216,7 +238,9 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
 
         # Put the data into a specific montage
         channel_montage.__init__(self)
-        print(self.montaged_dataframe.info())
+
+        # Update the tensor list
+        tensor_manager.update_tensor_list(self,self.montaged_dataframe.values)
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -253,14 +277,16 @@ def input_with_tab_completion(prompt):
 if __name__ == "__main__":
 
     # Define the allowed keywords a user can input
-    allowed_input_args   = {'CSV' : 'Use a comma separated file of files to read in. (default)',
-                            'MANUAL' : "Manually enter filepaths.",
-                            'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
-    allowed_dtype_args   = {'EDF': "EDF file formats. (default)"}
-    allowed_channel_args = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
-                            'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
-    allowed_montage_args = {'HUP1020': "Use a 10-20 montage.",
-                            'COMMON_AVERAGE': "Use a common average montage."}
+    allowed_input_args     = {'CSV' : 'Use a comma separated file of files to read in. (default)',
+                              'MANUAL' : "Manually enter filepaths.",
+                              'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
+    allowed_dtype_args     = {'EDF': "EDF file formats. (default)"}
+    allowed_channel_args   = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
+                              'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
+    allowed_montage_args   = {'HUP1020': "Use a 10-20 montage.",
+                              'COMMON_AVERAGE': "Use a common average montage."}
+    allowed_viability_args = {'VIABLE_DATA',: "Drop datasets that contain a NaN column. (default)",
+                              'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
     
     # Make a useful help string for each keyword
     allowed_input_help   = make_help_str(allowed_input_args)
