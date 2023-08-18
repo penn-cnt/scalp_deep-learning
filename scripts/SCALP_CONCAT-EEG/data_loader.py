@@ -86,7 +86,7 @@ class channel_montage:
     """
 
     def __init__(self):
-        if args.montage == "HUP1020":
+        if self.args.montage == "HUP1020":
             self.montage_HUP_1020()
 
     def montage_common_average(self):
@@ -135,10 +135,10 @@ class channel_montage:
         montage_data = np.array([list(self.dataframe[ival[0]].values-self.dataframe[ival[1]].values) for ival in bipolar_array]).T
 
         # Get the new montage channel labels
-        montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array] 
+        self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array] 
 
         # Pass the data to the dataframe class function for montages
-        dataframe_manager.montaged_dataframe(self,montage_data,montage_channels)
+        dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
 
 class dataframe_manager:
     """
@@ -175,6 +175,39 @@ class dataframe_manager:
 
         self.montaged_dataframe = PD.DataFrame(data,columns=columns)
 
+class data_viability:
+
+    def __init__(self,data_array):
+        if self.args.viability == "VIABLE_DATA":
+            return self.viable_data(data_array)
+        elif self.args.viability == 'VIABLE_COLUMNS':
+            return self.viable_columns(data_array)
+
+    def viable_data(self,data_array):
+        
+        # Loop over the index associated with the datasets and keep only datasets without NaNs
+        keep_index = []
+        for i_index in range(data_array.shape[0]):
+            idata = data_array[i_index]
+            if ~np.isnan(idata).any():
+                keep_index.append(i_index)
+
+        return data_array[i_index]
+
+    def viable_columns(self,data_array):
+
+        # Loop over the index associated with the columns and only return columns without NaNs
+        keep_index = []
+        for i_index in range(data_array.shape[2]):
+            idata = data_array[:,:,i_index]
+            if ~np.isnan(idata).any():
+                keep_index.append(i_index)
+        
+        # Update the channel list since we are dropping channels
+        self.montage_channels = self.montage_channels[keep_index]
+
+        return data_array[:,:,i_index]
+
 class tensor_manager:
 
     def __init__(self):
@@ -187,9 +220,16 @@ class tensor_manager:
 
     def create_tensor(self):
 
-        self.input_tensor = torch.tensor(np.array(self.input_tensor_list))
+        # Make the multi-dimensional array
+        input_array = np.array(self.input_tensor_list)
+        
+        # Clean up the data before going to the tensor
+        input_array = data_viability.__init__(self,input_array)
 
-class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, tensor_manager):
+        # Create the tensor
+        self.input_tensor = torch.tensor(input_array)
+
+class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, tensor_manager, data_viability):
 
     def __init__(self, infiles, args):
         """
@@ -216,7 +256,6 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             if self.args.dtype == 'EDF':
                 self.edf_handler()
         tensor_manager.create_tensor(self)
-        print(self.input_tensor)
 
     def edf_handler(self):
         """
@@ -229,11 +268,11 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Clean the channel names
         channel_clean.__init__(self)
 
-        # Create the dataframe for the object with the cleaned labels
-        dataframe_manager.__init__(self)
-
         # Get the correct channels for this merger
         channel_mapping.__init__(self,self.args.channel_list)
+
+        # Create the dataframe for the object with the cleaned labels
+        dataframe_manager.__init__(self)
         dataframe_manager.column_subsection(self,self.channel_map_out)
 
         # Put the data into a specific montage
@@ -285,21 +324,23 @@ if __name__ == "__main__":
                               'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
     allowed_montage_args   = {'HUP1020': "Use a 10-20 montage.",
                               'COMMON_AVERAGE': "Use a common average montage."}
-    allowed_viability_args = {'VIABLE_DATA',: "Drop datasets that contain a NaN column. (default)",
+    allowed_viability_args = {'VIABLE_DATA': "Drop datasets that contain a NaN column. (default)",
                               'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
     
     # Make a useful help string for each keyword
-    allowed_input_help   = make_help_str(allowed_input_args)
-    allowed_dtype_help   = make_help_str(allowed_dtype_args)
-    allowed_channel_help = make_help_str(allowed_channel_args)
-    allowed_montage_help = make_help_str(allowed_montage_args)
+    allowed_input_help     = make_help_str(allowed_input_args)
+    allowed_dtype_help     = make_help_str(allowed_dtype_args)
+    allowed_channel_help   = make_help_str(allowed_channel_args)
+    allowed_montage_help   = make_help_str(allowed_montage_args)
+    allowed_viability_help = make_help_str(allowed_viability_args)
 
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="Simplified data merging tool.", formatter_class=CustomFormatter)
     parser.add_argument("--input", choices=list(allowed_input_args.keys()), default="CSV", help=f"R|Choose an option:\n{allowed_input_help}")
     parser.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
     parser.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
-    parser.add_argument("--montage", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
+    parser.add_argument("--montage", choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
+    parser.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
     args = parser.parse_args()
 
     # Set the input file list
