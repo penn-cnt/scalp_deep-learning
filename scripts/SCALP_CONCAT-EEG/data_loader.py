@@ -178,6 +178,10 @@ class dataframe_manager:
 class data_viability:
 
     def __init__(self,data_array):
+
+        if self.args.interp:
+            self.interpolate_data(data_array)
+
         if self.args.viability == "VIABLE_DATA":
             return self.viable_data(data_array)
         elif self.args.viability == 'VIABLE_COLUMNS':
@@ -207,6 +211,57 @@ class data_viability:
         self.montage_channels = self.montage_channels[keep_index]
 
         return data_array[:,:,i_index]
+    
+    def consecutive_counter(self,iarr,ival):
+
+        # Add padding to the array to get an accurate difference between elements that includes first and last
+        if ~np.isnan(ival):
+            diffs = np.diff(np.concatenate(([False], iarr == ival, [False])).astype(int))
+        else:
+            diffs = np.diff(np.concatenate(([False], np.isnan(iarr), [False])).astype(int))
+
+        # Get the indices that denote where the array changes to/from expected value
+        left_ind  = np.flatnonzero(diffs == 1)
+        right_ind = np.flatnonzero(diffs == -1)
+
+        # Get the counts of values that match the criteria
+        counts = right_ind-left_ind
+
+        # Create a mask and iterate over counts and change mask to true for consecutive values equal to or less than the allowed threshold
+        mask = np.zeros(iarr.size).astype('bool')
+        for ival in counts:
+            if ival <= self.args.n_interp:
+                for ii in range(self.args.n_interp):
+                    mask[left_ind+ii] = True
+        return mask
+
+    def interpolate_data(self,data_array):
+
+        # Loop over the datasets
+        for i_index in range(data_array.shape[0]):
+            idata = data_array[i_index]
+
+            # Loop over the columns
+            for icol in range(idata.shape[1]):
+                
+                # Get the current timeseries and calculate the mask
+                vals = idata[:,icol]
+                mask = self.consecutive_counter(vals,np.nan)
+
+                # Ensure that the first and last indices are false. This is to a avoid extrapolation.
+                mask[0]  = False
+                mask[-1] = False
+
+                # Interpolate where appropriate
+                x_vals          = np.arange(vals.size)
+                x_interpretable = x_vals[~mask]
+                y_interpretable = vals[~mask]
+                interp_vals     = np.interp(x_vals,x_interpretable,y_interpretable)
+                vals[mask]      = interp_vals[mask]
+                
+                # Insert new values into the original data array
+                data_array[i_index,:,icol] = vals
+        return data_array
 
 class tensor_manager:
 
@@ -341,6 +396,8 @@ if __name__ == "__main__":
     parser.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
     parser.add_argument("--montage", choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
     parser.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
+    parser.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
+    parser.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
     args = parser.parse_args()
 
     # Set the input file list
