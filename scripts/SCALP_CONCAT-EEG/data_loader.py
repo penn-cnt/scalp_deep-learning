@@ -29,7 +29,15 @@ class data_loader:
 
         # Load current edf data into memory
         self.raw_data, self.channel_metadata, self.scan_metadata = highlevel.read_edf(self.infile)
-        self.channels = highlevel.read_edf_header(self.infile)['channels']
+        header           = highlevel.read_edf_header(self.infile)
+        self.channels    = header['channels']
+        self.annotations = header['annotations']
+        #for ikey in list(header.keys()):
+        #    print(ikey)
+        #    print(header[ikey])
+        #    print("===")
+        print(self.annotations)
+        #exit()
 
         # Clean up the edf data
         self.channels = [ichannel.upper() for ichannel in self.channels]
