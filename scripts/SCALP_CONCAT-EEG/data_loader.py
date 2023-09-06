@@ -8,6 +8,9 @@ import torch
 
 # General libraries
 import re
+import glob
+import time
+import resource
 import argparse
 import numpy as np
 import pandas as PD
@@ -132,7 +135,13 @@ class channel_montage:
                          ['FZ','CZ']]
         
         # Get the new values to pass to the dataframe class
-        montage_data = np.array([list(self.dataframe[ival[0]].values-self.dataframe[ival[1]].values) for ival in bipolar_array]).T
+        montage_data = []
+        for ival in bipolar_array:
+            try:
+                montage_data.append(list(self.dataframe[ival[0]].values-self.dataframe[ival[1]].values))
+            except KeyError:
+                montage_data.append(np.nan*np.ones(self.dataframe.shape[0]))
+        montage_data = np.array(montage_data).T
 
         # Get the new montage channel labels
         self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array] 
@@ -148,9 +157,14 @@ class dataframe_manager:
     def __init__(self):
 
         self.dataframe = PD.DataFrame(index=range(self.nrow), columns=self.master_channel_list)
+        values         = self.dataframe.values
         for idx,icol in enumerate(self.clean_channel_map):
-            ivals = self.raw_data[idx]
-            self.dataframe.loc[range(ivals.size),icol] = ivals
+            ivals      = self.raw_data[idx]
+            try:
+                column_idx                     = np.argwhere(self.dataframe.columns==icol)[0][0]
+                values[:ivals.size,column_idx] = ivals
+            except IndexError:
+                pass
 
     def column_subsection(self,keep_columns):
         """
@@ -177,40 +191,67 @@ class dataframe_manager:
 
 class data_viability:
 
-    def __init__(self,data_array):
+    def __init__(self):
 
+        # Interpolate over small subsets of NaN if requested
         if self.args.interp:
-            self.interpolate_data(data_array)
+            for idx,data_array in self.input_tensor_list:
+                self.input_tensor_list[idx] = self.interpolate_data(data_array)
 
+        # Find minimum viable datasets
         if self.args.viability == "VIABLE_DATA":
-            return self.viable_data(data_array)
+
+            # Loop over each dataset and find the ones that have no NaNs
+            flags = []
+            for idx,data_array in enumerate(self.input_tensor_list):
+                flags.append(self.viable_data(data_array))
+            
+            # Output list
+            output = []
+            for idx,iarr in enumerate(self.input_tensor_list):
+                if flags[idx]:
+                    output.append(iarr)
+            return output
+        
         elif self.args.viability == 'VIABLE_COLUMNS':
-            return self.viable_columns(data_array)
+            
+            # Loop over each array and get the valid columns as boolean flag
+            flags = []
+            for idx,data_array in self.input_tensor_list:
+                flags.append(self.viable_columns(data_array))
+
+            # Find the intersection of viable columns across all datasets
+            flags = np.prod(flags,axis=0)
+
+            # If no columns are viable, alert user and raise exception
+            if ~flags.all():
+                Exception("No channels are valid across all datasets.")
+
+            # Update the montage channel list
+            self.montage_channels = self.montage_channels[flags]
+
+            return [iarr[:,flags] for iarr in self.input_tensor_list]
 
     def viable_data(self,data_array):
         
         # Loop over the index associated with the datasets and keep only datasets without NaNs
-        keep_index = []
-        for i_index in range(data_array.shape[0]):
-            idata = data_array[i_index]
-            if ~np.isnan(idata).any():
-                keep_index.append(i_index)
-
-        return data_array[i_index]
+        if ~np.isnan(data_array).any():
+            return False
+        else:
+            return True
 
     def viable_columns(self,data_array):
 
         # Loop over the index associated with the columns and only return columns without NaNs
         keep_index = []
-        for i_index in range(data_array.shape[2]):
-            idata = data_array[:,:,i_index]
+        for i_index in range(data_array.shape[1]):
+            idata = data_array[:,i_index]
             if ~np.isnan(idata).any():
-                keep_index.append(i_index)
-        
-        # Update the channel list since we are dropping channels
-        self.montage_channels = self.montage_channels[keep_index]
+                keep_index.append(True)
+            else:
+                keep_index.append(False)
 
-        return data_array[:,:,i_index]
+        return keep_index
     
     def consecutive_counter(self,iarr,ival):
 
@@ -237,30 +278,26 @@ class data_viability:
 
     def interpolate_data(self,data_array):
 
-        # Loop over the datasets
-        for i_index in range(data_array.shape[0]):
-            idata = data_array[i_index]
+        # Loop over the columns
+        for icol in range(data_array.shape[1]):
+            
+            # Get the current timeseries and calculate the mask
+            vals = data_array[:,icol]
+            mask = self.consecutive_counter(vals,np.nan)
 
-            # Loop over the columns
-            for icol in range(idata.shape[1]):
-                
-                # Get the current timeseries and calculate the mask
-                vals = idata[:,icol]
-                mask = self.consecutive_counter(vals,np.nan)
+            # Ensure that the first and last indices are false. This is to a avoid extrapolation.
+            mask[0]  = False
+            mask[-1] = False
 
-                # Ensure that the first and last indices are false. This is to a avoid extrapolation.
-                mask[0]  = False
-                mask[-1] = False
-
-                # Interpolate where appropriate
-                x_vals          = np.arange(vals.size)
-                x_interpretable = x_vals[~mask]
-                y_interpretable = vals[~mask]
-                interp_vals     = np.interp(x_vals,x_interpretable,y_interpretable)
-                vals[mask]      = interp_vals[mask]
-                
-                # Insert new values into the original data array
-                data_array[i_index,:,icol] = vals
+            # Interpolate where appropriate
+            x_vals          = np.arange(vals.size)
+            x_interpretable = x_vals[~mask]
+            y_interpretable = vals[~mask]
+            interp_vals     = np.interp(x_vals,x_interpretable,y_interpretable)
+            vals[mask]      = interp_vals[mask]
+            
+            # Insert new values into the original data array
+            data_array[:,icol] = vals
         return data_array
 
 class tensor_manager:
@@ -275,14 +312,11 @@ class tensor_manager:
 
     def create_tensor(self):
 
-        # Make the multi-dimensional array
-        input_array = np.array(self.input_tensor_list)
-        
         # Clean up the data before going to the tensor
-        input_array = data_viability.__init__(self,input_array)
+        input_array = data_viability.__init__(self)
 
         # Create the tensor
-        self.input_tensor = torch.tensor(input_array)
+        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in input_array]
 
 class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, tensor_manager, data_viability):
 
@@ -302,6 +336,7 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         tensor_manager.__init__(self)
 
         # Loop over files to read and store each ones data
+        cnt = len(infiles)
         for ifile in infiles:
             
             # Save current file
@@ -309,8 +344,12 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             
             # Case statement the workflow
             if self.args.dtype == 'EDF':
-                self.edf_handler()
+                try:
+                    self.edf_handler()
+                except OSError:
+                    cnt -= 1
         tensor_manager.create_tensor(self)
+        print("Processed %04d files." %(cnt))
 
     def edf_handler(self):
         """
@@ -400,13 +439,15 @@ if __name__ == "__main__":
     parser.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
     args = parser.parse_args()
 
+    # For testing purposes
+    start = time.time()
+
     # Set the input file list
     if args.input == 'CSV':
         
         # Tab completion enabled input
-        #completer = PathCompleter()
-        #file_path = prompt("Please enter path to input file csv: ", completer=completer)
-        file_path = './sample_input.csv'
+        completer = PathCompleter()
+        file_path = prompt("Please enter path to input file csv: ", completer=completer)
 
         # Due to the different ways paths can be inputted, using a filepointer to clean each entry best we can
         fp    = open(file_path,'r')
@@ -419,6 +460,18 @@ if __name__ == "__main__":
                 if ival != '':
                     files.append(ival)
             data = fp.readline()
+    elif args.input == 'GLOB':
+
+        # Tab completion enabled input
+        completer = PathCompleter()
+        #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
+        files     = glob.glob(file_path)
 
     # Load the parent class
     DM = data_manager(files, args)
+
+    # For testing purposes
+    print("Time taken in seconds: %f" %(time.time()-start))
+    max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    print("Max memory usage in GB: ~%f" %(max_mem/1e9))
