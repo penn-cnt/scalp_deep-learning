@@ -3,13 +3,13 @@ import numpy as np
 import pandas as PD
 
 # Import the classes
-from data_loader import *
-from channel_mapping import *
-from dataframe_manager import *
-from channel_clean import *
-from channel_montage import *
-from tensor_manager import *
-from data_viability import *
+from .data_loader import *
+from .channel_mapping import *
+from .dataframe_manager import *
+from .channel_clean import *
+from .channel_montage import *
+from .tensor_manager import *
+from .data_viability import *
 
 class data_viability:
 
@@ -26,7 +26,7 @@ class data_viability:
             # Loop over each dataset and find the ones that have no NaNs
             flags = []
             for idx,data_array in enumerate(self.input_tensor_list):
-                flags.append(self.viable_data(data_array))
+                flags.append(self.viable_dataset(data_array))
             
             # Output list
             self.viable_data = []
@@ -53,7 +53,7 @@ class data_viability:
 
             self.viable_data = [iarr[:,flags] for iarr in self.input_tensor_list]
 
-    def viable_data(self,data_array):
+    def viable_dataset(self,data_array):
         
         # Loop over the index associated with the datasets and keep only datasets without NaNs
         if ~np.isnan(data_array).any():

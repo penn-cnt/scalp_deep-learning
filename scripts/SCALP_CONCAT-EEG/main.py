@@ -4,13 +4,13 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
 # General libraries
+import sys
 import glob
 import time
 import resource
 import argparse
 import numpy as np
 import pandas as PD
-from sys import exit
 
 # Import the classes
 from modules.data_loader import *
@@ -73,7 +73,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         dataframe_manager.column_subsection(self,self.channel_map_out)
 
         # Put the data into a specific montage
-        channel_montage.__init__(self)
+        montage_data = channel_montage.__init__(self)
+        dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
 
         # Clean up the data before going to the tensor
         data_viability.__init__(self)
@@ -172,7 +173,7 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
-        files     = glob.glob(file_path)
+        files     = glob.glob(file_path)[:50]
 
     # Load the parent class
     DM = data_manager(files, args)

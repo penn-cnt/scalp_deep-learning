@@ -3,12 +3,12 @@ import numpy as np
 import pandas as PD
 
 # Import the classes
-from data_loader import *
-from channel_mapping import *
-from dataframe_manager import *
-from channel_clean import *
-from tensor_manager import *
-from data_viability import *
+from .data_loader import *
+from .channel_mapping import *
+from .dataframe_manager import *
+from .channel_clean import *
+from .tensor_manager import *
+from .data_viability import *
 
 class channel_montage:
     """
@@ -17,7 +17,7 @@ class channel_montage:
 
     def __init__(self):
         if self.args.montage == "HUP1020":
-            self.montage_HUP_1020()
+            return self.montage_HUP_1020()
 
     def montage_common_average(self):
         """
@@ -74,4 +74,5 @@ class channel_montage:
         self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array] 
 
         # Pass the data to the dataframe class function for montages
-        dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
+        return montage_data
+        #dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
