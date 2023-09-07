@@ -51,6 +51,13 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
                     self.edf_handler()
                 except OSError:
                     filecnt -= 1
+                               
+        # Select valid data slices
+        data_viability.__init__(self)
+        
+        # Apply feature extractions as needed
+        
+        # Create the tensor for PyTorch
         tensor_manager.create_tensor(self)
         print("Processed %04d files." %(filecnt))
 
@@ -75,9 +82,6 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Put the data into a specific montage
         montage_data = channel_montage.__init__(self)
         dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
-
-        # Clean up the data before going to the tensor
-        data_viability.__init__(self)
 
         # Update the tensor list
         tensor_manager.update_tensor_list(self,self.montaged_dataframe.values)
@@ -173,7 +177,7 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
-        files     = glob.glob(file_path)[:50]
+        files     = glob.glob(file_path)
 
     # Load the parent class
     DM = data_manager(files, args)

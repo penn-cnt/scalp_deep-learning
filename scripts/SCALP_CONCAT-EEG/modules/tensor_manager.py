@@ -21,7 +21,7 @@ class tensor_manager:
 
         self.input_tensor_list.append(data)
 
-    def create_tensor(self,input_array):
+    def create_tensor(self):
 
         # Create the tensor
-        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in input_array]
+        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.input_tensor_list]
