@@ -37,9 +37,28 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
 
         # Initialize the tensor list so it can be updated with each file
         tensor_manager.__init__(self)
+        
+        # File management
+        file_cnt = self.file_manager(infiles)
+
+        # Select valid data slices
+        data_viability.__init__(self)
+        
+        # Apply feature extractions as needed
+        
+        # Create the tensor for PyTorch
+        tensor_manager.create_tensor(self)
+        
+        # For testing purposes
+        max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        print("Processed %04d files." %(filecnt))
+        print("Time taken in seconds: %f" %(time.time()-start))
+        print("Max memory usage in GB: ~%f" %(max_mem/1e9))
+
+    def file_manager(self,infiles):
 
         # Loop over files to read and store each ones data
-        filecnt = len(infiles)
+        file_cnt = len(infiles)
         for ifile in infiles:
             
             # Save current file
@@ -50,16 +69,10 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
                 try:
                     self.edf_handler()
                 except OSError:
-                    filecnt -= 1
-                               
-        # Select valid data slices
-        data_viability.__init__(self)
+                    file_cnt -= 1
         
-        # Apply feature extractions as needed
+        return file_cnt
         
-        # Create the tensor for PyTorch
-        tensor_manager.create_tensor(self)
-        print("Processed %04d files." %(filecnt))
 
     def edf_handler(self):
         """
@@ -181,8 +194,3 @@ if __name__ == "__main__":
 
     # Load the parent class
     DM = data_manager(files, args)
-
-    # For testing purposes
-    print("Time taken in seconds: %f" %(time.time()-start))
-    max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    print("Max memory usage in GB: ~%f" %(max_mem/1e9))
