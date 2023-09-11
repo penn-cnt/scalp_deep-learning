@@ -190,7 +190,7 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
-        files     = glob.glob(file_path)[:25]
+        files     = glob.glob(file_path)[:50]
 
     # Load the parent class
     DM = data_manager(files, args)
