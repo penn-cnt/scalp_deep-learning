@@ -11,17 +11,17 @@ from .channel_clean import *
 from .channel_montage import *
 from .data_viability import *
 
-class tensor_manager:
+class output_manager:
 
     def __init__(self):
 
-        self.input_tensor_list = []
+        self.input_output_list = []
 
-    def update_tensor_list(self,data):
+    def update_output_list(self,data):
 
-        self.input_tensor_list.append(data)
+        self.input_output_list.append(data)
 
     def create_tensor(self):
 
         # Create the tensor
-        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.input_tensor_list]
+        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.input_output_list]

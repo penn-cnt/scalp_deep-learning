@@ -8,7 +8,7 @@ from .channel_mapping import *
 from .dataframe_manager import *
 from .channel_clean import *
 from .channel_montage import *
-from .tensor_manager import *
+from .output_manager import *
 from .data_viability import *
 
 class data_loader:

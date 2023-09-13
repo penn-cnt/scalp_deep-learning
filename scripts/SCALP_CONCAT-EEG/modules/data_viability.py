@@ -8,7 +8,7 @@ from .channel_mapping import *
 from .dataframe_manager import *
 from .channel_clean import *
 from .channel_montage import *
-from .tensor_manager import *
+from .output_manager import *
 from .data_viability import *
 
 class data_viability:
@@ -17,20 +17,20 @@ class data_viability:
 
         # Interpolate over small subsets of NaN if requested
         if self.args.interp:
-            for idx,data_array in self.input_tensor_list:
-                self.input_tensor_list[idx] = self.interpolate_data(data_array)
+            for idx,data_array in self.input_output_list:
+                self.input_output_list[idx] = self.interpolate_data(data_array)
 
         # Find minimum viable datasets
         if self.args.viability == "VIABLE_DATA":
 
             # Loop over each dataset and find the ones that have no NaNs
             flags = []
-            for idx,data_array in enumerate(self.input_tensor_list):
+            for idx,data_array in enumerate(self.input_output_list):
                 flags.append(self.viable_dataset(data_array))
             
             # Output list
             self.viable_data = []
-            for idx,iarr in enumerate(self.input_tensor_list):
+            for idx,iarr in enumerate(self.input_output_list):
                 if flags[idx]:
                     self.viable_data.append(iarr)
         
@@ -38,7 +38,7 @@ class data_viability:
             
             # Loop over each array and get the valid columns as boolean flag
             flags = []
-            for idx,data_array in self.input_tensor_list:
+            for idx,data_array in self.input_output_list:
                 flags.append(self.viable_columns(data_array))
 
             # Find the intersection of viable columns across all datasets
@@ -51,7 +51,7 @@ class data_viability:
             # Update the montage channel list
             self.montage_channels = self.montage_channels[flags]
 
-            self.viable_data = [iarr[:,flags] for iarr in self.input_tensor_list]
+            self.viable_data = [iarr[:,flags] for iarr in self.input_output_list]
 
     def viable_dataset(self,data_array):
         

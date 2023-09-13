@@ -18,10 +18,10 @@ from modules.channel_mapping import *
 from modules.dataframe_manager import *
 from modules.channel_clean import *
 from modules.channel_montage import *
-from modules.tensor_manager import *
+from modules.output_manager import *
 from modules.data_viability import *
 
-class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, tensor_manager, data_viability):
+class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
 
     def __init__(self, infiles, args):
         """
@@ -35,8 +35,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Make args visible across inheritance
         self.args = args
 
-        # Initialize the tensor list so it can be updated with each file
-        tensor_manager.__init__(self)
+        # Initialize the output list so it can be updated with each file
+        output_manager.__init__(self)
         
         # File management
         file_cnt = self.file_manager(infiles)
@@ -44,10 +44,10 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Select valid data slices
         data_viability.__init__(self)
         
-        # Apply feature extractions as needed
+        # Apply preprocessing as needed
         
         # Create the tensor for PyTorch
-        tensor_manager.create_tensor(self)
+        output_manager.create_tensor(self)
         
         # For testing purposes
         max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
@@ -96,8 +96,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         montage_data = channel_montage.__init__(self)
         dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
 
-        # Update the tensor list
-        tensor_manager.update_tensor_list(self,self.montaged_dataframe.values)
+        # Update the output list
+        output_manager.update_output_list(self,self.montaged_dataframe.values)
 
 class CustomFormatter(argparse.HelpFormatter):
     """
