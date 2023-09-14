@@ -15,13 +15,13 @@ class output_manager:
 
     def __init__(self):
 
-        self.input_output_list = []
+        self.output_list = []
 
     def update_output_list(self,data):
 
-        self.input_output_list.append(data)
+        self.output_list.append(data)
 
     def create_tensor(self):
 
         # Create the tensor
-        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.input_output_list]
+        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.output_list]

@@ -134,16 +134,17 @@ def input_with_tab_completion(prompt):
 if __name__ == "__main__":
 
     # Define the allowed keywords a user can input
-    allowed_input_args     = {'CSV' : 'Use a comma separated file of files to read in. (default)',
-                              'MANUAL' : "Manually enter filepaths.",
-                              'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
-    allowed_dtype_args     = {'EDF': "EDF file formats. (default)"}
-    allowed_channel_args   = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
-                              'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
-    allowed_montage_args   = {'HUP1020': "Use a 10-20 montage.",
-                              'COMMON_AVERAGE': "Use a common average montage."}
-    allowed_viability_args = {'VIABLE_DATA': "Drop datasets that contain a NaN column. (default)",
-                              'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
+    allowed_input_args      = {'CSV' : 'Use a comma separated file of files to read in. (default)',
+                               'MANUAL' : "Manually enter filepaths.",
+                               'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
+    allowed_dtype_args      = {'EDF': "EDF file formats. (default)"}
+    allowed_channel_args    = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
+                               'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
+    allowed_montage_args    = {'HUP1020': "Use a 10-20 montage.",
+                               'COMMON_AVERAGE': "Use a common average montage."}
+    allowed_viability_args  = {'VIABLE_DATA': "Drop datasets that contain a NaN column. (default)",
+                               'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
+    allowed_preprocess_args = {'butter'}
     
     # Make a useful help string for each keyword
     allowed_input_help     = make_help_str(allowed_input_args)

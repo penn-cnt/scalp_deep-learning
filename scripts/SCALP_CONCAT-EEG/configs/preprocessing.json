@@ -1,0 +1,18 @@
+# This file defines preprocessing steps as well as their keyword arguments.
+# By externalizing the order, we can use reproducable code and allow individuals to comprehend/change the preprocessing steps quickly.
+# This file can be called in the main.py file. Alternatively, the main body of the script can query the user for steps, then generate a similar file to this one with user specified filename.
+
+# Butterworth Filter
+# scipy butterworth filter. More information can be found at: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html
+# Available keywords:
+## step_nums: integer. Array defining which steps in the preprocessing pipeline this should be run.
+## order: List of integers. The order of the filter. default=3
+## freqs: List of integer arrays. The frequencies to perform the filter on in each step. 
+## filter_type: List of strings. Type of filter. default='bandpass'
+### Options: {‘lowpass’, ‘highpass’, ‘bandpass’, ‘bandstop’}
+
+butterworth:
+  step_nums: [1]
+  filter_types: ['bandstop']
+  freqs: [[1,3]]
+  order: [3]
