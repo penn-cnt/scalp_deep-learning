@@ -21,7 +21,7 @@ def noise_reduction:
     def __init__(self, data):
         self.data = data
     
-    def z_score_rejection(self, window_size, z_threshold=5, method="interp):
+    def z_score_rejection(self, window_size, z_threshold=5, method="interp"):
         
         # Calculate the z values based on sliding window
         z_vals = []
