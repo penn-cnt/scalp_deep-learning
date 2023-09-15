@@ -1,3 +1,4 @@
+import yaml
 import numpy as np
 from fractions import Fraction
 from scipy.signal import resample_poly, butter, filtfilt
@@ -23,7 +24,7 @@ def noise_reduction:
     
     def z_score_rejection(self, window_size, z_threshold=5, method="interp"):
         
-        # Calculate the z values based on sliding window
+        # Calculate the z values based on sliding window +/- window_size from data point
         z_vals = []
         for idx,ival in enumerate(self.data):
             lind  = np.max([idx-window_size,0])
@@ -42,14 +43,24 @@ def noise_reduction:
             x_vals_interp   = x_vals[~mask]
             y_vals_interp   = np.interp(x_vals,x_vals_interp,self.data[~mask])
             self.data[mask] = y_vals_interp[mask]
-        
-        
-        
 
 class preprocessing:
     
     def __init__(self):
-        pass
+        
+        # Read in the preprocessing configuration
+        config = yaml.safe_load(open(args.config_preprocess,'r'))
+        
+        # Convert human readable config to easier format for code
+        self.preprocess_commands = {}
+        for ikey in list(config.keys()):
+            steps = config[ikey]['step_nums']
+            for istep in steps:
+                args = config[ikey].copy()
+                args.pop('step_nums')
+                self.preprocess_commands[istep] = {}
+                self.preprocess_commands[istep]['method'] = ikey
+                self.preprocess_commands[istep]['args']   = args
     
     def frequency_downsample(self,input_hz,output_hz):
         """
