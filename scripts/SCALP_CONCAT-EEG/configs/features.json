@@ -1,0 +1,17 @@
+# This file defines feature extraction steps as well as their keyword arguments.
+# By externalizing the order, we can use reproducable code and allow individuals to comprehend/change the preprocessing steps quickly.
+# This file can be called in the main.py file. Alternatively, the main body of the script can query the user for steps, then generate a similar file to this one with user specified filename.
+
+001:
+  channels: 'all'
+  window_size: 'all'
+  window_unit: 'sec'
+  features: ['sed']
+  multithread: False
+
+002:
+  channels: 'all'
+  window_size: 30
+  window_unit: 'sec'
+  features: ['sed']
+  multithread: False

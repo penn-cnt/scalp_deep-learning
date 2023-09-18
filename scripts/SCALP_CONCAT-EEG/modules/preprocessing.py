@@ -8,21 +8,56 @@ class signal_processing:
     def __init__(self, data):
         self.data = data
     
-    def butterworth_filter(self, freq_filter_array, fs, filter_type=='bandpass', butterorder=3):
+    def butterworth_filter(self, freq_filter_array, fs, filter_type='bandpass', butterorder=3):
+        """
+        Adopted from Akash Pattnaik code in CNT Research tools.
+
+        Parameters
+        ----------
+        freq_filter_array : array of integers
+            Array of endpoints for frequency filter
+        fs : integer
+            Sampling frequency.
+        filter_type : string, optional, default='bandpass'
+            Type of filter to apply. [bandpass,bandstop,lowpass,highpass]
+        butterorder: integer, optional, default=3
+            Order of the butterworth filter.
+
+        Returns
+        -------
+            Returns the filtered data.
+
+        """
         
-        if filter_type in ['bandpass','bandstop']:
+        if filter_type in ["bandpass","bandstop"]:
             bandpass_b, bandpass_a = butter(order,freq_filter_array, btype=filter_type, fs=fs)
-        elif filter_type in [‘lowpass’,‘highpass’]:
+        elif filter_type in ["lowpass","highpass"]:
             bandpass_b, bandpass_a = butter(order,freq_filter_array[0], btype=filter_type, fs=fs)
             
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
 
-def noise_reduction:
+class noise_reduction:
     
     def __init__(self, data):
         self.data = data
     
     def z_score_rejection(self, window_size, z_threshold=5, method="interp"):
+        """
+        Reject outliers based on the Chebychev theorem. Defaults to <95%/5-sigma.
+
+        Parameters
+        ----------
+            window_size : integer
+                Number of data points before/after current sample to calculate mean/stdev over.
+            z_threshold : int, optional
+                Number of standard deviation for threshold. Defaults to 5.
+            method : str, optional
+                Whether to 'mask' (i.e. set to NaN) or 'interp' (i.e. Interpolate over) bad data. Defaults to "interp".
+        
+        Returns
+        -------
+        Updates data object in instance.
+        """
         
         # Calculate the z values based on sliding window +/- window_size from data point
         z_vals = []
@@ -70,12 +105,12 @@ class preprocessing:
         ----------
         input_hz : Integer
             Original dataset frequency.
-        output_hz : TYPE
+        output_hz : Integer
             Output dataset frequency.
 
         Returns
         -------
-        New downsampled dataset.
+        Creates new downsampled dataset in instance.
 
         """
 

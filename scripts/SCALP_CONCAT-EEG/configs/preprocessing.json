@@ -16,9 +16,22 @@ butterworth:
   filter_types: ['bandstop','bandpass']
   freqs: [[1,3],[100,200]]
   order: [3,3]
+  multithread: False
+
+
+# Z Score Rejection
+# Simple z-score rejection function. Either masks or interpolates over values that are outliers from the mean.
+# Based on Chebychev Theorem.
+# Available keywords:
+## step_nums: integer. Array defining which steps in the preprocessing pipeline this should be run.
+## window_size: List of integers. Number of data points before/after data point to draw from for distribution.
+## z_threshold: List of floats. Number of standard deviations away from mean to create cut-off.
+## method: List of strings. Options for how to handle outliers.
+### Options: {‘mask’,'interp'}
 
 z_score_rejection:
   step_nums: [2]
   window_size: [512]
   z_threshold: [5]
   method: ["interp"]
+  multithread: False
