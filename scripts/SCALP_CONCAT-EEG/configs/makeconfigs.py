@@ -105,8 +105,14 @@ class make_config:
     
     def write_yaml_file(self, filename):
         
+        # Clean up the dictionary to be more readable
+        for key, value in self.config_dict.items():
+            if type(value) == dict:
+                for key2,value2 in self.config_dict[key].items():
+                    self.config_dict[key][key2] = str(value2)
+        
         with open(filename, 'w') as file:
-            yaml.dump(self.config_dict, file)
+            yaml.dump(self.config_dict, file, default_flow_style=False)
     
     def make_preprocessing_config(self):
         
