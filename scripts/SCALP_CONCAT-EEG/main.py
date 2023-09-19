@@ -21,6 +21,8 @@ from modules.channel_clean import *
 from modules.channel_montage import *
 from modules.output_manager import *
 from modules.data_viability import *
+from modules.preprocessing import *
+from configs.makeconfigs import *
 
 class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
 
@@ -46,13 +48,14 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         data_viability.__init__(self)
         
         # Apply preprocessing as needed
+        preprocessing.__init__(self)
         
         # Create the tensor for PyTorch
-        output_manager.create_tensor(self)
+        #output_manager.create_tensor(self)
         
         # For testing purposes
         max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        print("Processed %04d files." %(filecnt))
+        print("Processed %04d files." %(file_cnt))
         print("Time taken in seconds: %f" %(time.time()-start))
         print("Max memory usage in GB: ~%f" %(max_mem/1e9))
 
@@ -217,14 +220,17 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
-        files     = glob.glob(file_path)[:50]
+        files     = glob.glob(file_path)[:5]
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None:
-        args.preprocess_file = "preprocessing_"+timestamp+".yaml"
+        from modules import preprocessing
+        args.preprocess_file = "configs/preprocessing_"+timestamp+".yaml"
+        config_handler       = make_config(preprocessing,args.preprocess_file)
     if args.feature_file == None:
         args.feature_file = "features_"+timestamp+".yaml"
+        #config_handler    = make_config('preprocess',args.preprocess_file)
 
     # Load the parent class
     DM = data_manager(files, args)

@@ -1,4 +1,6 @@
+import sys
 import yaml
+import inspect
 import numpy as np
 from fractions import Fraction
 from scipy.signal import resample_poly, butter, filtfilt
@@ -35,6 +37,29 @@ class signal_processing:
             bandpass_b, bandpass_a = butter(order,freq_filter_array[0], btype=filter_type, fs=fs)
             
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
+
+    def frequency_downsample(self,input_hz,output_hz):
+        """
+        Adopted from Akash Pattnaik code in CNT Research tools.
+
+        Parameters
+        ----------
+        input_hz : Integer
+            Original dataset frequency.
+        output_hz : Integer
+            Output dataset frequency.
+
+        Returns
+        -------
+        Creates new downsampled dataset in instance.
+
+        """
+
+        if input_hz != output_hz:
+            frac                 = Fraction(new_fs, int(fs))
+            self.proprocess_data = resample_poly(self.proprocess_data, up=frac.numerator, down=frac.denominator)
+            
+
 
 class noise_reduction:
     
@@ -84,7 +109,7 @@ class preprocessing:
     def __init__(self):
         
         # Read in the preprocessing configuration
-        config = yaml.safe_load(open(args.config_preprocess,'r'))
+        config = yaml.safe_load(open(self.args.preprocess_file,'r'))
         
         # Convert human readable config to easier format for code
         self.preprocess_commands = {}
@@ -96,25 +121,13 @@ class preprocessing:
                 self.preprocess_commands[istep] = {}
                 self.preprocess_commands[istep]['method'] = ikey
                 self.preprocess_commands[istep]['args']   = args
-    
-    def frequency_downsample(self,input_hz,output_hz):
-        """
-        Adopted from Akash Pattnaik code in CNT Research tools.
 
-        Parameters
-        ----------
-        input_hz : Integer
-            Original dataset frequency.
-        output_hz : Integer
-            Output dataset frequency.
+        # Get the current module (i.e., the script itself)
+        current_module = sys.modules[__name__]
 
-        Returns
-        -------
-        Creates new downsampled dataset in instance.
+        # Use the inspect module to get a list of classes in the current module
+        classes = [cls for name, cls in inspect.getmembers(current_module, inspect.isclass)]
 
-        """
-
-        if input_hz != output_hz:
-            frac                 = Fraction(new_fs, int(fs))
-            self.proprocess_data = resample_poly(self.proprocess_data, up=frac.numerator, down=frac.denominator)
-            
+        # Print the list of class names
+        for cls in classes:
+            print(cls.__name__,hasattr(cls,'butterworth_filter'))

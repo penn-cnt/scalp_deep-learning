@@ -5,14 +5,13 @@ import numpy as np
 
 class make_config:
     
-    def __init__(self,config_type,outfile):
+    def __init__(self,config_library,outfile):
         
         # Define the dictionary to be saved to YAML
         self.config_dict = {}
         
         # Logic for preprocessing versus feature extraction
-        if config_type == 'preprocess':
-            self.make_preprocessing_config(outfile)
+        self.make_config(config_library,outfile)
             
     def print_methods(self,library):
         
@@ -114,11 +113,10 @@ class make_config:
         with open(filename, 'w') as file:
             yaml.dump(self.config_dict, file, default_flow_style=False)
     
-    def make_preprocessing_config(self,outfile):
+    def make_config(self,config_library,outfile):
         
         # Pass the preprocessing library to a function that prints user-readable docstrings.
-        import preprocessing
-        self.print_methods(preprocessing)
+        self.print_methods(config_library)
         
         # Loop over user selected methods until we receive a quit signal
         while True:
