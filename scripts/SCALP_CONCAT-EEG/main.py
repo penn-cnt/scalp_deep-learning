@@ -9,6 +9,7 @@ import glob
 import time
 import resource
 import argparse
+import datetime
 import numpy as np
 import pandas as PD
 
@@ -108,7 +109,7 @@ class make_yaml_configs:
             # Ask the user for preprocessing steps
             exit_flag = False
             while not exit_flag:
-                
+                break
 
         if feature_flag and feature_file is not None:
             pass
@@ -170,13 +171,23 @@ if __name__ == "__main__":
 
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="Simplified data merging tool.", formatter_class=CustomFormatter)
-    parser.add_argument("--input", choices=list(allowed_input_args.keys()), default="CSV", help=f"R|Choose an option:\n{allowed_input_help}")
-    parser.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
-    parser.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
-    parser.add_argument("--montage", choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
-    parser.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
-    parser.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
-    parser.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
+
+    datamerge_group = parser.add_argument_group('Data Merging Options')
+    datamerge_group.add_argument("--input", choices=list(allowed_input_args.keys()), default="CSV", help=f"R|Choose an option:\n{allowed_input_help}")
+    datamerge_group.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
+    datamerge_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
+    datamerge_group.add_argument("--montage", choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
+    datamerge_group.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
+    datamerge_group.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
+    datamerge_group.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
+    
+    preprocessing_group = parser.add_argument_group('Preprocessing Options')
+    preprocessing_group.add_argument("--no_preprocess_flag", action='store_true', default=False, help="Do not run preprocessing on data.")
+    preprocessing_group.add_argument("--preprocess_file", help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
+
+    feature_group = parser.add_argument_group('Feature Extraction Options')
+    feature_group.add_argument("--no_feature_flag", action='store_true', default=False, help="Do not run feature extraction on data.")
+    feature_group.add_argument("--feature_file", help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
     args = parser.parse_args()
 
     # For testing purposes
@@ -207,6 +218,13 @@ if __name__ == "__main__":
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
         files     = glob.glob(file_path)[:50]
+
+    # Make configuration files as needed
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    if args.preprocess_file == None:
+        args.preprocess_file = "preprocessing_"+timestamp+".yaml"
+    if args.feature_file == None:
+        args.feature_file = "features_"+timestamp+".yaml"
 
     # Load the parent class
     DM = data_manager(files, args)

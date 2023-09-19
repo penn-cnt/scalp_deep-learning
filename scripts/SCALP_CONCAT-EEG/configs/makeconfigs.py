@@ -122,7 +122,7 @@ class make_config:
         
         # Loop over user selected methods until we receive a quit signal
         while True:
-            method_choice = input("Enter Method Name to configure. (Q/Quit to stop configuration): ")
+            method_choice = input("\nEnter Method Name to configure. (Q/Quit to stop configuration): ")
             if method_choice.lower() in ['q','quit']:
                 self.write_yaml_file(outfile)
                 break
