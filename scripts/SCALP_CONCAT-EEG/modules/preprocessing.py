@@ -129,5 +129,16 @@ class preprocessing:
         classes = [cls for name, cls in inspect.getmembers(current_module, inspect.isclass)]
 
         # Print the list of class names
-        for cls in classes:
-            print(cls.__name__,hasattr(cls,'butterworth_filter'))
+        #for cls in classes:
+        #    if hasattr(cls,'butterworth_filter'):
+        #        tmp = getattr(cls,'butterworth_filter')
+        #        print(tmp)
+
+        # Get the sorted step list
+        steps = np.sort(list(self.preprocess_commands.keys()))
+        for istep in steps:
+            method_name = self.preprocess_commands[istep]['method']
+            for cls in classes:
+                if hasattr(cls,method_name):
+                    method_call = getattr(cls,method_name)
+                    print(method_call)
