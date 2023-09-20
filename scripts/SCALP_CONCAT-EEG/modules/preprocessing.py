@@ -57,9 +57,7 @@ class signal_processing:
 
         if input_hz != output_hz:
             frac                 = Fraction(new_fs, int(fs))
-            self.proprocess_data = resample_poly(self.proprocess_data, up=frac.numerator, down=frac.denominator)
-            
-
+            return resample_poly(self.data, up=frac.numerator, down=frac.denominator)
 
 class noise_reduction:
     
@@ -103,10 +101,11 @@ class noise_reduction:
             x_vals_interp   = x_vals[~mask]
             y_vals_interp   = np.interp(x_vals,x_vals_interp,self.data[~mask])
             self.data[mask] = y_vals_interp[mask]
+        return self.data
 
 class preprocessing:
     
-    def __init__(self):
+    def __init__(self,data):
         
         # Read in the preprocessing configuration
         config = yaml.safe_load(open(self.args.preprocess_file,'r'))
@@ -128,17 +127,14 @@ class preprocessing:
         # Use the inspect module to get a list of classes in the current module
         classes = [cls for name, cls in inspect.getmembers(current_module, inspect.isclass)]
 
-        # Print the list of class names
-        #for cls in classes:
-        #    if hasattr(cls,'butterworth_filter'):
-        #        tmp = getattr(cls,'butterworth_filter')
-        #        print(tmp)
-
         # Get the sorted step list
         steps = np.sort(list(self.preprocess_commands.keys()))
         for istep in steps:
             method_name = self.preprocess_commands[istep]['method']
+            method_args = self.preprocess_commands[istep]['args']
             for cls in classes:
                 if hasattr(cls,method_name):
+                    cls(data)
                     method_call = getattr(cls,method_name)
-                    print(method_call)
+                    data        = method_call(method_args)
+        return data
