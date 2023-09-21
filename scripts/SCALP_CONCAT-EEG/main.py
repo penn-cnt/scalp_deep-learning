@@ -26,7 +26,7 @@ from configs.makeconfigs import *
 
 class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
 
-    def __init__(self, infiles, args):
+    def __init__(self, infiles, start_times, end_times, args):
         """
         Initialize parent class for data loading.
         Store pathing for different data type loads.
@@ -42,7 +42,7 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         output_manager.__init__(self)
         
         # File management
-        file_cnt = self.file_manager(infiles)
+        file_cnt = self.file_manager(infiles, start_times, end_times)
 
         # Select valid data slices
         data_viability.__init__(self)
@@ -51,22 +51,24 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         preprocessing.__init__(self)
         
         # Create the tensor for PyTorch
-        #output_manager.create_tensor(self)
-        
+        output_manager.create_tensor(self)
+
         # For testing purposes
         max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         print("Processed %04d files." %(file_cnt))
         print("Time taken in seconds: %f" %(time.time()-start))
         print("Max memory usage in GB: ~%f" %(max_mem/1e9))
 
-    def file_manager(self,infiles):
+    def file_manager(self,infiles, start_times, end_times):
 
         # Loop over files to read and store each ones data
         file_cnt = len(infiles)
-        for ifile in infiles:
+        for ii,ifile in enumerate(infiles):
             
-            # Save current file
-            self.infile = ifile
+            # Save current file info
+            self.infile  = ifile
+            self.t_start = start_times[ii]
+            self.t_end   = end_times[ii]
             
             # Case statement the workflow
             if self.args.dtype == 'EDF':
@@ -163,7 +165,6 @@ if __name__ == "__main__":
                                'COMMON_AVERAGE': "Use a common average montage."}
     allowed_viability_args  = {'VIABLE_DATA': "Drop datasets that contain a NaN column. (default)",
                                'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
-    allowed_preprocess_args = {'butter'}
     
     # Make a useful help string for each keyword
     allowed_input_help     = make_help_str(allowed_input_args)
@@ -183,6 +184,8 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
     datamerge_group.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
     datamerge_group.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
+    datamerge_group.add_argument("--t_start", default=0, help="Time in seconds to start data collection.")
+    datamerge_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     
     preprocessing_group = parser.add_argument_group('Preprocessing Options')
     preprocessing_group.add_argument("--no_preprocess_flag", action='store_true', default=False, help="Do not run preprocessing on data.")
@@ -201,19 +204,19 @@ if __name__ == "__main__":
         
         # Tab completion enabled input
         completer = PathCompleter()
+        print("Using CSV input. Enter a three column csv file with filepath,starttime,endtime.")
+        print("If not starttime or endtime provided, defaults to argument inputs. Use --help for more information.")
         file_path = prompt("Please enter path to input file csv: ", completer=completer)
 
-        # Due to the different ways paths can be inputted, using a filepointer to clean each entry best we can
-        fp    = open(file_path,'r')
-        files = []
-        data  = fp.readline()
-        while data:
-            clean_data = data.replace('\n', '')
-            clean_data = clean_data.split(',')
-            for ival in clean_data:
-                if ival != '':
-                    files.append(ival)
-            data = fp.readline()
+        # Read in csv file
+        input_csv   = PD.read_csv("./sample_input.csv")
+        files       = input_csv['filepath'].values
+        start_times = input_csv['start_time'].values
+        end_times   = input_csv['end_time'].values
+
+        # Replace NaNs with appropriate times as needed
+        start_times = np.nan_to_num(start_times,nan=args.t_start)
+        end_times   = np.nan_to_num(end_times,nan=args.t_end)
     elif args.input == 'GLOB':
 
         # Tab completion enabled input
@@ -221,6 +224,10 @@ if __name__ == "__main__":
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/teug/a*/*edf"
         files     = glob.glob(file_path)[:5]
+
+        # Create start and end times array
+        start_times = args.t_start*np.ones(len(files))
+        end_times   = args.t_end*np.ones(len(files))
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
@@ -233,4 +240,4 @@ if __name__ == "__main__":
         #config_handler    = make_config('preprocess',args.preprocess_file)
 
     # Load the parent class
-    DM = data_manager(files, args)
+    DM = data_manager(files, start_times, end_times, args)

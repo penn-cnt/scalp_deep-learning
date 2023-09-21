@@ -16,8 +16,13 @@ class channel_mapping:
     """
 
     def __init__(self,channel_mapping):
+        
+        # Logic for different mappings
         if channel_mapping == "HUP1020":
             self.mapping_HUP_1020()
+
+        # Update the metadata dataframe
+        self.metadata = self.metadata[self.channel_map_out]
 
     def mapping_HUP_1020(self):
         """

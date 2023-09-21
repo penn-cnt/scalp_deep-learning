@@ -17,8 +17,14 @@ class channel_clean:
     """
 
     def __init__(self,clean_method='HUP'):
+        
+        # Logic gates for different cleaning methods
         if clean_method == 'HUP':
             self.HUP_clean()
+
+        # Add the cleaned labels to metadata
+        metadata_rename_dict = {k: v for k, v in zip(self.metadata.columns, self.clean_channel_map)}
+        self.metadata        = self.metadata.rename(metadata_rename_dict, axis="columns")
 
     def HUP_clean(self):
         """

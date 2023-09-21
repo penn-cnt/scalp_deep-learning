@@ -7,10 +7,11 @@ from scipy.signal import resample_poly, butter, filtfilt
 
 class signal_processing:
     
-    def __init__(self, data):
+    def __init__(self, data, fs):
         self.data = data
+        self.fs   = fs
     
-    def butterworth_filter(self, freq_filter_array, fs, filter_type='bandpass', butterorder=3):
+    def butterworth_filter(self, freq_filter_array, filter_type='bandpass', butterorder=3):
         """
         Adopted from Akash Pattnaik code in CNT Research tools.
 
@@ -32,37 +33,41 @@ class signal_processing:
         """
         
         if filter_type in ["bandpass","bandstop"]:
-            bandpass_b, bandpass_a = butter(order,freq_filter_array, btype=filter_type, fs=fs)
+            bandpass_b, bandpass_a = butter(order,freq_filter_array, btype=filter_type, fs=self.fs)
         elif filter_type in ["lowpass","highpass"]:
-            bandpass_b, bandpass_a = butter(order,freq_filter_array[0], btype=filter_type, fs=fs)
+            bandpass_b, bandpass_a = butter(order,freq_filter_array[0], btype=filter_type, fs=self.fs)
             
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
 
-    def frequency_downsample(self,input_hz,output_hz):
+    def frequency_downsample(self,output_hz,input_hz=None):
         """
         Adopted from Akash Pattnaik code in CNT Research tools.
 
         Parameters
         ----------
-        input_hz : Integer
-            Original dataset frequency.
         output_hz : Integer
             Output dataset frequency.
-
+        input_hz : Integer, optional
+            Input frequency. If None, convert all input sampling frequencies to output. If provided, only downsample frequencies that match this value.
+            
         Returns
         -------
         Creates new downsampled dataset in instance.
 
         """
 
-        if input_hz != output_hz:
-            frac                 = Fraction(new_fs, int(fs))
+        if input_hz == None and self.fs != output_hz:
+            frac                 = Fraction(output_hz, int(self.fs))
+            return resample_poly(self.data, up=frac.numerator, down=frac.denominator)
+        elif input_hz != None and input_hz == self.fs:
+            frac                 = Fraction(output_hz, int(self.fs))
             return resample_poly(self.data, up=frac.numerator, down=frac.denominator)
 
 class noise_reduction:
     
-    def __init__(self, data):
+    def __init__(self, data, fs):
         self.data = data
+        self.fs   = fs
     
     def z_score_rejection(self, window_size, z_threshold=5, method="interp"):
         """
@@ -91,8 +96,9 @@ class noise_reduction:
             mean  = np.mean(vals)
             stdev = np.std(vals)
             z_vals.append(np.fabs(ival-mean)/stdev)
-        
-        # Replace values       
+        z_vals = np.array(z_vals)
+
+        # Replace values   
         mask = (z_vals>=z_threshold)
         if method=="mask":
             self.data[mask] = np.nan
@@ -105,7 +111,7 @@ class noise_reduction:
 
 class preprocessing:
     
-    def __init__(self,data):
+    def __init__(self):
         
         # Read in the preprocessing configuration
         config = yaml.safe_load(open(self.args.preprocess_file,'r'))
@@ -114,9 +120,18 @@ class preprocessing:
         self.preprocess_commands = {}
         for ikey in list(config.keys()):
             steps = config[ikey]['step_nums']
-            for istep in steps:
+            for idx,istep in enumerate(steps):
+
+                # Get the argument list for the current command
                 args = config[ikey].copy()
                 args.pop('step_nums')
+                args.pop('multithread')
+
+                # Clean up the current argument list to only show current step
+                for jkey in list(args.keys()):
+                    args[jkey] = args[jkey][idx]
+
+                # Make the step formatted command list
                 self.preprocess_commands[istep] = {}
                 self.preprocess_commands[istep]['method'] = ikey
                 self.preprocess_commands[istep]['args']   = args
@@ -127,14 +142,30 @@ class preprocessing:
         # Use the inspect module to get a list of classes in the current module
         classes = [cls for name, cls in inspect.getmembers(current_module, inspect.isclass)]
 
-        # Get the sorted step list
+        # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.preprocess_commands.keys()))
         for istep in steps:
             method_name = self.preprocess_commands[istep]['method']
             method_args = self.preprocess_commands[istep]['args']
             for cls in classes:
                 if hasattr(cls,method_name):
-                    cls(data)
-                    method_call = getattr(cls,method_name)
-                    data        = method_call(method_args)
-        return data
+
+                    # Loop over the datasets and the channels in each
+                    for idx,dataset in enumerate(self.output_list):
+                        
+                        # Get the input frequency if needed
+                        fs = self.output_meta.loc[idx]['fs']
+                        for ichannel in range(dataset.shape[1]):
+
+                            # Perform preprocessing step
+                            namespace           = cls(dataset[:,ichannel],fs)
+                            method_call         = getattr(namespace,method_name)
+                            dataset[:,ichannel] = method_call(**method_args)
+                        
+                        # Update the data visible by the parent class
+                        self.output_list[idx] = dataset
+                        if method_name == 'frequency_downsample':
+                            new_fs = method_args['output_hz']
+                            #self.output_meta.loc[idx]['fs'] = new_fs
+
+

@@ -16,8 +16,15 @@ class channel_montage:
     """
 
     def __init__(self):
+        
+        # Logic for different montages
         if self.args.montage == "HUP1020":
-            return self.montage_HUP_1020()
+            montage_data = self.montage_HUP_1020()
+        
+        # Update the metadata. At present, assume equal sample rates. Need to add functionality for unequal rates
+        self.metadata = PD.DataFrame([self.metadata.loc['fs'].values[0]],columns=['fs'])
+
+        return montage_data
 
     def montage_common_average(self):
         """
@@ -75,4 +82,3 @@ class channel_montage:
 
         # Pass the data to the dataframe class function for montages
         return montage_data
-        #dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
