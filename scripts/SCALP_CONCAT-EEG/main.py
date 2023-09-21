@@ -184,8 +184,8 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
     datamerge_group.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
     datamerge_group.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
-    datamerge_group.add_argument("--t_start", default=0, help="Time in seconds to start data collection.")
-    datamerge_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
+    datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
+    datamerge_group.add_argument("--t_end", default=180, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     
     preprocessing_group = parser.add_argument_group('Preprocessing Options')
     preprocessing_group.add_argument("--no_preprocess_flag", action='store_true', default=False, help="Do not run preprocessing on data.")

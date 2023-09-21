@@ -33,9 +33,9 @@ class signal_processing:
         """
         
         if filter_type in ["bandpass","bandstop"]:
-            bandpass_b, bandpass_a = butter(order,freq_filter_array, btype=filter_type, fs=self.fs)
+            bandpass_b, bandpass_a = butter(butterorder,freq_filter_array, btype=filter_type, fs=self.fs)
         elif filter_type in ["lowpass","highpass"]:
-            bandpass_b, bandpass_a = butter(order,freq_filter_array[0], btype=filter_type, fs=self.fs)
+            bandpass_b, bandpass_a = butter(butterorder,freq_filter_array[0], btype=filter_type, fs=self.fs)
             
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
 
@@ -100,9 +100,9 @@ class noise_reduction:
 
         # Replace values   
         mask = (z_vals>=z_threshold)
-        if method=="mask":
+        if method=="mask" and any(mask):
             self.data[mask] = np.nan
-        elif method=="interp":
+        elif method=="interp" and any(mask):
             x_vals          = np.arange(self.data.size)
             x_vals_interp   = x_vals[~mask]
             y_vals_interp   = np.interp(x_vals,x_vals_interp,self.data[~mask])

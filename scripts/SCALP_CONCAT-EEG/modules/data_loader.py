@@ -22,7 +22,7 @@ class data_loader:
         """
 
         # Load current edf data into memory
-        self.raw_data, channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
+        raw_data, channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
         self.channels = highlevel.read_edf_header(self.infile)['channels']
 
         # Clean up the edf data
@@ -34,23 +34,20 @@ class data_loader:
         self.metadata.loc['fs'] = sample_frequency
 
         # Get only the time slices of interest
+        self.raw_data = []
         for ii,isamp in enumerate(sample_frequency):
             
             # Calculate the index of the start
-            samp_start = isamp*self.t_start
+            samp_start = int(isamp*self.t_start)
 
             # Calculate the index of the end
             if self.t_end == -1:
-                samp_end = len(self.raw_data[ii])
+                samp_end = int(len(raw_data[ii]))
             else:
-                samp_end = isamp*self.t_end
+                samp_end = int(isamp*self.t_end)
             
-
-
-        print(self.raw_data[0])
-        print(self.raw_data[0].shape)
-        import sys
-        sys.exit()
+            # Update the raw data array to only get the relevant time slice
+            self.raw_data.append(raw_data[ii][samp_start:samp_end])
 
         # Get the underlying data shapes
         self.ncol = len(self.raw_data)
