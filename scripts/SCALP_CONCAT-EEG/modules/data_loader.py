@@ -29,9 +29,13 @@ class data_loader:
         self.channels = [ichannel.upper() for ichannel in self.channels]
         
         # Make a metadata dataframe in case we need to store information through transformations
-        self.metadata           = PD.DataFrame(columns=self.channels)
-        sample_frequency        = [ichannel['sample_frequency'] for ichannel in channel_metadata]
-        self.metadata.loc['fs'] = sample_frequency
+        self.metadata              = {}
+        self.metadata[self.infile] = {}
+        self.metadata[self.infile]['channels'] = self.channels
+
+        # Calculate the sample frequencies to save the information and make time cuts
+        sample_frequency                 = np.array([ichannel['sample_frequency'] for ichannel in channel_metadata])
+        self.metadata[self.infile]['fs'] = sample_frequency
 
         # Get only the time slices of interest
         self.raw_data = []
@@ -45,7 +49,7 @@ class data_loader:
                 samp_end = int(len(raw_data[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
-            
+
             # Update the raw data array to only get the relevant time slice
             self.raw_data.append(raw_data[ii][samp_start:samp_end])
 

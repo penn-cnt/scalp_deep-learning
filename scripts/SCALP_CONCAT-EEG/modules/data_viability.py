@@ -29,10 +29,16 @@ class data_viability:
                 flags.append(self.viable_dataset(data_array))
             
             # Output list
-            self.viable_data = []
+            viable_data = []
+            viable_meta = []
             for idx,iarr in enumerate(self.output_list):
                 if flags[idx]:
-                    self.viable_data.append(iarr)
+                    viable_data.append(iarr)
+                    viable_meta.append(self.output_meta[idx])
+            
+            # Copying results. Kept as two variables for possible disambiguation later.
+            self.output_list = viable_data.copy()
+            self.output_meta = viable_meta.copy()
         
         elif self.args.viability == 'VIABLE_COLUMNS':
             
@@ -53,13 +59,13 @@ class data_viability:
 
             self.viable_data = [iarr[:,flags] for iarr in self.output_list]
 
+            # Copying results. Kept as two variables for possible disambiguation later.
+            self.output_list = self.viable_data.copy()
+
     def viable_dataset(self,data_array):
         
         # Loop over the index associated with the datasets and keep only datasets without NaNs
-        if ~np.isnan(data_array).any():
-            return False
-        else:
-            return True
+        return ~np.isnan(data_array).any()
 
     def viable_columns(self,data_array):
 

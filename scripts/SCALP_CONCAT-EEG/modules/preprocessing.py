@@ -62,6 +62,8 @@ class signal_processing:
         elif input_hz != None and input_hz == self.fs:
             frac                 = Fraction(output_hz, int(self.fs))
             return resample_poly(self.data, up=frac.numerator, down=frac.denominator)
+        else:
+            return self.data
 
 class noise_reduction:
     
@@ -76,7 +78,7 @@ class noise_reduction:
         Parameters
         ----------
             window_size : integer
-                Number of data points before/after current sample to calculate mean/stdev over.
+                Number of data points before/after current sample to calculate mean/stdev over. Must be odd and 3+. (rounds down if even)
             z_threshold : int, optional
                 Number of standard deviation for threshold. Defaults to 5.
             method : str, optional
@@ -86,17 +88,31 @@ class noise_reduction:
         -------
         Updates data object in instance.
         """
+
+        # Check parity of window size
+        if window_size < 3:
+            window_size = 3
+        elif window_size%2 == 0:
+            window_size -= 1
         
         # Calculate the z values based on sliding window +/- window_size from data point
-        z_vals = []
-        for idx,ival in enumerate(self.data):
-            lind  = np.max([idx-window_size,0])
-            rind  = np.min([idx+window_size,self.data.size-1])
-            vals  = self.data[lind:rind]
-            mean  = np.mean(vals)
-            stdev = np.std(vals)
-            z_vals.append(np.fabs(ival-mean)/stdev)
-        z_vals = np.array(z_vals)
+        pad_size = int(window_size/2)
+        pad_data = np.pad(self.data,(pad_size,pad_size), mode='constant', constant_values=np.nan)
+
+        import warnings
+        warnings.filterwarnings("error", category=RuntimeWarning)
+        try:
+            strided_data = np.lib.stride_tricks.sliding_window_view(pad_data, (window_size,))
+            mean         = np.mean(strided_data, axis=1, where=~np.isnan(strided_data))
+            stdev        = np.std(strided_data, axis=1, where=~np.isnan(strided_data))
+            z_vals       = np.zeros(mean.shape)
+            inds         = (stdev>0)
+            z_vals[inds] = np.fabs(self.data[inds]-mean[inds])/stdev[inds]
+        except RuntimeWarning as warning:
+            print(f"Caught a RuntimeWarning: {warning}")
+            print(self.data)
+            print(strided_data[0])
+            sys.exit()
 
         # Replace values   
         mask = (z_vals>=z_threshold)
@@ -145,27 +161,45 @@ class preprocessing:
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.preprocess_commands.keys()))
         for istep in steps:
+
+            # Get information about the method
             method_name = self.preprocess_commands[istep]['method']
             method_args = self.preprocess_commands[istep]['args']
+
+            # Clean up any optional arguments set to a null input
+            for key, value in method_args.items():
+                if type(value) == str:
+                    if value.lower() in ['','none']:
+                        method_args[key]=None
+
             for cls in classes:
                 if hasattr(cls,method_name):
 
                     # Loop over the datasets and the channels in each
                     for idx,dataset in enumerate(self.output_list):
                         
-                        # Get the input frequency if needed
-                        fs = self.output_meta.loc[idx]['fs']
+                        # Get the input frequencies
+                        fs = next(iter(self.output_meta[idx].values()))['fs']
+
+                        # Loop over the channels and get the updated values
+                        output = [] 
                         for ichannel in range(dataset.shape[1]):
 
                             # Perform preprocessing step
-                            namespace           = cls(dataset[:,ichannel],fs)
+                            namespace           = cls(dataset[:,ichannel],fs[ichannel])
                             method_call         = getattr(namespace,method_name)
-                            dataset[:,ichannel] = method_call(**method_args)
-                        
+                            output.append(method_call(**method_args))
+
+                            # Store the new frequencies if downsampling
+                            if method_name == 'frequency_downsample':
+                                input_fs  = method_args['input_hz']
+                                output_fs = method_args['output_hz']
+                                if input_fs == None or input_fs == output_fs:
+                                    key = list(self.output_meta[idx].keys())[0]
+                                    self.output_meta[idx][key]['fs'][ichannel] = output_fs
+
+                        dataset = np.column_stack(output)
+
                         # Update the data visible by the parent class
                         self.output_list[idx] = dataset
-                        if method_name == 'frequency_downsample':
-                            new_fs = method_args['output_hz']
-                            #self.output_meta.loc[idx]['fs'] = new_fs
-
 

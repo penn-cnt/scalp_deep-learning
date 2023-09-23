@@ -20,9 +20,6 @@ class channel_montage:
         # Logic for different montages
         if self.args.montage == "HUP1020":
             montage_data = self.montage_HUP_1020()
-        
-        # Update the metadata. At present, assume equal sample rates. Need to add functionality for unequal rates
-        self.metadata = PD.DataFrame([self.metadata.loc['fs'].values[0]],columns=['fs'])
 
         return montage_data
 
@@ -78,7 +75,10 @@ class channel_montage:
         montage_data = np.array(montage_data).T
 
         # Get the new montage channel labels
-        self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array] 
+        self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array]
+
+        # Update the metadata to note the montage channels
+        self.metadata[self.infile]['montage_channels'] = self.montage_channels
 
         # Pass the data to the dataframe class function for montages
         return montage_data

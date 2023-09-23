@@ -16,12 +16,12 @@ class output_manager:
     def __init__(self):
 
         self.output_list = []
-        self.output_meta = PD.DataFrame()
+        self.output_meta = []
 
-    def update_output_list(self,data):
+    def update_output_list(self,data,meta):
 
         self.output_list.append(data)
-        self.output_meta = PD.concat((self.output_meta,self.metadata)).reset_index(drop=True)
+        self.output_meta.append(meta)
 
     def create_tensor(self):
 

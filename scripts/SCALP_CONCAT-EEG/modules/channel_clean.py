@@ -23,8 +23,8 @@ class channel_clean:
             self.HUP_clean()
 
         # Add the cleaned labels to metadata
-        metadata_rename_dict = {k: v for k, v in zip(self.metadata.columns, self.clean_channel_map)}
-        self.metadata        = self.metadata.rename(metadata_rename_dict, axis="columns")
+        #metadata_rename_dict = {k: v for k, v in zip(self.metadata.columns, self.clean_channel_map)}
+        self.metadata[self.infile]['channels'] = self.clean_channel_map
 
     def HUP_clean(self):
         """

@@ -4,8 +4,8 @@
 
 frequency_downsample:
   step_nums: [1]
-  input_hz: ['']
-  output_hz: [512]
+  input_hz: [None]
+  output_hz: [128]
   multithread: False
 
 # Butterworth Filter
@@ -37,7 +37,7 @@ butterworth_filter:
 
 z_score_rejection:
   step_nums: [2]
-  window_size: [512]
+  window_size: [128]
   z_threshold: [5]
   method: ["interp"]
   multithread: False
