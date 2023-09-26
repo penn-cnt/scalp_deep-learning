@@ -111,21 +111,6 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             # Update the output list
             output_manager.update_output_list(self,self.montaged_dataframe.values,self.metadata)
 
-class make_yaml_configs:
-
-    def __init__(self,preprocess_flag,preprocess_file,feature_flag,feature_file):
-
-        if preprocess_flag and preprocess_file is not None:
-            
-            # Ask the user for preprocessing steps
-            exit_flag = False
-            while not exit_flag:
-                break
-
-        if feature_flag and feature_file is not None:
-            pass
-
-
 class CustomFormatter(argparse.HelpFormatter):
     """
     Custom formatting class to get a better argument parser help output.
@@ -148,15 +133,6 @@ def make_help_str(idict):
     """
 
     return "\n".join([f"{key:15}: {value}" for key, value in idict.items()])
-
-def input_with_tab_completion(prompt):
-    def complete(text, state):
-        return (file for file in readline.get_completions() if file.startswith(text))
-
-    readline.set_completer(complete)
-    readline.parse_and_bind("tab: complete")
-
-    return input(prompt)
 
 if __name__ == "__main__":
 
