@@ -16,6 +16,12 @@ class channel_mapping:
     """
 
     def __init__(self,channel_mapping):
+        """
+        Logic gates for which channel mapping methodology to use.
+
+        Args:
+            clean_method (str, optional): Mapping method to use, see --help for complete list.
+        """
         
         # Logic for different mappings
         if channel_mapping == "HUP1020":

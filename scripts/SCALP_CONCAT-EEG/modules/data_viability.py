@@ -12,8 +12,14 @@ from .output_manager import *
 from .data_viability import *
 
 class data_viability:
+    """
+    Handles different ways of rejecting bad data.
+    """
 
     def __init__(self):
+        """
+        Logic gating for interpolation of small patches of data and how to slice out large swaths of bad data.
+        """
 
         # Interpolate over small subsets of NaN if requested
         if self.args.interp:
@@ -63,11 +69,29 @@ class data_viability:
             self.output_list = self.viable_data.copy()
 
     def viable_dataset(self,data_array):
+        """
+        Flag if the !dataset! has any bad data and exclude the dataset.
+
+        Args:
+            data_array (array): Data array.
+
+        Returns:
+            Single boolean flag. True=Keep. False=Drop.
+        """
         
         # Loop over the index associated with the datasets and keep only datasets without NaNs
         return ~np.isnan(data_array).any()
 
     def viable_columns(self,data_array):
+        """
+        Flag if a !channel! has any bad data and exclude the channel.
+
+        Args:
+            data_array (array): Data array.
+
+        Returns:
+            Boolean mask for column array.
+        """
 
         # Loop over the index associated with the columns and only return columns without NaNs
         keep_index = []
@@ -81,6 +105,16 @@ class data_viability:
         return keep_index
     
     def consecutive_counter(self,iarr,ival):
+        """
+        Counts the number of consecutive instances of a value in an array. Returns a mask for trains less than argument set number.
+
+        Args:
+            iarr (1-d array): Array to look across for a particular value. 
+            ival (float): Value to look for in the array
+
+        Returns:
+            boolean array: Mask of entries that match the criteria
+        """
 
         # Add padding to the array to get an accurate difference between elements that includes first and last
         if ~np.isnan(ival):
@@ -104,6 +138,15 @@ class data_viability:
         return mask
 
     def interpolate_data(self,data_array):
+        """
+        Interpolate over specific train of a select value in an array, column wise.
+
+        Args:
+            data_array (array): Data array to interpolate out bad data.
+
+        Returns:
+            array: data array with interpolated entries.
+        """
 
         # Loop over the columns
         for icol in range(data_array.shape[1]):

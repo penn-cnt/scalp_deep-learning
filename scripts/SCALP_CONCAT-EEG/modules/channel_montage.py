@@ -16,6 +16,9 @@ class channel_montage:
     """
 
     def __init__(self):
+        """
+        Logic gates for which montage methodology to use.
+        """
         
         # Logic for different montages
         if self.args.montage == "HUP1020":
