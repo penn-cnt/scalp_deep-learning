@@ -1,7 +1,10 @@
 # General libraries
 import torch
+import pickle
+import datetime
 import numpy as np
 import pandas as PD
+
 
 # Import the classes
 from .data_loader import *
@@ -22,6 +25,12 @@ class output_manager:
 
         self.output_list.append(data)
         self.output_meta.append(meta)
+
+    def save_output_list(self):
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+        pickle.dump(self.output_list,open("%s_data.pickle" %(timestamp),"wb"))
+        pickle.dump(self.output_meta,open("%s_meta.pickle" %(timestamp),"wb"))
 
     def create_tensor(self):
 

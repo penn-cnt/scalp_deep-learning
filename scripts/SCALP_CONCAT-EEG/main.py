@@ -48,10 +48,11 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         data_viability.__init__(self)
 
         # Apply preprocessing as needed
-        preprocessing.__init__(self)
+        if not args.no_preprocess_flag:
+            preprocessing.__init__(self)
         
-        # Create the tensor for PyTorch
-        output_manager.create_tensor(self)
+        # Save the intermediate results
+        output_manager.save_output_list(self)
 
     def file_manager(self,infiles, start_times, end_times):
 
@@ -65,6 +66,7 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             self.t_end   = end_times[ii]
             
             # Case statement the workflow
+            print("Reading in %s." %(self.infile))
             if self.args.dtype == 'EDF':
                 try:
                     self.edf_handler()
@@ -230,7 +232,7 @@ if __name__ == "__main__":
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-    if args.preprocess_file == None:
+    if args.preprocess_file == None and not args.no_preprocess_flag:
         from modules import preprocessing
         args.preprocess_file = "configs/preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
