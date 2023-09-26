@@ -128,6 +128,10 @@ class noise_reduction:
 class preprocessing:
     
     def __init__(self):
+        """
+        Use the preprocessing configuration file to step through the preprocessing pipeline on each data array
+        in the output data container.
+        """
         
         # Read in the preprocessing configuration
         config = yaml.safe_load(open(self.args.preprocess_file,'r'))

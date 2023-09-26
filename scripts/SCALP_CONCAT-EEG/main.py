@@ -55,6 +55,14 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         output_manager.save_output_list(self)
 
     def file_manager(self,infiles, start_times, end_times):
+        """
+        Loop over the input files and send them to the correct data handler.
+
+        Args:
+            infiles (str list): Path to each dataset
+            start_times (float list): Start times in seconds to start sampling
+            end_times (float list): End times in seconds to end sampling
+        """
 
         # Loop over files to read and store each ones data
         file_cnt = len(infiles)
@@ -71,10 +79,7 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
                 try:
                     self.edf_handler()
                 except OSError:
-                    file_cnt -= 1
-        
-        return file_cnt
-        
+                    file_cnt -= 1        
 
     def edf_handler(self):
         """
@@ -195,6 +200,9 @@ if __name__ == "__main__":
     feature_group = parser.add_argument_group('Feature Extraction Options')
     feature_group.add_argument("--no_feature_flag", action='store_true', default=False, help="Do not run feature extraction on data.")
     feature_group.add_argument("--feature_file", help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
+
+    output_group = parser.add_argument_group('Output Options')
+    output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 
     args = parser.parse_args()
 
     # For testing purposes
