@@ -134,6 +134,21 @@ def make_help_str(idict):
 
     return "\n".join([f"{key:15}: {value}" for key, value in idict.items()])
 
+def parse_list(input_str):
+    """
+    Helper function to allow list inputs to argparse using a space or comma
+
+    Args:
+        input_str (str): Users inputted string
+
+    Returns:
+        list: Input argument list as python list
+    """
+
+    # Split the input using either spaces or commas as separators
+    values = input_str.replace(',', ' ').split()
+    return [int(value) for value in values]
+
 if __name__ == "__main__":
 
     # Define the allowed keywords a user can input
@@ -168,6 +183,7 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
     datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
     datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
+    datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     
     preprocessing_group = parser.add_argument_group('Preprocessing Options')
     preprocessing_group.add_argument("--no_preprocess_flag", action='store_true', default=False, help="Do not run preprocessing on data.")
@@ -180,9 +196,6 @@ if __name__ == "__main__":
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 
     args = parser.parse_args()
-
-    # For testing purposes
-    start = time.time()
 
     # Set the input file list
     if args.input == 'CSV':
@@ -208,11 +221,43 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
-        files     = glob.glob(file_path)[:5]
+        files     = glob.glob(file_path)[:25]
 
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))
+
+    # If using a sliding time window, duplicate inputs with the correct inputs
+    if args.t_window != None:
+        new_files = []
+        new_start = []
+        new_end   = []
+        for ifile in files:
+
+            # Read in just the header to get duration
+            duration = highlevel.read_edf_header(ifile)['Duration']
+
+            for iwindow in args.t_window:
+                
+                # Get the list of windows start and end times
+                windowed_start = np.array(range(0,duration,iwindow))
+                windowed_end   = np.array(range(iwindow,duration+iwindow,iwindow))
+
+                # Make sure we have no values outside the right range
+                windowed_end[(windowed_end>duration)] = duration
+
+                # Loop over the new entries and tile the input lists as needed
+                for idx,istart in enumerate(windowed_start):
+                    new_files.append(ifile)
+                    new_start.append(istart)
+                    new_end.append(windowed_end[idx])
+        files       = new_files
+        start_times = new_start
+        end_times   = new_end 
+
+    for idx in range(10):
+        print("%-100s %03d %03d" %(files[idx],start_times[idx],end_times[idx]))
+    sys.exit()
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
