@@ -221,7 +221,7 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
-        files     = glob.glob(file_path)[:25]
+        files     = glob.glob(file_path)[:5]
 
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
@@ -255,10 +255,6 @@ if __name__ == "__main__":
         start_times = new_start
         end_times   = new_end 
 
-    for idx in range(10):
-        print("%-100s %03d %03d" %(files[idx],start_times[idx],end_times[idx]))
-    sys.exit()
-
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None and not args.no_preprocess_flag:
@@ -267,7 +263,7 @@ if __name__ == "__main__":
         config_handler       = make_config(preprocessing,args.preprocess_file)
     if args.feature_file == None:
         args.feature_file = "features_"+timestamp+".yaml"
-        #config_handler    = make_config('preprocess',args.preprocess_file)
+        config_handler    = make_config('feature',args.feature_file)
 
     # Load the parent class
     DM = data_manager(files, start_times, end_times, args)

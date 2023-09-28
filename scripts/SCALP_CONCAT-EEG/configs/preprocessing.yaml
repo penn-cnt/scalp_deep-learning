@@ -5,7 +5,7 @@
 frequency_downsample:
   step_nums: [1]
   input_hz: [None]
-  output_hz: [128]
+  output_hz: [256]
   multithread: False
 
 # Butterworth Filter
@@ -18,10 +18,10 @@ frequency_downsample:
 ### Options: {‘lowpass’, ‘highpass’, ‘bandpass’, ‘bandstop’}
 
 butterworth_filter:
-  step_nums: [3,4]
-  filter_type: ['bandstop','bandpass']
-  freq_filter_array: [[1,3],[100,200]]
-  butterorder: [3,3]
+  step_nums: [3]
+  filter_type: ['bandstop']
+  freq_filter_array: [[58,62]]
+  butterorder: [3]
   multithread: False
 
 
