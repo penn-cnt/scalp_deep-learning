@@ -1,9 +1,12 @@
+import ast
 import sys
 import yaml
 import inspect
 import numpy as np
+from fooof import FOOOFGroup
 from fractions import Fraction
-from scipy.signal import resample_poly, butter, filtfilt
+from scipy.signal import welch
+
 
 class signal_processing:
     
@@ -11,77 +14,23 @@ class signal_processing:
         self.data = data
         self.fs   = fs
     
-    def spectral_energy_fooof(self, lo=1, hi=120, relative=True, win_size=2, win_stride=1):
+    def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2, win_stride=1):
 
         # bands = {"delta": (1, 4), "theta": (4, 8), "alpha": (8, 12), "beta": (12, 30), "gamma": (30, 80)}
-        bands = {"broad":(1,100)}
 
         # Get the number of samples in each window for welch average and the overlap
-        nperseg = int(win_size * fs)
-        noverlap = int(win_stride * fs)
+        nperseg = int(float(win_size) * self.fs)
+        noverlap = int(float(win_stride) * self.fs)
 
         # Calculate the welch periodogram
-        freq, pxx = welch(x=x, fs=fs, nperseg=nperseg, noverlap=noverlap, axis=1)
+        frequencies, psd = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
 
-        # Initialize a FOOOF object
-        fg = FOOOFGroup()
+        # Calculate the spectral energy
+        print(low_freq)
+        print(type(low_freq))
 
-        sys.exit()
-
-        # Set the frequency range to fit the model
-        freq_range = [lo, hi]
-
-        # Report: fit the model, print the resulting parameters, and plot the reconstruction
-        fg.fit(freq, pxx, freq_range)
-        fres = fg.get_results()
-
-        def one_over_f(f, b0, b1):
-            return b0 - np.log10(f ** b1)
-
-        idx = np.logical_and(freq >= lo, freq <= hi)
-        one_over_f_curves = np.array([one_over_f(freq[idx], *i.aperiodic_params) for i in fres])
-
-        residual = np.log10(pxx[:, idx]) - one_over_f_curves
-        freq = freq[idx]
-
-        bandpowers = np.zeros((len(bands), pxx.shape[0]))
-        for i_band, (lo, hi) in enumerate(bands.values()):
-            if np.logical_and(60 >= lo, 60 <= hi):
-                idx1 = np.logical_and(freq >= lo, freq <= 55)
-                idx2 = np.logical_and(freq >= 65, freq <= hi)
-                bp1 = simpson(
-                    y=residual[:, idx1],
-                    x=freq[idx1],
-                    dx=freq[1] - freq[0]
-                )
-                bp2 = simpson(
-                    y=residual[:, idx2],
-                    x=freq[idx2],
-                    dx=freq[1] - freq[0]
-                )
-                bandpowers[i_band] = bp1 + bp2
-            else:
-                idx = np.logical_and(freq >= lo, freq <= hi)
-                bandpowers[i_band] = simpson(
-                    y=residual[:, idx],
-                    x=freq[idx],
-                    dx=freq[1] - freq[0]
-                )
-        return bandpowers.T
-
-
-    def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, nperseg=None, nseg=10):
-        
-        # Get the nperseg as needed
-        if nperseg == None:
-            nseg = int(self.data.shape/nseg)
-
-        # Calculate the Welch periodogram with Hann window (scipy default)
-        frequencies, psd = welch(self.data, fs=self.fs, nperseg=256)
-
-        # Find the power in the frequency band
-        mask = (frequencies >= low_freq) & (frequencies <= hi_freq)
-        return np.trapz(psd[mask], frequencies[mask])
+        mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
+        spectral_energy = np.trapz(psd[mask], frequencies[mask])
 
 class features:
     
@@ -103,7 +52,10 @@ class features:
                 # Get the argument list for the current command
                 args = config[ikey].copy()
                 args.pop('step_nums')
-                args.pop('multithread')
+                try:
+                    args.pop('multithread')
+                except KeyError:
+                    pass
 
                 # Clean up the current argument list to only show current step
                 for jkey in list(args.keys()):
@@ -146,6 +98,12 @@ class features:
                         # Loop over the channels and get the updated values
                         output = [] 
                         for ichannel in range(dataset.shape[1]):
+
+                            for key, value in method_args.items():
+                                try:
+                                    method_args[key] = ast.literal_eval(value)
+                                except:
+                                    pass
 
                             # Perform preprocessing step
                             namespace           = cls(dataset[:,ichannel],fs[ichannel])

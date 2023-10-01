@@ -22,6 +22,7 @@ from modules.channel_montage import *
 from modules.output_manager import *
 from modules.data_viability import *
 from modules.preprocessing import *
+from modules.features import *
 from configs.makeconfigs import *
 
 class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
@@ -50,9 +51,10 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Apply preprocessing as needed
         if not args.no_preprocess_flag:
             preprocessing.__init__(self)
+            features.__init__(self)
         
         # Save the intermediate results
-        output_manager.save_output_list(self)
+        #output_manager.save_output_list(self)
 
     def file_manager(self,infiles, start_times, end_times):
         """
@@ -262,8 +264,9 @@ if __name__ == "__main__":
         args.preprocess_file = "configs/preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
     if args.feature_file == None:
+        from modules import features
         args.feature_file = "features_"+timestamp+".yaml"
-        config_handler    = make_config('feature',args.feature_file)
+        config_handler    = make_config(features,args.feature_file)
 
     # Load the parent class
     DM = data_manager(files, start_times, end_times, args)
