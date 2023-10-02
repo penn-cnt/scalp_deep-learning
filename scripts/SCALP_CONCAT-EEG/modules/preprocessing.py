@@ -5,6 +5,9 @@ import numpy as np
 from fractions import Fraction
 from scipy.signal import resample_poly, butter, filtfilt
 
+# Local imports
+from .yaml_loader import *
+
 class signal_processing:
     
     def __init__(self, data, fs):
@@ -134,27 +137,8 @@ class preprocessing:
         """
         
         # Read in the preprocessing configuration
-        config = yaml.safe_load(open(self.args.preprocess_file,'r'))
-        
-        # Convert human readable config to easier format for code
-        self.preprocess_commands = {}
-        for ikey in list(config.keys()):
-            steps = config[ikey]['step_nums']
-            for idx,istep in enumerate(steps):
-
-                # Get the argument list for the current command
-                args = config[ikey].copy()
-                args.pop('step_nums')
-                args.pop('multithread')
-
-                # Clean up the current argument list to only show current step
-                for jkey in list(args.keys()):
-                    args[jkey] = args[jkey][idx]
-
-                # Make the step formatted command list
-                self.preprocess_commands[istep] = {}
-                self.preprocess_commands[istep]['method'] = ikey
-                self.preprocess_commands[istep]['args']   = args
+        YL = yaml_loader(self.args.preprocess_file)
+        config,self.preprocess_commands = YL.return_handler()
 
         # Get the current module (i.e., the script itself)
         current_module = sys.modules[__name__]

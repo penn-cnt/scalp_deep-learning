@@ -3,6 +3,7 @@ import sys
 import yaml
 import inspect
 import numpy as np
+import pandas as PD
 from fooof import FOOOFGroup
 from fractions import Fraction
 from scipy.signal import welch
@@ -16,9 +17,19 @@ class signal_processing:
         self.data = data
         self.fs   = fs
     
-    def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2, win_stride=1):
+    def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
+        """
+        Returns the spectral energy using the Welch method.
 
-        # bands = {"delta": (1, 4), "theta": (4, 8), "alpha": (8, 12), "beta": (12, 30), "gamma": (30, 80)}
+        Args:
+            low_freq (float, optional): Low frequency cutoff. Defaults to -np.inf.
+            hi_freq (float, optional): High frequency cutoff. Defaults to np.inf.
+            win_size (float, optional): Window size in units of sampling frequency. Defaults to 2.
+            win_stride (float, optional): Window overlap in units of sampling frequency. Defaults to 1.
+
+        Returns:
+            float: Spectral
+        """
 
         # Get the number of samples in each window for welch average and the overlap
         nperseg = int(float(win_size) * self.fs)
@@ -26,13 +37,12 @@ class signal_processing:
 
         # Calculate the welch periodogram
         frequencies, psd = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
+        psd              = psd.flatten()
 
         # Calculate the spectral energy
-        print(low_freq)
-        print(type(low_freq))
-
         mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
-        spectral_energy = np.trapz(psd[mask], frequencies[mask])
+        return np.trapz(psd[mask], frequencies[mask])
+        
 
 class features:
     
@@ -41,9 +51,14 @@ class features:
         Use the feature extraction configuration file to step through the preprocessing pipeline on each data array
         in the output data container.
         """
+
+        # Initialize some variables
+        nrow     = len(self.output_list)
+        channels = self.metadata[0]['montage_channels']
+        self.feature_df = PD.DataFrame(index=range(nrow),columns=['file','dt','method']+channels)
         
         # Read in the feature configuration
-        YL = yaml_loader()
+        YL = yaml_loader(self.args.feature_file)
         config,self.feature_commands = YL.return_handler()
 
         # Get the current module (i.e., the script itself)
@@ -84,9 +99,16 @@ class features:
                             method_call         = getattr(namespace,method_name)
                             output.append(method_call(**method_args))
 
+                        # Use metadata to allow proper feature grouping
+                        imeta = self.metadata[idx]
+                        self.feature_df.loc[idx] = [imeta['file'],imeta['dt'],method_name]+output
+
                         # Update the new dataset
-                        dataset = np.column_stack(output)
+                        #dataset = np.column_stack(output)
 
                         # Update the data visible by the parent class
-                        self.output_list[idx] = dataset
+                        #self.output_list[idx] = dataset
 
+    def feature_aggregation(self):
+
+        pass

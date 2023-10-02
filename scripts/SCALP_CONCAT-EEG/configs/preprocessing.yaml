@@ -3,10 +3,14 @@
 # This file can be called in the main.py file. Alternatively, the main body of the script can query the user for steps, then generate a similar file to this one with user specified filename.
 
 frequency_downsample:
-  step_nums: [1]
-  input_hz: [None]
-  output_hz: [256]
-  multithread: False
+    step_nums:
+        - 1
+    input_hz:
+        - None
+    output_hz:
+        - 256
+    multithread:
+        - False
 
 # Butterworth Filter
 # scipy butterworth filter. More information can be found at: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html
@@ -18,11 +22,16 @@ frequency_downsample:
 ### Options: {‘lowpass’, ‘highpass’, ‘bandpass’, ‘bandstop’}
 
 butterworth_filter:
-  step_nums: [3]
-  filter_type: ['bandstop']
-  freq_filter_array: [[58,62]]
-  butterorder: [3]
-  multithread: False
+    step_nums:
+        - 3
+    filter_type:
+        - 'bandstop'
+    freq_filter_array: 
+        - "[58,62]"
+    butterorder:
+        - 3
+    multithread:
+        - False
 
 
 # Z Score Rejection
@@ -36,8 +45,13 @@ butterworth_filter:
 ### Options: {‘mask’,'interp'}
 
 z_score_rejection:
-  step_nums: [2]
-  window_size: [128]
-  z_threshold: [5]
-  method: ["interp"]
-  multithread: False
+    step_nums:
+        - 2
+    window_size:
+        - 128
+    z_threshold:
+        - 5
+    method:
+        - "interp"
+    multithread:
+        - False

@@ -22,20 +22,19 @@ class data_loader:
         """
 
         # Load current edf data into memory
-        raw_data, channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
-        self.channels = highlevel.read_edf_header(self.infile)['channels']
+        if self.infile != self.oldfile:
+            self.indata, channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
+            self.channels = highlevel.read_edf_header(self.infile)['channels']
 
         # Clean up the edf data
         self.channels = [ichannel.upper() for ichannel in self.channels]
         
         # Make a metadata dataframe in case we need to store information through transformations
-        self.metadata              = {}
-        self.metadata[self.infile] = {}
-        self.metadata[self.infile]['channels'] = self.channels
+        self.metadata[self.file_cntr]['channels'] = self.channels
 
         # Calculate the sample frequencies to save the information and make time cuts
         sample_frequency                 = np.array([ichannel['sample_frequency'] for ichannel in channel_metadata])
-        self.metadata[self.infile]['fs'] = sample_frequency
+        self.metadata[self.file_cntr]['fs'] = sample_frequency
 
         # Get only the time slices of interest
         self.raw_data = []
@@ -46,12 +45,12 @@ class data_loader:
 
             # Calculate the index of the end
             if self.t_end == -1:
-                samp_end = int(len(raw_data[ii]))
+                samp_end = int(len(self.indata[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
 
             # Update the raw data array to only get the relevant time slice
-            self.raw_data.append(raw_data[ii][samp_start:samp_end])
+            self.raw_data.append(self.indata[ii][samp_start:samp_end])
 
         # Get the underlying data shapes
         self.ncol = len(self.raw_data)

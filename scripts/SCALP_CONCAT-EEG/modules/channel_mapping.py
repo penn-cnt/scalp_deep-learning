@@ -28,8 +28,8 @@ class channel_mapping:
             self.mapping_HUP_1020()
 
         # Update the metadata
-        self.metadata[self.infile]['channels'] = self.channel_map_out
-        self.metadata[self.infile]['fs']       = self.metadata[self.infile]['fs'][self.channel_map_out_inds]
+        self.metadata[self.file_cntr]['channels'] = self.channel_map_out
+        self.metadata[self.file_cntr]['fs']       = self.metadata[self.file_cntr]['fs'][self.channel_map_out_inds]
 
     def mapping_HUP_1020(self):
         """

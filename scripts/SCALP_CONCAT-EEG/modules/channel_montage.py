@@ -81,7 +81,7 @@ class channel_montage:
         self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array]
 
         # Update the metadata to note the montage channels
-        self.metadata[self.infile]['montage_channels'] = self.montage_channels
+        self.metadata[self.file_cntr]['montage_channels'] = self.montage_channels
 
         # Pass the data to the dataframe class function for montages
         return montage_data

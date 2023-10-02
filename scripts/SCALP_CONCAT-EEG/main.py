@@ -37,7 +37,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         """
 
         # Make args visible across inheritance
-        self.args = args
+        self.args                       = args
+        self.metadata                   = {}
 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
@@ -52,7 +53,10 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         if not args.no_preprocess_flag:
             preprocessing.__init__(self)
             features.__init__(self)
-        
+
+            #print(self.feature_df)
+            #pickle.dump(self.feature_df,open("features.pickle","wb"))
+
         # Save the intermediate results
         #output_manager.save_output_list(self)
 
@@ -67,21 +71,25 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         """
 
         # Loop over files to read and store each ones data
-        file_cnt = len(infiles)
         for ii,ifile in enumerate(infiles):
             
             # Save current file info
-            self.infile  = ifile
-            self.t_start = start_times[ii]
-            self.t_end   = end_times[ii]
+            self.infile    = ifile
+            self.oldfile   = None
+            self.t_start   = start_times[ii]
+            self.t_end     = end_times[ii]
+            
+            # Update the metadata
+            self.file_cntr = ii
+            self.metadata[self.file_cntr]         = {}
+            self.metadata[self.file_cntr]['file'] = self.infile
+            self.metadata[self.file_cntr]['dt']   = self.t_end-self.t_start
             
             # Case statement the workflow
             print("Reading in %s." %(self.infile))
             if self.args.dtype == 'EDF':
-                try:
-                    self.edf_handler()
-                except OSError:
-                    file_cnt -= 1        
+                self.edf_handler()
+                self.old_file = self.infile
 
     def edf_handler(self):
         """
@@ -223,7 +231,7 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
-        files     = glob.glob(file_path)[:5]
+        files     = glob.glob(file_path)[:2]
 
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
@@ -269,4 +277,4 @@ if __name__ == "__main__":
         config_handler    = make_config(features,args.feature_file)
 
     # Load the parent class
-    #DM = data_manager(files, start_times, end_times, args)
+    DM = data_manager(files, start_times, end_times, args)

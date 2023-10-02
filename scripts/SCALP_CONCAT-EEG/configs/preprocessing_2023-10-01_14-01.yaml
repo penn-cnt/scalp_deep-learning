@@ -1,9 +1,0 @@
-butterworth_filter:
-  butterorder:
-  - 3
-  filter_type:
-  - bandstop
-  freq_filter_array:
-  - '[58,62]'
-  step_nums:
-  - 1

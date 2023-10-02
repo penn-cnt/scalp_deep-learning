@@ -29,7 +29,7 @@ class channel_clean:
             self.HUP_clean()
 
         # Add the cleaned labels to metadata
-        self.metadata[self.infile]['channels'] = self.clean_channel_map
+        self.metadata[self.file_cntr]['channels'] = self.clean_channel_map
 
     def HUP_clean(self):
         """
