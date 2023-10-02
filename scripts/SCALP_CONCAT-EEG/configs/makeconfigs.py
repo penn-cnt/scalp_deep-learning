@@ -88,9 +88,11 @@ class make_config:
                         print('Input required for this variable.')
                     else:
                         if arg_list == '' and default != '':
-                            arg_list = ast.literal_eval(default)
+                            arg_list = [ast.literal_eval(default)]
+                        elif arg_list[0] != '[':
+                            arg_list = ast.literal_eval("["+arg_list+"]")
                         else:
-                            arg_list = self.literal_to_list(arg_list)
+                            arg_list = [arg_list]
 
                         # Make lists of inputs
                         if type(arg_list) == int and len(step_list) > 1:
@@ -103,7 +105,13 @@ class make_config:
         print("=============")
     
     def write_yaml_file(self, filename):
-        
+
+        with open(filename, 'w') as file:
+            yaml.dump(self.config_dict, file, default_flow_style=False)
+
+        import sys
+        sys.exit()
+
         # Clean up the dictionary to be more readable
         for key, value in self.config_dict.items():
             if type(value) == dict:

@@ -7,6 +7,8 @@ from fooof import FOOOFGroup
 from fractions import Fraction
 from scipy.signal import welch
 
+# Local imports
+from .yaml_loader import *
 
 class signal_processing:
     
@@ -40,31 +42,9 @@ class features:
         in the output data container.
         """
         
-        # Read in the preprocessing configuration
-        config = yaml.safe_load(open(self.args.feature_file,'r'))
-        
-        # Convert human readable config to easier format for code
-        self.feature_commands = {}
-        for ikey in list(config.keys()):
-            steps = config[ikey]['step_nums']
-            for idx,istep in enumerate(steps):
-
-                # Get the argument list for the current command
-                args = config[ikey].copy()
-                args.pop('step_nums')
-                try:
-                    args.pop('multithread')
-                except KeyError:
-                    pass
-
-                # Clean up the current argument list to only show current step
-                for jkey in list(args.keys()):
-                    args[jkey] = args[jkey][idx]
-
-                # Make the step formatted command list
-                self.feature_commands[istep] = {}
-                self.feature_commands[istep]['method'] = ikey
-                self.feature_commands[istep]['args']   = args
+        # Read in the feature configuration
+        YL = yaml_loader()
+        config,self.feature_commands = YL.return_handler()
 
         # Get the current module (i.e., the script itself)
         current_module = sys.modules[__name__]
@@ -79,12 +59,6 @@ class features:
             # Get information about the method
             method_name = self.feature_commands[istep]['method']
             method_args = self.feature_commands[istep]['args']
-
-            # Clean up any optional arguments set to a null input
-            for key, value in method_args.items():
-                if type(value) == str:
-                    if value.lower() in ['','none']:
-                        method_args[key]=None
 
             for cls in classes:
                 if hasattr(cls,method_name):
@@ -110,14 +84,7 @@ class features:
                             method_call         = getattr(namespace,method_name)
                             output.append(method_call(**method_args))
 
-                            # Store the new frequencies if downsampling
-                            if method_name == 'frequency_downsample':
-                                input_fs  = method_args['input_hz']
-                                output_fs = method_args['output_hz']
-                                if input_fs == None or input_fs == output_fs:
-                                    key = list(self.output_meta[idx].keys())[0]
-                                    self.output_meta[idx][key]['fs'][ichannel] = output_fs
-
+                        # Update the new dataset
                         dataset = np.column_stack(output)
 
                         # Update the data visible by the parent class

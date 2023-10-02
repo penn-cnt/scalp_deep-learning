@@ -269,4 +269,4 @@ if __name__ == "__main__":
         config_handler    = make_config(features,args.feature_file)
 
     # Load the parent class
-    DM = data_manager(files, start_times, end_times, args)
+    #DM = data_manager(files, start_times, end_times, args)
