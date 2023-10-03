@@ -69,13 +69,12 @@ class channel_montage:
                          ['FZ','CZ']]
         
         # Get the new values to pass to the dataframe class
-        montage_data = []
-        for ival in bipolar_array:
+        montage_data = np.zeros((self.dataframe.shape[0],len(bipolar_array))).astype('float64')
+        for ii,ival in enumerate(bipolar_array):
             try:
-                montage_data.append(list(self.dataframe[ival[0]].values-self.dataframe[ival[1]].values))
+                montage_data[:,ii] = self.dataframe[ival[0]].values-self.dataframe[ival[1]].values
             except KeyError:
-                montage_data.append(np.nan*np.ones(self.dataframe.shape[0]))
-        montage_data = np.array(montage_data).T
+                montage_data[:,ii] = np.nan
 
         # Get the new montage channel labels
         self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array]

@@ -17,15 +17,30 @@ class dataframe_manager:
 
     def __init__(self):
 
+        """
         self.dataframe = PD.DataFrame(index=range(self.nrow), columns=self.master_channel_list)
         values         = self.dataframe.values
+        cols           = self.dataframe.columns
         for idx,icol in enumerate(self.clean_channel_map):
             ivals      = self.raw_data[idx]
             try:
-                column_idx                     = np.argwhere(self.dataframe.columns==icol)[0][0]
+                column_idx                     = np.argwhere(cols==icol)[0][0]
                 values[:ivals.size,column_idx] = ivals
             except IndexError:
                 pass
+        """
+        ncol      = len(self.master_channel_list)
+        values    = np.empty((self.nrow,ncol))
+        values[:] = np.nan
+        cols      = np.array(self.master_channel_list)
+        for idx,icol in enumerate(self.clean_channel_map):
+            ivals = self.raw_data[idx]
+            try:
+                column_idx                     = np.argwhere(cols==icol)[0][0]
+                values[:ivals.size,column_idx] = ivals
+            except IndexError:
+                pass
+        self.dataframe = PD.DataFrame(values, columns=self.master_channel_list)
 
     def column_subsection(self,keep_columns):
         """

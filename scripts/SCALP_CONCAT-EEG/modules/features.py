@@ -1,9 +1,10 @@
 import ast
 import sys
-import yaml
+import pickle
 import inspect
 import numpy as np
 import pandas as PD
+from tqdm import tqdm
 from fooof import FOOOFGroup
 from fractions import Fraction
 from scipy.signal import welch
@@ -41,8 +42,14 @@ class signal_processing:
 
         # Calculate the spectral energy
         mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
-        return np.trapz(psd[mask], frequencies[mask])
-        
+        spectral_energy = np.trapz(psd[mask], frequencies[mask])
+
+        # Add in the optional tagging to denote frequency range of this step
+        low_freq_str = str(np.floor(low_freq))
+        hi_freq_str  = str(np.floor(hi_freq))
+        optional_tag = '['+low_freq_str+','+hi_freq_str+']'
+
+        return spectral_energy,optional_tag
 
 class features:
     
@@ -53,9 +60,9 @@ class features:
         """
 
         # Initialize some variables
-        nrow     = len(self.output_list)
-        channels = self.metadata[0]['montage_channels']
-        self.feature_df = PD.DataFrame(index=range(nrow),columns=['file','dt','method']+channels)
+        #nrow     = len(self.output_list)
+        channels        = self.metadata[0]['montage_channels']
+        self.feature_df = PD.DataFrame(columns=['file','dt','method','tag']+channels)
         
         # Read in the feature configuration
         YL = yaml_loader(self.args.feature_file)
@@ -78,11 +85,15 @@ class features:
             for cls in classes:
                 if hasattr(cls,method_name):
 
+                    # Make a dummy list so we can append files to the dataframe in a staggered fashion (performance improvement)
+                    df_values = []
+
                     # Loop over the datasets and the channels in each
-                    for idx,dataset in enumerate(self.output_list):
+                    print("Feature extraction step: %s" %(method_name))
+                    for idx,dataset in tqdm(enumerate(self.output_list), desc="Processing", unit="%", unit_scale=True, total=len(self.output_list)):
                         
                         # Get the input frequencies
-                        fs = next(iter(self.output_meta[idx].values()))['fs']
+                        fs = self.metadata[idx]['fs']
 
                         # Loop over the channels and get the updated values
                         output = [] 
@@ -97,17 +108,25 @@ class features:
                             # Perform preprocessing step
                             namespace           = cls(dataset[:,ichannel],fs[ichannel])
                             method_call         = getattr(namespace,method_name)
-                            output.append(method_call(**method_args))
+                            result_a, result_b  = method_call(**method_args)
+                            output.append(result_a)
 
                         # Use metadata to allow proper feature grouping
                         imeta = self.metadata[idx]
-                        self.feature_df.loc[idx] = [imeta['file'],imeta['dt'],method_name]+output
+                        df_values.append([imeta['file'],imeta['dt'],method_name,result_b]+output)
 
-                        # Update the new dataset
-                        #dataset = np.column_stack(output)
+                        # Stagger condition for pandas concat
+                        if (idx%1000==0):
 
-                        # Update the data visible by the parent class
-                        #self.output_list[idx] = dataset
+                            # Dataframe creations
+                            iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
+                            self.feature_df = PD.concat((self.feature_df,iDF))
+
+                            # Dataframe intermediate saves
+                            pickle.dump(self.feature_df,open("features.pickle","wb"))
+
+                            # Clean up the dummy list
+                            df_values = []
 
     def feature_aggregation(self):
 

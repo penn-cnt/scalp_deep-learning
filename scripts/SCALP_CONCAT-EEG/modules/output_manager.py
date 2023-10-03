@@ -24,7 +24,7 @@ class output_manager:
         self.output_list = []
         self.output_meta = []
 
-    def update_output_list(self,data,meta):
+    def update_output_list(self,data):
         """
         Add elements to the container of objects we want to analyze.
 
@@ -34,7 +34,15 @@ class output_manager:
         """
 
         self.output_list.append(data)
-        self.output_meta.append(meta)
+
+    def save_features(self):
+        """
+        Save the feature dataframe
+        """
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+        pickle.dump(self.feature_df,open("%s/%s_features.pickle" %(self.args.outdir,timestamp),"wb"))
+        pickle.dump(self.metadata,open("%s/%s_meta.pickle" %(self.args.outdir,timestamp),"wb"))
 
     def save_output_list(self):
         """
@@ -43,7 +51,7 @@ class output_manager:
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         pickle.dump(self.output_list,open("%s/%s_data.pickle" %(self.args.outdir,timestamp),"wb"))
-        pickle.dump(self.output_meta,open("%s/%s_meta.pickle" %(self.args.outdir,timestamp),"wb"))
+        pickle.dump(self.metadata,open("%s/%s_meta.pickle" %(self.args.outdir,timestamp),"wb"))
 
     def create_tensor(self):
         """

@@ -23,8 +23,8 @@ class data_loader:
 
         # Load current edf data into memory
         if self.infile != self.oldfile:
-            self.indata, channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
-            self.channels = highlevel.read_edf_header(self.infile)['channels']
+            self.indata, self.channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
+            self.channels = [ival['label'] for ival in self.channel_metadata]
 
         # Clean up the edf data
         self.channels = [ichannel.upper() for ichannel in self.channels]
@@ -33,7 +33,7 @@ class data_loader:
         self.metadata[self.file_cntr]['channels'] = self.channels
 
         # Calculate the sample frequencies to save the information and make time cuts
-        sample_frequency                 = np.array([ichannel['sample_frequency'] for ichannel in channel_metadata])
+        sample_frequency                 = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
         self.metadata[self.file_cntr]['fs'] = sample_frequency
 
         # Get only the time slices of interest

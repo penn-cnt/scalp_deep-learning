@@ -23,7 +23,7 @@ frequency_downsample:
 
 butterworth_filter:
     step_nums:
-        - 3
+        - 2
     filter_type:
         - 'bandstop'
     freq_filter_array: 
@@ -44,14 +44,14 @@ butterworth_filter:
 ## method: List of strings. Options for how to handle outliers.
 ### Options: {‘mask’,'interp'}
 
-z_score_rejection:
-    step_nums:
-        - 2
-    window_size:
-        - 128
-    z_threshold:
-        - 5
-    method:
-        - "interp"
-    multithread:
-        - False
+#z_score_rejection:
+#    step_nums:
+#        - 2
+#    window_size:
+#        - 128
+#    z_threshold:
+#        - 5
+#    method:
+#        - "interp"
+#    multithread:
+#        - False

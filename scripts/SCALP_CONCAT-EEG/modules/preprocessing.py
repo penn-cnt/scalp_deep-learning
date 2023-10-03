@@ -1,7 +1,7 @@
 import sys
-import yaml
 import inspect
 import numpy as np
+from tqdm import tqdm
 from fractions import Fraction
 from scipy.signal import resample_poly, butter, filtfilt
 
@@ -102,20 +102,15 @@ class noise_reduction:
         pad_size = int(window_size/2)
         pad_data = np.pad(self.data,(pad_size,pad_size), mode='constant', constant_values=np.nan)
 
-        import warnings
-        warnings.filterwarnings("error", category=RuntimeWarning)
-        try:
-            strided_data = np.lib.stride_tricks.sliding_window_view(pad_data, (window_size,))
-            mean         = np.mean(strided_data, axis=1, where=~np.isnan(strided_data))
-            stdev        = np.std(strided_data, axis=1, where=~np.isnan(strided_data))
-            z_vals       = np.zeros(mean.shape)
-            inds         = (stdev>0)
-            z_vals[inds] = np.fabs(self.data[inds]-mean[inds])/stdev[inds]
-        except RuntimeWarning as warning:
-            print(f"Caught a RuntimeWarning: {warning}")
-            print(self.data)
-            print(strided_data[0])
-            sys.exit()
+        # Calculate the Z-score
+        strided_data = np.lib.stride_tricks.sliding_window_view(pad_data, (window_size,))
+        stride_inds  = ~np.isnan(strided_data)
+        mean         = np.mean(strided_data, axis=1, where=stride_inds)
+        variance     = np.mean((strided_data - mean[:, np.newaxis]) ** 2, axis=1, where=stride_inds)
+        stdev        = np.sqrt(variance)
+        z_vals       = np.zeros(mean.shape)
+        inds         = (stdev>0)
+        z_vals[inds] = np.fabs(self.data[inds]-mean[inds])/stdev[inds]
 
         # Replace values   
         mask = (z_vals>=z_threshold)
@@ -164,10 +159,11 @@ class preprocessing:
                 if hasattr(cls,method_name):
 
                     # Loop over the datasets and the channels in each
-                    for idx,dataset in enumerate(self.output_list):
+                    print("Preprocess step: %s" %(method_name))
+                    for idx,dataset in tqdm(enumerate(self.output_list), desc="Processing", unit="%", unit_scale=True, total=len(self.output_list)):
                         
                         # Get the input frequencies
-                        fs = next(iter(self.output_meta[idx].values()))['fs']
+                        fs = self.metadata[idx]['fs']
 
                         # Loop over the channels and get the updated values
                         output = [] 
@@ -183,8 +179,7 @@ class preprocessing:
                                 input_fs  = method_args['input_hz']
                                 output_fs = method_args['output_hz']
                                 if input_fs == None or input_fs == output_fs:
-                                    key = list(self.output_meta[idx].keys())[0]
-                                    self.output_meta[idx][key]['fs'][ichannel] = output_fs
+                                    self.metadata[idx]['fs'][ichannel] = output_fs
 
                         dataset = np.column_stack(output)
 

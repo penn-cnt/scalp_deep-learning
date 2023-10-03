@@ -6,12 +6,11 @@ from prompt_toolkit.completion import PathCompleter
 # General libraries
 import sys
 import glob
-import time
-import resource
 import argparse
 import datetime
 import numpy as np
 import pandas as PD
+from tqdm import tqdm
 
 # Import the classes
 from modules.data_loader import *
@@ -54,11 +53,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             preprocessing.__init__(self)
             features.__init__(self)
 
-            #print(self.feature_df)
-            #pickle.dump(self.feature_df,open("features.pickle","wb"))
-
-        # Save the intermediate results
-        #output_manager.save_output_list(self)
+        # Save the results
+        output_manager.save_features(self)
 
     def file_manager(self,infiles, start_times, end_times):
         """
@@ -71,11 +67,13 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         """
 
         # Loop over files to read and store each ones data
-        for ii,ifile in enumerate(infiles):
+        self.oldfile = None
+        nfile        = len(infiles)
+        print("Reading in data and performing initial cleanup.")
+        for ii,ifile in tqdm(enumerate(infiles), desc="Processing", unit="%", unit_scale=True, total=nfile):
             
             # Save current file info
             self.infile    = ifile
-            self.oldfile   = None
             self.t_start   = start_times[ii]
             self.t_end     = end_times[ii]
             
@@ -86,10 +84,9 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             self.metadata[self.file_cntr]['dt']   = self.t_end-self.t_start
             
             # Case statement the workflow
-            print("Reading in %s." %(self.infile))
             if self.args.dtype == 'EDF':
                 self.edf_handler()
-                self.old_file = self.infile
+                self.oldfile = self.infile
 
     def edf_handler(self):
         """
@@ -119,7 +116,7 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
 
             # Update the output list
-            output_manager.update_output_list(self,self.montaged_dataframe.values,self.metadata)
+            output_manager.update_output_list(self,self.montaged_dataframe.values)
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -231,7 +228,7 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
-        files     = glob.glob(file_path)[:2]
+        files     = glob.glob(file_path)[:10]
 
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
