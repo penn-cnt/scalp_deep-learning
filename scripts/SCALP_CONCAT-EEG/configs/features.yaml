@@ -7,11 +7,13 @@ spectral_energy_welch:
         - 1
     low_freq:
         - -np.inf
+        - loop
     hi_freq:
         - np.inf
+        - loop
     win_size:
         - 2
     win_stride:
         - 1
-    multithread:
-        - False
+    loop_val:
+        - 1

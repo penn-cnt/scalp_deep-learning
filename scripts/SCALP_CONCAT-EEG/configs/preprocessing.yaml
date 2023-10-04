@@ -9,8 +9,6 @@ frequency_downsample:
         - None
     output_hz:
         - 256
-    multithread:
-        - False
 
 # Butterworth Filter
 # scipy butterworth filter. More information can be found at: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html
@@ -30,8 +28,6 @@ butterworth_filter:
         - "[58,62]"
     butterorder:
         - 3
-    multithread:
-        - False
 
 
 # Z Score Rejection
@@ -53,5 +49,4 @@ butterworth_filter:
 #        - 5
 #    method:
 #        - "interp"
-#    multithread:
-#        - False
+

@@ -43,10 +43,6 @@ class yaml_loader:
                 # Get the argument list for the current command
                 args = self.yaml_config[ikey].copy()
                 args.pop('step_nums')
-                try:
-                    args.pop('multithread')
-                except KeyError:
-                    pass
 
                 # Clean up the current argument list to only show current step
                 for jkey in list(args.keys()):
