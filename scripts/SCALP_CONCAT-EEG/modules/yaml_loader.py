@@ -8,6 +8,10 @@ class yaml_loader:
         
         # Read in and typecast the yaml file
         config = yaml.safe_load(open(yaml_file,'r'))
+
+        # Add in any looped steps to the correct yaml input format
+        self.loop_handler(config)
+
         for ikey in list(config.keys()):
             for jkey in config[ikey]:
                 self.str_handler(config[ikey][jkey])
@@ -19,10 +23,43 @@ class yaml_loader:
     def return_handler(self):
         return self.yaml_config,self.yaml_step
 
+    def loop_handler(self,config):
+        """
+        Parse logic in the YAML file that allows for looping over parameters. Good for fine grain searches.
+
+        Args:
+            config (dict): Raw yaml data.
+        """
+
+        # Loop over the method names
+        for imethod in list(config.keys()):
+
+            # Loop over the configuration for the method
+            for method_arg,method_values in config[imethod].items():
+                
+                # Check the values of each method call to see if we need to add a loop
+                for method_value_index, method_value_current in enumerate(method_values):
+
+                    # Check the typing
+                    if isinstance(method_value_current,dict):
+                        
+                        # Get the length of the entry so we know if it is a tile or a range
+                        dict_key    = list(method_value_current.keys())[0]
+                        dict_values = list(method_value_current.values())[0]
+                        if len(dict_values) == 1:
+                            new_range = np.tile(dict_key,dict_values[0])
+                        else:
+                            new_range = list(range(dict_key, dict_values[0], dict_values[1]))
+
+                        # Pop the old dictionary out
+                        method_values.pop(method_value_index)
+                        method_values               = list(np.concatenate((method_values,new_range)))
+                        config[imethod][method_arg] = method_values
+
     def str_handler(self,values):
 
-        if isinstance(values[0], str):
-            for idx,ivalue in enumerate(values):
+        for idx,ivalue in enumerate(values):
+            if isinstance(ivalue, str):
                 if ivalue.lower() == '-np.inf':
                     values[idx] = -np.inf
                 elif ivalue.lower() == 'np.inf':
@@ -52,4 +89,3 @@ class yaml_loader:
                 self.yaml_step[istep] = {}
                 self.yaml_step[istep]['method'] = ikey
                 self.yaml_step[istep]['args']   = args
-

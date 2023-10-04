@@ -163,6 +163,7 @@ if __name__ == "__main__":
 
     datamerge_group = parser.add_argument_group('Data Merging Options')
     datamerge_group.add_argument("--input", choices=list(allowed_input_args.keys()), default="GLOB", help=f"R|Choose an option:\n{allowed_input_help}")
+    datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing.")
     datamerge_group.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
     datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
     datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
@@ -217,11 +218,17 @@ if __name__ == "__main__":
         completer = PathCompleter()
         #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
-        files     = glob.glob(file_path)[:10]
+        files     = glob.glob(file_path)
 
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))
+
+    # Limit file length as needed
+    if args.n_input != None:
+        files       = files[:args.n_input]
+        start_times = start_times[:args.n_input]
+        end_times   = end_times[:args.n_input]
 
     # If using a sliding time window, duplicate inputs with the correct inputs
     if args.t_window != None:

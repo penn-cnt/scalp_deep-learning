@@ -76,7 +76,8 @@ class features:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.feature_commands.keys()))
-        for istep in steps:
+        print("Starting Feature Extraction.")
+        for istep in tqdm(steps, desc="Processing", unit="%", unit_scale=True, total=len(steps), disable=self.args.multithread):
 
             # Get information about the method
             method_name = self.feature_commands[istep]['method']
@@ -89,8 +90,9 @@ class features:
                     df_values = []
 
                     # Loop over the datasets and the channels in each
-                    print("Feature extraction step: %s (Core=%s)" %(method_name,self.unique_id))
-                    for idx,dataset in tqdm(enumerate(self.output_list), desc="Processing", unit="%", unit_scale=True, total=len(self.output_list), disable=self.args.multithread):
+                    if self.args.multithread:
+                        print("Feature extraction step: %s (Core=%s)" %(method_name,self.unique_id))
+                    for idx,dataset in enumerate(self.output_list):
                         
                         # Get the input frequencies
                         fs = self.metadata[idx]['fs']

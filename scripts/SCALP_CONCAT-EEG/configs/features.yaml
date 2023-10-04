@@ -5,15 +5,24 @@
 spectral_energy_welch:
     step_nums:
         - 1
+        - 2:
+            - 99
+            - 1
     low_freq:
         - -np.inf
-        - loop
+        - 0:
+            - 99
+            - 1
     hi_freq:
         - np.inf
-        - loop
+        - 1:
+            - 100
+            - 1
     win_size:
         - 2
+        - 2:
+            - 99
     win_stride:
         - 1
-    loop_val:
-        - 1
+        - 1:
+            - 99
