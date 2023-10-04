@@ -162,19 +162,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simplified data merging tool.", formatter_class=CustomFormatter)
 
     datamerge_group = parser.add_argument_group('Data Merging Options')
-    datamerge_group.add_argument("--input", choices=list(allowed_input_args.keys()), default="CSV", help=f"R|Choose an option:\n{allowed_input_help}")
+    datamerge_group.add_argument("--input", choices=list(allowed_input_args.keys()), default="GLOB", help=f"R|Choose an option:\n{allowed_input_help}")
     datamerge_group.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
-    datamerge_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
-    datamerge_group.add_argument("--montage", choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
-    datamerge_group.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
-    datamerge_group.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
-    datamerge_group.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
     datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
     datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datamerge_group.add_argument("--multithread", action='store_true', default=False, help="Multithread flag.")
     datamerge_group.add_argument("--ncpu", default=3, help="Number of CPUs to use if multithread.")
 
+    channel_group = parser.add_argument_group('Channel label Options')
+    channel_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
+
+    montage_group = parser.add_argument_group('Montage Options')
+    montage_group.add_argument("--montage", choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
+
+    viability_group = parser.add_argument_group('Data viability Options')
+    viability_group.add_argument("--viability", choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
+    viability_group.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
+    viability_group.add_argument("--n_interp", default=1, help="Number of contiguous NaN values that can be interpolated over should the interp option be used.")
 
     preprocessing_group = parser.add_argument_group('Preprocessing Options')
     preprocessing_group.add_argument("--no_preprocess_flag", action='store_true', default=False, help="Do not run preprocessing on data.")
