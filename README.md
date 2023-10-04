@@ -1,4 +1,4 @@
-CNT Research Repository Template
+CNT Scalp Concatenation Software
 ================
 ![version](https://img.shields.io/badge/version-0.2.1-blue)
 ![pip](https://img.shields.io/pypi/v/pip.svg)
@@ -37,7 +37,33 @@ Due to the required flexibility of this code, multiple runtime options are avail
  * --t_window : Break the data in each file into windows of the provided size in seconds.
  * --n_input : Limit how many files to read in. This is useful for testing code or data and not wanting to read in all the data found along the provided path or in the pathing file.
 
-**NOTE:** The provided features.yaml file shows a special use case of how to create looped data. This is useful if trying to perform one analysis step many times with slightly different windows.
+**NOTE:** The provided features.yaml file shows a special use case of how to create looped data. This is useful if trying to perform one analysis step many times with slightly different windows. An example yaml code block is shown as follows:
+```
+spectral_energy_welch:
+    step_nums:
+        - 1
+        - 2:
+            - 99
+            - 1
+    low_freq:
+        - -np.inf
+        - 0:
+            - 99
+            - 1
+    hi_freq:
+        - np.inf
+        - 1:
+            - 100
+            - 1
+    win_size:
+        - 2
+        - 2:
+            - 99
+    win_stride:
+        - 1
+        - 1:
+            - 99
+```
 
 ```
 %run main.py --help
