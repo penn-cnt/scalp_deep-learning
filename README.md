@@ -15,7 +15,9 @@ The python environment required to run this code can be found in the following l
 
 This file can be installed using the following call to conda:
 
-> conda env create -f CNT_ENVIRON_SCALP_CONCAT.yml
+> conda create --name <env> --file CNT_ENVIRON_SCALP_CONCAT.yml
+
+where <env> is the name of the environment you wish to save this work under.
 
 More information about creating conda environments can be found [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
