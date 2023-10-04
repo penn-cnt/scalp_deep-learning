@@ -159,8 +159,8 @@ class preprocessing:
                 if hasattr(cls,method_name):
 
                     # Loop over the datasets and the channels in each
-                    print("Preprocess step: %s" %(method_name))
-                    for idx,dataset in tqdm(enumerate(self.output_list), desc="Processing", unit="%", unit_scale=True, total=len(self.output_list)):
+                    print("Preprocess step: %s (Core=%s)" %(method_name,self.unique_id))
+                    for idx,dataset in tqdm(enumerate(self.output_list), desc="Processing", unit="%", unit_scale=True, total=len(self.output_list), disable=self.args.multithread):
                         
                         # Get the input frequencies
                         fs = self.metadata[idx]['fs']

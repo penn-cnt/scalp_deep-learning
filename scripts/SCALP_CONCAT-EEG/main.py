@@ -5,14 +5,18 @@ from prompt_toolkit.completion import PathCompleter
 
 # General libraries
 import sys
+import time
 import glob
+import uuid
 import argparse
 import datetime
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
+import concurrent.futures
 
 # Import the classes
+from modules.datatype_handlers import *
 from modules.data_loader import *
 from modules.channel_mapping import *
 from modules.dataframe_manager import *
@@ -24,9 +28,9 @@ from modules.preprocessing import *
 from modules.features import *
 from configs.makeconfigs import *
 
-class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
+class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
 
-    def __init__(self, infiles, start_times, end_times, args):
+    def __init__(self, input_params, args):
         """
         Initialize parent class for data loading.
         Store pathing for different data type loads.
@@ -36,8 +40,12 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         """
 
         # Make args visible across inheritance
-        self.args                       = args
-        self.metadata                   = {}
+        infiles        = input_params[:,0]
+        start_times    = input_params[:,1].astype('float')
+        end_times      = input_params[:,2].astype('float')
+        self.args      = args
+        self.metadata  = {}
+        self.unique_id = uuid.uuid4()
 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
@@ -69,8 +77,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
         # Loop over files to read and store each ones data
         self.oldfile = None
         nfile        = len(infiles)
-        print("Reading in data and performing initial cleanup.")
-        for ii,ifile in tqdm(enumerate(infiles), desc="Processing", unit="%", unit_scale=True, total=nfile):
+        print("Reading in data and performing initial cleanup with core %s." %(self.unique_id))
+        for ii,ifile in tqdm(enumerate(infiles), desc="Processing", unit="%", unit_scale=True, total=nfile, disable=self.args.multithread):
             
             # Save current file info
             self.infile    = ifile
@@ -85,38 +93,8 @@ class data_manager(data_loader, channel_mapping, dataframe_manager, channel_clea
             
             # Case statement the workflow
             if self.args.dtype == 'EDF':
-                self.edf_handler()
+                datatype_handlers.edf_handler(self)
                 self.oldfile = self.infile
-
-    def edf_handler(self):
-        """
-        Run pipeline to load EDF data.
-        """
-
-        # Import data into memory
-        data_loader.load_edf(self)
-
-        # Clean the channel names
-        channel_clean.__init__(self)
-
-        # Get the correct channels for this merger
-        channel_mapping.__init__(self,self.args.channel_list)
-
-        # Create the dataframe for the object with the cleaned labels
-        dataframe_manager.__init__(self)
-        dataframe_manager.column_subsection(self,self.channel_map_out)
-
-        # Perform next steps only if we have a viable dataset
-        if self.dataframe.shape[0] == 0:
-            print("Skipping %s.\n(This could be due to poorly selected start and end times.)" %(self.infile))
-            pass
-        else:
-            # Put the data into a specific montage
-            montage_data = channel_montage.__init__(self)
-            dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
-
-            # Update the output list
-            output_manager.update_output_list(self,self.montaged_dataframe.values)
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -156,6 +134,9 @@ def parse_list(input_str):
     values = input_str.replace(',', ' ').split()
     return [int(value) for value in values]
 
+def start_analysis(input_tuple):
+    DM = data_manager(input_tuple[0],input_tuple[1])
+
 if __name__ == "__main__":
 
     # Define the allowed keywords a user can input
@@ -191,7 +172,10 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
     datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
-    
+    datamerge_group.add_argument("--multithread", action='store_true', default=False, help="Multithread flag.")
+    datamerge_group.add_argument("--ncpu", default=3, help="Number of CPUs to use if multithread.")
+
+
     preprocessing_group = parser.add_argument_group('Preprocessing Options')
     preprocessing_group.add_argument("--no_preprocess_flag", action='store_true', default=False, help="Do not run preprocessing on data.")
     preprocessing_group.add_argument("--preprocess_file", help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
@@ -273,5 +257,18 @@ if __name__ == "__main__":
         args.feature_file = "features_"+timestamp+".yaml"
         config_handler    = make_config(features,args.feature_file)
 
-    # Load the parent class
-    DM = data_manager(files, start_times, end_times, args)
+    # Multithread options
+    start = time.time()
+    input_parameters = np.column_stack((files, start_times, end_times))
+    if args.multithread:
+
+        # Calculate the size of each subset based on the number of processes
+        subset_size  = input_parameters.shape[0] // args.ncpu
+        list_subsets = [input_parameters[i:i + subset_size] for i in range(0, input_parameters.shape[0], subset_size)]
+
+        # Loop over the workers
+        with concurrent.futures.ProcessPoolExecutor(max_workers=args.ncpu) as executor:
+            futures = [executor.submit(start_analysis, (subset,args)) for subset in list_subsets]
+    else:
+        start_analysis((input_parameters,args))
+    print(time.time()-start,"seconds.")
