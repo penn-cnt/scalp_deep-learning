@@ -65,6 +65,10 @@ spectral_energy_welch:
             - 99
 ```
 
+If you wish to duplicate a step many times with slight variations, you can use the double indented blocks. If there are two entries under each entry, then it will iterate from the key out to the first nested value  by the amount of the second. (i.e. Step number 2, with a 99 and 1 below would give you range(2,99,1). If you only provide one value, then you simple tile the key by the number shown. (i.e. The win_size value of 2 with a 99 underneath means all 99 steps will have a win_size of 2.)
+
+For more information, here is the full help documentation that can be found at runtime.
+
 ```
 %run main.py --help
 usage: main.py [-h] [--input {CSV,MANUAL,GLOB}] [--n_input N_INPUT] [--dtype {EDF}] [--t_start T_START] [--t_end T_END] [--t_window T_WINDOW] [--multithread] [--ncpu NCPU] [--channel_list {HUP1020,RAW}]
