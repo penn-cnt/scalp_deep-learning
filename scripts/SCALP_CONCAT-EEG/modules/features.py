@@ -52,7 +52,16 @@ class signal_processing:
         return spectral_energy,optional_tag
 
 class features:
-    
+    """
+    This class invokes the various features that can be calculated. This should not be altered without good reason.
+
+    New feature extraction tasks should go into other classes in this script.
+
+    Each feature should return either the scalar feature value, or a tuple with the scalar and some optional tagging for additional group distinctions.
+
+    If you need vector returned, you can create an instance level variable and return the required elements as scalars so the resulting dataframe properly sorts values.
+    """
+
     def __init__(self):
         """
         Use the feature extraction configuration file to step through the preprocessing pipeline on each data array

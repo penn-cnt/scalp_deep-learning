@@ -15,6 +15,9 @@ from .channel_montage import *
 from .data_viability import *
 
 class output_manager:
+    """
+    Manages various output functionality.
+    """
 
     def __init__(self):
         """

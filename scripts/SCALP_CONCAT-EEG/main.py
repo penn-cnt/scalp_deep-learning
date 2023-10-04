@@ -74,8 +74,10 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
             end_times (float list): End times in seconds to end sampling
         """
 
+        # Intialize a variable that stores the previous filepath. This allows us to cache data and only read in as needed. (i.e. new path != old path)
+        self.oldfile = None  
+
         # Loop over files to read and store each ones data
-        self.oldfile = None
         nfile        = len(infiles)
         print("Reading in data and performing initial cleanup with core %s." %(self.unique_id))
         for ii,ifile in tqdm(enumerate(infiles), desc="Processing", unit="%", unit_scale=True, total=nfile, disable=self.args.multithread):
@@ -135,6 +137,13 @@ def parse_list(input_str):
     return [int(value) for value in values]
 
 def start_analysis(input_tuple):
+    """
+    Helper function to allow for easy multiprocessing initialization.
+
+    Args:
+        input_tuple (tuple): Array of input parameters (filepaths, start time, end time), and user arguments.
+    """
+
     DM = data_manager(input_tuple[0],input_tuple[1])
 
 if __name__ == "__main__":
@@ -216,13 +225,22 @@ if __name__ == "__main__":
 
         # Tab completion enabled input
         completer = PathCompleter()
-        #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
-        file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
+        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         files     = glob.glob(file_path)
 
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))
+    else:
+        # Tab completion enabled input
+        completer = PathCompleter()
+        file_path = prompt("Please enter path to input file: ", completer=completer)
+        files     = [file_path]
+
+        # Create start and end times array
+        start_times = args.t_start*np.ones(len(files))
+        end_times   = args.t_end*np.ones(len(files))
+
 
     # Limit file length as needed
     if args.n_input != None:
@@ -270,7 +288,6 @@ if __name__ == "__main__":
         config_handler    = make_config(features,args.feature_file)
 
     # Multithread options
-    start = time.time()
     input_parameters = np.column_stack((files, start_times, end_times))
     if args.multithread:
 
@@ -283,4 +300,3 @@ if __name__ == "__main__":
             futures = [executor.submit(start_analysis, (subset,args)) for subset in list_subsets]
     else:
         start_analysis((input_parameters,args))
-    print(time.time()-start,"seconds.")

@@ -4,6 +4,13 @@ import inspect
 import numpy as np
 
 class make_config:
+    """
+    Class devoted to helping users create a yaml configuration file on the fly.
+
+    At present it will look for any functions in features or preprocessing to present to the user. It requires a docstring to give much useful information.
+
+    This does not currently support making looped values on the fly. Those must be entered by hand. This feature will be developed later.
+    """
     
     def __init__(self,config_library,outfile):
         

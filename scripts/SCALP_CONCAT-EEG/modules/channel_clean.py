@@ -14,6 +14,10 @@ from .data_viability import *
 class channel_clean:
     """
     Class devoted to cleaning different channel naming conventions.
+
+    New functions should look for the self.channels object which stores the raw channel names.
+
+    Output should be a new list of channel names called self.clean_channel_map.
     """
 
     def __init__(self,clean_method='HUP'):

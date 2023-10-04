@@ -14,6 +14,8 @@ from .data_viability import *
 class data_viability:
     """
     Handles different ways of rejecting bad data.
+
+    Will be updated to have cleaner object definitions for new functions. At present, viable data is the only fully tested option.
     """
 
     def __init__(self):

@@ -7,6 +7,11 @@ from .output_manager import *
 from .data_viability import *
 
 class datatype_handlers:
+    """
+    Class devoted the specific pipeline used to load a data type. This is meant to provide a clean reproducable pipeline.
+
+    New functions should follow all the data processing steps up to preprocessing and feature extraction that are relevant to their data type and data set.
+    """
 
     def __init__(self):
         pass

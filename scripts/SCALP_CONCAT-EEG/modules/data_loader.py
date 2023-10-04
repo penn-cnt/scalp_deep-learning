@@ -14,6 +14,8 @@ from .data_viability import *
 class data_loader:
     """
     Class devoted to loading in raw data into the shared class instance.
+
+    New functions should make use of the specific raw data handler for their dataset.
     """
 
     def load_edf(self):

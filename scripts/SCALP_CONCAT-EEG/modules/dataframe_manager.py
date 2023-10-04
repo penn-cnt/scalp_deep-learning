@@ -12,23 +12,11 @@ from .data_viability import *
 
 class dataframe_manager:
     """
-    Class devoted to all things dataframe related. These dataframes will be used to populate the PyTorch tensors.
+    Class devoted to all things dataframe related. These dataframes will be used to populate the preprocessing, feature, tensor arrays etc.
     """
 
     def __init__(self):
 
-        """
-        self.dataframe = PD.DataFrame(index=range(self.nrow), columns=self.master_channel_list)
-        values         = self.dataframe.values
-        cols           = self.dataframe.columns
-        for idx,icol in enumerate(self.clean_channel_map):
-            ivals      = self.raw_data[idx]
-            try:
-                column_idx                     = np.argwhere(cols==icol)[0][0]
-                values[:ivals.size,column_idx] = ivals
-            except IndexError:
-                pass
-        """
         ncol      = len(self.master_channel_list)
         values    = np.empty((self.nrow,ncol))
         values[:] = np.nan

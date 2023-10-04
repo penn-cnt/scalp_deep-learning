@@ -124,6 +124,13 @@ class noise_reduction:
         return self.data
 
 class preprocessing:
+    """
+    This class invokes the various preprocessing steps
+
+    New preprocessing tasks should go into other classes in this script.
+
+    Functions should return the new vector array for each channel/montage channel to be propagated forward.
+    """
     
     def __init__(self):
         """

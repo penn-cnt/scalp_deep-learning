@@ -13,6 +13,11 @@ from .data_viability import *
 class channel_montage:
     """
     Class devoted to calculating the montages of interest for the data.
+
+    New functions should look for the relevant data in the self.dataframe object.
+
+    Output should create a new object self.montage_channels with the labels for the output montage data vectors. You must also return the actual montage data.
+    (This is due to an inheritance issue passing this data directly to the dataframe manager.)
     """
 
     def __init__(self):
@@ -23,6 +28,11 @@ class channel_montage:
         # Logic for different montages
         if self.args.montage == "HUP1020":
             montage_data = self.montage_HUP_1020()
+        elif self.args.montage == "COMMON_AVERAGE":
+            montage_data = self.montage_common_average()
+
+        # Update the metadata to note the montage channels
+        self.metadata[self.file_cntr]['montage_channels'] = self.montage_channels
 
         return montage_data
 
@@ -39,10 +49,10 @@ class channel_montage:
         montage_data = self.dataframe.values-averages
 
         # Get the montage labels
-        montage_channels = [f"{ichannel}-com_avg" for ichannel in self.dataframe.columns]
+        self.montage_channels = [f"{ichannel}-com_avg" for ichannel in self.dataframe.columns]
 
         # Make the montage dataframe
-        dataframe_manager.montaged_dataframe(self,montage_data,montage_channels)
+        return montage_data
 
     def montage_HUP_1020(self):
         """
@@ -78,9 +88,6 @@ class channel_montage:
 
         # Get the new montage channel labels
         self.montage_channels = [f"{ichannel[0]}-{ichannel[1]}" for ichannel in bipolar_array]
-
-        # Update the metadata to note the montage channels
-        self.metadata[self.file_cntr]['montage_channels'] = self.montage_channels
 
         # Pass the data to the dataframe class function for montages
         return montage_data

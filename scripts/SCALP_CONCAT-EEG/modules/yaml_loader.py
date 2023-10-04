@@ -3,6 +3,9 @@ import yaml
 import numpy as np
 
 class yaml_loader:
+    """
+    Class devoted to reading in, cleaning up, and preparing yaml scripts for preprocessing and feature pipelines.
+    """
 
     def __init__(self,yaml_file):
         
@@ -57,6 +60,12 @@ class yaml_loader:
                         config[imethod][method_arg] = method_values
 
     def str_handler(self,values):
+        """
+        Clean up string entries to proper typing
+
+        Args:
+            Current yaml entry to convert.
+        """
 
         for idx,ivalue in enumerate(values):
             if isinstance(ivalue, str):
@@ -70,6 +79,9 @@ class yaml_loader:
                     values[idx] = ast.literal_eval(ivalue)
 
     def convert_to_step(self):
+        """
+        Modify the human readable yaml to a more machine friendly step sorted dictionary.
+        """
         
         # Convert human readable config to easier format for code
         self.yaml_step = {}

@@ -13,6 +13,10 @@ from .data_viability import *
 class channel_mapping:
     """
     Class devoted to the different channel mappings of interest. 
+
+    New functions should look for the cross section of their mapping to the self.clean_channel_map data.
+
+    Output should be a new list of channels called self.channel_map_out. Also required is the indices of intersection. (This is to update the metadata properly)
     """
 
     def __init__(self,channel_mapping):
