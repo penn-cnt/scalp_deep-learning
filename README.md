@@ -4,7 +4,9 @@ CNT Research Repository Template
 ![pip](https://img.shields.io/pypi/v/pip.svg)
 ![https://img.shields.io/pypi/pyversions/](https://img.shields.io/pypi/pyversions/4)
 
-This code is designed to facilitate the merging of scalp EEG data collected by different sources. This is a temporary stand-in for DN3, which was originally specced to be a method for preparing data for deep learning tasks. At present DN3 is not ready for lab-wide implementation. This code aims to only prepare the data for deep learning ingested, and leaves the metadata for creating a model to the user.
+This code is designed to facilitate the merging of scalp EEG data collected by different sources. The code is based in the Observer design principal and parent-child inheritance to allow for lab code to be added/modified in a simpler fashion. We aim to let students still have flexible control over their workflow, but to do so in an environment that is easier to track and understand.
+
+This code is also a possible stand-in for DN3, which was originally specced to be a method for preparing data for deep learning tasks. At present DN3 is not ready for lab-wide implementation. This code aims to only prepare the data for deep learning ingested, and leaves the metadata for creating a model to the user.
 
 # Prerequisites
 In order to use this repository, you must have access to Python 3+. 
@@ -22,6 +24,21 @@ where <env> is the name of the environment you wish to save this work under.
 More information about creating conda environments can be found [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
 # Documentation
+
+Due to the required flexibility of this code, multiple runtime options are available. We have aimed to reduce the need for extensive preparation of sidecar configuration files. Any sidecar files that are needed can be generated at runtime via a cli user-interace that queries the user for processing steps. If the sidecar files are already provided, this step is skipped. An example instantiation of this code is as follows:
+
+> %run -i main.py --input GLOB --preprocess_file configs/preprocessing.yaml --feature_file configs/features.yaml --t_window 60 --n_input 2
+
+**main.py** is the main body of this code. The additional flags are:
+ * -i is a special runtime flag for interactive environments. This is required if running multiprocessing in most interactive environments
+ * --input GLOB : Query the user for a wildcard path to files to read in via the GLOB library.
+ * --preprocess_file : Path to the sidecar yaml configuration file that defines preprocessing steps. An example can be found [here](scripts/SCALP_CONCAT-EEG/configs/preprocessing.yaml)
+ * --feature_file : Path to the sidecar yaml configuration file that defines feature extraction steps. An example can be found [here](scripts/SCALP_CONCAT-EEG/configs/features.yaml)
+ * --t_window : Break the data in each file into windows of the provided size in seconds.
+ * --n_input : Limit how many files to read in. This is useful for testing code or data and not wanting to read in all the data found along the provided path or in the pathing file.
+
+**NOTE:** The provided features.yaml file shows a special use case of how to create looped data. This is useful if trying to perform one analysis step many times with slightly different windows.
+
 ```
 %run main.py --help
 usage: main.py [-h] [--input {CSV,MANUAL,GLOB}] [--n_input N_INPUT] [--dtype {EDF}] [--t_start T_START] [--t_end T_END] [--t_window T_WINDOW] [--multithread] [--ncpu NCPU] [--channel_list {HUP1020,RAW}]
