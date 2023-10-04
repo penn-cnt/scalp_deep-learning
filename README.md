@@ -13,6 +13,12 @@ In order to use this repository, you must have access to Python 3+.
 
 The python environment required to run this code can be found in the following location. [Concatenation YAML](/core_libraries/python/scalp/envs/CNT_ENVIRON_SCALP_CONCAT.yml)
 
+This file can be installed using the following call to conda:
+
+> conda env create -f CNT_ENVIRON_SCALP_CONCAT.yml
+
+More information about creating conda environments can be found [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+
 # Documentation
 TBD
 
