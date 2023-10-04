@@ -11,7 +11,7 @@ In order to use this repository, you must have access to Python 3+.
 
 # Installation
 
-In order to install any of the common library code, we provide instructions for installing the libraries.
+The python environment required to run this code can be found in the following location. [Concatenation YAML](/core_libraries/python/scalp/envs/CNT_ENVIRON_SCALP_CONCAT.yml)
 
 # Documentation
 TBD
