@@ -225,7 +225,8 @@ if __name__ == "__main__":
 
         # Tab completion enabled input
         completer = PathCompleter()
-        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
         files     = glob.glob(file_path)
 
         # Create start and end times array

@@ -19,10 +19,10 @@ spectral_energy_welch:
             - 100
             - 1
     win_size:
-        - 2
-        - 2:
-            - 99
-    win_stride:
         - 1
         - 1:
+            - 99
+    win_stride:
+        - 0.5
+        - 0.5:
             - 99

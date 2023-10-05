@@ -85,7 +85,7 @@ class features:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.feature_commands.keys()))
-        print("Starting Feature Extraction.")
+        print("Starting Feature Extraction with core %s." %(self.unique_id))
         for istep in tqdm(steps, desc="Processing", unit="%", unit_scale=True, total=len(steps), disable=self.args.multithread):
 
             # Get information about the method
