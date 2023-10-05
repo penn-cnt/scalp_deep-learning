@@ -172,7 +172,8 @@ if __name__ == "__main__":
 
     datamerge_group = parser.add_argument_group('Data Merging Options')
     datamerge_group.add_argument("--input", choices=list(allowed_input_args.keys()), default="GLOB", help=f"R|Choose an option:\n{allowed_input_help}")
-    datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing.")
+    datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing or working in batches.")
+    datamerge_group.add_argument("--n_offset", type=int, default=0, help=f"Offset the files read in. Useful for testing or working in batch.")
     datamerge_group.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
     datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
     datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
@@ -242,6 +243,10 @@ if __name__ == "__main__":
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))
 
+    # Apply any file offset as needed
+    files       = files[args.n_offset:]
+    start_times = start_times[args.n_offset:]
+    end_times   = end_times[args.n_offset:]
 
     # Limit file length as needed
     if args.n_input != None:
