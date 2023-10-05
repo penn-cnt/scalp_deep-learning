@@ -100,10 +100,6 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
                 datatype_handlers.edf_handler(self)
                 self.oldfile = self.infile
 
-            # Update the progress bar
-            progbar.set_stat(ii)
-            progbar.update()
-        progbar.end()
 
 class CustomFormatter(argparse.HelpFormatter):
     """
