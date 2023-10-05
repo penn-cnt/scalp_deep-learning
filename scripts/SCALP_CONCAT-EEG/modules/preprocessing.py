@@ -150,8 +150,8 @@ class preprocessing:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.preprocess_commands.keys()))
-        print("Starting Preprocessing with core %s." %(self.unique_id))
-        for istep in tqdm(steps, desc="Processing", unit="%", unit_scale=True, total=len(steps), disable=self.args.multithread):
+        if self.worker_number == 0: print("Starting Preprocessing with worker ids:")
+        for istep in tqdm(steps, desc=str(self.unique_id), total=steps.size, bar_format=self.bar_frmt, position=self.worker_number):
 
             # Get information about the method
             method_name = self.preprocess_commands[istep]['method']

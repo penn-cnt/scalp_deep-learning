@@ -85,8 +85,8 @@ class features:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.feature_commands.keys()))
-        print("Starting Feature Extraction with core %s." %(self.unique_id))
-        for istep in tqdm(steps, desc="Processing", unit="%", unit_scale=True, total=len(steps), disable=self.args.multithread):
+        if self.worker_number == 0: print("Starting feature selection with worker ids:")
+        for istep in tqdm(steps, desc=str(self.unique_id), total=steps.size, bar_format=self.bar_frmt, position=self.worker_number):
 
             # Get information about the method
             method_name = self.feature_commands[istep]['method']
@@ -132,9 +132,6 @@ class features:
                             # Dataframe creations
                             iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
                             self.feature_df = PD.concat((self.feature_df,iDF))
-
-                            # Dataframe intermediate saves
-                            pickle.dump(self.feature_df,open("features.pickle","wb"))
 
                             # Clean up the dummy list
                             df_values = []

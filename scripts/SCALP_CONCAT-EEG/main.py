@@ -30,7 +30,7 @@ from configs.makeconfigs import *
 
 class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
 
-    def __init__(self, input_params, args):
+    def __init__(self, input_params, args, worker_number):
         """
         Initialize parent class for data loading.
         Store pathing for different data type loads.
@@ -40,12 +40,14 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         """
 
         # Make args visible across inheritance
-        infiles        = input_params[:,0]
-        start_times    = input_params[:,1].astype('float')
-        end_times      = input_params[:,2].astype('float')
-        self.args      = args
-        self.metadata  = {}
-        self.unique_id = uuid.uuid4()
+        infiles            = input_params[:,0]
+        start_times        = input_params[:,1].astype('float')
+        end_times          = input_params[:,2].astype('float')
+        self.args          = args
+        self.metadata      = {}
+        self.unique_id     = uuid.uuid4()
+        self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}'
+        self.worker_number = worker_number
 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
@@ -78,9 +80,9 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         self.oldfile = None  
 
         # Loop over files to read and store each ones data
-        nfile        = len(infiles)
-        print("Reading in data and performing initial cleanup with core %s." %(self.unique_id))
-        for ii,ifile in tqdm(enumerate(infiles), desc="Processing", unit="%", unit_scale=True, total=nfile, disable=self.args.multithread):
+        nfile = len(infiles)
+        if self.worker_number == 0: print("Reading in data and performing initial cleanup with worker ids:")
+        for ii,ifile in tqdm(enumerate(infiles), desc=str(self.unique_id), total=nfile, bar_format=self.bar_frmt, position=self.worker_number):
             
             # Save current file info
             self.infile    = ifile
@@ -144,7 +146,7 @@ def start_analysis(input_tuple):
         input_tuple (tuple): Array of input parameters (filepaths, start time, end time), and user arguments.
     """
 
-    DM = data_manager(input_tuple[0],input_tuple[1])
+    DM = data_manager(input_tuple[0],input_tuple[1], input_tuple[2])
 
 if __name__ == "__main__":
 
@@ -303,6 +305,6 @@ if __name__ == "__main__":
 
         # Loop over the workers
         with concurrent.futures.ProcessPoolExecutor(max_workers=args.ncpu) as executor:
-            futures = [executor.submit(start_analysis, (subset,args)) for subset in list_subsets]
+            futures = [executor.submit(start_analysis, (subset,args,iworker)) for iworker,subset in enumerate(list_subsets)]
     else:
-        start_analysis((input_parameters,args))
+        start_analysis((input_parameters, args, 0))
