@@ -4,8 +4,6 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
 # General libraries
-import sys
-import time
 import glob
 import uuid
 import argparse
@@ -46,7 +44,7 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         self.args          = args
         self.metadata      = {}
         self.unique_id     = uuid.uuid4()
-        self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}'
+        self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
         self.worker_number = worker_number
 
         # Initialize the output list so it can be updated with each file
@@ -61,6 +59,8 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         # Apply preprocessing as needed
         if not args.no_preprocess_flag:
             preprocessing.__init__(self)
+
+        if not args.no_feature_flag:
             features.__init__(self)
 
         # Save the results
@@ -82,8 +82,8 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         # Loop over files to read and store each ones data
         nfile = len(infiles)
         if self.worker_number == 0: print("Reading in data and performing initial cleanup with worker ids:")
-        for ii,ifile in tqdm(enumerate(infiles), desc=str(self.unique_id), total=nfile, bar_format=self.bar_frmt, position=self.worker_number):
-            
+        for ii,ifile in tqdm(enumerate(infiles), desc=str(self.unique_id), total=nfile, bar_format=self.bar_frmt, position=self.worker_number):            
+        
             # Save current file info
             self.infile    = ifile
             self.t_start   = start_times[ii]
@@ -99,6 +99,11 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
             if self.args.dtype == 'EDF':
                 datatype_handlers.edf_handler(self)
                 self.oldfile = self.infile
+
+            # Update the progress bar
+            progbar.set_stat(ii)
+            progbar.update()
+        progbar.end()
 
 class CustomFormatter(argparse.HelpFormatter):
     """

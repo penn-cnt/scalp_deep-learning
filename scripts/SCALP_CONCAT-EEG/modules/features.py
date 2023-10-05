@@ -1,3 +1,4 @@
+import os
 import ast
 import sys
 import pickle
@@ -85,8 +86,8 @@ class features:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.feature_commands.keys()))
-        if self.worker_number == 0: print("Starting feature selection with worker ids:")
-        for istep in tqdm(steps, desc=str(self.unique_id), total=steps.size, bar_format=self.bar_frmt, position=self.worker_number):
+        desc  = "Feature extraction with %s" %(self.unique_id)
+        for istep in tqdm(steps, desc=desc, total=steps.size, position=self.worker_number, leave=True):
 
             # Get information about the method
             method_name = self.feature_commands[istep]['method']
