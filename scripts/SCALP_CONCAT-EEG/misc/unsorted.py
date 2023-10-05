@@ -1200,6 +1200,3 @@ def coherence_bands(
         coher_bands[i_band] = np.mean(cohers[filter_idx], axis=0)
 
     return coher_bands
-
-utils.py
-Displaying utils.py.
