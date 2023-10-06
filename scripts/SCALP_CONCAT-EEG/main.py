@@ -4,14 +4,17 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
 # General libraries
+import os
+import sys
 import glob
 import uuid
+import time
 import argparse
 import datetime
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
-import concurrent.futures
+import multiprocessing
 
 # Import the classes
 from modules.datatype_handlers import *
@@ -28,7 +31,7 @@ from configs.makeconfigs import *
 
 class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
 
-    def __init__(self, input_params, args, worker_number):
+    def __init__(self, input_params, args, worker_number, barrier):
         """
         Initialize parent class for data loading.
         Store pathing for different data type loads.
@@ -46,6 +49,7 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         self.unique_id     = uuid.uuid4()
         self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
         self.worker_number = worker_number
+        self.barrier       = barrier
 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
@@ -58,9 +62,33 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
 
         # Apply preprocessing as needed
         if not args.no_preprocess_flag:
+            
+            # Barrier the code for better output formatting
+            if self.args.multithread:
+                barrier.wait()
+
+            # Add a wait for proper progress bars
+            time.sleep(self.worker_number)
+
+            # Clean up the screen
+            if self.worker_number == 0:
+                sys.stdout.write("\033[H")
+                sys.stdout.flush()
+
+            # Process
             preprocessing.__init__(self)
 
         if not args.no_feature_flag:
+            if self.args.multithread:
+                barrier.wait()
+
+            # Add a wait for proper progress bars
+            time.sleep(self.worker_number)
+
+            # Clean up the screen
+            if self.worker_number == 0:
+                sys.stdout.write("\033[H")
+                sys.stdout.flush()
             features.__init__(self)
 
         # Save the results
@@ -81,8 +109,8 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
 
         # Loop over files to read and store each ones data
         nfile = len(infiles)
-        if self.worker_number == 0: print("Reading in data and performing initial cleanup with worker ids:")
-        for ii,ifile in tqdm(enumerate(infiles), desc=str(self.unique_id), total=nfile, bar_format=self.bar_frmt, position=self.worker_number):            
+        desc  = "Initial load with id %s:" %(self.unique_id)
+        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False):            
         
             # Save current file info
             self.infile    = ifile
@@ -139,15 +167,12 @@ def parse_list(input_str):
     values = input_str.replace(',', ' ').split()
     return [int(value) for value in values]
 
-def start_analysis(input_tuple):
+def start_analysis(data_chunk,args,worker_id,barrier):
     """
     Helper function to allow for easy multiprocessing initialization.
-
-    Args:
-        input_tuple (tuple): Array of input parameters (filepaths, start time, end time), and user arguments.
     """
 
-    DM = data_manager(input_tuple[0],input_tuple[1], input_tuple[2])
+    DM = data_manager(data_chunk,args,worker_id,barrier)
 
 if __name__ == "__main__":
 
@@ -304,8 +329,26 @@ if __name__ == "__main__":
         subset_size  = input_parameters.shape[0] // args.ncpu
         list_subsets = [input_parameters[i:i + subset_size] for i in range(0, input_parameters.shape[0], subset_size)]
 
-        # Loop over the workers
-        with concurrent.futures.ProcessPoolExecutor(max_workers=args.ncpu) as executor:
-            futures = [executor.submit(start_analysis, (subset,args,iworker)) for iworker,subset in enumerate(list_subsets)]
+        # Handle leftovers
+        if len(list_subsets) > args.ncpu:
+            arr_ncpu  = list_subsets[args.ncpu-1]
+            arr_ncpu1 = list_subsets[args.ncpu]
+
+            list_subsets[args.ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
+            list_subsets.pop(-1)
+
+        # Create a barrier for synchronization
+        barrier = multiprocessing.Barrier(args.ncpu)
+
+        # Create processes and start workers
+        processes = []
+        for worker_id, data_chunk in enumerate(list_subsets):
+            process = multiprocessing.Process(target=start_analysis, args=(data_chunk,args,worker_id,barrier))
+            processes.append(process)
+            process.start()
+        
+        # Wait for all processes to complete
+        for process in processes:
+            process.join()
     else:
-        start_analysis((input_parameters, args, 0))
+        start_analysis(input_parameters, args, 0, None)
