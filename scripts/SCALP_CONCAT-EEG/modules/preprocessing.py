@@ -151,8 +151,8 @@ class preprocessing:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.preprocess_commands.keys()))
-        desc  = "Preprocessing with %s" %(self.unique_id)
-        for istep in tqdm(steps, desc=desc, total=steps.size, position=self.worker_number, leave=True):
+        desc  = "Preprocessing with id %s:" %(self.unique_id)
+        for istep in tqdm(steps, desc=desc, total=len(steps), bar_format=self.bar_frmt, position=self.worker_number, leave=False):
 
             # Get information about the method
             method_name = self.preprocess_commands[istep]['method']
@@ -168,8 +168,6 @@ class preprocessing:
                 if hasattr(cls,method_name):
 
                     # Loop over the datasets and the channels in each
-                    if self.args.multithread:
-                        print("Preprocess step: %s (Core=%s)" %(method_name,self.unique_id))
                     for idx,dataset in enumerate(self.output_list):
                         
                         # Get the input frequencies
