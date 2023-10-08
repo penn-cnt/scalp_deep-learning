@@ -110,7 +110,7 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         # Loop over files to read and store each ones data
         nfile = len(infiles)
         desc  = "Initial load with id %s:" %(self.unique_id)
-        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=args.silent):            
+        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent):            
         
             # Save current file info
             self.infile    = ifile
