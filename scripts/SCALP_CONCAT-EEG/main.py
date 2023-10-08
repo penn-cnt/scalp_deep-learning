@@ -110,7 +110,7 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         # Loop over files to read and store each ones data
         nfile = len(infiles)
         desc  = "Initial load with id %s:" %(self.unique_id)
-        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False):            
+        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=args.silent):            
         
             # Save current file info
             self.infile    = ifile
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datamerge_group.add_argument("--multithread", action='store_true', default=False, help="Multithread flag.")
-    datamerge_group.add_argument("--ncpu", default=3, help="Number of CPUs to use if multithread.")
+    datamerge_group.add_argument("--ncpu", type=int, default=2, help="Number of CPUs to use if multithread.")
 
     channel_group = parser.add_argument_group('Channel label Options')
     channel_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
@@ -230,6 +230,9 @@ if __name__ == "__main__":
 
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 
+
+    misc_group = parser.add_argument_group('Misc Options')
+    misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     args = parser.parse_args()
 
     # Set the input file list
@@ -254,8 +257,8 @@ if __name__ == "__main__":
 
         # Tab completion enabled input
         completer = PathCompleter()
-        #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
-        file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
+        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        #file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
         files     = glob.glob(file_path)
 
         # Create start and end times array

@@ -87,7 +87,7 @@ class features:
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.feature_commands.keys()))
         desc  = "Feature extraction with id %s:" %(self.unique_id)
-        for istep in tqdm(steps, desc=desc, total=len(steps), bar_format=self.bar_frmt, position=self.worker_number, leave=False):
+        for istep in tqdm(steps, desc=desc, total=len(steps), bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=args.silent):
 
             # Get information about the method
             method_name = self.feature_commands[istep]['method']
