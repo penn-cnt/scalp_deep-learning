@@ -84,6 +84,9 @@ class features:
         # Use the inspect module to get a list of classes in the current module
         classes = [cls for name, cls in inspect.getmembers(current_module, inspect.isclass)]
 
+        # Make a dummy list so we can append files to the dataframe in a staggered fashion (performance improvement)
+        df_values = []
+
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.feature_commands.keys()))
         desc  = "Feature extraction with id %s:" %(self.unique_id)
@@ -95,9 +98,6 @@ class features:
 
             for cls in classes:
                 if hasattr(cls,method_name):
-
-                    # Make a dummy list so we can append files to the dataframe in a staggered fashion (performance improvement)
-                    df_values = []
 
                     # Loop over the datasets and the channels in each
                     for idx,dataset in enumerate(self.output_list):
@@ -122,8 +122,9 @@ class features:
                             output.append(result_a)
 
                         # Use metadata to allow proper feature grouping
-                        imeta = self.metadata[idx]
-                        df_values.append([imeta['file'],imeta['t_start'],imeta['t_end'],imeta['dt'],method_name,result_b]+output)
+                        imeta    = self.metadata[idx]
+                        meta_arr = [imeta['file'],imeta['t_start'],imeta['t_end'],imeta['dt'],method_name,result_b]
+                        df_values.append(np.concatenate((meta_arr,output),axis=0))
 
                         # Stagger condition for pandas concat
                         if (idx%5000==0):

@@ -121,10 +121,10 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
             self.file_cntr = ii
             self.metadata[self.file_cntr]            = {}
             self.metadata[self.file_cntr]['file']    = self.infile
-            self.metadata[self.file_cntr]['t_start'] = self.args.t_start
-            self.metadata[self.file_cntr]['t_end']   = self.args.t_start
+            self.metadata[self.file_cntr]['t_start'] = self.t_start
+            self.metadata[self.file_cntr]['t_end']   = self.t_end
             self.metadata[self.file_cntr]['dt']      = self.t_end-self.t_start
-            
+
             # Case statement the workflow
             if self.args.dtype == 'EDF':
                 datatype_handlers.edf_handler(self)
