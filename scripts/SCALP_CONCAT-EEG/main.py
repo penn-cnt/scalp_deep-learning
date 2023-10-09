@@ -205,8 +205,8 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing or working in batches.")
     datamerge_group.add_argument("--n_offset", type=int, default=0, help=f"Offset the files read in. Useful for testing or working in batch.")
     datamerge_group.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
-    datamerge_group.add_argument("--t_start", default=120, help="Time in seconds to start data collection.")
-    datamerge_group.add_argument("--t_end", default=600, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
+    datamerge_group.add_argument("--t_start", default=0, help="Time in seconds to start data collection.")
+    datamerge_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datamerge_group.add_argument("--multithread", action='store_true', default=False, help="Multithread flag.")
     datamerge_group.add_argument("--ncpu", type=int, default=2, help="Number of CPUs to use if multithread.")
@@ -260,7 +260,6 @@ if __name__ == "__main__":
         # Tab completion enabled input
         completer = PathCompleter()
         file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
-        #file_path = "/Users/bjprager/Documents/GitHub/SCALP_CONCAT-EEG/user_data/sample_data/edf/ieeg/sub*/*/eeg/*edf"
         files     = glob.glob(file_path)
 
         # Create start and end times array
@@ -295,7 +294,7 @@ if __name__ == "__main__":
         for ifile in files:
 
             # Read in just the header to get duration
-            if args.t_end == None:
+            if args.t_end == -1:
                 t_end = highlevel.read_edf_header(ifile)['Duration']
             else:
                 t_end = args.t_end
