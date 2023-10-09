@@ -72,7 +72,7 @@ class features:
         # Initialize some variables
         #nrow     = len(self.output_list)
         channels        = self.metadata[0]['montage_channels']
-        self.feature_df = PD.DataFrame(columns=['file','dt','method','tag']+channels)
+        self.feature_df = PD.DataFrame(columns=['file','t_start','t_end','dt','method','tag']+channels)
         
         # Read in the feature configuration
         YL = yaml_loader(self.args.feature_file)
@@ -123,10 +123,10 @@ class features:
 
                         # Use metadata to allow proper feature grouping
                         imeta = self.metadata[idx]
-                        df_values.append([imeta['file'],imeta['dt'],method_name,result_b]+output)
+                        df_values.append([imeta['file'],imeta['t_start'],imeta['t_end'],imeta['dt'],method_name,result_b]+output)
 
                         # Stagger condition for pandas concat
-                        if (idx%1000==0):
+                        if (idx%5000==0):
 
                             # Dataframe creations
                             iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)

@@ -119,9 +119,11 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
             
             # Update the metadata
             self.file_cntr = ii
-            self.metadata[self.file_cntr]         = {}
-            self.metadata[self.file_cntr]['file'] = self.infile
-            self.metadata[self.file_cntr]['dt']   = self.t_end-self.t_start
+            self.metadata[self.file_cntr]            = {}
+            self.metadata[self.file_cntr]['file']    = self.infile
+            self.metadata[self.file_cntr]['t_start'] = self.args.t_start
+            self.metadata[self.file_cntr]['t_end']   = self.args.t_start
+            self.metadata[self.file_cntr]['dt']      = self.t_end-self.t_start
             
             # Case statement the workflow
             if self.args.dtype == 'EDF':
@@ -293,16 +295,25 @@ if __name__ == "__main__":
         for ifile in files:
 
             # Read in just the header to get duration
-            duration = highlevel.read_edf_header(ifile)['Duration']
+            if args.t_end == None:
+                t_end = highlevel.read_edf_header(ifile)['Duration']
+            else:
+                t_end = args.t_end
+
+            # Get the start time for the windows
+            if args.t_start == None:
+                t_start = 0
+            else:
+                t_start = args.t_start
 
             for iwindow in args.t_window:
                 
                 # Get the list of windows start and end times
-                windowed_start = np.array(range(0,duration,iwindow))
-                windowed_end   = np.array(range(iwindow,duration+iwindow,iwindow))
+                windowed_start = np.array(range(t_start,t_end,iwindow))
+                windowed_end   = np.array(range(t_start+iwindow,t_end+iwindow,iwindow))
 
                 # Make sure we have no values outside the right range
-                windowed_end[(windowed_end>duration)] = duration
+                windowed_end[(windowed_end>t_end)] = t_end
 
                 # Loop over the new entries and tile the input lists as needed
                 for idx,istart in enumerate(windowed_start):
