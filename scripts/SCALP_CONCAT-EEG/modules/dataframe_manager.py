@@ -16,6 +16,13 @@ class dataframe_manager:
     """
 
     def __init__(self):
+        """
+        Create the dataframe object with raw data.
+
+        Allows for data samples without the same length.
+
+        Row-major due to pyedflib limitations and need to work with 1-d slices for unequal lengths
+        """
 
         ncol      = len(self.master_channel_list)
         values    = np.empty((self.nrow,ncol))
