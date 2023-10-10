@@ -1,13 +1,9 @@
-import os
 import ast
 import sys
-import pickle
 import inspect
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
-from fooof import FOOOFGroup
-from fractions import Fraction
 from scipy.signal import welch
 
 # Local imports
