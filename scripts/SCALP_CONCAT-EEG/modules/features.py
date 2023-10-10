@@ -26,7 +26,7 @@ class signal_processing:
             win_stride (float, optional): Window overlap in units of sampling frequency. Defaults to 1.
 
         Returns:
-            float: Spectral
+            float: Spectral energy
         """
 
         # Get the number of samples in each window for welch average and the overlap
