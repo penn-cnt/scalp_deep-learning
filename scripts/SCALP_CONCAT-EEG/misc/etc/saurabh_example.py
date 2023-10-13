@@ -19,7 +19,7 @@ from scipy.integrate import simps
 from joblib import Parallel, delayed
 import pandas as pd
 import json
-from eeg_funcs import *
+from misc.etc.eeg_funcs import *
 # import mtspec
 
 # Open config file

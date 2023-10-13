@@ -21,7 +21,7 @@ class data_loader:
     New functions should make use of the specific raw data handler for their dataset.
     """
 
-    def raw_dataslice(self,sample_frequency,majoraxis='columnar'):
+    def raw_dataslice(self,sample_frequency,majoraxis='column'):
 
         # Get only the time slices of interest
         self.raw_data = []
@@ -36,7 +36,7 @@ class data_loader:
             else:
                 samp_end = int(isamp*self.t_end)
 
-            if majoraxis == 'columnar':
+            if majoraxis == 'column':
                 self.raw_data.append(self.indata[samp_start:samp_end,ii])
             elif majoraxis == 'row':
                 self.raw_data.append(self.indata[ii][samp_start:samp_end])
