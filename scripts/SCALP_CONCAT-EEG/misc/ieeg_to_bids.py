@@ -166,7 +166,7 @@ class iEEG_handler(BIDS_handler):
             if self.clips[0].type.lower() == 'clip end':
                 self.clips = list(np.concatenate(([0],self.clips), axis=0))
             if self.clips[-1].type.lower() == 'clip start':
-                self.clips = list(np.concatenate((self.clips,[self.end_time]), axis=0))
+                self.clips = list(np.concatenate((self.clips,[self.end_time-self.start_time]), axis=0))
 
             clip_vals = []
             for iclip in self.clips:
@@ -241,6 +241,7 @@ class iEEG_handler(BIDS_handler):
             else:
                 self.clips           = dataset.get_annotations(self.clip_layer)
                 self.raw_annotations = dataset.get_annotations(self.natus_layer)
+                self.start_time      = dataset.start_time
                 self.end_time        = dataset.end_time
             session.close()
 

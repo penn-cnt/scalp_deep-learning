@@ -12,4 +12,6 @@ dependencies:
     - pennprov
     - mne
     - mne-bids
+    - EDFlib-Python
     - ../wheels/ieeg-1.6-py3-none-any.whl
+
