@@ -262,6 +262,10 @@ if __name__ == "__main__":
         file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         files     = glob.glob(file_path)
 
+        # Make sure we were handed a good filepath
+        if len(files) == 0:
+            raise IndexError("No data found with that search. Cannot iterate over a null file list.")
+
         # Create start and end times array
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))

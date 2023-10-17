@@ -1,0 +1,15 @@
+name: scalp_eeg
+
+dependencies:
+  - python>=3.0
+  - numpy
+  - scipy
+  - pandas
+  - requests
+  - deprecation
+  - tqdm
+  - pip:
+    - pennprov
+    - mne
+    - mne-bids
+    - ../wheels/ieeg-1.6-py3-none-any.whl
