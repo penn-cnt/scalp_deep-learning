@@ -14,6 +14,27 @@ from mne_bids import BIDSPath, write_raw_bids
 # Allows us to catch ieeg api errors
 import ieeg.ieeg_api as IIA
 
+
+# API timeout class
+import signal
+class TimeoutException(Exception):
+    pass
+
+class Timeout:
+    def __init__(self, seconds=1, error_message='Function call timed out'):
+        self.seconds = seconds
+        self.error_message = error_message
+
+    def handle_timeout(self, signum, frame):
+        raise TimeoutException(self.error_message)
+
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.seconds)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        signal.alarm(0)
+
 class BIDS_handler:
 
     def __init__(self):
@@ -21,9 +42,14 @@ class BIDS_handler:
         self.data_info = {'iEEG_id':self.current_file}
         self.get_subject_number()
 
+    def reset_variables(self):
+            # Delete all variables in the object's namespace
+            for var_name in list(self.__dict__.keys()):
+                delattr(self, var_name)
+
     def get_subject_number(self):
 
-        files            = glob.glob(self.args.bidsroot+'sub_*')
+        files            = glob.glob(self.args.bidsroot+'sub-*')
         if len(files) > 0:
             self.subject_num  = max([int(ifile.split('sub-')[-1]) for ifile in files])+1
         else:
@@ -68,7 +94,7 @@ class BIDS_handler:
         self.channel_types = PD.DataFrame(self.channel_types.reshape((-1,1)),index=self.channels,columns=["type"])
 
     def make_info(self):
-        self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs) #, ch_types=self.channel_types)
+        self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs)
 
     def add_raw(self):
         self.raws.append(mne.io.RawArray(self.data.T, self.data_info))
@@ -90,15 +116,11 @@ class BIDS_handler:
             # Make the events file and save the results
             for itime in list(self.annotations[idx].keys()):
                 desc   = self.annotations[idx][itime]
-                index  = (1e-6*itime)/self.fs
+                index  = (1e-6*itime)*self.fs
                 events = np.array([[int(index),0,self.event_mapping[desc]]])
                 try:
-                    print("===")
                     bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=self.args.session, subject='%04d' %(self.subject_num), run=idx+1, task='task')
-                    print("===")
-                    print("+++")
                     write_raw_bids(bids_path=bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
-                    print("+++")
                 except FileExistsError:
                     pass
 
@@ -117,11 +139,17 @@ class BIDS_handler:
 class iEEG_handler(BIDS_handler):
 
     def __init__(self,args):
-        self.args         = args
-        self.n_retry      = 5
-        self.clip_layer   = 'EEG clip times'
-        self.natus_layer  = 'Imported Natus ENT annotations'
-        self.subject_path = args.bidsroot+args.subject_file
+        self.args           = args
+        self.n_retry        = 5
+        self.global_timeout = 120
+        self.clip_layer     = 'EEG clip times'
+        self.natus_layer    = 'Imported Natus ENT annotations'
+        self.subject_path   = args.bidsroot+args.subject_file
+
+    def reset_variables(self):
+            # Delete all variables in the object's namespace
+            for var_name in list(self.__dict__.keys()):
+                delattr(self, var_name)
 
     def get_annotations(self):
 
@@ -177,11 +205,22 @@ class iEEG_handler(BIDS_handler):
             BIDS_handler.__init__(self)
             for idx,istart in enumerate(self.clip_start_times):
                 self.session_method_handler(istart, self.clip_durations[idx])
-                BIDS_handler.get_channel_type(self)
-                BIDS_handler.make_info(self)
-                BIDS_handler.add_raw(self)
-            BIDS_handler.event_mapper(self)
-            BIDS_handler.save_bids(self)
+                if self.success_flag == True:
+                    BIDS_handler.get_channel_type(self)
+                    BIDS_handler.make_info(self)
+                    BIDS_handler.add_raw(self)
+
+        # Save the bids files if we have any data
+        try:
+            if len(self.raws) > 0:
+                BIDS_handler.event_mapper(self)
+                BIDS_handler.save_bids(self)
+        except AttributeError:
+            pass
+
+        # Clear namespace of variables for file looping
+        BIDS_handler.reset_variables(self)
+        self.reset_variables()
 
     def session_method(self,start,duration,annotation_flag):
 
@@ -199,7 +238,6 @@ class iEEG_handler(BIDS_handler):
                 else:
                     raise IndexError("Too many unique values for sampling frequency.")
             else:
-                print(str(self.current_file)+"\n\n\n")
                 self.clips           = dataset.get_annotations(self.clip_layer)
                 self.raw_annotations = dataset.get_annotations(self.natus_layer)
                 self.end_time        = dataset.end_time
@@ -209,23 +247,23 @@ class iEEG_handler(BIDS_handler):
 
         n_attempts = 0
         while True:
-            try:
-                self.session_method(start,duration,annotation_flag)
-                self.success_flag = True
-                break
-            except (IIA.IeegConnectionError,IIA.IeegServiceError) as e:
-                if n_attempts<self.n_retry:
-                    print("Possible iEEG error. Trying again momentarily.")
-                    sleep(5)
-                    n_attempts += 1
-                else:
-                    self.success_flag = False
-                    fp = open(self.args.bidsroot+self.args.failure_file,"a")
-                    fp.write("%s,%f,%f,%s\n" %(self.current_file,start,duration,e))
-                    fp.close()
+            with Timeout(self.global_timeout):
+                try:
+                    self.session_method(start,duration,annotation_flag)
+                    self.success_flag = True
                     break
+                except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,TypeError) as e:
+                    if n_attempts<self.n_retry:
+                        print("Possible iEEG error. Trying again momentarily.")
+                        sleep(5)
+                        n_attempts += 1
+                    else:
+                        self.success_flag = False
+                        fp = open(self.args.bidsroot+self.args.failure_file,"a")
+                        fp.write("%s,%f,%f,%s\n" %(self.current_file,start,duration,e))
+                        fp.close()
+                        break
             
-
 if __name__ == '__main__':
 
     # Command line options needed to obtain data.
@@ -272,8 +310,11 @@ if __name__ == '__main__':
                 processed_files = []
 
             # Loop over files and process as needed
-            input_files = PD.read_csv(args.annotation_file)
+            input_files = PD.read_csv(args.annotation_file).values[:,0]
             for ifile in input_files:
                 if ifile not in processed_files:
                     IEEG.download_by_annotation(ifile)
+                    IEEG = iEEG_handler(args)
+
+
     
