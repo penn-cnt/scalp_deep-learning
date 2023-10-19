@@ -8,6 +8,7 @@ dependencies:
   - requests
   - deprecation
   - tqdm
+  - ipython
   - pip:
     - pennprov
     - mne
