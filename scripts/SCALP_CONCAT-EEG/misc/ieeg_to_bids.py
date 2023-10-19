@@ -156,7 +156,7 @@ class BIDS_handler:
 
                     # Save the targets with the edf path paired up to filetype
                     target_path = str(bids_path.copy()).rstrip('.edf')+'_targets.pickle'
-                    target_dict = {'target':self.target,'annotation':desc}
+                    target_dict = {'uid':self.uid,'target':self.target,'annotation':desc}
                     pickle.dump(target_dict,open(target_path,"wb"))
 
                 except:
@@ -164,7 +164,6 @@ class BIDS_handler:
                     # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                     error_path = str(bids_path.copy()).rstrip('.edf')+'.pickle'
                     pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
-
 
         # Save the subject file info
         iDF = PD.DataFrame([[self.current_file,self.uid,self.subject_num]],columns=['iEEG file','uid','subject_number'])
@@ -265,6 +264,34 @@ class iEEG_handler(BIDS_handler):
         BIDS_handler.reset_variables(self)
         self.reset_variables()
 
+    def session_method_handler(self,start,duration,annotation_flag=False):
+        """
+        Wrapper to call ieeg. Due to ieeg errors, we want to make sure we can try to call it a few times before giving up.
+
+        Args:
+            start (float): Start time (referenced to data start) in microseconds to request data from
+            duration (float): Duration in microseconds of data to request
+            annotation_flag (bool, optional): Flag whether we just want annotation data or not. Defaults to False.
+        """
+
+        n_attempts = 0
+        while True:
+            with Timeout(self.global_timeout):
+                try:
+                    self.session_method(start,duration,annotation_flag)
+                    self.success_flag = True
+                    break
+                except Exception as e:
+                    if n_attempts<self.n_retry:
+                        sleep(5)
+                        n_attempts += 1
+                    else:
+                        self.success_flag = False
+                        fp = open(self.args.bidsroot+self.args.failure_file,"a")
+                        fp.write("%s,%f,%f,%s\n" %(self.current_file,start,duration,e))
+                        fp.close()
+                        break
+
     def session_method(self,start,duration,annotation_flag):
         """
         Call ieeg.org for data and return data or annotations.
@@ -325,34 +352,6 @@ class iEEG_handler(BIDS_handler):
                 self.start_time      = dataset.start_time
                 self.end_time        = dataset.end_time
             session.close()
-
-    def session_method_handler(self,start,duration,annotation_flag=False):
-        """
-        Wrapper to call ieeg. Due to ieeg errors, we want to make sure we can try to call it a few times before giving up.
-
-        Args:
-            start (float): Start time (referenced to data start) in microseconds to request data from
-            duration (float): Duration in microseconds of data to request
-            annotation_flag (bool, optional): Flag whether we just want annotation data or not. Defaults to False.
-        """
-
-        n_attempts = 0
-        while True:
-            with Timeout(self.global_timeout):
-                try:
-                    self.session_method(start,duration,annotation_flag)
-                    self.success_flag = True
-                    break
-                except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
-                    if n_attempts<self.n_retry:
-                        sleep(5)
-                        n_attempts += 1
-                    else:
-                        self.success_flag = False
-                        fp = open(self.args.bidsroot+self.args.failure_file,"a")
-                        fp.write("%s,%f,%f,%s\n" %(self.current_file,start,duration,e))
-                        fp.close()
-                        break
             
 if __name__ == '__main__':
 

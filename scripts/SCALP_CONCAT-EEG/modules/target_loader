@@ -1,4 +1,0 @@
-class target_loader:
-
-    def __init__(self):
-        pass
