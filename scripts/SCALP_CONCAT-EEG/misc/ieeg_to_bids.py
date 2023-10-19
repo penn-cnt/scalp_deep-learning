@@ -314,7 +314,7 @@ class iEEG_handler(BIDS_handler):
                     self.session_method(start,duration,annotation_flag)
                     self.success_flag = True
                     break
-                except Exception as e:
+                except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
                     if n_attempts<self.n_retry:
                         sleep(5)
                         n_attempts += 1
@@ -438,7 +438,7 @@ if __name__ == '__main__':
 
     # Loop over files
     IEEG = iEEG_handler(args)
-    for file_idx,ifile in tqdm(enumerate(input_files), desc="Downloading Data:", total=input_files.size):
+    for file_idx,ifile in tqdm(enumerate(input_files), desc="Downloading Data", total=input_files.size):
         if ifile not in processed_files:
             iid    = map_data['uid'].values[file_idx]
             target = map_data['target'].values[file_idx]
