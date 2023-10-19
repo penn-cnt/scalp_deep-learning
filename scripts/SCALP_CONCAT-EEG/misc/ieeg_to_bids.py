@@ -159,10 +159,12 @@ class BIDS_handler:
                     target_dict = {'target':self.target,'annotation':desc}
                     pickle.dump(target_dict,open(target_path,"wb"))
 
-                except (FileExistsError,RuntimeError) as e:
-                    print(e)
-                    pickle.dump(raw,open("raw.pickle","wb"))
-                    exit()
+                except:
+
+                    # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
+                    error_path = str(bids_path.copy()).rstrip('.edf')+'.pickle'
+                    pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
+
 
         # Save the subject file info
         iDF = PD.DataFrame([[self.current_file,self.uid,self.subject_num]],columns=['iEEG file','uid','subject_number'])
