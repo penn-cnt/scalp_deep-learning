@@ -185,8 +185,8 @@ class iEEG_handler(BIDS_handler):
         self.subject_path   = args.bidsroot+args.subject_file
 
         # Hard coded variables based on ieeg api
-        self.n_retry        = 5
-        self.global_timeout = 120
+        self.n_retry        = 3
+        self.global_timeout = 60
         self.clip_layer     = 'EEG clip times'
         self.natus_layer    = 'Imported Natus ENT annotations'
 
@@ -278,7 +278,7 @@ class iEEG_handler(BIDS_handler):
         # Loop over clips
         if self.success_flag == True:
             BIDS_handler.__init__(self)
-            for idx,istart in enumerate(self.clip_start_times):
+            for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False):
                 self.session_method_handler(istart, self.clip_durations[idx])
                 if self.success_flag == True:
                     BIDS_handler.get_channel_type(self)
@@ -438,8 +438,9 @@ if __name__ == '__main__':
 
     # Loop over files
     IEEG = iEEG_handler(args)
-    for file_idx,ifile in tqdm(enumerate(input_files), desc="Downloading Data", total=input_files.size):
+    for file_idx,ifile in enumerate(input_files):
         if ifile not in processed_files:
+            print("Downloading %s" %(ifile))
             iid    = map_data['uid'].values[file_idx]
             target = map_data['target'].values[file_idx]
             if args.annotations:
@@ -447,6 +448,8 @@ if __name__ == '__main__':
                 IEEG = iEEG_handler(args)
             else:
                 IEEG.download_by_cli(iid,ifile,target,args.start,args.duration)
+        else:
+            print("Skipping %s" %(ifile))
 
                     
 
