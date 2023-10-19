@@ -178,13 +178,17 @@ class BIDS_handler:
 
 class iEEG_handler(BIDS_handler):
 
-    def __init__(self,args):
+    def __init__(self, args):
+        
+        # Store variables based on input params
         self.args           = args
+        self.subject_path   = args.bidsroot+args.subject_file
+
+        # Hard coded variables based on ieeg api
         self.n_retry        = 5
         self.global_timeout = 120
         self.clip_layer     = 'EEG clip times'
         self.natus_layer    = 'Imported Natus ENT annotations'
-        self.subject_path   = args.bidsroot+args.subject_file
 
     def reset_variables(self):
             # Delete all variables in the object's namespace
@@ -230,13 +234,42 @@ class iEEG_handler(BIDS_handler):
                         event_time_shift = (time-istart)
                         self.annotations[idx][event_time_shift] = desc
                         self.annotation_flats.append(desc)
-        
+
+    def download_by_cli(self, uid, file, target, start, duration):
+
+        # Store the ieeg filename
+        self.uid          = uid
+        self.current_file = file
+        self.target       = target
+        self.success_flag = False
+
+        # Loop over clips
+        if self.success_flag == True:
+            BIDS_handler.__init__(self)
+            self.session_method_handler(start,duration)
+            if self.success_flag == True:
+                BIDS_handler.get_channel_type(self)
+                BIDS_handler.make_info(self)
+                BIDS_handler.add_raw(self)
+
+        # Save the bids files if we have any data
+        try:
+            if len(self.raws) > 0:
+                BIDS_handler.event_mapper(self)
+                BIDS_handler.save_bids(self)
+        except AttributeError:
+            pass
+
+        # Clear namespace of variables for file looping
+        BIDS_handler.reset_variables(self)
+        self.reset_variables()
+
     def download_by_annotation(self, uid, file, target):
 
         # Store the ieeg filename
         self.uid          = uid
-        self.target       = target
         self.current_file = file
+        self.target       = target
         self.success_flag = False
 
         # Get the annotation times
@@ -352,7 +385,7 @@ class iEEG_handler(BIDS_handler):
                 self.start_time      = dataset.start_time
                 self.end_time        = dataset.end_time
             session.close()
-            
+
 if __name__ == '__main__':
 
     # Command line options needed to obtain data.
@@ -373,44 +406,47 @@ if __name__ == '__main__':
     other_group = parser.add_argument_group('Other options')
     other_group.add_argument("--annotation_file", type=str, help="File of iEEG datasets to download by annotation.")
     other_group.add_argument("--subject_file", type=str, default='subject_map.csv', help="File mapping subject id to ieeg file. (Defaults to bidroot+'subject_map.csv)")
-    other_group.add_argument("--uid", type=str, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
+    other_group.add_argument("--uid", default=0, type=str, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
+    other_group.add_argument("--target", default=None, type=str, help="Target value to associate with the subject. (i.e. epilepsy vs. pnes)")
 
     selection_group = parser.add_mutually_exclusive_group()
     selection_group.add_argument("--cli", action='store_true', default=False, help="Use start and duration from this CLI.")
-    selection_group.add_argument("--csv", type=str, help="CSV file with filename, start time, and duration.")
     selection_group.add_argument("--annotations", action='store_true', default=False, help="CSV file with de-identified unique patient id, ieeg filename, and targets (optional). Format:[uid,ieeg_filename,target]")
     args = parser.parse_args()
 
-    # Selection criteria
-    IEEG = iEEG_handler(args)
+    # Selection criteria    
     if args.cli:
-        data = 1
-    elif args.csv:
-        pass
+        start_time  = args.start
+        duration    = args.duration
+        map_data    = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','ieeg_filename','target'])
     elif args.annotations:
         if args.annotation_file == None:
-            IEEG.download_by_annotation(args.dataset)
+            input_files = [args.dataset]
         else:
-            
-            # Get list of files to skip that already exist locally
-            subject_path = args.bidsroot+args.subject_file
-            if path.exists(subject_path):
-                processed_files = PD.read_csv(subject_path)['iEEG file']
-            else:
-                processed_files = []
-
             # Read in the mapping file
             map_data = PD.read_csv(args.annotation_file)
 
-            # Loop over files and process as needed
-            input_files = map_data['ieeg_filename'].values
-            for file_idx,ifile in tqdm(enumerate(input_files), desc="Downloading Data:", total=input_files.size):
-                if ifile not in processed_files:
-                    iid    = map_data['uid'].values[file_idx]
-                    target = map_data['target'].values[file_idx]
-                    IEEG.download_by_annotation(iid,ifile,target)
-                    IEEG = iEEG_handler(args)
+    # Store files to query
+    input_files = map_data['ieeg_filename'].values
 
+    # Get list of files to skip that already exist locally
+    subject_path = args.bidsroot+args.subject_file
+    if path.exists(subject_path):
+        processed_files = PD.read_csv(subject_path)['iEEG file']
+    else:
+        processed_files = []
+
+    # Loop over files
+    IEEG = iEEG_handler(args)
+    for file_idx,ifile in tqdm(enumerate(input_files), desc="Downloading Data:", total=input_files.size):
+        if ifile not in processed_files:
+            iid    = map_data['uid'].values[file_idx]
+            target = map_data['target'].values[file_idx]
+            if args.annotations:
+                IEEG.download_by_annotation(iid,ifile,target)
+                IEEG = iEEG_handler(args)
+            else:
+                IEEG.download_by_cli(iid,ifile,target,args.start,args.duration)
 
                     
 
