@@ -77,10 +77,14 @@ class BIDS_handler:
 
     def get_session_number(self):
 
-        folders = glob.glob("%ssub-%04d" %(self.args.bidsroot,self.subject_num))
-        regex   = re.compile(r"(\D+)(\d+)")
+        # Get the folder strings
+        folders = glob.glob("%ssub-%04d/*" %(self.args.bidsroot,self.subject_num))
+        folders = [ifolder.split('/')[-1] for ifolder in folders]
+        
+        # Search for the session numbers
+        regex = re.compile(r'\d+$')
         if len(folders) > 0:
-            self.session_number = max([int(regex.match(ival).group(2)) for ival in folders])+1
+            self.session_number = max([int(re.search(regex, ival).group()) for ival in folders])+1
         else:
             self.session_number = 1
 
@@ -432,7 +436,7 @@ if __name__ == '__main__':
     # Get list of files to skip that already exist locally
     subject_path = args.bidsroot+args.subject_file
     if path.exists(subject_path):
-        processed_files = PD.read_csv(subject_path)['iEEG file']
+        processed_files = PD.read_csv(subject_path)['iEEG file'].values
     else:
         processed_files = []
 
