@@ -148,11 +148,11 @@ class BIDS_handler:
 
             # Make the events file and save the results
             for itime in list(self.annotations[idx].keys()):
-                desc   = self.annotations[idx][itime]
-                index  = (1e-6*itime)*self.fs
-                events = np.array([[int(index),0,self.event_mapping[desc]]])
-
                 try:
+                    desc   = self.annotations[idx][itime]
+                    index  = (1e-6*itime)*self.fs
+                    events = np.array([[int(index),0,self.event_mapping[desc]]])
+
                     # Save the edf in bids format
                     session_str = "%s%02d" %(self.args.session,self.session_number)
                     bids_path   = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%04d' %(self.subject_num), run=idx+1, task='task')

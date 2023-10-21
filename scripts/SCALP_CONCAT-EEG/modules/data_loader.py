@@ -7,6 +7,8 @@ from  pyedflib import highlevel
 from ieeg.auth import Session
 
 # Import the classes
+from .metadata_handler import *
+from .target_loader import *
 from .channel_mapping import *
 from .dataframe_manager import *
 from .channel_clean import *
@@ -57,11 +59,11 @@ class data_loader:
 
         # Save the channel names
         self.channels                             = [ichannel.upper() for ichannel in self.channels]
-        self.metadata[self.file_cntr]['channels'] = self.channels
+        metadata_handler.set_channels(self,self.chanels)
 
         # Calculate the sample frequencies to save the information and make time cuts
-        sample_frequency                    = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
-        self.metadata[self.file_cntr]['fs'] = sample_frequency
+        sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
+        metadata_handler.set_sampling_frequency(self,sample_frequency)
 
         # Get the rawdata
         self.raw_data(sample_frequency)
@@ -78,11 +80,12 @@ class data_loader:
         
         # Save the channel names to metadata
         self.channels = channels
-        self.metadata[self.file_cntr]['channels'] = self.channels
+        metadata_handler.set_channels(self,self.chanels)
         
         # Calculate the sample frequencies
-        sample_frequency                    = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
-        self.metadata[self.file_cntr]['fs'] = sample_frequency
+        sample_frequency = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
+        metadata_handler.set_sampling_frequency(self,sample_frequency)
+
 
             
 

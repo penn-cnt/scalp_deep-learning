@@ -1,4 +1,6 @@
 # Import the classes
+from .metadata_handler import *
+from .target_loader import *
 from .channel_mapping import *
 from .dataframe_manager import *
 from .channel_clean import *
@@ -6,9 +8,9 @@ from .channel_montage import *
 from .output_manager import *
 from .data_viability import *
 
-class datatype_handlers:
+class project_handlers:
     """
-    Class devoted the specific pipeline used to load a data type. This is meant to provide a clean reproducable pipeline.
+    Class devoted the specific pipeline used to load data according to project needs. This is meant to provide a clean reproducable pipeline.
 
     New functions should follow all the data processing steps up to preprocessing and feature extraction that are relevant to their data type and data set.
     """
@@ -16,9 +18,9 @@ class datatype_handlers:
     def __init__(self):
         pass
 
-    def edf_handler(self):
+    def scalp_00(self):
         """
-        Run pipeline to load EDF data.
+        Run pipeline to load EDF data for a scalp project.
         """
 
         # Import data into memory

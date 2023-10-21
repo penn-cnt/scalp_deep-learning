@@ -10,19 +10,12 @@ class metadata_handler:
         # Because we are using built-in lists to store each data transform, we want to index the dictionary to find the right metadata
         self.metadata[self.file_cntr] = {}
 
-        # Create a metadata entry to store what functions were used throughout the process
-        self.metadata[self.file_cntr]['history'] = []
-
     def update_metadata(self,inputs):
         """
         Update the metadata dictionary with new dictionary. This is useful if rejecting datasets.
         """
 
         self.metadata = inputs.copy()
-
-    def update_history(self,input_method):
-
-        self.metadata[self.file_cntr]['history'].append(input_method)
 
     def highlevel_info(self):
         """
@@ -33,6 +26,7 @@ class metadata_handler:
         self.metadata[self.file_cntr]['t_start'] = self.t_start
         self.metadata[self.file_cntr]['t_end']   = self.t_end
         self.metadata[self.file_cntr]['dt']      = self.t_end-self.t_start
+        self.metadata[self.file_cntr]['history'] = self.args
 
     def set_channels(self,inputs):
 
@@ -46,6 +40,6 @@ class metadata_handler:
 
         self.metadata[self.file_cntr]['fs'] = inputs
 
-    def set_targets(self,inputs):
+    def set_target_file(self,inputs):
 
-        self.metadata[self.file_cntr]['targets'] = inputs
+        self.metadata[self.file_cntr]['target_file'] = inputs

@@ -7,7 +7,11 @@ class target_loader:
     def __init__(self):
         pass
 
-    def read_targets(self,file_format,target_label):
+    def load_targets(self,current_edf,datatype,target_substring,file_format,target_label):
+
+        # Find the target file based on datatype and substrings
+        if datatype == 'bids':
+            self.bids_finder(current_edf,target_substring)
 
         # Logic gates for type of target files
         if self.target_file != None:
