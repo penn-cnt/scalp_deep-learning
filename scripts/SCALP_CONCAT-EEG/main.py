@@ -17,6 +17,7 @@ from tqdm import tqdm
 import multiprocessing
 
 # Import the classes
+from modules.target_loader import *
 from modules.metadata_handler import *
 from modules.project_handler import *
 from modules.data_loader import *
@@ -30,7 +31,7 @@ from modules.preprocessing import *
 from modules.features import *
 from configs.makeconfigs import *
 
-class data_manager(datatype_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
+class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
 
     def __init__(self, input_params, args, worker_number, barrier):
         """
@@ -51,6 +52,9 @@ class data_manager(datatype_handlers, metadata_handler, data_loader, channel_map
         self.worker_number = worker_number
         self.barrier       = barrier
 
+        # Create the metalevel container
+        metadata_handler.__init__(self)
+
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
         
@@ -64,14 +68,45 @@ class data_manager(datatype_handlers, metadata_handler, data_loader, channel_map
         self.preprocessing_manager()
         self.feature_manager()
 
-        # Add targets as needed
-        #if args.targets:
-            #for ikey in self.metadata.keys():
-                #ifile = self.metadata['file']
-            #target_loader.load_targets(self,self.current_)
+        # Associate targets if requested
+        self.target_manager()
 
         # Save the results
         output_manager.save_features(self)
+
+    def file_manager(self,infiles, start_times, end_times):
+        """
+        Loop over the input files and send them to the correct data handler.
+
+        Args:
+            infiles (str list): Path to each dataset
+            start_times (float list): Start times in seconds to start sampling
+            end_times (float list): End times in seconds to end sampling
+        """
+
+        # Intialize a variable that stores the previous filepath. This allows us to cache data and only read in as needed. (i.e. new path != old path)
+        self.oldfile = None  
+
+        # Loop over files to read and store each ones data
+        nfile = len(infiles)
+        desc  = "Initial load with id %s:" %(self.unique_id)
+        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent):            
+        
+            # Save current file info
+            self.infile    = ifile
+            self.t_start   = start_times[ii]
+            self.t_end     = end_times[ii]
+            
+            # Initialize the metadata container
+            self.file_cntr = ii
+            metadata_handler.highlevel_info(self)
+
+            # Case statement the workflow
+            if self.args.project.lower() == 'scalp_00':
+                project_handlers.scalp_00(self)
+            
+            # Update file strings for cached read in
+            self.oldfile = self.infile
 
     def preprocessing_manager(self):
 
@@ -108,41 +143,12 @@ class data_manager(datatype_handlers, metadata_handler, data_loader, channel_map
                 sys.stdout.flush()
             features.__init__(self)
 
-    def file_manager(self,infiles, start_times, end_times):
-        """
-        Loop over the input files and send them to the correct data handler.
+    def target_manager(self):
 
-        Args:
-            infiles (str list): Path to each dataset
-            start_times (float list): Start times in seconds to start sampling
-            end_times (float list): End times in seconds to end sampling
-        """
-
-        # Intialize a variable that stores the previous filepath. This allows us to cache data and only read in as needed. (i.e. new path != old path)
-        self.oldfile = None  
-
-        # Loop over files to read and store each ones data
-        nfile = len(infiles)
-        desc  = "Initial load with id %s:" %(self.unique_id)
-        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent):            
-        
-            # Save current file info
-            self.infile    = ifile
-            self.t_start   = start_times[ii]
-            self.t_end     = end_times[ii]
-            
-            # Initialize the metadata container
-            self.file_cntr = ii
-            metadata_handler.__init__(self)
-            metadata_handler.highlevel_info(self)
-
-            # Case statement the workflow
-            if self.args.project.lower() == 'scalp_00':
-                project_handlers.scalp_00(self)
-            
-            # Update file strings for cached read in
-            self.oldfile = self.infile
-
+        if self.args.targets:
+            for ikey in self.metadata.keys():
+                ifile   = self.metadata[ikey]['file']
+                target_loader.load_targets(self,ifile,'bids','target')
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -242,6 +248,9 @@ if __name__ == "__main__":
     feature_group = parser.add_argument_group('Feature Extraction Options')
     feature_group.add_argument("--no_feature_flag", action='store_true', default=False, help="Do not run feature extraction on data.")
     feature_group.add_argument("--feature_file", help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
+
+    target_group = parser.add_argument_group('Target Association Options')
+    target_group.add_argument("--targets", action='store_true', default=False, help="Join target data with the final dataframe")
 
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 

@@ -2,26 +2,21 @@ import re
 import glob
 import pickle
 
+# Import the classes
+from .metadata_handler import *
+from .target_loader import *
+from .data_loader import *
+from .channel_mapping import *
+from .dataframe_manager import *
+from .channel_clean import *
+from .channel_montage import *
+from .output_manager import *
+from .data_viability import *
+
 class target_loader:
 
     def __init__(self):
         pass
-
-    def load_targets(self,current_edf,datatype,target_substring,file_format,target_label):
-
-        # Find the target file based on datatype and substrings
-        if datatype == 'bids':
-            self.bids_finder(current_edf,target_substring)
-
-        # Logic gates for type of target files
-        if self.target_file != None:
-            
-            # Load the data
-            raw_target = pickle.load(open(self.target_file,"rb"))
-
-            # Based on file type, get the targert variable
-            if file_format == 'dict':
-                return raw_target[target_label]            
 
     def find_matching_strings(self,reference_string, input_strings, trailing_characters_pattern):
         pattern = re.compile(f"{re.escape(reference_string)}{trailing_characters_pattern}")
@@ -47,4 +42,30 @@ class target_loader:
             self.target_file = target_files[0]
         else:
             self.target_file = None
+
+    def load_targets(self,current_edf,datatype,target_substring):
+
+        # Find the target file based on datatype and substrings
+        if datatype == 'bids':
+            self.bids_finder(current_edf,target_substring)
+
+        # Logic gates for type of target files
+        if self.target_file != None:
+            
+            # Load the data
+            raw_targets = pickle.load(open(self.target_file,"rb"))
+
+            # Create the target columns as needed
+            if type(raw_targets) == dict:
+                for tkey in raw_targets.keys():
+                    if tkey not in self.feature_df.columns:
+                        self.feature_df[tkey] = None
+
+            # Assign target values to the correct data files
+            inds    = (self.feature_df.file.values==current_edf)
+            for tkey in raw_targets.keys():
+                newvals               = self.feature_df[tkey].values
+                newvals[inds]         = raw_targets[tkey]
+                self.feature_df[tkey] = newvals
+
 

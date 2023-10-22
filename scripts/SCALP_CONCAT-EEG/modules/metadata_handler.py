@@ -7,9 +7,6 @@ class metadata_handler:
         # Initialize the metadata dictionary
         self.metadata = {}
 
-        # Because we are using built-in lists to store each data transform, we want to index the dictionary to find the right metadata
-        self.metadata[self.file_cntr] = {}
-
     def update_metadata(self,inputs):
         """
         Update the metadata dictionary with new dictionary. This is useful if rejecting datasets.
@@ -22,6 +19,10 @@ class metadata_handler:
         Store high level information about the current dataset and the timeslices extracted from it
         """
 
+        # Because we are using built-in lists to store each data transform, we want to index the dictionary to find the right metadata
+        self.metadata[self.file_cntr] = {}
+
+        # Other high level dataset info
         self.metadata[self.file_cntr]['file']    = self.infile
         self.metadata[self.file_cntr]['t_start'] = self.t_start
         self.metadata[self.file_cntr]['t_end']   = self.t_end

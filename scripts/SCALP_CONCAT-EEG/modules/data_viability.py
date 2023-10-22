@@ -40,11 +40,11 @@ class data_viability:
             
             # Output list
             viable_data = []
-            viable_meta = []
+            viable_meta = {}
             for idx,iarr in enumerate(self.output_list):
                 if flags[idx]:
                     viable_data.append(iarr)
-                    viable_meta.append(self.metadata[idx])
+                    viable_meta[idx] = self.metadata[idx]
             
             # Copying results. Kept as two variables for possible disambiguation later.
             self.output_list = viable_data.copy()
