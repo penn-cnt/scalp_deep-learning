@@ -154,7 +154,7 @@ class BIDS_handler:
                     events = np.array([[int(index),0,self.event_mapping[desc]]])
 
                     # Save the edf in bids format
-                    session_str = "%s%02d" %(self.args.session,self.session_number)
+                    session_str = "%s%03d" %(self.args.session,self.session_number)
                     bids_path   = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%04d' %(self.subject_num), run=idx+1, task='task')
                     write_raw_bids(bids_path=bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False,overwrite=True)
 
