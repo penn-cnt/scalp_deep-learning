@@ -444,7 +444,7 @@ if __name__ == '__main__':
     IEEG = iEEG_handler(args)
     for file_idx,ifile in enumerate(input_files):
         if ifile not in processed_files:
-            print("Downloading %s" %(ifile))
+            print("Downloading %s. (%04d/%04d)" %(ifile,file_idx,input_files.size))
             iid    = map_data['uid'].values[file_idx]
             target = map_data['target'].values[file_idx]
             if args.annotations:
@@ -453,7 +453,7 @@ if __name__ == '__main__':
             else:
                 IEEG.download_by_cli(iid,ifile,target,args.start,args.duration)
         else:
-            print("Skipping %s" %(ifile))
+            print("Skipping %s. (%04d/%04d)" %(ifile,file_idx,input_files.size))
 
                     
 
