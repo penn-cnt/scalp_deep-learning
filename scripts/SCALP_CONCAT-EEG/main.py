@@ -16,6 +16,9 @@ import pandas as PD
 from tqdm import tqdm
 import multiprocessing
 
+# Clear the numpy mac conflict message
+os.system("clear")
+
 # Import the classes
 from modules.target_loader import *
 from modules.metadata_handler import *
@@ -99,7 +102,6 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
             
             # Initialize the metadata container
             self.file_cntr = ii
-            metadata_handler.highlevel_info(self)
 
             # Case statement the workflow
             if self.args.project.lower() == 'scalp_00':

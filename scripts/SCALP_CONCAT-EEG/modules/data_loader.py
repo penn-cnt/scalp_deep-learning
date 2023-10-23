@@ -60,6 +60,9 @@ class data_loader:
             except OSError:
                 return False
 
+        # Create the metadata handler
+        metadata_handler.highlevel_info(self)
+
         # Save the channel names
         self.channels = [ichannel.upper() for ichannel in self.channels]
         metadata_handler.set_channels(self,self.channels)

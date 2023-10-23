@@ -1,3 +1,5 @@
+from sys import exit
+
 # Import the classes
 from .data_loader import *
 from .metadata_handler import *
@@ -25,7 +27,7 @@ class project_handlers:
         """
 
         # Import data into memory
-        load_flag = data_loader.load_edf(self)
+        load_flag = data_loader.load_edf(self) 
 
         if load_flag:
             # Clean the channel names

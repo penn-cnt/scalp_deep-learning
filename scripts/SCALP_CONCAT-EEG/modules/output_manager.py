@@ -39,6 +39,7 @@ class output_manager:
         """
 
         self.output_list.append(data)
+        self.output_meta.append(self.file_cntr)
 
     def save_features(self):
         """
