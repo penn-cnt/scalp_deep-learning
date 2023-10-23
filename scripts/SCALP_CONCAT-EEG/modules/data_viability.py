@@ -3,6 +3,8 @@ import numpy as np
 import pandas as PD
 
 # Import the classes
+from .metadata_handler import *
+from .target_loader import *
 from .data_loader import *
 from .channel_mapping import *
 from .dataframe_manager import *
@@ -38,15 +40,15 @@ class data_viability:
             
             # Output list
             viable_data = []
-            viable_meta = []
+            viable_meta = {}
             for idx,iarr in enumerate(self.output_list):
                 if flags[idx]:
                     viable_data.append(iarr)
-                    viable_meta.append(self.metadata[idx])
+                    viable_meta[idx] = self.metadata[idx]
             
             # Copying results. Kept as two variables for possible disambiguation later.
             self.output_list = viable_data.copy()
-            self.metadata    = viable_meta.copy()
+            metadata_handler.update_metadata(self,viable_meta)
         
         elif self.args.viability == 'VIABLE_COLUMNS':
             

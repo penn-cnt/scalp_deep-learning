@@ -3,6 +3,8 @@ import numpy as np
 import pandas as PD
 
 # Import the classes
+from .metadata_handler import *
+from .target_loader import *
 from .data_loader import *
 from .dataframe_manager import *
 from .channel_clean import *
@@ -32,8 +34,8 @@ class channel_mapping:
             self.mapping_HUP_1020()
 
         # Update the metadata
-        self.metadata[self.file_cntr]['channels'] = self.channel_map_out
-        self.metadata[self.file_cntr]['fs']       = self.metadata[self.file_cntr]['fs'][self.channel_map_out_inds]
+        metadata_handler.set_channels(self,self.channel_map_out)
+        metadata_handler.set_sampling_frequency(self,self.metadata[self.file_cntr]['fs'][self.channel_map_out_inds])
 
     def mapping_HUP_1020(self):
         """

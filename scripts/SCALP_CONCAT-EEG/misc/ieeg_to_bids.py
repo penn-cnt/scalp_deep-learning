@@ -148,11 +148,11 @@ class BIDS_handler:
 
             # Make the events file and save the results
             for itime in list(self.annotations[idx].keys()):
-                desc   = self.annotations[idx][itime]
-                index  = (1e-6*itime)*self.fs
-                events = np.array([[int(index),0,self.event_mapping[desc]]])
-
                 try:
+                    desc   = self.annotations[idx][itime]
+                    index  = (1e-6*itime)*self.fs
+                    events = np.array([[int(index),0,self.event_mapping[desc]]])
+
                     # Save the edf in bids format
                     session_str = "%s%02d" %(self.args.session,self.session_number)
                     bids_path   = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%04d' %(self.subject_num), run=idx+1, task='task')
@@ -444,7 +444,7 @@ if __name__ == '__main__':
     IEEG = iEEG_handler(args)
     for file_idx,ifile in enumerate(input_files):
         if ifile not in processed_files:
-            print("Downloading %s" %(ifile))
+            print("Downloading %s. (%04d/%04d)" %(ifile,file_idx,input_files.size))
             iid    = map_data['uid'].values[file_idx]
             target = map_data['target'].values[file_idx]
             if args.annotations:
@@ -453,7 +453,7 @@ if __name__ == '__main__':
             else:
                 IEEG.download_by_cli(iid,ifile,target,args.start,args.duration)
         else:
-            print("Skipping %s" %(ifile))
+            print("Skipping %s. (%04d/%04d)" %(ifile,file_idx,input_files.size))
 
                     
 

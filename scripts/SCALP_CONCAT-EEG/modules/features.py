@@ -66,8 +66,8 @@ class features:
         """
 
         # Initialize some variables
-        #nrow     = len(self.output_list)
-        channels        = self.metadata[0]['montage_channels']
+        dummy_key       = list(self.metadata.keys())[0]
+        channels        = self.metadata[dummy_key]['montage_channels']
         self.feature_df = PD.DataFrame(columns=['file','t_start','t_end','dt','method','tag']+channels)
         
         # Read in the feature configuration
@@ -131,6 +131,11 @@ class features:
 
                             # Clean up the dummy list
                             df_values = []
+
+                    # Dataframe creations
+                    iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
+                    self.feature_df = PD.concat((self.feature_df,iDF))
+
 
     def feature_aggregation(self):
 

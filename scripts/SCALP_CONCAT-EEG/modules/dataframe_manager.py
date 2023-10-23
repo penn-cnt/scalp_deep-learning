@@ -3,6 +3,8 @@ import numpy as np
 import pandas as PD
 
 # Import the classes
+from .metadata_handler import *
+from .target_loader import *
 from .data_loader import *
 from .channel_mapping import *
 from .channel_clean import *

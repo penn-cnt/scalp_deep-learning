@@ -3,6 +3,8 @@ import numpy as np
 import pandas as PD
 
 # Import the classes
+from .metadata_handler import *
+from .target_loader import *
 from .data_loader import *
 from .channel_mapping import *
 from .dataframe_manager import *
@@ -32,7 +34,7 @@ class channel_montage:
             montage_data = self.montage_common_average()
 
         # Update the metadata to note the montage channels
-        self.metadata[self.file_cntr]['montage_channels'] = self.montage_channels
+        metadata_handler.set_montage_channels(self,self.montage_channels)
 
         return montage_data
 

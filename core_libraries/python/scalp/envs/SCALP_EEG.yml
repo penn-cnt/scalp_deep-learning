@@ -14,5 +14,8 @@ dependencies:
     - mne
     - mne-bids
     - EDFlib-Python
+    - torch
+    - pyEDFlib
+    - pyyaml
     - ../wheels/ieeg-1.6-py3-none-any.whl
 

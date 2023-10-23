@@ -17,7 +17,9 @@ from tqdm import tqdm
 import multiprocessing
 
 # Import the classes
-from modules.datatype_handlers import *
+from modules.target_loader import *
+from modules.metadata_handler import *
+from modules.project_handler import *
 from modules.data_loader import *
 from modules.channel_mapping import *
 from modules.dataframe_manager import *
@@ -29,7 +31,7 @@ from modules.preprocessing import *
 from modules.features import *
 from configs.makeconfigs import *
 
-class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability):
+class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
 
     def __init__(self, input_params, args, worker_number, barrier):
         """
@@ -45,11 +47,13 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         start_times        = input_params[:,1].astype('float')
         end_times          = input_params[:,2].astype('float')
         self.args          = args
-        self.metadata      = {}
         self.unique_id     = uuid.uuid4()
         self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
         self.worker_number = worker_number
         self.barrier       = barrier
+
+        # Create the metalevel container
+        metadata_handler.__init__(self)
 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
@@ -60,36 +64,12 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
         # Select valid data slices
         data_viability.__init__(self)
 
-        # Apply preprocessing as needed
-        if not args.no_preprocess_flag:
-            
-            # Barrier the code for better output formatting
-            if self.args.multithread:
-                barrier.wait()
+        # Pass to preprocessing and feature selection managers
+        self.preprocessing_manager()
+        self.feature_manager()
 
-            # Add a wait for proper progress bars
-            time.sleep(self.worker_number)
-
-            # Clean up the screen
-            if self.worker_number == 0:
-                sys.stdout.write("\033[H")
-                sys.stdout.flush()
-
-            # Process
-            preprocessing.__init__(self)
-
-        if not args.no_feature_flag:
-            if self.args.multithread:
-                barrier.wait()
-
-            # Add a wait for proper progress bars
-            time.sleep(self.worker_number)
-
-            # Clean up the screen
-            if self.worker_number == 0:
-                sys.stdout.write("\033[H")
-                sys.stdout.flush()
-            features.__init__(self)
+        # Associate targets if requested
+        self.target_manager()
 
         # Save the results
         output_manager.save_features(self)
@@ -117,19 +97,58 @@ class data_manager(datatype_handlers, data_loader, channel_mapping, dataframe_ma
             self.t_start   = start_times[ii]
             self.t_end     = end_times[ii]
             
-            # Update the metadata
+            # Initialize the metadata container
             self.file_cntr = ii
-            self.metadata[self.file_cntr]            = {}
-            self.metadata[self.file_cntr]['file']    = self.infile
-            self.metadata[self.file_cntr]['t_start'] = self.t_start
-            self.metadata[self.file_cntr]['t_end']   = self.t_end
-            self.metadata[self.file_cntr]['dt']      = self.t_end-self.t_start
+            metadata_handler.highlevel_info(self)
 
             # Case statement the workflow
-            if self.args.dtype == 'EDF':
-                datatype_handlers.edf_handler(self)
-                self.oldfile = self.infile
+            if self.args.project.lower() == 'scalp_00':
+                project_handlers.scalp_00(self)
+            
+            # Update file strings for cached read in
+            self.oldfile = self.infile
 
+    def preprocessing_manager(self):
+
+        # Apply preprocessing as needed
+        if not self.args.no_preprocess_flag:
+            
+            # Barrier the code for better output formatting
+            if self.args.multithread:
+                barrier.wait()
+
+            # Add a wait for proper progress bars
+            time.sleep(self.worker_number)
+
+            # Clean up the screen
+            if self.worker_number == 0:
+                sys.stdout.write("\033[H")
+                sys.stdout.flush()
+
+            # Process
+            preprocessing.__init__(self)
+
+    def feature_manager(self):
+
+        if not self.args.no_feature_flag:
+            if self.args.multithread:
+                barrier.wait()
+
+            # Add a wait for proper progress bars
+            time.sleep(self.worker_number)
+
+            # Clean up the screen
+            if self.worker_number == 0:
+                sys.stdout.write("\033[H")
+                sys.stdout.flush()
+            features.__init__(self)
+
+    def target_manager(self):
+
+        if self.args.targets:
+            for ikey in self.metadata.keys():
+                ifile   = self.metadata[ikey]['file']
+                target_loader.load_targets(self,ifile,'bids','target')
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -182,7 +201,7 @@ if __name__ == "__main__":
     allowed_input_args      = {'CSV' : 'Use a comma separated file of files to read in. (default)',
                                'MANUAL' : "Manually enter filepaths.",
                                'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
-    allowed_dtype_args      = {'EDF': "EDF file formats. (default)"}
+    allowed_project_args    = {'SCALP_00': "Basic scalp processing pipeline. (bjprager 10/2023)"}
     allowed_channel_args    = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
                                'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
     allowed_montage_args    = {'HUP1020': "Use a 10-20 montage.",
@@ -192,7 +211,7 @@ if __name__ == "__main__":
     
     # Make a useful help string for each keyword
     allowed_input_help     = make_help_str(allowed_input_args)
-    allowed_dtype_help     = make_help_str(allowed_dtype_args)
+    allowed_project_help   = make_help_str(allowed_project_args)
     allowed_channel_help   = make_help_str(allowed_channel_args)
     allowed_montage_help   = make_help_str(allowed_montage_args)
     allowed_viability_help = make_help_str(allowed_viability_args)
@@ -204,7 +223,7 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--input", choices=list(allowed_input_args.keys()), default="GLOB", help=f"R|Choose an option:\n{allowed_input_help}")
     datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing or working in batches.")
     datamerge_group.add_argument("--n_offset", type=int, default=0, help=f"Offset the files read in. Useful for testing or working in batch.")
-    datamerge_group.add_argument("--dtype", choices=list(allowed_dtype_args.keys()), default="EDF", help=f"R|Choose an option:\n{allowed_dtype_help}")
+    datamerge_group.add_argument("--project", choices=list(allowed_project_args.keys()), default="SCALP_00", help=f"R|Choose an option:\n{allowed_project_help}")
     datamerge_group.add_argument("--t_start", default=0, help="Time in seconds to start data collection.")
     datamerge_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
@@ -229,6 +248,9 @@ if __name__ == "__main__":
     feature_group = parser.add_argument_group('Feature Extraction Options')
     feature_group.add_argument("--no_feature_flag", action='store_true', default=False, help="Do not run feature extraction on data.")
     feature_group.add_argument("--feature_file", help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
+
+    target_group = parser.add_argument_group('Target Association Options')
+    target_group.add_argument("--targets", action='store_true', default=False, help="Join target data with the final dataframe")
 
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 
