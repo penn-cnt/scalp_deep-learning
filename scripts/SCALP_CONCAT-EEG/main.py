@@ -166,7 +166,7 @@ class CustomFormatter(argparse.HelpFormatter):
 ##### Helper Functions #####
 ############################
 
-def test_input_data(args,files):
+def test_input_data(args,files,start_times,end_times):
     
     # Get the pathing to the excluded data
     if args.exclude == None:
@@ -175,23 +175,26 @@ def test_input_data(args,files):
         exclude_path = args.exclude
 
     # Get the files to use and which to save
+    good_index = []
+    bad_index  = []
     if os.path.exists(exclude_path):
         excluded_files = PD.read_csv(exclude_path)['file'].values
-        good_files     = np.setdiff1d(files,excluded_files)
+        for idx,ifile in enumerate(files):
+            if ifile not in excluded_files:
+                good_index.append(idx)
     else:
         # Confirm that data can be read in properly
-        good_files     = []
         excluded_files = []
-        for ifile in files:
+        for idx,ifile in enumerate(files):
             DLT  = data_loader_test()
             flag = DLT.edf_test(ifile)
             if flag[0]:
-                good_files.append(ifile)
+                good_index.append(idx)
             else:
                 excluded_files.append([ifile,flag[1]])
         excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
         excluded_df.to_csv(exclude_path,index=False)
-    return good_files
+    return files[good_index],start_times[good_index],end_times[good_index]
 
 def overlapping_start_times(start, end, step, overlap_frac):
 
@@ -368,8 +371,13 @@ if __name__ == "__main__":
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))
 
+    # Cast the inputs as arrays
+    files       = np.array(files)
+    start_times = np.array(start_times)
+    end_times   = np.array(end_times)
+
     # Get the useable files from the request
-    files = test_input_data(args,files)
+    files, start_times, end_times = test_input_data(args,files,start_times,end_times)
 
     # Apply any file offset as needed
     files       = files[args.n_offset:]
@@ -408,6 +416,7 @@ if __name__ == "__main__":
 
                 # Loop over the new entries and tile the input lists as needed
                 for idx,istart in enumerate(windowed_start):
+                    print(istart)
                     new_files.append(ifile)
                     new_start.append(istart)
                     new_end.append(windowed_end[idx])
