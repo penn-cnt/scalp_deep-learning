@@ -95,5 +95,16 @@ class data_loader:
         metadata_handler.set_sampling_frequency(self,sample_frequency)
 
 
-            
+class data_loader_test:
+
+    def __init__(self):
+        pass
+
+    def edf_test(self,infile):
+        try:
+            highlevel.read_edf_header(infile)
+            return (True,)
+        except Exception as e:
+            return (False,e)
+
 

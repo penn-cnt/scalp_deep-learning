@@ -119,13 +119,13 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
             if self.args.multithread:
                 self.barrier.wait()
 
-            # Add a wait for proper progress bars
-            time.sleep(self.worker_number)
+                # Add a wait for proper progress bars
+                time.sleep(self.worker_number)
 
-            # Clean up the screen
-            if self.worker_number == 0:
-                sys.stdout.write("\033[H")
-                sys.stdout.flush()
+                # Clean up the screen
+                if self.worker_number == 0:
+                    sys.stdout.write("\033[H")
+                    sys.stdout.flush()
 
             # Process
             preprocessing.__init__(self)
@@ -136,13 +136,13 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
             if self.args.multithread:
                 self.barrier.wait()
 
-            # Add a wait for proper progress bars
-            time.sleep(self.worker_number)
+                # Add a wait for proper progress bars
+                time.sleep(self.worker_number)
 
-            # Clean up the screen
-            if self.worker_number == 0:
-                sys.stdout.write("\033[H")
-                sys.stdout.flush()
+                # Clean up the screen
+                if self.worker_number == 0:
+                    sys.stdout.write("\033[H")
+                    sys.stdout.flush()
             features.__init__(self)
 
     def target_manager(self):
@@ -161,6 +161,66 @@ class CustomFormatter(argparse.HelpFormatter):
         if text.startswith("R|"):
             return text[2:].splitlines()
         return super()._split_lines(text, width)
+
+############################
+##### Helper Functions #####
+############################
+
+def test_input_data(args,files):
+    
+    # Get the pathing to the excluded data
+    if args.exclude == None:
+        exclude_path = args.outdir+"excluded.txt"
+    else:
+        exclude_path = args.exclude
+
+    # Get the files to use and which to save
+    if os.path.exists(exclude_path):
+        excluded_files = PD.read_csv(exclude_path)['file'].values
+        good_files     = np.setdiff1d(files,excluded_files)
+    else:
+        # Confirm that data can be read in properly
+        good_files     = []
+        excluded_files = []
+        for ifile in files:
+            DLT  = data_loader_test()
+            flag = DLT.edf_test(ifile)
+            if flag[0]:
+                good_files.append(ifile)
+            else:
+                excluded_files.append([ifile,flag[1]])
+        excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
+        excluded_df.to_csv(exclude_path,index=False)
+    return good_files
+
+def overlapping_start_times(start, end, step, overlap_frac):
+
+    # Define tracking variables
+    current_time = start
+    start_times  = []
+    end_times    = []
+
+    # Sanity check on step and overlap sizes
+    if overlap_frac >= 1:
+        raise ValueError("--t_overlap must be smaller than --t_window.")
+    else:
+        overlap = overlap_frac*step
+
+    # Loop over the time range using the start, end, and step values. But then backup by windowed overlap as need
+    while current_time <= end:
+        start_times.append(current_time)
+        if (current_time + step) < end:
+            end_times.append(current_time+step)
+        else:
+            end_times.append(end)
+        current_time = current_time + step - overlap
+    start_times = np.array(start_times)
+    end_times   = np.array(end_times)
+
+    # Find edge cases where taking large steps with small offsets means multiple slices that reach the end time
+    limiting_index = np.argwhere(end_times>=end).min()+1
+
+    return start_times[:limiting_index],end_times[:limiting_index]
 
 def make_help_str(idict):
     """
@@ -226,11 +286,14 @@ if __name__ == "__main__":
     datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing or working in batches.")
     datamerge_group.add_argument("--n_offset", type=int, default=0, help=f"Offset the files read in. Useful for testing or working in batch.")
     datamerge_group.add_argument("--project", choices=list(allowed_project_args.keys()), default="SCALP_00", help=f"R|Choose an option:\n{allowed_project_help}")
-    datamerge_group.add_argument("--t_start", default=0, help="Time in seconds to start data collection.")
-    datamerge_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
-    datamerge_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datamerge_group.add_argument("--multithread", action='store_true', default=False, help="Multithread flag.")
     datamerge_group.add_argument("--ncpu", type=int, default=2, help="Number of CPUs to use if multithread.")
+
+    datachunk_group = parser.add_argument_group('Data Chunking Options')
+    datachunk_group.add_argument("--t_start", default=0, help="Time in seconds to start data collection.")
+    datachunk_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
+    datachunk_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
+    datachunk_group.add_argument("--t_overlap", default=0, type=float, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
 
     channel_group = parser.add_argument_group('Channel label Options')
     channel_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
@@ -256,6 +319,8 @@ if __name__ == "__main__":
 
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 
+    output_group.add_argument("--exclude", help="Exclude file. If any of the requested data is bad, the path and error gets dumped here. \
+                              Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
@@ -303,6 +368,9 @@ if __name__ == "__main__":
         start_times = args.t_start*np.ones(len(files))
         end_times   = args.t_end*np.ones(len(files))
 
+    # Get the useable files from the request
+    files = test_input_data(args,files)
+
     # Apply any file offset as needed
     files       = files[args.n_offset:]
     start_times = start_times[args.n_offset:]
@@ -336,11 +404,13 @@ if __name__ == "__main__":
             for iwindow in args.t_window:
                 
                 # Get the list of windows start and end times
-                windowed_start = np.array(range(t_start,t_end,iwindow))
-                windowed_end   = np.array(range(t_start+iwindow,t_end+iwindow,iwindow))
+                #windowed_start = np.array(range(t_start,t_end,iwindow))
+                #windowed_end   = np.array(range(t_start+iwindow,t_end+iwindow,iwindow))
 
                 # Make sure we have no values outside the right range
-                windowed_end[(windowed_end>t_end)] = t_end
+                #windowed_end[(windowed_end>t_end)] = t_end
+
+                windowed_start, windowed_end = overlapping_start_times(t_start,t_end,iwindow,args.t_overlap)
 
                 # Loop over the new entries and tile the input lists as needed
                 for idx,istart in enumerate(windowed_start):
