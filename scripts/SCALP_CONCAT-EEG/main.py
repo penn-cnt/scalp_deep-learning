@@ -404,12 +404,6 @@ if __name__ == "__main__":
             for iwindow in args.t_window:
                 
                 # Get the list of windows start and end times
-                #windowed_start = np.array(range(t_start,t_end,iwindow))
-                #windowed_end   = np.array(range(t_start+iwindow,t_end+iwindow,iwindow))
-
-                # Make sure we have no values outside the right range
-                #windowed_end[(windowed_end>t_end)] = t_end
-
                 windowed_start, windowed_end = overlapping_start_times(t_start,t_end,iwindow,args.t_overlap)
 
                 # Loop over the new entries and tile the input lists as needed
