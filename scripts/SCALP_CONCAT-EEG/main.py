@@ -416,7 +416,6 @@ if __name__ == "__main__":
 
                 # Loop over the new entries and tile the input lists as needed
                 for idx,istart in enumerate(windowed_start):
-                    print(istart)
                     new_files.append(ifile)
                     new_start.append(istart)
                     new_end.append(windowed_end[idx])

@@ -1,6 +1,7 @@
 # General libraries
 import numpy as np
 import pandas as PD
+from sys import exit
 from  pyedflib import highlevel
 
 # CNT/EEG Specific
@@ -37,7 +38,7 @@ class data_loader:
                 samp_end = int(len(self.indata[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
-
+            
             if majoraxis == 'column':
                 self.raw_data.append(self.indata[samp_start:samp_end,ii])
             elif majoraxis == 'row':

@@ -38,7 +38,7 @@ class data_viability:
             flags = []
             for idx,data_array in enumerate(self.output_list):
                 flags.append(self.viable_dataset(data_array))
-            
+
             # Output list
             viable_data = []
             viable_meta = {}
@@ -57,7 +57,7 @@ class data_viability:
             flags = []
             for idx,data_array in self.output_list:
                 flags.append(self.viable_columns(data_array))
-
+            
             # Find the intersection of viable columns across all datasets
             flags = np.prod(flags,axis=0)
 
