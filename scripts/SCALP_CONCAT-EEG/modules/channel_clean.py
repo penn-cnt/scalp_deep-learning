@@ -22,20 +22,44 @@ class channel_clean:
     Output should be a new list of channel names called self.clean_channel_map.
     """
 
-    def __init__(self,clean_method='HUP'):
+    def __init__(self):
+        pass
+
+    def pipeline(self,clean_method='HUP'):
         """
-        Logic gates for which channel cleaning methodology to use.
+        Clean a vector of channel labels via the main pipeline.
 
         Args:
-            clean_method (str, optional): Cleaning method to use, see --help for complete list. Defaults to 'HUP'.
+            clean_method (str, optional): _description_. Defaults to 'HUP'.
         """
-        
+
+        # Apply cleaning logic
+        self.channel_logic(clean_method)
+
+        # Add the cleaned labels to metadata
+        self.metadata[self.file_cntr]['channels'] = self.clean_channel_map
+
+    def direct_inputs(self,channels,clean_method="HUP"):
+        """
+        Clean a vector of channel labels via user provided input.
+
+        Args:
+            clean_method (str, optional): _description_. Defaults to 'HUP'.
+        """
+
+        self.channels = channels
+        self.channel_logic(clean_method)
+        return self.clean_channel_map
+
+    def channel_logic(self,clean_method):
+
         # Logic gates for different cleaning methods
         if clean_method == 'HUP':
             self.HUP_clean()
 
-        # Add the cleaned labels to metadata
-        self.metadata[self.file_cntr]['channels'] = self.clean_channel_map
+    ###################################
+    #### User Provided Logic Below ####
+    ###################################
 
     def HUP_clean(self):
         """
@@ -53,4 +77,4 @@ class channel_clean:
                 new_name    = f"{lead}{contact:02d}"
             else:
                 new_name = ichannel.replace("EEG","").replace("-REF","").strip()
-            self.clean_channel_map.append(new_name)
+            self.clean_channel_map.append(new_name.upper())

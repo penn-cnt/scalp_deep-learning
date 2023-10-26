@@ -23,20 +23,40 @@ class channel_montage:
     """
 
     def __init__(self):
-        """
-        Logic gates for which montage methodology to use.
-        """
+        pass
+
+    def direct_inputs(self,DF,montage):
         
-        # Logic for different montages
-        if self.args.montage == "HUP1020":
-            montage_data = self.montage_HUP_1020()
-        elif self.args.montage == "COMMON_AVERAGE":
-            montage_data = self.montage_common_average()
+        # Save the user provided dataframe
+        self.dataframe = DF
+
+        # Apply montage logic
+        montage_data = self.montage_logic(montage)
+
+        return PD.DataFrame(montage_data,columns=self.montage_channels)
+
+    def pipeline(self):
+
+        # Apply the montage logic
+        montage_data = self.montage_logic(self.args.montage)
 
         # Update the metadata to note the montage channels
         metadata_handler.set_montage_channels(self,self.montage_channels)
 
         return montage_data
+
+    def montage_logic(self, montage):
+
+        # Logic for different montages
+        if montage == "HUP1020":
+            return self.montage_HUP_1020()
+        elif montage == "COMMON_AVERAGE":
+            return self.montage_common_average()        
+
+
+    ###################################
+    #### User Provided Logic Below ####
+    ###################################
 
     def montage_common_average(self):
         """

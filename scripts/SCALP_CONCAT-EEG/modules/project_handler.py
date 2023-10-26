@@ -31,7 +31,7 @@ class project_handlers:
 
         if load_flag:
             # Clean the channel names
-            channel_clean.__init__(self)
+            channel_clean.pipeline(self)
 
             # Get the correct channels for this merger
             channel_mapping.__init__(self,self.args.channel_list)
@@ -45,7 +45,7 @@ class project_handlers:
                 pass
             else:
                 # Put the data into a specific montage
-                montage_data = channel_montage.__init__(self)
+                montage_data = channel_montage.pipeline(self)
                 dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
 
                 # Update the output list
