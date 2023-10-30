@@ -77,7 +77,7 @@ class data_analysis:
         self.rawdata, raw_channel_metadata,_ = highlevel.read_edf(file)
 
         # Get the sampling frequency
-        self.fs = np.array([ichannel['sample_frequency'] for ichannel in raw_channel_metadata])[0]
+        self.fs[file] = np.array([ichannel['sample_frequency'] for ichannel in raw_channel_metadata])[0]
 
         # Get the raw channels
         channels   = [ival['label'] for ival in raw_channel_metadata]
@@ -115,7 +115,23 @@ class data_analysis:
             if file not in list(self.data_dict.keys()):
                 self.data_dict[file] = {}
                 self.data_dict[file]['raw'] = self.rawdata
-            self.data_dict[file][meta_str] = np.zeros(self.data_dict[file]['raw'].shape)
+            self.data_dict[file][meta_str]    = np.chararray(self.data_dict[file]['raw'].shape,unicode=True)
+            self.data_dict[file][meta_str][:] = 'k'
+
+    def update_data_colors(self,idf,ichannel,channel_data,props,meta_str):
+        
+        for ii in range(len(props['left_ips'])):
+            inds  = (channel_data>=props['left_ips'][ii])&(channel_data<props['right_ips'][ii])
+            slice = idf.iloc[inds] 
+            color = props["color"][ii]
+
+            for irow in range(slice.shape[0]):
+                datarow    = slice.iloc[irow]
+                samp_start = int(self.fs[datarow.file]*datarow.t_start)
+                samp_end   = int(self.fs[datarow.file]*datarow.t_end)
+                icol       = np.argwhere(self.data_dict[datarow.file]['raw'].columns==ichannel)[0][0]
+                self.data_dict[datarow.file][meta_str][samp_start:samp_end,icol] = color
+
 
     def plot_handler(self):
 
@@ -141,6 +157,7 @@ class data_analysis:
 
             # Get the timeseries loaded into memory
             self.data_dict = {}
+            self.fs        = {}
             self.update_data_dict(self.awake_alpha_meta,'awake_alpha')
             self.update_data_dict(self.awake_delta_meta,'awake_delta')
             self.update_data_dict(self.sleep_alpha_meta,'sleep_alpha')
@@ -163,25 +180,65 @@ class data_analysis:
                 prop_2 = self.awake_delta_properties
                 prop_3 = self.sleep_alpha_properties
                 prop_4 = self.sleep_delta_properties
-                for ii in range(len(self.awake_alpha_peaks)):
-                    awake_alpha_inds = (awake_alpha_channel>=prop_1['left_ips'][ii])&(awake_alpha_channel<prop_1['right_ips'][ii])
-
-                    for ival in awake_alpha.values:
-                        print(ival)
-                        exit()
-
-                    awake_delta_inds = (awake_delta_channel>=prop_2['left_ips'][ii])&(awake_delta_channel<prop_2['right_ips'][ii])
-                    sleep_alpha_inds = (sleep_alpha_channel>=prop_3['left_ips'][ii])&(sleep_alpha_channel<prop_3['right_ips'][ii])
-                    sleep_delta_inds = (sleep_delta_channel>=prop_4['left_ips'][ii])&(sleep_delta_channel<prop_4['right_ips'][ii])
-
-
+                self.update_data_colors(awake_alpha,ichannel,awake_alpha_channel,prop_1,'awake_alpha')
+                self.update_data_colors(awake_delta,ichannel,awake_delta_channel,prop_2,'awake_delta')
+                self.update_data_colors(sleep_alpha,ichannel,sleep_alpha_channel,prop_3,'sleep_alpha')
+                self.update_data_colors(sleep_delta,ichannel,sleep_delta_channel,prop_4,'sleep_delta')
 
                 # Make plots
-                #self.plot_raw_distributions(ichannel,i_uid,awake_alpha_channel,awake_delta_channel,sleep_alpha_channel,sleep_delta_channel)
+                self.plot_raw_distributions(ichannel,i_uid,awake_alpha_channel,awake_delta_channel,sleep_alpha_channel,sleep_delta_channel)
+            self.plot_timeseries(ichannel,i_uid)
 
-    def plot_timeseries(self):
-        pass
+    def plot_timeseries(self,ichannel,i_uid):
+        
+        # Get the number of timeseries files we need to plot
+        filenames = list(self.data_dict.keys())
+        for ii,ifile in enumerate(filenames):
+            filebase = ifile.split('/')[-1]
+            for idx,ichannel in enumerate(self.channels):
+                y             = self.data_dict[ifile]['raw'][ichannel].values
+                x             = np.arange(y.size)
+                try:
+                    c_awake_alpha = list(self.data_dict[ifile]['awake_alpha'][:,idx])
+                except KeyError:
+                    c_awake_alpha = 'k'
+                
+                try:
+                    c_awake_delta = list(self.data_dict[ifile]['awake_delta'][:,idx])
+                except KeyError:
+                    c_awake_delta = 'k'
+                
+                try:
+                    c_sleep_alpha = list(self.data_dict[ifile]['sleep_alpha'][:,idx])
+                except KeyError:
+                    c_sleep_alpha = 'k'
+                
+                try:
+                    c_sleep_delta = list(self.data_dict[ifile]['sleep_delta'][:,idx])
+                except KeyError:
+                    c_sleep_delta = 'k'
 
+                # Make the plot
+                fig = PLT.figure(dpi=100,figsize=(12.,8.))
+                ax1 = fig.add_subplot(411)
+                ax2 = fig.add_subplot(412,sharex=ax1)
+                ax3 = fig.add_subplot(413,sharex=ax1)
+                ax4 = fig.add_subplot(414,sharex=ax1)
+                ax1.scatter(x,y,color=c_awake_alpha,s=1)
+                ax2.scatter(x,y,color=c_awake_delta,s=1)
+                ax3.scatter(x,y,color=c_sleep_alpha,s=1)
+                ax4.scatter(x,y,color=c_sleep_delta,s=1)
+                ax1.set_ylabel(['Alpha Awake'])
+                ax2.set_ylabel(['Alpha Delta'])
+                ax3.set_ylabel(['Sleep Alpha'])
+                ax4.set_ylabel(['Sleep Delta'])
+                ax1.set_xticklabels([])
+                ax2.set_xticklabels([])
+                ax3.set_xticklabels([])
+                ax1.set_title("Patient id: %03d, Channel: %s, File:%s" %(i_uid,ichannel,filebase), fontsize=13)
+                fig.tight_layout()
+                PLT.savefig(self.plotdir+"%03d_%s_timeseries_%02d.png" %(i_uid,ichannel,ii))
+                PLT.close("all")
 
     def plot_raw_distributions(self,ichannel,i_uid,awake_alpha_channel,awake_delta_channel,sleep_alpha_channel,sleep_delta_channel):
                 
