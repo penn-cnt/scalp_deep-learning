@@ -133,7 +133,7 @@ class data_analysis:
                 self.data_dict[datarow.file][meta_str][samp_start:samp_end,icol] = color
 
 
-    def plot_handler(self):
+    def plot_handler(self,mid_frac,duration):
 
         # First split according to the unique id
         uids = np.intersect1d(self.sleep_data['uid'].unique(),self.awake_data['uid'].unique())
@@ -187,9 +187,9 @@ class data_analysis:
 
                 # Make plots
                 self.plot_raw_distributions(ichannel,i_uid,awake_alpha_channel,awake_delta_channel,sleep_alpha_channel,sleep_delta_channel)
-            self.plot_timeseries(ichannel,i_uid)
+            self.plot_timeseries(ichannel,i_uid,mid_frac,duration)
 
-    def plot_timeseries(self,ichannel,i_uid):
+    def plot_timeseries(self,ichannel,i_uid,mid_frac,duration):
         
         # Get the number of timeseries files we need to plot
         filenames = list(self.data_dict.keys())
@@ -238,6 +238,29 @@ class data_analysis:
                 ax1.set_title("Patient id: %03d, Channel: %s, File:%s" %(i_uid,ichannel,filebase), fontsize=13)
                 fig.tight_layout()
                 PLT.savefig(self.plotdir+"%03d_%s_timeseries_%02d.png" %(i_uid,ichannel,ii))
+                PLT.close("all")
+
+                # Make zoomed in versions
+                if mid_frac == None or duration == None:
+                    pass
+                else:
+                    duration_samples = self.fs[ifile]*duration
+                    start_samp       = mid_frac*x.size-int(duration_samples/2.)
+                    end_samp         = mid_frac*x.size+int(duration_samples/2.)
+                    start_samp       = int(max([start_samp,0]))
+                    end_samp         = int(min([end_samp,x.size]))
+                    x                = x[start_samp:end_samp]
+                    y                = y[start_samp:end_samp]
+                nstd             = 3
+                y_min_scale      = np.median(y)-nstd*np.std(y)
+                y_max_scale      = np.median(y)+nstd*np.std(y)
+                fig              = PLT.figure(dpi=100,figsize=(12.,8.))
+                ax               = fig.add_subplot(111)
+                ax.plot(x,y,color='k')
+                ax.set_ylim([y_min_scale,y_max_scale])
+                ax.set_title("Patient id: %03d, Channel: %s, File:%s" %(i_uid,ichannel,filebase), fontsize=13)
+                fig.tight_layout()
+                PLT.savefig(self.plotdir+"%03d_%s_rawdata_%02d.png" %(i_uid,ichannel,ii))
                 PLT.close("all")
 
     def plot_raw_distributions(self,ichannel,i_uid,awake_alpha_channel,awake_delta_channel,sleep_alpha_channel,sleep_delta_channel):
@@ -372,9 +395,9 @@ class data_loader(data_analysis):
         self.awake_data = PD.read_pickle(awake_path)
         return self.sleep_data,self.awake_data
 
-    def call_stats(self):
+    def call_stats(self,mid_frac,duration):
 
-        data_analysis.plot_handler(self)
+        data_analysis.plot_handler(self,mid_frac,duration)
 
 def merge_pickles(path,outpath):
     files   = glob.glob(path)
@@ -393,6 +416,8 @@ if __name__ == '__main__':
     parser.add_argument("--outdir", default="./", help="Path to output directory.")
     parser.add_argument("--awakefile", help="Filepath to a csv with outputs from SCALP_CONCAT_EEG that have already been sliced against awake annotations.")
     parser.add_argument("--sleepfile", help="Filepath to a csv with outputs from SCALP_CONCAT_EEG that have already been sliced against sleep annotations.")
+    parser.add_argument("--mid_frac", default=0.5, help="Filepath to a csv with outputs from SCALP_CONCAT_EEG that have already been sliced against sleep annotations.")
+    parser.add_argument("--duration", default=30, help="Filepath to a csv with outputs from SCALP_CONCAT_EEG that have already been sliced against sleep annotations.")
  
     inputtype_group = parser.add_mutually_exclusive_group()
     inputtype_group.add_argument("--infile", help="Path to input pickle file. Either individual outputs from SCALP_CONCAT_EEG or a merged pickle.")
@@ -433,4 +458,4 @@ if __name__ == '__main__':
         DF_sleep,DF_awake = DL.load_data(sleep_path,awake_path)
 
     # Make statistic plots
-    DL.call_stats()
+    DL.call_stats(args.mid_frac,args.duration)

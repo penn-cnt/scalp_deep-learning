@@ -29,13 +29,38 @@ class channel_mapping:
             clean_method (str, optional): Mapping method to use, see --help for complete list.
         """
         
-        # Logic for different mappings
-        if channel_mapping == "HUP1020":
-            self.mapping_HUP_1020()
+    def direct_inputs(self,channels,channel_mapping):
+
+        # Store the argument of chanel mapping to class instance
+        self.clean_channel_map = channels
+        self.channel_mapping   = channel_mapping
+
+        # Apply mapping logic
+        self.mapping_logic()
+
+        return self.channel_map_out
+
+    def pipeline(self,channel_mapping):
+
+        # Store the argument of chanel mapping to class instance
+        self.channel_mapping = channel_mapping
+
+        # Apply mapping logic
+        self.mapping_logic()
 
         # Update the metadata
         metadata_handler.set_channels(self,self.channel_map_out)
         metadata_handler.set_sampling_frequency(self,self.metadata[self.file_cntr]['fs'][self.channel_map_out_inds])
+
+    def mapping_logic(self):
+
+        # Logic for different mappings
+        if self.channel_mapping == "HUP1020":
+            self.mapping_HUP_1020()
+
+    ###################################
+    #### User Provided Logic Below ####
+    ###################################
 
     def mapping_HUP_1020(self):
         """
