@@ -1,12 +1,206 @@
 # Basic Python Imports
 import sys
+import time
+import seaborn
 import argparse
+import tkinter as tk
 from glob import glob
+import matplotlib.pyplot as PLT
 
 # Local imports
-from modules.channel_mapping import *
+from modules.data_loader import *
 from modules.channel_clean import *
+from modules.channel_mapping import *
 from modules.channel_montage import *
+
+#################
+#### Classes ####
+#################
+
+class data_viewer:
+
+    def __init__(self,infile):
+        
+        # Save the input info
+        self.infile = infile
+        self.fname  = infile.split('/')[-1]
+
+        # Get the approx screen dimensions
+        root        = tk.Tk()
+        self.height = 0.9*root.winfo_screenheight()/100
+        self.width  = 0.9*root.winfo_screenwidth()/100
+        root.destroy()
+
+        # Save event driven variables
+        self.xlim    = []
+        self.drawn_y = []
+
+    def data_prep(self):
+
+        # Create pointers to the relevant classes
+        DL    = data_loader()
+        CHCLN = channel_clean()
+        CHMAP = channel_mapping()
+        CHMON = channel_montage()
+
+        # Get the raw data and pointers
+        DF,self.fs = DL.direct_inputs(self.infile,'edf')
+
+        # Get the cleaned channel names
+        clean_channels = CHCLN.direct_inputs(DF.columns)
+        channel_dict   = dict(zip(DF.columns,clean_channels))
+        DF.rename(columns=channel_dict,inplace=True)
+
+        # Get the channel mapping
+        channel_map = CHMAP.direct_inputs(DF.columns,"HUP1020")
+        DF          = DF[channel_map]
+
+        # Get the montage
+        self.DF = CHMON.direct_inputs(DF,"HUP1020")
+
+    def montage_plot(self):
+        
+        # Get the number of channels to plot
+        nchan = self.DF.columns.size
+
+        # Set the label shift. 72 points equals ~1 inch in pyplot
+        width_frac = (0.025*self.width)
+        npnt       = int(72*width_frac)
+        
+        # Create the plotting environment
+        fig           = PLT.figure(dpi=100,figsize=(self.width,self.height))
+        gs            = fig.add_gridspec(nchan, 1, hspace=0)
+        self.ax_dict  = {}
+        self.lim_dict = {}
+        for idx,ichan in enumerate(self.DF.columns):
+            # Define the axes
+            if idx == 0:
+                self.ax_dict[ichan] = fig.add_subplot(gs[idx, 0])
+                self.refkey         = ichan
+            else:
+                self.ax_dict[ichan] = fig.add_subplot(gs[idx, 0],sharex=self.ax_dict[self.refkey])
+
+            # Get the data stats 
+            idata,ymin,ymax = self.get_stats(ichan)
+            xvals           = np.arange(idata.size)/self.fs
+            self.xlim_orig  = [xvals[0],xvals[-1]]
+
+            # Plot the data
+            nstride = 2
+            self.ax_dict[ichan].plot(xvals[::nstride],idata[::nstride],color='k')
+            self.ax_dict[ichan].set_ylim([ymin,ymax])
+            self.lim_dict[ichan] = [ymin,ymax]
+            
+            # Clean up the plot
+            xticklabels = self.ax_dict[ichan].get_xticklabels().copy()
+            self.ax_dict[ichan].set_yticklabels([])
+            self.ax_dict[ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
+        
+        # Add an xlabel to the final object
+        self.ax_dict[ichan].set_xticklabels(xticklabels)
+        self.ax_dict[ichan].set_xlabel("Time (s)",fontsize=14)
+
+        self.ax_dict[self.refkey].set_title(self.fname,fontsize=14)
+        fig.tight_layout()
+        fig.canvas.mpl_connect('button_press_event', self.on_click)
+        fig.canvas.mpl_connect('key_press_event', self.update_plot)
+        PLT.show()
+
+    def enlarged_plot(self,channel):
+        
+        # Get the data view
+        idata,ymin,ymax = self.get_stats(channel)
+        xvals           = np.arange(idata.size)/self.fs
+
+        # Plot the enlarged view
+        fig     = PLT.figure(dpi=100,figsize=(self.width,self.height))
+        self.ax_enl = fig.add_subplot(111)
+        self.ax_enl.plot(xvals,idata,color='k')
+        self.ax_enl.set_xlabel("Time (s)",fontsize=14)
+        self.ax_enl.set_ylabel(channel,fontsize=14)
+        PLT.title(self.fname,fontsize=14)
+        fig.tight_layout()
+        PLT.show()
+
+    ##########################
+    #### Helper functions ####
+    ##########################
+
+    def get_stats(self,ichan):
+
+        idata  = self.DF[ichan].values
+        median = np.median(idata)
+        stdev  = np.std(idata)
+        idata -= median
+        ymin   = -5*stdev
+        ymax   = 5*stdev
+        return idata,ymin,ymax
+
+    def yscaling(self,ikey,dy):
+
+        # Get the limits of the current plot for rescaling and recreating
+        xlim      = self.ax_dict[ikey].get_xlim()
+        ylim      = self.ax_dict[ikey].get_ylim()
+
+        # Get the approximate new scale
+        scale     = ylim[1]-ylim[0]
+        ymin      = ylim[0]+dy*scale
+        ymax      = ylim[1]-dy*scale
+
+        # Get the data and limits with a good vertical offset
+        vals      = self.DF[ikey].values
+        inds      = (vals>=ymin)&(vals<=ymax)
+        vals      = vals[inds]
+        offset    = np.median(vals)
+        vals     -= offset
+        ymin     -= offset
+        ymax     -= offset
+
+        # Generate new limits
+        self.ax_dict[ikey].set_ylim([ymin,ymax])
+
+    ################################
+    #### Event driven functions ####
+    ################################
+
+    def on_click(self,event):
+        if event.button == 1:  # Check if left mouse button is clicked
+            for ikey in self.ax_dict.keys():
+                self.drawn_y.append(self.ax_dict[ikey].axvline(event.xdata, color='red', linestyle='--'))
+            PLT.draw()  # Redraw the plot to update the display
+
+            # Update the event driven zoom object
+            self.xlim.append(event.xdata)
+
+    def update_plot(self,event):
+        if event.key == 'z' and len(self.xlim) == 2:
+            
+            # Set the xlimits
+            self.ax_dict[self.refkey].set_xlim(self.xlim)
+            self.xlim = []
+
+            # Remove the vertical lines on the plot
+            for iobj in self.drawn_y:
+                iobj.remove()
+            self.draw_y = []
+        elif event.key == 'r':
+            self.ax_dict[self.refkey].set_xlim(self.xlim_orig)
+            self.xlim = []
+        elif event.key == '+':
+            for ikey in self.ax_dict.keys():
+                self.yscaling(ikey,0.1)
+        elif event.key == '-':
+            for ikey in self.ax_dict.keys():
+                self.yscaling(ikey,-0.1)
+        elif event.key == '0':
+            for ikey in self.ax_dict.keys():
+                self.ax_dict[ikey].set_ylim(self.lim_dict[ikey])
+        elif event.key == 'e':
+            for ikey in self.ax_dict.keys():
+                if event.inaxes == self.ax_dict[ikey]:
+                    self.enlarged_plot(ikey)
+        PLT.draw()
+
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -17,6 +211,10 @@ class CustomFormatter(argparse.HelpFormatter):
         if text.startswith("R|"):
             return text[2:].splitlines()
         return super()._split_lines(text, width)
+
+#####################
+#### Helper Fncs ####
+#####################
 
 def make_help_str(idict):
     """
@@ -61,3 +259,8 @@ if __name__ == '__main__':
     else:
         files = glob(args.wildcard)
 
+    # Get the data prepared for viewing
+    for ifile in files:
+        DV = data_viewer(ifile)
+        DV.data_prep()
+        DV.montage_plot()

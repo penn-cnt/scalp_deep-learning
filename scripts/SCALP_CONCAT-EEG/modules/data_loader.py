@@ -36,6 +36,9 @@ class data_loader:
     New functions should make use of the specific raw data handler for their dataset.
     """
 
+    def __init__(self):
+        pass
+
     def pipeline(self,filetype):
         
         # Logic gate for filetyping, returns if load succeeded
@@ -71,9 +74,10 @@ class data_loader:
 
         if flag:
             sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
-            return PD.DataFrame(self.indata,columns=self.channels),sample_frequency[0]
+            return PD.DataFrame(self.indata.T,columns=self.channels),sample_frequency[0]
         else:
-            return
+            print("Unable to read in %s." %(self.infile))
+            return None,None
 
     def mapping_logic(self, filetype):
         

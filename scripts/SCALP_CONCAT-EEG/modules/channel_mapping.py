@@ -21,7 +21,7 @@ class channel_mapping:
     Output should be a new list of channels called self.channel_map_out. Also required is the indices of intersection. (This is to update the metadata properly)
     """
 
-    def __init__(self,channel_mapping):
+    def __init__(self):
         """
         Logic gates for which channel mapping methodology to use.
 
