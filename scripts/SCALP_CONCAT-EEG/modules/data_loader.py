@@ -17,12 +17,68 @@ from .channel_montage import *
 from .output_manager import *
 from .data_viability import *
 
+class data_loader_test:
+
+    def __init__(self):
+        pass
+
+    def edf_test(self,infile):
+        try:
+            highlevel.read_edf_header(infile)
+            return (True,)
+        except Exception as e:
+            return (False,e)
+
 class data_loader:
     """
     Class devoted to loading in raw data into the shared class instance.
 
     New functions should make use of the specific raw data handler for their dataset.
     """
+
+    def pipeline(self,filetype):
+        
+        # Logic gate for filetyping, returns if load succeeded
+        flag = self.mapping_logic(filetype)
+
+        if flag:
+            # Create the metadata handler
+            metadata_handler.highlevel_info(self)
+
+            # Save the channel names
+            self.channels = [ichannel.upper() for ichannel in self.channels]
+            metadata_handler.set_channels(self,self.channels)
+
+            # Calculate the sample frequencies to save the information and make time cuts
+            sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
+            metadata_handler.set_sampling_frequency(self,sample_frequency)
+
+            # Get the rawdata
+            self.raw_dataslice(sample_frequency,majoraxis='row')
+
+            return True
+        else:
+            return False
+
+    def direct_inputs(self,infile,filetype):
+        
+        # Define some instance variables needed to work within this pipeline
+        self.infile  = infile
+        self.oldfile = '' 
+
+        # Try to load data
+        flag = self.mapping_logic(filetype)
+
+        if flag:
+            return PD.DataFrame(self.indata,columns=self.channels)
+        else:
+            return
+
+    def mapping_logic(self, filetype):
+        
+        if filetype == 'edf':
+            flag = self.load_edf()
+        return flag
 
     def raw_dataslice(self,sample_frequency,majoraxis='column'):
 
@@ -48,34 +104,24 @@ class data_loader:
         self.ncol = len(self.raw_data)
         self.nrow = max([ival.size for ival in self.raw_data])        
 
+
+    ###################################
+    #### User Provided Logic Below ####
+    ###################################
+
     def load_edf(self):
         """
         Load EDF data directly into the pipeline.
         """
-
+ 
         # Load current edf data into memory
         if self.infile != self.oldfile:
             try:
                 self.indata, self.channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
                 self.channels = [ival['label'] for ival in self.channel_metadata]
+                return True
             except OSError:
                 return False
-
-        # Create the metadata handler
-        metadata_handler.highlevel_info(self)
-
-        # Save the channel names
-        self.channels = [ichannel.upper() for ichannel in self.channels]
-        metadata_handler.set_channels(self,self.channels)
-
-        # Calculate the sample frequencies to save the information and make time cuts
-        sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
-        metadata_handler.set_sampling_frequency(self,sample_frequency)
-
-        # Get the rawdata
-        self.raw_dataslice(sample_frequency,majoraxis='row')
-
-        return True
 
     def load_iEEG(self,username,password,dataset_name):
 
@@ -95,17 +141,5 @@ class data_loader:
         sample_frequency = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
         metadata_handler.set_sampling_frequency(self,sample_frequency)
 
-
-class data_loader_test:
-
-    def __init__(self):
-        pass
-
-    def edf_test(self,infile):
-        try:
-            highlevel.read_edf_header(infile)
-            return (True,)
-        except Exception as e:
-            return (False,e)
 
 

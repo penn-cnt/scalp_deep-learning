@@ -27,7 +27,7 @@ class project_handlers:
         """
 
         # Import data into memory
-        load_flag = data_loader.load_edf(self) 
+        load_flag = data_loader.pipeline(self,'edf') 
 
         if load_flag:
             # Clean the channel names
