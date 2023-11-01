@@ -70,7 +70,8 @@ class data_loader:
         flag = self.mapping_logic(filetype)
 
         if flag:
-            return PD.DataFrame(self.indata,columns=self.channels)
+            sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
+            return PD.DataFrame(self.indata,columns=self.channels),sample_frequency[0]
         else:
             return
 
