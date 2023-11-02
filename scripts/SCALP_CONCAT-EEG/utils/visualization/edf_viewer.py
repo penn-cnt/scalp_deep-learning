@@ -19,11 +19,12 @@ from modules.channel_montage import *
 
 class data_viewer:
 
-    def __init__(self,infile):
+    def __init__(self, infile, args):
         
         # Save the input info
         self.infile = infile
         self.fname  = infile.split('/')[-1]
+        self.args   = args
 
         # Get the approx screen dimensions
         root        = tk.Tk()
@@ -58,6 +59,37 @@ class data_viewer:
         # Get the montage
         self.DF = CHMON.direct_inputs(DF,"HUP1020")
 
+        # Get the time axis
+        self.t_max = self.DF.shape[0]/self.fs
+        if self.args.t0_frac != None:
+            self.args.t0 = self.args.t0_frac*self.t_max
+        if self.args.dur_frac != None:
+            self.args.dur = self.args.dur_frac*self.t_max
+        if self.args.t0 == None and self.args.t0_frac == None:
+            self.args.t0 = 0
+        if self.args.dur == None and self.args.dur_frac == None:
+            self.args.dur = 10
+
+        # Read in optional sleep wake power data if provided
+        if self.args.sleep_wake_power != None:
+            self.read_sleep_wake_data()
+
+    def read_sleep_wake_data(self):
+
+        # Read in the pickled data associations
+        self.assoc_dict = pickle.load(open(self.args.sleep_wake_power,"rb"))
+
+        # Get the relevant keys
+        self.assoc_keys = (self.assoc_dict.keys())
+
+        # Look to see if the current file is in the associations
+        for ikey in self.assoc_keys:
+            print(self.fname)
+            print(self.assoc_dict[ikey]['file'])
+            if self.fname in self.assoc_dict[ikey]['file'].values:
+                print("Good")
+        sys.exit()
+
     def montage_plot(self):
         
         # Get the number of channels to plot
@@ -83,24 +115,35 @@ class data_viewer:
             # Get the data stats 
             idata,ymin,ymax = self.get_stats(ichan)
             xvals           = np.arange(idata.size)/self.fs
-            self.xlim_orig  = [xvals[0],xvals[-1]]
+            self.xlim_orig  = [self.args.t0,self.args.t0+self.args.dur]
 
             # Plot the data
             nstride = 2
             self.ax_dict[ichan].plot(xvals[::nstride],idata[::nstride],color='k')
+            self.ax_dict[ichan].set_xlim(self.xlim_orig)
             self.ax_dict[ichan].set_ylim([ymin,ymax])
             self.lim_dict[ichan] = [ymin,ymax]
             
             # Clean up the plot
-            xticklabels = self.ax_dict[ichan].get_xticklabels().copy()
             self.ax_dict[ichan].set_yticklabels([])
             self.ax_dict[ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
+        self.refkey2 = ichan
         
         # Add an xlabel to the final object
-        self.ax_dict[ichan].set_xticklabels(xticklabels)
-        self.ax_dict[ichan].set_xlabel("Time (s)",fontsize=14)
+        self.ax_dict[self.refkey2].set_xlabel("Time (s)",fontsize=14)
 
-        self.ax_dict[self.refkey].set_title(self.fname,fontsize=14)
+        # Set the title objects
+        upa        = u'\u2191'  # Up arrow
+        downa      = u'\u2193'  # Down arrow
+        lefta      = u'\u2190'  # Left arrow
+        righta     = u'\u2192'  # Right arrow
+        title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'a'=Show entire x-axis; '0'=reset y-scale; 'e'=Plot axes mouse is on."
+        title_str += '\n'
+        title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right;" %(upa, downa, lefta, righta)
+        self.ax_dict[self.refkey].set_title(title_str)
+        
+        # Final plot clean-up and event association
+        PLT.suptitle(self.fname,fontsize=14)
         fig.tight_layout()
         fig.canvas.mpl_connect('button_press_event', self.on_click)
         fig.canvas.mpl_connect('key_press_event', self.update_plot)
@@ -112,12 +155,18 @@ class data_viewer:
         idata,ymin,ymax = self.get_stats(channel)
         xvals           = np.arange(idata.size)/self.fs
 
+        # Get the current limits of the main viewer
+        xlims = self.ax_dict[self.refkey].get_xlim()
+        ylims = self.ax_dict[self.refkey].get_ylim()
+
         # Plot the enlarged view
         fig     = PLT.figure(dpi=100,figsize=(self.width,self.height))
         self.ax_enl = fig.add_subplot(111)
         self.ax_enl.plot(xvals,idata,color='k')
         self.ax_enl.set_xlabel("Time (s)",fontsize=14)
         self.ax_enl.set_ylabel(channel,fontsize=14)
+        self.ax_enl.set_xlim(xlims)
+        self.ax_enl.set_ylim(ylims)
         PLT.title(self.fname,fontsize=14)
         fig.tight_layout()
         PLT.show()
@@ -164,15 +213,34 @@ class data_viewer:
     ################################
 
     def on_click(self,event):
-        if event.button == 1:  # Check if left mouse button is clicked
+        """
+        Click driven events for the plot object.
+
+        Args:
+            Matplotlib event.
+        """
+
+        # Left click defines the zoom ranges
+        if event.button == 1:
+            # Loop over the axes and draw the zoom ranges
             for ikey in self.ax_dict.keys():
                 self.drawn_y.append(self.ax_dict[ikey].axvline(event.xdata, color='red', linestyle='--'))
-            PLT.draw()  # Redraw the plot to update the display
+            
+            # Redraw the plot to update the display
+            PLT.draw()
 
             # Update the event driven zoom object
             self.xlim.append(event.xdata)
 
     def update_plot(self,event):
+        """
+        Key driven events for the plot object.
+
+        Args:
+            Matplotlib event.
+        """
+
+        # Zoom on 'z' press and when there are two bounds
         if event.key == 'z' and len(self.xlim) == 2:
             
             # Set the xlimits
@@ -183,18 +251,39 @@ class data_viewer:
             for iobj in self.drawn_y:
                 iobj.remove()
             self.draw_y = []
+        # Reset the -axes of the plot
         elif event.key == 'r':
             self.ax_dict[self.refkey].set_xlim(self.xlim_orig)
             self.xlim = []
-        elif event.key == '+':
+        # Increase gain
+        elif event.key == 'up':
             for ikey in self.ax_dict.keys():
                 self.yscaling(ikey,0.1)
-        elif event.key == '-':
+        # Decrease gain
+        elif event.key == 'down':
             for ikey in self.ax_dict.keys():
                 self.yscaling(ikey,-0.1)
+        # Shift back in time
+        elif event.key == 'left':
+            current_xlim = self.ax_dict[self.refkey].get_xlim()
+            current_xlim = [ival-self.args.dur for ival in current_xlim]
+            for ikey in self.ax_dict.keys():
+                self.ax_dict[ikey].set_xlim(current_xlim)
+        # Shift forward in time
+        elif event.key == 'right':
+            current_xlim = self.ax_dict[self.refkey].get_xlim()
+            current_xlim = [ival+self.args.dur for ival in current_xlim]
+            for ikey in self.ax_dict.keys():
+                self.ax_dict[ikey].set_xlim(current_xlim)
+        # Show the entire x-axis
+        elif event.key == 'a':
+            for ikey in self.ax_dict.keys():
+                self.ax_dict[ikey].set_xlim([0,self.t_max])
+        # Reset gain
         elif event.key == '0':
             for ikey in self.ax_dict.keys():
                 self.ax_dict[ikey].set_ylim(self.lim_dict[ikey])
+        # Enlarge a singular plot
         elif event.key == 'e':
             for ikey in self.ax_dict.keys():
                 if event.inaxes == self.ax_dict[ikey]:
@@ -251,6 +340,17 @@ if __name__ == '__main__':
     prep_group = parser.add_argument_group('Data preparation options')
     prep_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
 
+    time_group = parser.add_mutually_exclusive_group()
+    time_group.add_argument("--t0", type=float, help="Start time to plot from in seconds.")
+    time_group.add_argument("--t0_frac", type=float, help="Start time to plot from in fraction of total data.")
+
+    duration_group = parser.add_mutually_exclusive_group()
+    duration_group.add_argument("--dur", type=float, help="Duration to plot in seconds.")
+    duration_group.add_argument("--dur_frac", type=float, help="Duration to plot in fraction of total data.")
+
+    misc_group = parser.add_argument_group('Data preparation options')
+    misc_group.add_argument("--sleep_wake_power", type=str, help="Optional file with identified groups in alpha/delta for sleep/wake patients")
+
     args = parser.parse_args()
 
     # Create the file list to read in
@@ -259,8 +359,8 @@ if __name__ == '__main__':
     else:
         files = glob(args.wildcard)
 
-    # Get the data prepared for viewing
+    # Iterate over the data and create the relevant plots
     for ifile in files:
-        DV = data_viewer(ifile)
+        DV = data_viewer(ifile,args)
         DV.data_prep()
         DV.montage_plot()
