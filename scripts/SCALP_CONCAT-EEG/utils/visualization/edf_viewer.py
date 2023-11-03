@@ -84,11 +84,14 @@ class data_viewer:
 
         # Look to see if the current file is in the associations
         for ikey in self.assoc_keys:
+            ufiles = self.assoc_dict[ikey]['file'].unique()
+            print(ufiles)
             print(self.fname)
-            print(self.assoc_dict[ikey]['file'])
-            if self.fname in self.assoc_dict[ikey]['file'].values:
-                print("Good")
-        sys.exit()
+            print(self.fname in ufiles)
+            #print(self.assoc_dict[ikey]['file'])
+            #if self.fname in self.assoc_dict[ikey]['file'].values:
+            #    print("Good")
+            sys.exit()
 
     def montage_plot(self):
         

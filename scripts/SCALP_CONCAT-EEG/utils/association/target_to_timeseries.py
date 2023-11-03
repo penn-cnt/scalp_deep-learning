@@ -1,8 +1,10 @@
+import sys
 import pickle
 import argparse
 import itertools
 import numpy as np
 import pandas as PD
+from glob import glob
 from tqdm import tqdm
 from scipy.signal import find_peaks
 
@@ -110,7 +112,10 @@ class sleep_state_power:
                 self.output[itag][ichan] = -1
             file_ref   = self.output[itag]['file'].values
             tstart_ref = self.output[itag]['t_start'].values
-            tend_ref   = self.output[itag]['t_end'].values
+            range_ref  = np.arange(file_ref.size)
+
+            # Create a numpy array to reference for searcing (faster than pandas dataframe lookup)
+            lookup_array = iDF[id_cols].values
 
             for ichannel in tqdm(self.channels, desc='Channel searches:', total=len(self.channels), leave=False):
                 values  = iDF[ichannel].values.astype('float')
@@ -126,13 +131,16 @@ class sleep_state_power:
                     
                     # Get the indices in bounds
                     jinds = (values>=lo_bound)&(values<=hi_bound)
-                    jDF   = iDF.iloc[jinds][id_cols]
+                    jarr  = lookup_array[jinds]
                     
                     # Loop over the results (yes again ;_;) to populate the reference dict )
-                    for irow in jDF.values:
-
-                        inds          = (file_ref==irow[0])&(tstart_ref==irow[1])&(tend_ref==irow[2])
-                        outvals[inds] = ipeak 
+                    for irow in jarr:
+                        #inds          = (file_ref==irow[0])&(tstart_ref==irow[1])
+                        finds         = np.zeros(file_ref.size).astype('bool')
+                        inds          = (tstart_ref==irow[1])
+                        finds_numeric = [i for i in range_ref[inds] if file_ref[i] == irow[0]] 
+                        finds[finds_numeric] = True
+                        outvals[inds&finds] = ipeak 
                 self.output[itag][ichannel] = outvals
             pickle.dump(self.output,open(self.args.outfile,"wb"))
 
