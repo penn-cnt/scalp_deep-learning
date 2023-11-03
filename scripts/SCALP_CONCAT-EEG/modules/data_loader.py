@@ -40,6 +40,15 @@ class data_loader:
         pass
 
     def pipeline(self,filetype):
+        """
+        Method for working within the larger pipeline environment to load data.
+
+        Args:
+            filetype (str): filetype to read in (i.e. edf/mef/etc.)
+
+        Returns:
+            bool: Flag if data loaded correctly
+        """
         
         # Logic gate for filetyping, returns if load succeeded
         flag = self.mapping_logic(filetype)
@@ -64,7 +73,17 @@ class data_loader:
             return False
 
     def direct_inputs(self,infile,filetype):
-        
+        """
+        Method for loading data directly outside of the pipeline environment.
+
+        Args:
+            infile (str): Path to the file to read in.
+            filetype (str): filetype to read in (i.e. edf/mef/etc.)
+
+        Returns:
+            bool: Flag if data loaded correctly
+        """
+
         # Define some instance variables needed to work within this pipeline
         self.infile  = infile
         self.oldfile = '' 
@@ -80,12 +99,28 @@ class data_loader:
             return None,None
 
     def mapping_logic(self, filetype):
+        """
+        Logic gates for which data loader to use
+
+        Args:
+            filetype (str): filetype to read in (i.e. edf/mef/etc.)
+
+        Returns:
+            bool: Flag if data loaded correctly
+        """
         
         if filetype == 'edf':
             flag = self.load_edf()
         return flag
 
     def raw_dataslice(self,sample_frequency,majoraxis='column'):
+        """
+        Logic for cutting the data up by time slices. Doing so at the beginning reduces memory load.
+
+        Args:
+            sample_frequency (int): Sampling frequency of the data
+            majoraxis (str, optional): Orientation of the time vectors. Defaults to 'column'.
+        """
 
         # Get only the time slices of interest
         self.raw_data = []

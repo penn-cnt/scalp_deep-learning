@@ -25,17 +25,13 @@ class channel_montage:
     def __init__(self):
         pass
 
-    def direct_inputs(self,DF,montage):
-        
-        # Save the user provided dataframe
-        self.dataframe = DF
-
-        # Apply montage logic
-        montage_data = self.montage_logic(montage)
-
-        return PD.DataFrame(montage_data,columns=self.montage_channels)
-
     def pipeline(self):
+        """
+        Method for working within the larger pipeline environment to get channel montages.
+
+        Returns:
+            array: Array of montage data. (Issue with inheritance requires a direct passback and not through instance.)
+        """
 
         # Apply the montage logic
         montage_data = self.montage_logic(self.args.montage)
@@ -45,7 +41,36 @@ class channel_montage:
 
         return montage_data
 
+    def direct_inputs(self,DF,montage):
+        """
+        Method for getting channel montages directly outside of the pipeline environment.
+
+        Args:
+            DF (datafram): Dataframe to get montage for.
+            montage (str): Montage to perform
+
+        Returns:
+            dataframe: New dataframe with montage data and channel names
+        """
+        
+        # Save the user provided dataframe
+        self.dataframe = DF
+
+        # Apply montage logic
+        montage_data = self.montage_logic(montage)
+
+        return PD.DataFrame(montage_data,columns=self.montage_channels)
+
     def montage_logic(self, montage):
+        """
+        Logic gate for how to montage the data.
+
+        Args:
+            montage (str): User provided string for type of montage to perform.
+
+        Returns:
+            array: array of montage data
+        """
 
         # Logic for different montages
         if montage == "HUP1020":

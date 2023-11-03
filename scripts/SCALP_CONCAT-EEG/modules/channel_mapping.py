@@ -18,7 +18,7 @@ class channel_mapping:
 
     New functions should look for the cross section of their mapping to the self.clean_channel_map data.
 
-    Output should be a new list of channels called self.channel_map_out. Also required is the indices of intersection. (This is to update the metadata properly)
+    Output should be a new list of channels called self.channel_map_out. Also required are the indices of intersection. (This is to update the metadata properly)
     """
 
     def __init__(self):
@@ -28,19 +28,14 @@ class channel_mapping:
         Args:
             clean_method (str, optional): Mapping method to use, see --help for complete list.
         """
-        
-    def direct_inputs(self,channels,channel_mapping):
-
-        # Store the argument of chanel mapping to class instance
-        self.clean_channel_map = channels
-        self.channel_mapping   = channel_mapping
-
-        # Apply mapping logic
-        self.mapping_logic()
-
-        return self.channel_map_out
 
     def pipeline(self,channel_mapping):
+        """
+        Method for working within the larger pipeline environment to get channel mappings.
+
+        Args:
+            channel_mapping (str): String that defines the logic for which mapping to use.
+        """
 
         # Store the argument of chanel mapping to class instance
         self.channel_mapping = channel_mapping
@@ -52,7 +47,28 @@ class channel_mapping:
         metadata_handler.set_channels(self,self.channel_map_out)
         metadata_handler.set_sampling_frequency(self,self.metadata[self.file_cntr]['fs'][self.channel_map_out_inds])
 
+    def direct_inputs(self,channels,channel_mapping):
+        """
+        Method for getting channel mappings directly outside of the pipeline environment.
+
+        Args:
+            channels (list): List of channel names to perform mapping on.
+            channel_mapping (str): String that defines the logic for which mapping to use.
+        """
+
+        # Store the argument of chanel mapping to class instance
+        self.clean_channel_map = channels
+        self.channel_mapping   = channel_mapping
+
+        # Apply mapping logic
+        self.mapping_logic()
+
+        return self.channel_map_out
+
     def mapping_logic(self):
+        """
+        Logic gates for the different mapping options.
+        """
 
         # Logic for different mappings
         if self.channel_mapping == "HUP1020":
