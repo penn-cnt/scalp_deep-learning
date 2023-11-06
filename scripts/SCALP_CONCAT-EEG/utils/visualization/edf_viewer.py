@@ -73,6 +73,8 @@ class data_viewer:
         # Read in optional sleep wake power data if provided
         if self.args.sleep_wake_power != None:
             self.read_sleep_wake_data()
+        else:
+            self.t_flag = False
 
     def read_sleep_wake_data(self):
 
@@ -95,7 +97,45 @@ class data_viewer:
         self.color_cnt  = 0
         self.color_keys = list(self.assoc_keys)
         self.ncolor     = len(self.color_keys)
-        self.t_obj      = {}
+        self.t_flag     = True
+        self.t_colors   = ['r','b','g','m']
+
+    def plot_sleep_wake(self):
+
+        x_list = {}
+        y_list = {}
+        for ikey in self.color_keys:
+            x_list[ikey] = {}
+            y_list[ikey] = {}
+            iDF          = self.color_dict[ikey]
+
+            # Loop over the channels and plot results
+            for ichan in self.DF.columns:
+
+                x_list[ikey][ichan] = []
+                y_list[ikey][ichan] = []
+
+                # Get the data stats 
+                idata,ymin,ymax = self.get_stats(ichan)
+                xvals           = np.arange(idata.size)/self.fs
+
+                # Get the list of target info to iterate over
+                values  = iDF[ichan].values
+                uvalues = np.unique(values)
+                uvalues = uvalues[(uvalues!=-1)]
+                for ii,ivalue in enumerate(uvalues):
+
+                    # Get the different boundaries
+                    inds    = (values==ivalue)
+                    t0_vals = iDF['t_start'].values[inds].astype('float')
+                    t1_vals = iDF['t_end'].values[inds].astype('float')
+
+                    # Loop over the times and then plot the scatter points
+                    for itr in range(t0_vals.size):
+                        inds_t = (xvals>=t0_vals[itr])&(xvals<=t1_vals[itr])
+                        x_list[ikey][ichan].append(xvals[inds_t])
+                        y_list[ikey][ichan].append(idata[inds_t])
+        return x_list,y_list
 
     def montage_plot(self):
         
@@ -107,17 +147,17 @@ class data_viewer:
         npnt       = int(72*width_frac)
         
         # Create the plotting environment
-        fig           = PLT.figure(dpi=100,figsize=(self.width,self.height))
-        gs            = fig.add_gridspec(nchan, 1, hspace=0)
+        self.fig      = PLT.figure(dpi=100,figsize=(self.width,self.height))
+        gs            = self.fig.add_gridspec(nchan, 1, hspace=0)
         self.ax_dict  = {}
         self.lim_dict = {}
         for idx,ichan in enumerate(self.DF.columns):
             # Define the axes
             if idx == 0:
-                self.ax_dict[ichan] = fig.add_subplot(gs[idx, 0])
+                self.ax_dict[ichan] = self.fig.add_subplot(gs[idx, 0])
                 self.refkey         = ichan
             else:
-                self.ax_dict[ichan] = fig.add_subplot(gs[idx, 0],sharex=self.ax_dict[self.refkey])
+                self.ax_dict[ichan] = self.fig.add_subplot(gs[idx, 0],sharex=self.ax_dict[self.refkey])
 
             # Get the data stats 
             idata,ymin,ymax = self.get_stats(ichan)
@@ -130,12 +170,26 @@ class data_viewer:
             self.ax_dict[ichan].set_xlim(self.xlim_orig)
             self.ax_dict[ichan].set_ylim([ymin,ymax])
             self.lim_dict[ichan] = [ymin,ymax]
-            
+
             # Clean up the plot
             self.ax_dict[ichan].set_yticklabels([])
             self.ax_dict[ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
         self.refkey2 = ichan
-        
+
+        # Plot and hide target data as needed
+        self.t_obj = {}
+        if self.t_flag:
+            if self.args.sleep_wake_power != None:
+                x_list,y_list = self.plot_sleep_wake()
+
+                for ii,ikey in enumerate(list(x_list.keys())):
+                    self.t_obj[ikey] = []
+                    for ichan in list(x_list[ikey].keys()):
+                        ix = x_list[ikey][ichan]
+                        iy = y_list[ikey][ichan]
+                        for jj in range(len(ix)):                       
+                            self.t_obj[ikey].append(self.ax_dict[ichan].scatter(ix[jj],iy[jj],s=2,c=self.t_colors[ii],visible=False))
+
         # Add an xlabel to the final object
         self.ax_dict[self.refkey2].set_xlabel("Time (s)",fontsize=14)
 
@@ -144,16 +198,16 @@ class data_viewer:
         downa      = u'\u2193'  # Down arrow
         lefta      = u'\u2190'  # Left arrow
         righta     = u'\u2192'  # Right arrow
-        title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'a'=Show entire x-axis; '0'=reset y-scale; 'e'=Plot axes mouse is on."
-        title_str += '\n'
-        title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right;" %(upa, downa, lefta, righta)
-        self.ax_dict[self.refkey].set_title(title_str)
+        self.title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'a'=Show entire x-axis; '0'=reset y-scale; 'e'=Plot axes mouse is on.; 't'=Toggle targets"
+        self.title_str += '\n'
+        self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right;" %(upa, downa, lefta, righta)
+        self.ax_dict[self.refkey].set_title(self.title_str)
         
         # Final plot clean-up and event association
         PLT.suptitle(self.fname,fontsize=14)
-        fig.tight_layout()
-        fig.canvas.mpl_connect('button_press_event', self.on_click)
-        fig.canvas.mpl_connect('key_press_event', self.update_plot)
+        self.fig.tight_layout()
+        self.fig.canvas.mpl_connect('button_press_event', self.on_click)
+        self.fig.canvas.mpl_connect('key_press_event', self.update_plot)
         PLT.show()
 
     def enlarged_plot(self,channel):
@@ -297,50 +351,25 @@ class data_viewer:
                     self.enlarged_plot(ikey)
         # Iterate over target dictionary if available to show mapped colors
         elif event.key == 't' and hasattr(self,'color_dict'):
-            
-            # Some hardcoded colors so we can associate peaks to a known color
-            colors = ['r','b','g','m']
+            for icnt in range(len(self.t_colors)):
+                ikey    = self.color_keys[icnt]
+                objects = self.t_obj[ikey]
+                for iobj in objects:
+                    if icnt == self.color_cnt:
+                        # Change visibility
+                        iobj.set_visible(True)
 
-            # Clear out the dictionary storing plotted target options as needed
-            if len(list(self.t_obj.keys()))!=0:
-                print("Removing previous target artists.")
-                for ikey in list(self.t_obj.keys()):
-                    self.t_obj[ikey].remove()
-                    self.ax_dict[ikey].figure.canvas.draw_idle()
-                self.t_obj = {}
-                PLT.draw()
+                        # Update title
+                        PLT.suptitle(self.fname+" | "+str(ikey),fontsize=14)
+                    else:
+                        iobj.set_visible(False)
 
             if self.color_cnt < self.ncolor:
+                self.color_cnt += 1
+            else:
+                self.color_cnt = 0
+                PLT.suptitle(self.fname,fontsize=14)
 
-                # Get the relevant dataslice from the target dataframe
-                iDF    = self.color_dict[self.color_keys[self.color_cnt]]
-
-                # Loop over the channels and plot results
-                for ichan in self.DF.columns:
-
-                    # Get the data stats 
-                    idata,ymin,ymax = self.get_stats(ichan)
-                    xvals           = np.arange(idata.size)/self.fs
-
-                    # Get the list of target info to iterate over
-                    values  = iDF[ichan].values
-                    uvalues = np.unique(values)
-                    uvalues = uvalues[(uvalues!=-1)]
-                    for ii,ivalue in enumerate(uvalues):
-
-                        # Get the different boundaries
-                        inds    = (values==ivalue)
-                        t0_vals = iDF['t_start'].values[inds].astype('float')
-                        t1_vals = iDF['t_end'].values[inds].astype('float')
-
-                        # Loop over the times and then plot the scatter points
-                        for itr in range(t0_vals.size):
-                            inds_t            = (xvals>=t0_vals[itr])&(xvals<=t1_vals[itr])
-                            x_t               = xvals[inds_t]
-                            y_t               = idata[inds_t]
-                            self.t_obj[ichan] = self.ax_dict[ichan].scatter(x_t,y_t,c=colors[ii],s=2)
-            self.color_cnt += 1
-            if self.color_cnt > self.ncolor: self.color_cnt=0
         PLT.draw()
 
 
