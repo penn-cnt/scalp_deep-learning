@@ -329,6 +329,13 @@ if __name__ == "__main__":
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     args = parser.parse_args()
 
+    # Make the output directory as needed
+    if not os.path.exists(args.outdir):
+        print("Output directory does not exist. Make directory at %s (Y/y)?" %(args.outdir))
+        user_input = input("Response: ")
+        if user_input.lower() == 'y':
+            os.system("mkdir -p %s" %(args.outdir))
+
     # Set the input file list
     if args.input == 'CSV':
         
@@ -339,7 +346,7 @@ if __name__ == "__main__":
         file_path = prompt("Please enter path to input file csv: ", completer=completer)
 
         # Read in csv file
-        input_csv   = PD.read_csv("./sample_input.csv")
+        input_csv   = PD.read_csv(file_path)
         files       = input_csv['filepath'].values
         start_times = input_csv['start_time'].values
         end_times   = input_csv['end_time'].values

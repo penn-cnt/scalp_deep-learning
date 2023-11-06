@@ -104,9 +104,11 @@ class data_viewer:
 
         x_list = {}
         y_list = {}
+        c_list = {}
         for ikey in self.color_keys:
             x_list[ikey] = {}
             y_list[ikey] = {}
+            c_list[ikey] = {}
             iDF          = self.color_dict[ikey]
 
             # Loop over the channels and plot results
@@ -114,6 +116,7 @@ class data_viewer:
 
                 x_list[ikey][ichan] = []
                 y_list[ikey][ichan] = []
+                c_list[ikey][ichan] = []
 
                 # Get the data stats 
                 idata,ymin,ymax = self.get_stats(ichan)
@@ -135,7 +138,8 @@ class data_viewer:
                         inds_t = (xvals>=t0_vals[itr])&(xvals<=t1_vals[itr])
                         x_list[ikey][ichan].append(xvals[inds_t])
                         y_list[ikey][ichan].append(idata[inds_t])
-        return x_list,y_list
+                        c_list[ikey][ichan].append(self.t_colors[ii])
+        return x_list,y_list,c_list
 
     def montage_plot(self):
         
@@ -180,15 +184,16 @@ class data_viewer:
         self.t_obj = {}
         if self.t_flag:
             if self.args.sleep_wake_power != None:
-                x_list,y_list = self.plot_sleep_wake()
+                x_list,y_list,c_list = self.plot_sleep_wake()
 
                 for ii,ikey in enumerate(list(x_list.keys())):
                     self.t_obj[ikey] = []
                     for ichan in list(x_list[ikey].keys()):
                         ix = x_list[ikey][ichan]
                         iy = y_list[ikey][ichan]
+                        ic = c_list[ikey][ichan]
                         for jj in range(len(ix)):                       
-                            self.t_obj[ikey].append(self.ax_dict[ichan].scatter(ix[jj],iy[jj],s=2,c=self.t_colors[ii],visible=False))
+                            self.t_obj[ikey].append(self.ax_dict[ichan].scatter(ix[jj],iy[jj],s=2,c=ic[jj],visible=False))
 
         # Add an xlabel to the final object
         self.ax_dict[self.refkey2].set_xlabel("Time (s)",fontsize=14)
