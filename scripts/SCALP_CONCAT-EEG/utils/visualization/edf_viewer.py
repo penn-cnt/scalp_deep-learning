@@ -83,15 +83,19 @@ class data_viewer:
         self.assoc_keys = (self.assoc_dict.keys())
 
         # Look to see if the current file is in the associations
+        self.color_dict = {}
         for ikey in self.assoc_keys:
-            ufiles = self.assoc_dict[ikey]['file'].unique()
-            print(ufiles)
-            print(self.fname)
-            print(self.fname in ufiles)
-            #print(self.assoc_dict[ikey]['file'])
-            #if self.fname in self.assoc_dict[ikey]['file'].values:
-            #    print("Good")
-            sys.exit()
+            fvals  = self.assoc_dict[ikey]['file'].values
+            ufiles = np.unique(fvals)
+            if self.fname in ufiles:
+                inds = (fvals==self.fname)
+                self.color_dict[ikey] = self.assoc_dict[ikey].iloc[inds]
+        
+        # Create a few variables to iterate through the dictionary as needed
+        self.color_cnt  = 0
+        self.color_keys = list(self.assoc_keys)
+        self.ncolor     = len(self.color_keys)
+        self.t_obj      = {}
 
     def montage_plot(self):
         
@@ -291,6 +295,52 @@ class data_viewer:
             for ikey in self.ax_dict.keys():
                 if event.inaxes == self.ax_dict[ikey]:
                     self.enlarged_plot(ikey)
+        # Iterate over target dictionary if available to show mapped colors
+        elif event.key == 't' and hasattr(self,'color_dict'):
+            
+            # Some hardcoded colors so we can associate peaks to a known color
+            colors = ['r','b','g','m']
+
+            # Clear out the dictionary storing plotted target options as needed
+            if len(list(self.t_obj.keys()))!=0:
+                print("Removing previous target artists.")
+                for ikey in list(self.t_obj.keys()):
+                    self.t_obj[ikey].remove()
+                    self.ax_dict[ikey].figure.canvas.draw_idle()
+                self.t_obj = {}
+                PLT.draw()
+
+            if self.color_cnt < self.ncolor:
+
+                # Get the relevant dataslice from the target dataframe
+                iDF    = self.color_dict[self.color_keys[self.color_cnt]]
+
+                # Loop over the channels and plot results
+                for ichan in self.DF.columns:
+
+                    # Get the data stats 
+                    idata,ymin,ymax = self.get_stats(ichan)
+                    xvals           = np.arange(idata.size)/self.fs
+
+                    # Get the list of target info to iterate over
+                    values  = iDF[ichan].values
+                    uvalues = np.unique(values)
+                    uvalues = uvalues[(uvalues!=-1)]
+                    for ii,ivalue in enumerate(uvalues):
+
+                        # Get the different boundaries
+                        inds    = (values==ivalue)
+                        t0_vals = iDF['t_start'].values[inds].astype('float')
+                        t1_vals = iDF['t_end'].values[inds].astype('float')
+
+                        # Loop over the times and then plot the scatter points
+                        for itr in range(t0_vals.size):
+                            inds_t            = (xvals>=t0_vals[itr])&(xvals<=t1_vals[itr])
+                            x_t               = xvals[inds_t]
+                            y_t               = idata[inds_t]
+                            self.t_obj[ichan] = self.ax_dict[ichan].scatter(x_t,y_t,c=colors[ii],s=2)
+            self.color_cnt += 1
+            if self.color_cnt > self.ncolor: self.color_cnt=0
         PLT.draw()
 
 
