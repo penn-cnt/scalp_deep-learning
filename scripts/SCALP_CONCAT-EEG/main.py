@@ -321,7 +321,7 @@ if __name__ == "__main__":
     target_group.add_argument("--targets", action='store_true', default=False, help="Join target data with the final dataframe")
 
     output_group = parser.add_argument_group('Output Options')
-    output_group.add_argument("--outdir", default="../../user_data/derivative/", help="Output directory.") 
+    output_group.add_argument("--outdir", required=True, default="../../user_data/derivative/", help="Output directory.") 
     output_group.add_argument("--exclude", help="Exclude file. If any of the requested data is bad, the path and error gets dumped here. \
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
 
@@ -434,11 +434,15 @@ if __name__ == "__main__":
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None and not args.no_preprocess_flag:
         from modules import preprocessing
-        args.preprocess_file = "configs/preprocessing_"+timestamp+".yaml"
+        dirpath              = args.outdir+"configs/"
+        os.system("mkdir -p %s" %(dirpath))
+        args.preprocess_file = dirpath+"preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
     if args.feature_file == None:
         from modules import features
-        args.feature_file = "features_"+timestamp+".yaml"
+        dirpath           = args.outdir+"configs/"
+        os.system("mkdir -p %s" %(dirpath))
+        args.feature_file = dirpath+"features_"+timestamp+".yaml"
         config_handler    = make_config(features,args.feature_file)
 
     # Multithread options
