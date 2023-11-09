@@ -2,15 +2,20 @@
 import numpy as np
 import pandas as PD
 
-# Import the classes
-from .metadata_handler import *
-from .target_loader import *
-from .data_loader import *
-from .channel_mapping import *
-from .dataframe_manager import *
-from .channel_clean import *
-from .output_manager import *
-from .data_viability import *
+# Import the add on classes
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
 
 class channel_montage:
     """

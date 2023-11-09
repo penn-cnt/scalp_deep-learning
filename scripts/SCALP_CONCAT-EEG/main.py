@@ -8,7 +8,7 @@ import os
 import sys
 import glob
 import uuid
-import time
+import yaml
 import argparse
 import datetime
 import numpy as np
@@ -46,9 +46,9 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         """
 
         # Make args visible across inheritance
-        infiles            = input_params[:,0]
-        start_times        = input_params[:,1].astype('float')
-        end_times          = input_params[:,2].astype('float')
+        self.infiles       = input_params[:,0]
+        self.start_times   = input_params[:,1].astype('float')
+        self.end_times     = input_params[:,2].astype('float')
         self.args          = args
         self.unique_id     = uuid.uuid4()
         self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
@@ -57,7 +57,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # Create the metalevel container
         metadata_handler.__init__(self)
-
+ 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
         
@@ -76,81 +76,6 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # Save the results
         output_manager.save_features(self)
-
-    def file_manager(self,infiles, start_times, end_times):
-        """
-        Loop over the input files and send them to the correct data handler.
-
-        Args:
-            infiles (str list): Path to each dataset
-            start_times (float list): Start times in seconds to start sampling
-            end_times (float list): End times in seconds to end sampling
-        """
-
-        # Intialize a variable that stores the previous filepath. This allows us to cache data and only read in as needed. (i.e. new path != old path)
-        self.oldfile = None  
-
-        # Loop over files to read and store each ones data
-        nfile = len(infiles)
-        desc  = "Initial load with id %s:" %(self.unique_id)
-        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent):            
-        
-            # Save current file info
-            self.infile    = ifile
-            self.t_start   = start_times[ii]
-            self.t_end     = end_times[ii]
-            
-            # Initialize the metadata container
-            self.file_cntr = ii
-
-            # Case statement the workflow
-            if self.args.project.lower() == 'scalp_00':
-                project_handlers.scalp_00(self)
-            
-            # Update file strings for cached read in
-            self.oldfile = self.infile
-
-    def preprocessing_manager(self):
-
-        # Apply preprocessing as needed
-        if not self.args.no_preprocess_flag:
-            
-            # Barrier the code for better output formatting
-            if self.args.multithread:
-                self.barrier.wait()
-
-                # Add a wait for proper progress bars
-                time.sleep(self.worker_number)
-
-                # Clean up the screen
-                if self.worker_number == 0:
-                    sys.stdout.write("\033[H")
-                    sys.stdout.flush()
-
-            # Process
-            preprocessing.__init__(self)
-
-    def feature_manager(self):
-
-        if not self.args.no_feature_flag:
-            if self.args.multithread:
-                self.barrier.wait()
-
-                # Add a wait for proper progress bars
-                time.sleep(self.worker_number)
-
-                # Clean up the screen
-                if self.worker_number == 0:
-                    sys.stdout.write("\033[H")
-                    sys.stdout.flush()
-            features.__init__(self)
-
-    def target_manager(self):
-
-        if self.args.targets:
-            for ikey in self.metadata.keys():
-                ifile   = self.metadata[ikey]['file']
-                target_loader.load_targets(self,ifile,'bids','target')
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -262,17 +187,10 @@ def start_analysis(data_chunk,args,worker_id,barrier):
 
 if __name__ == "__main__":
 
-    # Define the allowed keywords a user can input
-    allowed_input_args      = {'CSV' : 'Use a comma separated file of files to read in. (default)',
-                               'MANUAL' : "Manually enter filepaths.",
-                               'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
-    allowed_project_args    = {'SCALP_00': "Basic scalp processing pipeline. (bjprager 10/2023)"}
-    allowed_channel_args    = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
-                               'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
-    allowed_montage_args    = {'HUP1020': "Use a 10-20 montage.",
-                               'COMMON_AVERAGE': "Use a common average montage."}
-    allowed_viability_args  = {'VIABLE_DATA': "Drop datasets that contain a NaN column. (default)",
-                               'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
+    # Read in the allowed arguments
+    raw_args = yaml.safe_load(open("allowed_arguments.yaml","r"))
+    for ikey in raw_args.keys():
+        exec("%s=%s" %(ikey,raw_args[ikey]))
     
     # Make a useful help string for each keyword
     allowed_input_help     = make_help_str(allowed_input_args)

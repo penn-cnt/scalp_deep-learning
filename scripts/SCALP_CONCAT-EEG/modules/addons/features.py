@@ -7,7 +7,7 @@ from tqdm import tqdm
 from scipy.signal import welch
 
 # Local imports
-from .yaml_loader import *
+from modules.core.yaml_loader import *
 
 class signal_processing:
     

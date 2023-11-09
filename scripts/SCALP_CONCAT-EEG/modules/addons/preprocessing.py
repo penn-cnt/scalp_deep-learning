@@ -7,7 +7,7 @@ from fractions import Fraction
 from scipy.signal import resample_poly, butter, filtfilt
 
 # Local imports
-from .yaml_loader import *
+from modules.core.yaml_loader import *
 
 class signal_processing:
     
