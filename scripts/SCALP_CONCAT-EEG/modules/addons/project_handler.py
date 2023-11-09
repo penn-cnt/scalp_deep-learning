@@ -57,26 +57,6 @@ class project_handlers:
             # Update file strings for cached read in
             self.oldfile = self.infile
 
-    def preprocessing_manager(self):
-
-        # Apply preprocessing as needed
-        if not self.args.no_preprocess_flag:
-            
-            # Barrier the code for better output formatting
-            if self.args.multithread:
-                self.barrier.wait()
-
-                # Add a wait for proper progress bars
-                time.sleep(self.worker_number)
-
-                # Clean up the screen
-                if self.worker_number == 0:
-                    sys.stdout.write("\033[H")
-                    sys.stdout.flush()
-
-            # Process
-            preprocessing.__init__(self)
-
     def feature_manager(self):
 
         if not self.args.no_feature_flag:
@@ -123,12 +103,28 @@ class project_handlers:
             channel_mapping.pipeline(self)
 
             # Once we have the cleaned channel names, and the appropriate column slices, make a dataframe
-            # Data up to this point is kept as a raw array due to variable input data formats and because
+            # Data up to this point is kept as a raw array due to variable input formats and because
             # dataframes take up more memory and have slower operations.
             # This can go anywhere after the initial data load, and before the preprocessing, montaging, and feature extraction.
             dataframe_manager.__init__(self)
-            dataframe_manager.column_subsection(self,self.channel_map_out)            
+            dataframe_manager.column_subsection(self,self.channel_map_out)  
 
+            # We can use the dataframe to set criteria for continued analysis.
+            # In this example, the data must have at least the sampling frequency worth of values
+            if self.dataframe.shape[0] > int(max(self.metadata[self.file_cntr]['fs'])):
+                
+                # You can either montage first, then preprocess, or vice versa.
+                # At present you cannot mix these steps. But later updates will allow
+                # to provide the ability to define multiple preprocessing blocks that
+                # can be ordered independently.
+                df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
+
+                # Montage the data
+                df = channel_montage.pipeline(self,df)
+
+                # Store the data to the output handler so we can pass everything to the feature extractor
+                # Returning to a list of arrays so it can be passed to different modeling back-ends like PyTorch.
+                output_manager.update_output_list(self,df.values)
 
     ###################################
     #### User Provided Logic Below ####
@@ -154,9 +150,8 @@ class project_handlers:
             dataframe_manager.column_subsection(self,self.channel_map_out)
 
             # Perform next steps only if we have a viable dataset
-            if self.dataframe.shape[0] <= int(max(self.metadata[self.file_cntr]['fs'])):
-                pass
-            else:
+            if self.dataframe.shape[0] > int(max(self.metadata[self.file_cntr]['fs'])):
+
                 # Put the data into a specific montage
                 montage_data = channel_montage.pipeline(self)
                 dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)

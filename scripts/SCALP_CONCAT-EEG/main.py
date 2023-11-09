@@ -62,13 +62,12 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         output_manager.__init__(self)
         
         # File management
-        self.file_manager(infiles, start_times, end_times)
+        project_handler.file_manader(self)
 
         # Select valid data slices
         data_viability.__init__(self)
 
-        # Pass to preprocessing and feature selection managers
-        self.preprocessing_manager()
+        # Pass to feature selection managers
         self.feature_manager()
 
         # Associate targets if requested
@@ -76,6 +75,28 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # Save the results
         output_manager.save_features(self)
+
+    def feature_manager(self):
+
+        if not self.args.no_feature_flag:
+            if self.args.multithread:
+                self.barrier.wait()
+
+                # Add a wait for proper progress bars
+                time.sleep(self.worker_number)
+
+                # Clean up the screen
+                if self.worker_number == 0:
+                    sys.stdout.write("\033[H")
+                    sys.stdout.flush()
+            features.__init__(self)
+
+    def target_manager(self):
+
+        if self.args.targets:
+            for ikey in self.metadata.keys():
+                ifile   = self.metadata[ikey]['file']
+                target_loader.load_targets(self,ifile,'bids','target')
 
 class CustomFormatter(argparse.HelpFormatter):
     """

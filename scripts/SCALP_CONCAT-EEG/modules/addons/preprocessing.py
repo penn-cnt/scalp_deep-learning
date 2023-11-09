@@ -133,7 +133,7 @@ class preprocessing:
     Functions should return the new vector array for each channel/montage channel to be propagated forward.
     """
     
-    def __init__(self):
+    def __init__(self,dataset,fs):
         """
         Use the preprocessing configuration file to step through the preprocessing pipeline on each data array
         in the output data container.
@@ -164,33 +164,28 @@ class preprocessing:
                     if value.lower() in ['','none']:
                         method_args[key]=None
 
+            # Search the available classes for the user requested method
             for cls in classes:
                 if hasattr(cls,method_name):
 
-                    # Loop over the datasets and the channels in each
-                    for idx,dataset in enumerate(self.output_list):
-                        
-                        # Get the input frequencies
-                        fs = self.metadata[idx]['fs']
+                    # Loop over the channels and get the updated values
+                    output = [] 
+                    for ichannel in range(dataset.shape[1]):
 
-                        # Loop over the channels and get the updated values
-                        output = [] 
-                        for ichannel in range(dataset.shape[1]):
+                        # Perform preprocessing step
+                        namespace           = cls(dataset.values[:,ichannel],fs[ichannel])
+                        method_call         = getattr(namespace,method_name)
+                        output.append(method_call(**method_args))
 
-                            # Perform preprocessing step
-                            namespace           = cls(dataset[:,ichannel],fs[ichannel])
-                            method_call         = getattr(namespace,method_name)
-                            output.append(method_call(**method_args))
+                        # Store the new frequencies if downsampling
+                        if method_name == 'frequency_downsample':
+                            input_fs  = method_args['input_hz']
+                            output_fs = method_args['output_hz']
+                            if input_fs == None or input_fs == output_fs:
+                                self.metadata[idx]['fs'][ichannel] = output_fs
 
-                            # Store the new frequencies if downsampling
-                            if method_name == 'frequency_downsample':
-                                input_fs  = method_args['input_hz']
-                                output_fs = method_args['output_hz']
-                                if input_fs == None or input_fs == output_fs:
-                                    self.metadata[idx]['fs'][ichannel] = output_fs
+                    # Recreate the dataframe
+                    dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
 
-                        dataset = np.column_stack(output)
-
-                        # Update the data visible by the parent class
-                        self.output_list[idx] = dataset
+        return dataset
 
