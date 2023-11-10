@@ -57,34 +57,6 @@ class project_handlers:
             # Update file strings for cached read in
             self.oldfile = self.infile
 
-    def feature_manager(self):
-
-        if not self.args.no_feature_flag:
-            if self.args.multithread:
-                self.barrier.wait()
-
-                # Add a wait for proper progress bars
-                time.sleep(self.worker_number)
-
-                # Clean up the screen
-                if self.worker_number == 0:
-                    sys.stdout.write("\033[H")
-                    sys.stdout.flush()
-            features.__init__(self)
-
-    def target_manager(self):
-
-        if self.args.targets:
-            for ikey in self.metadata.keys():
-                ifile   = self.metadata[ikey]['file']
-                target_loader.load_targets(self,ifile,'bids','target')
-
-    def project_logic(self):
-
-        # Case statement the workflow
-        if self.args.project.lower() == 'scalp_00':
-            project_handlers.scalp_00(self)
-
     ##########################
     #### Template Project ####
     ##########################
@@ -92,7 +64,7 @@ class project_handlers:
     def template(self):
 
         # Import data into memory
-        load_flag = data_loader.pipeline(self,'edf')      # Load flag is a boolean that lets us know if the current data loaded correctly
+        load_flag = data_loader.pipeline(self)      # Load flag is a boolean that lets us know if the current data loaded correctly
 
         # If data loaded, begin the processing portion
         if load_flag:
@@ -102,10 +74,10 @@ class project_handlers:
             # Get the correct channels for this merger
             channel_mapping.pipeline(self)
 
-            # Once we have the cleaned channel names, and the appropriate column slices, make a dataframe
-            # Data up to this point is kept as a raw array due to variable input formats and because
-            # dataframes take up more memory and have slower operations.
-            # This can go anywhere after the initial data load, and before the preprocessing, montaging, and feature extraction.
+            # Once we have the cleaned channel names, and the appropriate column slices, make a dataframe.
+            # Dataframes are formed from the self.raw_data object and self.master_channel_list.
+            # Data up to this point is kept as a raw array due to variable input formats and because dataframes
+            # tend to take up more memory and have slower operations. 
             dataframe_manager.__init__(self)
             dataframe_manager.column_subsection(self,self.channel_map_out)  
 
@@ -120,7 +92,7 @@ class project_handlers:
                 df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 
                 # Montage the data
-                df = channel_montage.pipeline(self,df)
+                self.montaged_dataframe = channel_montage.pipeline(self,df)
 
                 # Store the data to the output handler so we can pass everything to the feature extractor
                 # Returning to a list of arrays so it can be passed to different modeling back-ends like PyTorch.
@@ -130,13 +102,22 @@ class project_handlers:
     #### User Provided Logic Below ####
     ###################################
 
+    def project_logic(self):
+        """
+        Update this function for the pipeline to find new pipelines.
+        """
+
+        # Case statement the workflow
+        if self.args.project.lower() == 'scalp_00':
+            project_handlers.scalp_00(self)
+
     def scalp_00(self):
         """
         Run pipeline to load EDF data for a scalp project.
         """
 
         # Import data into memory
-        load_flag = data_loader.pipeline(self,'edf') 
+        load_flag = data_loader.pipeline(self) 
 
         if load_flag:
             # Clean the channel names
@@ -152,9 +133,11 @@ class project_handlers:
             # Perform next steps only if we have a viable dataset
             if self.dataframe.shape[0] > int(max(self.metadata[self.file_cntr]['fs'])):
 
+                # Preprocess the data
+                df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
+
                 # Put the data into a specific montage
-                montage_data = channel_montage.pipeline(self)
-                dataframe_manager.montaged_dataframe(self,montage_data,self.montage_channels)
+                self.montaged_dataframe = channel_montage.pipeline(self)
 
                 # Update the output list
                 output_manager.update_output_list(self,self.montaged_dataframe.values)

@@ -59,6 +59,7 @@ class dataframe_manager:
     def montaged_dataframe(self,data,columns):
         """
         Create a dataframe that stores the montaged data.
+        DEPRECIATE AFTER BETA PIPELINE RELEASE!
 
         Args:
             data (array): array of montaged data

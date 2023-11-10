@@ -44,7 +44,7 @@ class data_loader:
     def __init__(self):
         pass
 
-    def pipeline(self,filetype):
+    def pipeline(self):
         """
         Method for working within the larger pipeline environment to load data.
 
@@ -56,7 +56,7 @@ class data_loader:
         """
         
         # Logic gate for filetyping, returns if load succeeded
-        flag = self.mapping_logic(filetype)
+        flag = self.data_loader_logic(self.args.datatype)
 
         if flag:
             # Create the metadata handler
@@ -94,7 +94,7 @@ class data_loader:
         self.oldfile = '' 
 
         # Try to load data
-        flag = self.mapping_logic(filetype)
+        flag = self.data_loader_logic(filetype)
 
         if flag:
             sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
@@ -102,21 +102,6 @@ class data_loader:
         else:
             print("Unable to read in %s." %(self.infile))
             return None,None
-
-    def mapping_logic(self, filetype):
-        """
-        Logic gates for which data loader to use
-
-        Args:
-            filetype (str): filetype to read in (i.e. edf/mef/etc.)
-
-        Returns:
-            bool: Flag if data loaded correctly
-        """
-        
-        if filetype == 'edf':
-            flag = self.load_edf()
-        return flag
 
     def raw_dataslice(self,sample_frequency,majoraxis='column'):
         """
@@ -153,6 +138,21 @@ class data_loader:
     ###################################
     #### User Provided Logic Below ####
     ###################################
+
+    def data_loader_logic(self, filetype):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+
+        Args:
+            filetype (str): filetype to read in (i.e. edf/mef/etc.)
+
+        Returns:
+            bool: Flag if data loaded correctly
+        """
+        
+        if filetype.lower() == 'edf':
+            flag = self.load_edf()
+        return flag
 
     def load_edf(self):
         """

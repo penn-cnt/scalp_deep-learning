@@ -39,7 +39,7 @@ class channel_clean:
         """
 
         # Apply cleaning logic
-        self.channel_logic(clean_method)
+        self.channel_clean_logic(clean_method)
 
         # Add the cleaned labels to metadata
         self.metadata[self.file_cntr]['channels'] = self.clean_channel_map
@@ -53,18 +53,24 @@ class channel_clean:
         """
 
         self.channels = channels
-        self.channel_logic(clean_method)
+        self.channel_clean_logic(clean_method)
         return self.clean_channel_map
-
-    def channel_logic(self,clean_method):
-
-        # Logic gates for different cleaning methods
-        if clean_method == 'HUP':
-            self.HUP_clean()
 
     ###################################
     #### User Provided Logic Below ####
     ###################################
+
+    def channel_clean_logic(self,clean_method):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+
+        Args:
+            filetype (str): cleaning method to use
+        """
+
+        # Logic gates for different cleaning methods
+        if clean_method.lower() == 'hup':
+            self.HUP_clean()
 
     def HUP_clean(self):
         """

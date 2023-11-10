@@ -19,19 +19,22 @@ import multiprocessing
 # Clear the numpy mac conflict message
 os.system("clear")
 
-# Import the classes
-from modules.target_loader import *
-from modules.metadata_handler import *
-from modules.project_handler import *
-from modules.data_loader import *
-from modules.channel_mapping import *
-from modules.dataframe_manager import *
-from modules.channel_clean import *
-from modules.channel_montage import *
-from modules.output_manager import *
-from modules.data_viability import *
-from modules.preprocessing import *
-from modules.features import *
+# Import the add on classes
+from modules.addons.project_handler import *
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
+
 from configs.makeconfigs import *
 
 class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
@@ -62,7 +65,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         output_manager.__init__(self)
         
         # File management
-        project_handler.file_manader(self)
+        project_handlers.file_manager(self)
 
         # Select valid data slices
         data_viability.__init__(self)
@@ -214,10 +217,11 @@ if __name__ == "__main__":
         exec("%s=%s" %(ikey,raw_args[ikey]))
     
     # Make a useful help string for each keyword
-    allowed_input_help     = make_help_str(allowed_input_args)
     allowed_project_help   = make_help_str(allowed_project_args)
+    allowed_datatype_help  = make_help_str(allowed_datatypes)
     allowed_channel_help   = make_help_str(allowed_channel_args)
     allowed_montage_help   = make_help_str(allowed_montage_args)
+    allowed_input_help     = make_help_str(allowed_input_args)
     allowed_viability_help = make_help_str(allowed_viability_args)
 
     # Command line options needed to obtain data.
@@ -236,6 +240,9 @@ if __name__ == "__main__":
     datachunk_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datachunk_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datachunk_group.add_argument("--t_overlap", default=0, type=float, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
+
+    datatype_group = parser.add_argument_group('Input datatype Options')
+    datatype_group.add_argument("--datatype", default='EDF', choices=list(allowed_datatypes.keys()), help=f"R|Choose an option:\n{allowed_datatype_help}")
 
     channel_group = parser.add_argument_group('Channel label Options')
     channel_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")

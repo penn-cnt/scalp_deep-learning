@@ -151,8 +151,7 @@ class preprocessing:
 
         # Iterate over steps, find the corresponding function, then invoke it.
         steps = np.sort(list(self.preprocess_commands.keys()))
-        desc  = "Preprocessing with id %s:" %(self.unique_id)
-        for istep in tqdm(steps, desc=desc, total=len(steps), bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent):
+        for istep in steps:
 
             # Get information about the method
             method_name = self.preprocess_commands[istep]['method']

@@ -42,7 +42,7 @@ class channel_montage:
         self.dataframe_to_montage = DF
 
         # Apply the montage logic
-        montage_data = self.montage_logic(self.args.montage)
+        montage_data = self.channel_montage_logic(self.args.montage)
 
         # Update the metadata to note the montage channels
         metadata_handler.set_montage_channels(self,self.montage_channels)
@@ -65,13 +65,17 @@ class channel_montage:
         self.dataframe_to_montage = DF
 
         # Apply montage logic
-        montage_data = self.montage_logic(montage)
+        montage_data = self.channel_montage_logic(montage)
 
         return PD.DataFrame(montage_data,columns=self.montage_channels)
 
-    def montage_logic(self, montage):
+    ###################################
+    #### User Provided Logic Below ####
+    ###################################
+
+    def channel_montage_logic(self, montage):
         """
-        Logic gate for how to montage the data.
+        Update this function for the pipeline and direct handler to find new functions.
 
         Args:
             montage (str): User provided string for type of montage to perform.
@@ -81,15 +85,10 @@ class channel_montage:
         """
 
         # Logic for different montages
-        if montage == "HUP1020":
+        if montage.lower() == "hup1020":
             return self.montage_HUP_1020()
-        elif montage == "COMMON_AVERAGE":
-            return self.montage_common_average()        
-
-
-    ###################################
-    #### User Provided Logic Below ####
-    ###################################
+        elif montage.lower() == "common_average":
+            return self.montage_common_average()   
 
     def montage_common_average(self):
         """

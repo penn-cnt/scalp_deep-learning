@@ -46,7 +46,7 @@ class channel_mapping:
         self.channel_mapping = channel_mapping
 
         # Apply mapping logic
-        self.mapping_logic()
+        self.channel_mapping_logic()
 
         # Update the metadata
         metadata_handler.set_channels(self,self.channel_map_out)
@@ -66,22 +66,22 @@ class channel_mapping:
         self.channel_mapping   = channel_mapping
 
         # Apply mapping logic
-        self.mapping_logic()
+        self.channel_mapping_logic()
 
         return self.channel_map_out
-
-    def mapping_logic(self):
-        """
-        Logic gates for the different mapping options.
-        """
-
-        # Logic for different mappings
-        if self.channel_mapping == "HUP1020":
-            self.mapping_HUP_1020()
 
     ###################################
     #### User Provided Logic Below ####
     ###################################
+
+    def channel_mapping_logic(self):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+        """
+
+        # Logic for different mappings
+        if self.channel_mapping.lower() == "hup1020":
+            self.mapping_HUP_1020()
 
     def mapping_HUP_1020(self):
         """
