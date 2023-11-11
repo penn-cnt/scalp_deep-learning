@@ -124,7 +124,7 @@ class data_loader:
                 samp_end = int(len(self.indata[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
-            
+
             if majoraxis == 'column':
                 self.raw_data.append(self.indata[samp_start:samp_end,ii])
             elif majoraxis == 'row':
@@ -167,6 +167,8 @@ class data_loader:
                 return True
             except OSError:
                 return False
+        else:
+            return True
 
     def load_iEEG(self,username,password,dataset_name):
 

@@ -47,7 +47,7 @@ class project_handlers:
             self.infile    = ifile
             self.t_start   = self.start_times[ii]
             self.t_end     = self.end_times[ii]
-            
+
             # Initialize the metadata container
             self.file_cntr = ii
 
@@ -137,7 +137,7 @@ class project_handlers:
                 df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 
                 # Put the data into a specific montage
-                self.montaged_dataframe = channel_montage.pipeline(self)
+                self.montaged_dataframe = channel_montage.pipeline(self,df)
 
                 # Update the output list
                 output_manager.update_output_list(self,self.montaged_dataframe.values)

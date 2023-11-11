@@ -21,7 +21,10 @@ class yaml_loader:
         self.yaml_config = config
 
         # Make the step sorted dictionary
-        self.convert_to_step()
+        try:
+            self.convert_to_step()
+        except Exception as e:
+            raise KeyError("Unable to parse input configuration file. Please check configs and try again.")
 
     def return_handler(self):
         return self.yaml_config,self.yaml_step

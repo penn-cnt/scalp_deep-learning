@@ -2,7 +2,7 @@ import os
 import sys
 import inspect
 import numpy as np
-from tqdm import tqdm
+import pandas as PD
 from fractions import Fraction
 from scipy.signal import resample_poly, butter, filtfilt
 
@@ -35,11 +35,11 @@ class signal_processing:
             Returns the filtered data.
 
         """
-        
+
         if filter_type in ["bandpass","bandstop"]:
             bandpass_b, bandpass_a = butter(butterorder,freq_filter_array, btype=filter_type, fs=self.fs)
         elif filter_type in ["lowpass","highpass"]:
-            bandpass_b, bandpass_a = butter(butterorder,freq_filter_array[0], btype=filter_type, fs=self.fs)
+            bandpass_b, bandpass_a = butter(butterorder,freq_filter_array, btype=filter_type, fs=self.fs)
             
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
 
@@ -181,7 +181,7 @@ class preprocessing:
                             input_fs  = method_args['input_hz']
                             output_fs = method_args['output_hz']
                             if input_fs == None or input_fs == output_fs:
-                                self.metadata[idx]['fs'][ichannel] = output_fs
+                                self.metadata[self.file_cntr]['fs'][ichannel] = output_fs
 
                     # Recreate the dataframe
                     dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)

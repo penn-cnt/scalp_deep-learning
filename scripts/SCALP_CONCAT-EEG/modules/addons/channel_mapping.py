@@ -42,8 +42,8 @@ class channel_mapping:
             channel_mapping (str): String that defines the logic for which mapping to use.
         """
 
-        # Store the argument of chanel mapping to class instance
-        self.channel_mapping = channel_mapping
+        # Cleaning up naming between argument list and internal logic
+        self.channel_mapping = self.args.channel_list
 
         # Apply mapping logic
         self.channel_mapping_logic()
