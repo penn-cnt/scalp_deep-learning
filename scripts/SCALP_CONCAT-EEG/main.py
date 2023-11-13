@@ -304,7 +304,8 @@ if __name__ == "__main__":
 
         # Tab completion enabled input
         completer = PathCompleter()
-        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        file_path = '../../user_data/BIDS/BIDS/sub*/*/*/*edf'
         files     = glob.glob(file_path)
 
         # Make sure we were handed a good filepath

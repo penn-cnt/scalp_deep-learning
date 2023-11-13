@@ -3,8 +3,10 @@ import mne
 import sys
 import pickle
 import inspect
+import contextlib
 import numpy as np
 import pandas as PD
+from io import StringIO
 from fractions import Fraction
 from mne.preprocessing import ICA
 from mne_icalabel import label_components
@@ -13,14 +15,15 @@ from scipy.signal import resample_poly, butter, filtfilt
 
 # Local imports
 from modules.core.yaml_loader import *
-#from modules.addons.channel_clean import *
+from modules.core.error_logging import *
 
 class mne_processing:
 
     def __init__(self,dataset,fs,mne_channels):
         self.dataset      = dataset
-        self.channels     = list(dataset.columns)
+        self.ppchannels   = list(dataset.columns)
         self.mne_channels = mne_channels
+        self.errors       = []
         
         # Make sure that all of the frequencies match for mne
         if len(np.unique(fs)) == 1:
@@ -28,21 +31,22 @@ class mne_processing:
         else:
             raise IndexError("MNE Processing requires that all sampling frequencies match. Please check input data or downsampling arguments.")
 
-    def eyeblink_removal(self,config_path,n_components=10):
+    @silence_mne_warnings
+    def eyeblink_removal(self,config_path,n_components=10,max_iter=1000):
 
         # Get the channel mappings in mne compliant form
         mapping      = yaml.safe_load(open(config_path,'r'))
         mapping_keys = list(mapping.keys())
         ch_types     = []
-        for ichannel in self.channels:
+        for ichannel in self.ppchannels:
             if ichannel in mapping_keys:
                 ch_types.append(mapping[ichannel])
             else:
                 ch_types.append('eeg')
 
         # Create the mne object
-        info         = mne.create_info(self.channels, self.fs, ch_types=ch_types)
-        raw          = mne.io.RawArray(self.dataset.T, info)
+        info         = mne.create_info(self.ppchannels, self.fs, ch_types=ch_types,verbose=False)
+        raw          = mne.io.RawArray(self.dataset.T, info,verbose=False)
         montage      = mne.channels.make_standard_montage("standard_1020")
         mne_chan_map = dict(zip(montage.ch_names,self.mne_channels))
         montage.rename_channels(mne_chan_map)
@@ -51,9 +55,12 @@ class mne_processing:
         raw.set_montage(montage)
 
         # Create the ICA object and fit
-        ica = ICA(n_components=n_components, random_state=42, max_iter=800,verbose=False)
-        ica.fit(raw)
-        ic_labels=label_components(raw, ica, method="iclabel")
+        ica = ICA(n_components=n_components, random_state=42, max_iter=max_iter,verbose=False)
+        ica.fit(raw,verbose=False)
+
+        # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
+        with contextlib.redirect_stdout(StringIO()):
+            ic_labels=label_components(raw, ica, method="iclabel")
 
         # Get labels as a list
         labels = ic_labels['labels']
@@ -80,9 +87,9 @@ class mne_processing:
         raw_copy = raw.copy()
 
         # Exclude eye blinks
-        ica.apply(raw_copy,exclude=np.where(eye_inds)[0])
-        print(raw_copy)
-        sys.exit()
+        ica.apply(raw_copy,exclude=np.where(eye_inds)[0],verbose=False)
+        
+        return PD.DataFrame(raw_copy.get_data().T,columns=self.ppchannels)
 
 class signal_processing:
     

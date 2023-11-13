@@ -5,7 +5,6 @@ import datetime
 import numpy as np
 import pandas as PD
 
-
 # Import the add on classes
 from modules.addons.data_loader import *
 from modules.addons.channel_clean import *

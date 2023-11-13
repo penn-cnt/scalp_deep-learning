@@ -168,6 +168,7 @@ class data_loader:
             except OSError:
                 return False
         else:
+            self.channels = [ival['label'] for ival in self.channel_metadata]
             return True
 
     def load_iEEG(self,username,password,dataset_name):
