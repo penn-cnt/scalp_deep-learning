@@ -46,6 +46,14 @@ class output_manager:
         self.output_list.append(data)
         self.output_meta.append(self.file_cntr)
 
+    def create_tensor(self):
+        """
+        Create a pytorch tensor input.
+        """
+
+        # Create the tensor
+        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.output_list]
+
     def save_features(self):
         """
         Save the feature dataframe
@@ -63,11 +71,3 @@ class output_manager:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         pickle.dump(self.output_list,open("%s/%s_data_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
         pickle.dump(self.metadata,open("%s/%s_meta_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
-
-    def create_tensor(self):
-        """
-        Create a pytorch tensor input.
-        """
-
-        # Create the tensor
-        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.output_list]

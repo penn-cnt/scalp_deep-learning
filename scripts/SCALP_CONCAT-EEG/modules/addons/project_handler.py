@@ -133,6 +133,10 @@ class project_handlers:
             # Perform next steps only if we have a viable dataset
             if self.dataframe.shape[0] > int(max(self.metadata[self.file_cntr]['fs'])):
 
+                # Make the cleaned mne channel map
+                mne_channels      = mne.channels.make_standard_montage("standard_1020").ch_names
+                self.mne_channels = channel_clean.direct_inputs(self,mne_channels)
+
                 # Preprocess the data
                 df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 

@@ -1,13 +1,88 @@
 import os
+import mne
 import sys
+import pickle
 import inspect
 import numpy as np
 import pandas as PD
 from fractions import Fraction
+from mne.preprocessing import ICA
+from mne_icalabel import label_components
+from pyedflib import EdfWriter,FILETYPE_EDFPLUS
 from scipy.signal import resample_poly, butter, filtfilt
 
 # Local imports
 from modules.core.yaml_loader import *
+#from modules.addons.channel_clean import *
+
+class mne_processing:
+
+    def __init__(self,dataset,fs,mne_channels):
+        self.dataset      = dataset
+        self.channels     = list(dataset.columns)
+        self.mne_channels = mne_channels
+        
+        # Make sure that all of the frequencies match for mne
+        if len(np.unique(fs)) == 1:
+            self.fs = np.unique(fs)[0]
+        else:
+            raise IndexError("MNE Processing requires that all sampling frequencies match. Please check input data or downsampling arguments.")
+
+    def eyeblink_removal(self,config_path,n_components=10):
+
+        # Get the channel mappings in mne compliant form
+        mapping      = yaml.safe_load(open(config_path,'r'))
+        mapping_keys = list(mapping.keys())
+        ch_types     = []
+        for ichannel in self.channels:
+            if ichannel in mapping_keys:
+                ch_types.append(mapping[ichannel])
+            else:
+                ch_types.append('eeg')
+
+        # Create the mne object
+        info         = mne.create_info(self.channels, self.fs, ch_types=ch_types)
+        raw          = mne.io.RawArray(self.dataset.T, info)
+        montage      = mne.channels.make_standard_montage("standard_1020")
+        mne_chan_map = dict(zip(montage.ch_names,self.mne_channels))
+        montage.rename_channels(mne_chan_map)
+
+        # Set the montages
+        raw.set_montage(montage)
+
+        # Create the ICA object and fit
+        ica = ICA(n_components=n_components, random_state=42, max_iter=800,verbose=False)
+        ica.fit(raw)
+        ic_labels=label_components(raw, ica, method="iclabel")
+
+        # Get labels as a list
+        labels = ic_labels['labels']
+
+        # Get the probability for each label
+        y_pred_prob = ic_labels['y_pred_proba']
+
+        # Get the exclusion indices
+        eye_inds = []
+        for idx in range(len(labels)):
+            ilabel = labels[idx]
+            ipred  = y_pred_prob[idx]
+            if ilabel not in ["brain","other"]:
+                if ilabel == "other" and ipred<0.3:
+                    eye_inds.append(False)
+                else:
+                    eye_inds.append(True)
+            else:
+                eye_inds.append(False)
+        labels   = np.array(labels)
+        eye_inds = np.array(eye_inds) 
+
+        # Copy the raw data
+        raw_copy = raw.copy()
+
+        # Exclude eye blinks
+        ica.apply(raw_copy,exclude=np.where(eye_inds)[0])
+        print(raw_copy)
+        sys.exit()
 
 class signal_processing:
     
@@ -124,6 +199,63 @@ class noise_reduction:
             self.data[mask] = y_vals_interp[mask]
         return self.data
 
+class preprocessing_utils:
+
+    def __init__(self,dataset,filename,t_start,t_end,step_num,fs,outdir):
+        self.dataset  = dataset
+        self.filename = filename
+        self.t_start  = t_start
+        self.t_end    = t_end
+        self.step_num = step_num
+        self.fs       = fs
+        self.outdir   = outdir
+
+    def data_snapshot_pickle(self,outpath=None):
+        """
+        Save a snapshot of the data in pickle format.
+        (Useful for testing changes across steps.)
+        """
+
+        # Handle default pathing if needed
+        self.filename = self.filename.split('/')[-1].split('.')[0]+f"_{self.t_start}_{self.t_end}_preprocess.pickle"
+        if outpath == None:
+            outpath = self.outdir+f"/preprocessing_snapshot/pickle/{self.step_num:02}/"
+        outfile = outpath+self.filename
+
+        # Make sure path exists
+        if not os.path.exists(outpath):
+            os.system(f"mkdir -p {outpath}")
+
+        # Write data to file
+        pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
+
+    def data_snapshot_edf(self,outpath=None):
+        """
+        Save a snapshot of the data in edf format.
+        (Useful for testing changes across steps.)
+
+        Still in production. Digital min/max is not working correctly as of 11/12/23.
+        """
+
+        # Handle default pathing if needed
+        self.filename = self.filename.split('/')[-1].split('.')[0]+f"_{self.t_start}_{self.t_end}_preprocess.edf"
+        if outpath == None:
+            outpath = self.outdir+f"/preprocessing_snapshot/edf/{self.step_num:02}/"
+        outfile = outpath+self.filename
+
+        # Make sure path exists
+        if not os.path.exists(outpath):
+            os.system(f"mkdir -p {outpath}")
+
+        # Write data to file
+        f = EdfWriter(outfile, len(self.dataset.columns), file_type=FILETYPE_EDFPLUS)
+        for ii in range(self.dataset.columns.size):
+            f.setSamplefrequency(ii, self.fs[ii])
+        for icol in self.dataset.columns:
+            signal = self.dataset[icol].values
+            f.writePhysicalSamples(signal)
+        f.close()
+        
 class preprocessing:
     """
     This class invokes the various preprocessing steps
@@ -166,25 +298,34 @@ class preprocessing:
             # Search the available classes for the user requested method
             for cls in classes:
                 if hasattr(cls,method_name):
+                    if cls.__name__ not in ['preprocessing_utils','mne_processing']:
 
-                    # Loop over the channels and get the updated values
-                    output = [] 
-                    for ichannel in range(dataset.shape[1]):
+                        # Loop over the channels and get the updated values
+                        output = [] 
+                        for ichannel in range(dataset.shape[1]):
 
-                        # Perform preprocessing step
-                        namespace           = cls(dataset.values[:,ichannel],fs[ichannel])
-                        method_call         = getattr(namespace,method_name)
-                        output.append(method_call(**method_args))
+                            # Perform preprocessing step
+                            namespace           = cls(dataset.values[:,ichannel],fs[ichannel])
+                            method_call         = getattr(namespace,method_name)
+                            output.append(method_call(**method_args))
 
-                        # Store the new frequencies if downsampling
-                        if method_name == 'frequency_downsample':
-                            input_fs  = method_args['input_hz']
-                            output_fs = method_args['output_hz']
-                            if input_fs == None or input_fs == output_fs:
-                                self.metadata[self.file_cntr]['fs'][ichannel] = output_fs
+                            # Store the new frequencies if downsampling
+                            if method_name == 'frequency_downsample':
+                                input_fs  = method_args['input_hz']
+                                output_fs = method_args['output_hz']
+                                if input_fs == None or input_fs == output_fs:
+                                    self.metadata[self.file_cntr]['fs'][ichannel] = output_fs
 
-                    # Recreate the dataframe
-                    dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
-
+                        # Recreate the dataframe
+                        dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
+                    elif cls.__name__ == 'preprocessing_utils':
+                        filename    = self.metadata[self.file_cntr]['file']
+                        PU          = preprocessing_utils(dataset,filename,self.t_start,self.t_end,istep,fs,self.args.outdir)
+                        method_call = getattr(PU,method_name)
+                        method_call(**method_args)
+                    elif cls.__name__ == 'mne_processing':
+                        MP = mne_processing(dataset,fs,self.mne_channels)
+                        method_call = getattr(MP,method_name)
+                        method_call(**method_args)
         return dataset
 
