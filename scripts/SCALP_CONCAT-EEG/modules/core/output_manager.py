@@ -5,16 +5,20 @@ import datetime
 import numpy as np
 import pandas as PD
 
+# Import the add on classes
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
 
-# Import the classes
-from .metadata_handler import *
-from .target_loader import *
-from .data_loader import *
-from .channel_mapping import *
-from .dataframe_manager import *
-from .channel_clean import *
-from .channel_montage import *
-from .data_viability import *
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
 
 class output_manager:
     """
@@ -41,6 +45,14 @@ class output_manager:
         self.output_list.append(data)
         self.output_meta.append(self.file_cntr)
 
+    def create_tensor(self):
+        """
+        Create a pytorch tensor input.
+        """
+
+        # Create the tensor
+        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.output_list]
+
     def save_features(self):
         """
         Save the feature dataframe
@@ -58,11 +70,3 @@ class output_manager:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         pickle.dump(self.output_list,open("%s/%s_data_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
         pickle.dump(self.metadata,open("%s/%s_meta_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
-
-    def create_tensor(self):
-        """
-        Create a pytorch tensor input.
-        """
-
-        # Create the tensor
-        self.input_tensor_dataset = [torch.utils.data.DataLoader(dataset) for dataset in self.output_list]

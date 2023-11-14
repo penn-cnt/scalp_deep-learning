@@ -3,15 +3,20 @@ import re
 import numpy as np
 import pandas as PD
 
-# Import the classes
-from .metadata_handler import *
-from .target_loader import *
-from .data_loader import *
-from .channel_mapping import *
-from .dataframe_manager import *
-from .channel_montage import *
-from .output_manager import *
-from .data_viability import *
+# Import the add on classes
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
 
 class channel_clean:
     """
@@ -34,7 +39,7 @@ class channel_clean:
         """
 
         # Apply cleaning logic
-        self.channel_logic(clean_method)
+        self.channel_clean_logic(clean_method)
 
         # Add the cleaned labels to metadata
         self.metadata[self.file_cntr]['channels'] = self.clean_channel_map
@@ -48,18 +53,24 @@ class channel_clean:
         """
 
         self.channels = channels
-        self.channel_logic(clean_method)
+        self.channel_clean_logic(clean_method)
         return self.clean_channel_map
-
-    def channel_logic(self,clean_method):
-
-        # Logic gates for different cleaning methods
-        if clean_method == 'HUP':
-            self.HUP_clean()
 
     ###################################
     #### User Provided Logic Below ####
     ###################################
+
+    def channel_clean_logic(self,clean_method):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+
+        Args:
+            filetype (str): cleaning method to use
+        """
+
+        # Logic gates for different cleaning methods
+        if clean_method.lower() == 'hup':
+            self.HUP_clean()
 
     def HUP_clean(self):
         """

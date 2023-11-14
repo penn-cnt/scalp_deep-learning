@@ -8,6 +8,7 @@ import os
 import sys
 import glob
 import uuid
+import yaml
 import time
 import argparse
 import datetime
@@ -19,19 +20,22 @@ import multiprocessing
 # Clear the numpy mac conflict message
 os.system("clear")
 
-# Import the classes
-from modules.target_loader import *
-from modules.metadata_handler import *
-from modules.project_handler import *
-from modules.data_loader import *
-from modules.channel_mapping import *
-from modules.dataframe_manager import *
-from modules.channel_clean import *
-from modules.channel_montage import *
-from modules.output_manager import *
-from modules.data_viability import *
-from modules.preprocessing import *
-from modules.features import *
+# Import the add on classes
+from modules.addons.project_handler import *
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
+
 from configs.makeconfigs import *
 
 class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
@@ -46,9 +50,9 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         """
 
         # Make args visible across inheritance
-        infiles            = input_params[:,0]
-        start_times        = input_params[:,1].astype('float')
-        end_times          = input_params[:,2].astype('float')
+        self.infiles       = input_params[:,0]
+        self.start_times   = input_params[:,1].astype('float')
+        self.end_times     = input_params[:,2].astype('float')
         self.args          = args
         self.unique_id     = uuid.uuid4()
         self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
@@ -57,18 +61,17 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # Create the metalevel container
         metadata_handler.__init__(self)
-
+ 
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
         
         # File management
-        self.file_manager(infiles, start_times, end_times)
+        project_handlers.file_manager(self)
 
         # Select valid data slices
         data_viability.__init__(self)
 
-        # Pass to preprocessing and feature selection managers
-        self.preprocessing_manager()
+        # Pass to feature selection managers
         self.feature_manager()
 
         # Associate targets if requested
@@ -76,59 +79,6 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # Save the results
         output_manager.save_features(self)
-
-    def file_manager(self,infiles, start_times, end_times):
-        """
-        Loop over the input files and send them to the correct data handler.
-
-        Args:
-            infiles (str list): Path to each dataset
-            start_times (float list): Start times in seconds to start sampling
-            end_times (float list): End times in seconds to end sampling
-        """
-
-        # Intialize a variable that stores the previous filepath. This allows us to cache data and only read in as needed. (i.e. new path != old path)
-        self.oldfile = None  
-
-        # Loop over files to read and store each ones data
-        nfile = len(infiles)
-        desc  = "Initial load with id %s:" %(self.unique_id)
-        for ii,ifile in tqdm(enumerate(infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent):            
-        
-            # Save current file info
-            self.infile    = ifile
-            self.t_start   = start_times[ii]
-            self.t_end     = end_times[ii]
-            
-            # Initialize the metadata container
-            self.file_cntr = ii
-
-            # Case statement the workflow
-            if self.args.project.lower() == 'scalp_00':
-                project_handlers.scalp_00(self)
-            
-            # Update file strings for cached read in
-            self.oldfile = self.infile
-
-    def preprocessing_manager(self):
-
-        # Apply preprocessing as needed
-        if not self.args.no_preprocess_flag:
-            
-            # Barrier the code for better output formatting
-            if self.args.multithread:
-                self.barrier.wait()
-
-                # Add a wait for proper progress bars
-                time.sleep(self.worker_number)
-
-                # Clean up the screen
-                if self.worker_number == 0:
-                    sys.stdout.write("\033[H")
-                    sys.stdout.flush()
-
-            # Process
-            preprocessing.__init__(self)
 
     def feature_manager(self):
 
@@ -262,23 +212,17 @@ def start_analysis(data_chunk,args,worker_id,barrier):
 
 if __name__ == "__main__":
 
-    # Define the allowed keywords a user can input
-    allowed_input_args      = {'CSV' : 'Use a comma separated file of files to read in. (default)',
-                               'MANUAL' : "Manually enter filepaths.",
-                               'GLOB' : 'Use Python glob to select all files that follow a user inputted pattern.'}
-    allowed_project_args    = {'SCALP_00': "Basic scalp processing pipeline. (bjprager 10/2023)"}
-    allowed_channel_args    = {'HUP1020': "Channels associated with a 10-20 montage performed at HUP.",
-                               'RAW': "Use all possible channels. Warning, channels may not match across different datasets."}
-    allowed_montage_args    = {'HUP1020': "Use a 10-20 montage.",
-                               'COMMON_AVERAGE': "Use a common average montage."}
-    allowed_viability_args  = {'VIABLE_DATA': "Drop datasets that contain a NaN column. (default)",
-                               'VIABLE_COLUMNS': "Use the minimum cross section of columns across all datasets that contain no NaNs."}
+    # Read in the allowed arguments
+    raw_args = yaml.safe_load(open("allowed_arguments.yaml","r"))
+    for ikey in raw_args.keys():
+        exec("%s=%s" %(ikey,raw_args[ikey]))
     
     # Make a useful help string for each keyword
-    allowed_input_help     = make_help_str(allowed_input_args)
     allowed_project_help   = make_help_str(allowed_project_args)
+    allowed_datatype_help  = make_help_str(allowed_datatypes)
     allowed_channel_help   = make_help_str(allowed_channel_args)
     allowed_montage_help   = make_help_str(allowed_montage_args)
+    allowed_input_help     = make_help_str(allowed_input_args)
     allowed_viability_help = make_help_str(allowed_viability_args)
 
     # Command line options needed to obtain data.
@@ -297,6 +241,9 @@ if __name__ == "__main__":
     datachunk_group.add_argument("--t_end", default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datachunk_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datachunk_group.add_argument("--t_overlap", default=0, type=float, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
+
+    datatype_group = parser.add_argument_group('Input datatype Options')
+    datatype_group.add_argument("--datatype", default='EDF', choices=list(allowed_datatypes.keys()), help=f"R|Choose an option:\n{allowed_datatype_help}")
 
     channel_group = parser.add_argument_group('Channel label Options')
     channel_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
@@ -358,7 +305,8 @@ if __name__ == "__main__":
 
         # Tab completion enabled input
         completer = PathCompleter()
-        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        #file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        file_path = '../../user_data/BIDS/BIDS/sub*/*/*/*edf'
         files     = glob.glob(file_path)
 
         # Make sure we were handed a good filepath

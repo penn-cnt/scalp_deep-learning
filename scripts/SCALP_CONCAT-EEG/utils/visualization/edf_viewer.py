@@ -1,17 +1,16 @@
 # Basic Python Imports
 import sys
 import time
-import seaborn
 import argparse
 import tkinter as tk
 from glob import glob
 import matplotlib.pyplot as PLT
 
 # Local imports
-from modules.data_loader import *
-from modules.channel_clean import *
-from modules.channel_mapping import *
-from modules.channel_montage import *
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
 
 #################
 #### Classes ####
@@ -45,7 +44,11 @@ class data_viewer:
         CHMON = channel_montage()
 
         # Get the raw data and pointers
-        DF,self.fs = DL.direct_inputs(self.infile,'edf')
+        if not self.args.pickle_load:
+            DF,self.fs = DL.direct_inputs(self.infile,'edf')
+        else:
+            DF,self.fs = pickle.load(open(self.infile,"rb"))
+            self.fs    = self.fs[0]
 
         # Get the cleaned channel names
         clean_channels = CHCLN.direct_inputs(DF.columns)
@@ -435,8 +438,9 @@ if __name__ == '__main__':
     duration_group.add_argument("--dur", type=float, help="Duration to plot in seconds.")
     duration_group.add_argument("--dur_frac", type=float, help="Duration to plot in fraction of total data.")
 
-    misc_group = parser.add_argument_group('Data preparation options')
+    misc_group = parser.add_argument_group('Misc options')
     misc_group.add_argument("--sleep_wake_power", type=str, help="Optional file with identified groups in alpha/delta for sleep/wake patients")
+    misc_group.add_argument("--pickle_load", action='store_true', default=False, help="Load from pickled tuple of dataframe,fs.")
 
     args = parser.parse_args()
 

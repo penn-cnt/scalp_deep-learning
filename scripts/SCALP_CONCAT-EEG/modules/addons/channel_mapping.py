@@ -2,15 +2,20 @@
 import numpy as np
 import pandas as PD
 
-# Import the classes
-from .metadata_handler import *
-from .target_loader import *
-from .data_loader import *
-from .dataframe_manager import *
-from .channel_clean import *
-from .channel_montage import *
-from .output_manager import *
-from .data_viability import *
+# Import the add on classes
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
 
 class channel_mapping:
     """
@@ -29,7 +34,7 @@ class channel_mapping:
             clean_method (str, optional): Mapping method to use, see --help for complete list.
         """
 
-    def pipeline(self,channel_mapping):
+    def pipeline(self):
         """
         Method for working within the larger pipeline environment to get channel mappings.
 
@@ -37,11 +42,11 @@ class channel_mapping:
             channel_mapping (str): String that defines the logic for which mapping to use.
         """
 
-        # Store the argument of chanel mapping to class instance
-        self.channel_mapping = channel_mapping
+        # Cleaning up naming between argument list and internal logic
+        self.channel_mapping = self.args.channel_list
 
         # Apply mapping logic
-        self.mapping_logic()
+        self.channel_mapping_logic()
 
         # Update the metadata
         metadata_handler.set_channels(self,self.channel_map_out)
@@ -61,22 +66,22 @@ class channel_mapping:
         self.channel_mapping   = channel_mapping
 
         # Apply mapping logic
-        self.mapping_logic()
+        self.channel_mapping_logic()
 
         return self.channel_map_out
-
-    def mapping_logic(self):
-        """
-        Logic gates for the different mapping options.
-        """
-
-        # Logic for different mappings
-        if self.channel_mapping == "HUP1020":
-            self.mapping_HUP_1020()
 
     ###################################
     #### User Provided Logic Below ####
     ###################################
+
+    def channel_mapping_logic(self):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+        """
+
+        # Logic for different mappings
+        if self.channel_mapping.lower() == "hup1020":
+            self.mapping_HUP_1020()
 
     def mapping_HUP_1020(self):
         """

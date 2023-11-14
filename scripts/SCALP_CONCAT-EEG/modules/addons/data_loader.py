@@ -7,15 +7,20 @@ from  pyedflib import highlevel
 # CNT/EEG Specific
 from ieeg.auth import Session
 
-# Import the classes
-from .metadata_handler import *
-from .target_loader import *
-from .channel_mapping import *
-from .dataframe_manager import *
-from .channel_clean import *
-from .channel_montage import *
-from .output_manager import *
-from .data_viability import *
+# Import the add on classes
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
 
 class data_loader_test:
 
@@ -39,7 +44,7 @@ class data_loader:
     def __init__(self):
         pass
 
-    def pipeline(self,filetype):
+    def pipeline(self):
         """
         Method for working within the larger pipeline environment to load data.
 
@@ -51,7 +56,7 @@ class data_loader:
         """
         
         # Logic gate for filetyping, returns if load succeeded
-        flag = self.mapping_logic(filetype)
+        flag = self.data_loader_logic(self.args.datatype)
 
         if flag:
             # Create the metadata handler
@@ -89,7 +94,7 @@ class data_loader:
         self.oldfile = '' 
 
         # Try to load data
-        flag = self.mapping_logic(filetype)
+        flag = self.data_loader_logic(filetype)
 
         if flag:
             sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
@@ -97,21 +102,6 @@ class data_loader:
         else:
             print("Unable to read in %s." %(self.infile))
             return None,None
-
-    def mapping_logic(self, filetype):
-        """
-        Logic gates for which data loader to use
-
-        Args:
-            filetype (str): filetype to read in (i.e. edf/mef/etc.)
-
-        Returns:
-            bool: Flag if data loaded correctly
-        """
-        
-        if filetype == 'edf':
-            flag = self.load_edf()
-        return flag
 
     def raw_dataslice(self,sample_frequency,majoraxis='column'):
         """
@@ -134,7 +124,7 @@ class data_loader:
                 samp_end = int(len(self.indata[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
-            
+
             if majoraxis == 'column':
                 self.raw_data.append(self.indata[samp_start:samp_end,ii])
             elif majoraxis == 'row':
@@ -149,6 +139,21 @@ class data_loader:
     #### User Provided Logic Below ####
     ###################################
 
+    def data_loader_logic(self, filetype):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+
+        Args:
+            filetype (str): filetype to read in (i.e. edf/mef/etc.)
+
+        Returns:
+            bool: Flag if data loaded correctly
+        """
+        
+        if filetype.lower() == 'edf':
+            flag = self.load_edf()
+        return flag
+
     def load_edf(self):
         """
         Load EDF data directly into the pipeline.
@@ -162,6 +167,9 @@ class data_loader:
                 return True
             except OSError:
                 return False
+        else:
+            self.channels = [ival['label'] for ival in self.channel_metadata]
+            return True
 
     def load_iEEG(self,username,password,dataset_name):
 

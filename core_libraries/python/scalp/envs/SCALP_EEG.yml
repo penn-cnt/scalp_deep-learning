@@ -1,5 +1,7 @@
 name: scalp_eeg
-
+channels:
+  - conda-forge
+  - defaults
 dependencies:
   - python>=3.0
   - numpy
@@ -9,13 +11,15 @@ dependencies:
   - deprecation
   - tqdm
   - ipython
+  - pyedflib
+  - pytorch
+  - scikit-learn
   - pip:
     - pennprov
     - mne
     - mne-bids
+    - mne-icalabel
     - EDFlib-Python
-    - torch
-    - pyEDFlib
     - pyyaml
     - ../wheels/ieeg-1.6-py3-none-any.whl
 

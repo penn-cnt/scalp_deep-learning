@@ -2,15 +2,20 @@
 import numpy as np
 import pandas as PD
 
-# Import the classes
-from .metadata_handler import *
-from .target_loader import *
-from .data_loader import *
-from .channel_mapping import *
-from .dataframe_manager import *
-from .channel_clean import *
-from .output_manager import *
-from .data_viability import *
+# Import the add on classes
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
+from modules.addons.preprocessing import *
+from modules.addons.features import *
+
+# Import the core classes
+from modules.core.metadata_handler import *
+from modules.core.target_loader import *
+from modules.core.dataframe_manager import *
+from modules.core.output_manager import *
+from modules.core.data_viability import *
 
 class channel_montage:
     """
@@ -25,7 +30,7 @@ class channel_montage:
     def __init__(self):
         pass
 
-    def pipeline(self):
+    def pipeline(self,DF):
         """
         Method for working within the larger pipeline environment to get channel montages.
 
@@ -33,13 +38,16 @@ class channel_montage:
             array: Array of montage data. (Issue with inheritance requires a direct passback and not through instance.)
         """
 
+        # Save the current dataframe
+        self.dataframe_to_montage = DF
+
         # Apply the montage logic
-        montage_data = self.montage_logic(self.args.montage)
+        montage_data = self.channel_montage_logic(self.args.montage)
 
         # Update the metadata to note the montage channels
         metadata_handler.set_montage_channels(self,self.montage_channels)
 
-        return montage_data
+        return PD.DataFrame(montage_data,columns=self.montage_channels)
 
     def direct_inputs(self,DF,montage):
         """
@@ -54,16 +62,20 @@ class channel_montage:
         """
         
         # Save the user provided dataframe
-        self.dataframe = DF
+        self.dataframe_to_montage = DF
 
         # Apply montage logic
-        montage_data = self.montage_logic(montage)
+        montage_data = self.channel_montage_logic(montage)
 
         return PD.DataFrame(montage_data,columns=self.montage_channels)
 
-    def montage_logic(self, montage):
+    ###################################
+    #### User Provided Logic Below ####
+    ###################################
+
+    def channel_montage_logic(self, montage):
         """
-        Logic gate for how to montage the data.
+        Update this function for the pipeline and direct handler to find new functions.
 
         Args:
             montage (str): User provided string for type of montage to perform.
@@ -73,15 +85,10 @@ class channel_montage:
         """
 
         # Logic for different montages
-        if montage == "HUP1020":
+        if montage.lower() == "hup1020":
             return self.montage_HUP_1020()
-        elif montage == "COMMON_AVERAGE":
-            return self.montage_common_average()        
-
-
-    ###################################
-    #### User Provided Logic Below ####
-    ###################################
+        elif montage.lower() == "common_average":
+            return self.montage_common_average()   
 
     def montage_common_average(self):
         """
@@ -89,14 +96,14 @@ class channel_montage:
         """
 
         # Get the averages across all channels per time slice
-        averages = np.average(self.dataframe.values(axis=0))
+        averages = np.average(self.dataframe_to_montage.values(axis=0))
         averages = np.tile(averages, (1, self.ncol))
 
         # Get the montage data
-        montage_data = self.dataframe.values-averages
+        montage_data = self.dataframe_to_montage.values-averages
 
         # Get the montage labels
-        self.montage_channels = [f"{ichannel}-com_avg" for ichannel in self.dataframe.columns]
+        self.montage_channels = [f"{ichannel}-com_avg" for ichannel in self.dataframe_to_montage.columns]
 
         # Make the montage dataframe
         return montage_data
@@ -126,10 +133,10 @@ class channel_montage:
                          ['FZ','CZ']]
         
         # Get the new values to pass to the dataframe class
-        montage_data = np.zeros((self.dataframe.shape[0],len(bipolar_array))).astype('float64')
+        montage_data = np.zeros((self.dataframe_to_montage.shape[0],len(bipolar_array))).astype('float64')
         for ii,ival in enumerate(bipolar_array):
             try:
-                montage_data[:,ii] = self.dataframe[ival[0]].values-self.dataframe[ival[1]].values
+                montage_data[:,ii] = self.dataframe_to_montage[ival[0]].values-self.dataframe_to_montage[ival[1]].values
             except KeyError:
                 montage_data[:,ii] = np.nan
 
