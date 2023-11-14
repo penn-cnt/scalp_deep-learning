@@ -1,4 +1,4 @@
-name: scalp_eeg
+name: cnt_codehub
 channels:
   - conda-forge
   - defaults
