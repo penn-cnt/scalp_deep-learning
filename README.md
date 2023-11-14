@@ -11,17 +11,21 @@ This code is meant to be researcher driven, allowing new code libraries to be ad
 For more information on how to use our code, please see the examples folder for specific use-cases and common practices.
 
 # Prerequisites
-In order to use this repository, you must have access to Python 3+. 
+In order to use this repository, you must have access to Python 3+. You must also have access to conda 23.+ if building environments from yaml files.
 
 # Installation
 
-An environment file with all the needed packages to run this suite of code can be found at the following location
+An environment file with all the needed packages to run this suite of code can be found at the following location:
 
-> [Concatenation YAML](core_libraries/python/cnt_codehub/envs/cnt_codehub.yml)
+> [CNT Codehub YAML](core_libraries/python/cnt_codehub/envs/cnt_codehub.yml)
 
 This file can be installed using the following call to conda:
 
-> conda create --name <env> --file CNT_ENVIRON_SCALP_CONCAT.yml
+> conda create --file cnt_codehub.yml
+
+which will create the `cnt_codehub' environment. If you wish to alter the environment name, you can instead run:
+
+> conda create --file cnt_codehub.yml -n <env>
 
 where <env> is the name of the environment you wish to save this work under.
 
