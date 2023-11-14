@@ -40,7 +40,29 @@ This repository is meant to serve two main purposes.
 
 ## 1. Code Repository Usage
 
-Within the [modules](scripts/modules/) subfolder, you can find the subdirectory `addons'.
+Within the [modules](scripts/modules/) subfolder, you can find the following subdirectories:
+
+1. core
+   - Low level functions primarily focused on enabling the pipeline.
+2. addons
+   - User provided addons to core data processing functions.
+  
+Users are invited to add new code to the addons library. They may also directly access code contained in these libraries in other scripts or interactive objects by looking for the `direct_inputs' function. This function is designed to allow users to circumvent the need to run a full pipeline, but still use properly tested and optimized code. Some examples include:
+
+- Channel Cleaning
+    - Clean up channel labels according to a variety of site/hospital/industry standards.
+- Channel Montaging
+    - Montage data according to user specified formats.
+- Preprocessing
+    - Bandpass/Bandstop/Highpass/Lowpass signal filtering
+    - Frequency Downsampling
+    - Eyeblink removal
+- Feature Extraction
+    - Spectral Energy Measurements
+
+plus much more.
+
+To add to the available functionality, please see the [examples](examples/) directory for more information.
 
 ## 2. Pipeline Usage
 
