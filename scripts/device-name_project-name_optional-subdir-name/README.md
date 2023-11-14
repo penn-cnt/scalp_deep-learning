@@ -6,7 +6,7 @@ This is an example user folder. Personal project work takes place in folders sav
 
 We require that the naming of the folder follow the following design pattern:
 
-> {device name}\_{project name}\_{optional subdirectory
+> {device name}\_{project name}\_{optional subdirectory}
 
 
 We require this naming structure in order to join different projects within the CNT data ecosystem. Multiple users can work within a single repository, either within the same directory or within their own optional subdirectories.
