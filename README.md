@@ -1,4 +1,4 @@
-CNT Scalp Concatenation Software
+CNT Code Hub
 ================
 ![version](https://img.shields.io/badge/version-0.2.1-blue)
 ![pip](https://img.shields.io/pypi/v/pip.svg)
@@ -33,6 +33,11 @@ More information about creating conda environments can be found [here](https://c
 
 # Documentation
 
+This repository is meant to serve two main purposes.
+
+1. Create a central repository for research code that is maintained in an easy to find/easy to update fashion.
+2. Create a framework for creating pipelines to ingest, clean, and analyze variable amounts of data. We also implement tracking of how the data was analyed for reproducability.
+
 Due to the required flexibility of this code, multiple runtime options are available. We have aimed to reduce the need for extensive preparation of sidecar configuration files. Any sidecar files that are needed can be generated at runtime via a cli user-interace that queries the user for processing steps. If the sidecar files are already provided, this step is skipped. An example instantiation of this code is as follows:
 
 > %run -i main.py --input GLOB --preprocess_file configs/preprocessing.yaml --feature_file configs/features.yaml --t_window 60 --n_input 2
@@ -45,37 +50,9 @@ Due to the required flexibility of this code, multiple runtime options are avail
  * --t_window : Break the data in each file into windows of the provided size in seconds.
  * --n_input : Limit how many files to read in. This is useful for testing code or data and not wanting to read in all the data found along the provided path or in the pathing file.
 
-**NOTE:** The provided features.yaml file shows a special use case of how to create looped data. This is useful if trying to perform one analysis step many times with slightly different windows. An example yaml code block is shown as follows:
-```
-spectral_energy_welch:
-    step_nums:
-        - 1
-        - 2:
-            - 99
-            - 1
-    low_freq:
-        - -np.inf
-        - 0:
-            - 99
-            - 1
-    hi_freq:
-        - np.inf
-        - 1:
-            - 100
-            - 1
-    win_size:
-        - 2
-        - 2:
-            - 99
-    win_stride:
-        - 1
-        - 1:
-            - 99
-```
+More detailed examples can be found in the examples directory.
 
-If you wish to duplicate a step many times with slight variations, you can use the double indented blocks. If there are two entries under each entry, then it will iterate from the key out to the first nested value  by the amount of the second. (i.e. Step number 2, with a 99 and 1 below would give you range(2,99,1). If you only provide one value, then you simple tile the key by the number shown. (i.e. The win_size value of 2 with a 99 underneath means all 99 steps will have a win_size of 2.)
-
-For more information, here is the full help documentation that can be found at runtime.
+# Pipeline Options
 
 ```
 %run main.py --help
