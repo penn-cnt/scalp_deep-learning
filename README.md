@@ -58,14 +58,14 @@ More detailed examples can be found in the [examples][examples/) directory.
 # Pipeline Options
 
 ```
-%run main.py --help
-usage: main.py [-h] [--input {CSV,MANUAL,GLOB}] [--n_input N_INPUT] [--dtype {EDF}] [--t_start T_START] [--t_end T_END] [--t_window T_WINDOW] [--multithread] [--ncpu NCPU] [--channel_list {HUP1020,RAW}]
-               [--montage {HUP1020,COMMON_AVERAGE}] [--viability {VIABLE_DATA,VIABLE_COLUMNS}] [--interp] [--n_interp N_INTERP] [--no_preprocess_flag] [--preprocess_file PREPROCESS_FILE] [--no_feature_flag]
-               [--feature_file FEATURE_FILE] [--outdir OUTDIR]
+%run pipeline_manager.py --help
+usage: pipeline_manager.py [-h] [--input {CSV,MANUAL,GLOB}] [--n_input N_INPUT] [--n_offset N_OFFSET] [--project {SCALP_00}] [--multithread] [--ncpu NCPU] [--t_start T_START] [--t_end T_END] [--t_window T_WINDOW]
+                           [--t_overlap T_OVERLAP] [--datatype {EDF}] [--channel_list {HUP1020,RAW}] [--montage {HUP1020,COMMON_AVERAGE}] [--viability {VIABLE_DATA,VIABLE_COLUMNS,None}] [--interp] [--n_interp N_INTERP]
+                           [--no_preprocess_flag] [--preprocess_file PREPROCESS_FILE] [--no_feature_flag] [--feature_file FEATURE_FILE] [--targets] --outdir OUTDIR [--exclude EXCLUDE] [--silent]
 
 Simplified data merging tool.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
 
 Data Merging Options:
@@ -74,14 +74,23 @@ Data Merging Options:
                         CSV            : Use a comma separated file of files to read in. (default)
                         MANUAL         : Manually enter filepaths.
                         GLOB           : Use Python glob to select all files that follow a user inputted pattern.
-  --n_input N_INPUT     Limit number of files read in. Useful for testing.
-  --dtype {EDF}         Choose an option:
-                        EDF            : EDF file formats. (default)
+  --n_input N_INPUT     Limit number of files read in. Useful for testing or working in batches.
+  --n_offset N_OFFSET   Offset the files read in. Useful for testing or working in batch.
+  --project {SCALP_00}  Choose an option:
+                        SCALP_00       : Basic scalp processing pipeline. (bjprager 10/2023)
+  --multithread         Multithread flag.
+  --ncpu NCPU           Number of CPUs to use if multithread.
+
+Data Chunking Options:
   --t_start T_START     Time in seconds to start data collection.
   --t_end T_END         Time in seconds to end data collection. (-1 represents the end of the file.)
   --t_window T_WINDOW   List of window sizes, effectively setting multiple t_start and t_end for a single file.
-  --multithread         Multithread flag.
-  --ncpu NCPU           Number of CPUs to use if multithread.
+  --t_overlap T_OVERLAP
+                        If you want overlapping time windows, this is the fraction of t_window overlapping.
+
+Input datatype Options:
+  --datatype {EDF}      Choose an option:
+                        EDF            : Read in EDF data.
 
 Channel label Options:
   --channel_list {HUP1020,RAW}
@@ -96,10 +105,11 @@ Montage Options:
                         COMMON_AVERAGE : Use a common average montage.
 
 Data viability Options:
-  --viability {VIABLE_DATA,VIABLE_COLUMNS}
+  --viability {VIABLE_DATA,VIABLE_COLUMNS,None}
                         Choose an option:
                         VIABLE_DATA    : Drop datasets that contain a NaN column. (default)
                         VIABLE_COLUMNS : Use the minimum cross section of columns across all datasets that contain no NaNs.
+                        None           : Do not remove data with NaNs.
   --interp              Interpolate over NaN values of sequence length equal to n_interp.
   --n_interp N_INTERP   Number of contiguous NaN values that can be interpolated over should the interp option be used.
 
@@ -113,8 +123,15 @@ Feature Extraction Options:
   --feature_file FEATURE_FILE
                         Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.
 
+Target Association Options:
+  --targets             Join target data with the final dataframe
+
 Output Options:
   --outdir OUTDIR       Output directory.
+  --exclude EXCLUDE     Exclude file. If any of the requested data is bad, the path and error gets dumped here. Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)
+
+Misc Options:
+  --silent              Silent mode.
 ```
 
 # Major Features Remaining
