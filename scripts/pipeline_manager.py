@@ -17,9 +17,6 @@ import pandas as PD
 from tqdm import tqdm
 import multiprocessing
 
-# Clear the numpy mac conflict message
-os.system("clear")
-
 # Import the add on classes
 from modules.addons.project_handler import *
 from modules.addons.data_loader import *
