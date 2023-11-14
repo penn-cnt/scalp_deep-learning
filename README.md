@@ -42,14 +42,18 @@ Due to the required flexibility of this code, multiple runtime options are avail
 
 > python pipeline_manager.py --input GLOB --preprocess_file ../../user_data/derivative/trial_00/configs/preprocessing.yaml --feature_file ../../user_data/derivative/trial_00/configs/features.yaml --outdir ../../user_data/derivative/trial_00/features/five_second_two_second_overlap --n_input 500 --t_window 5 --t_overlap 0.4 --ncpu 2 --multithread
 
-**main.py** is the main body of this code. The additional flags are:
+**pipeline_manager.py** is the main body of this code. The additional flags are:
  * --input GLOB : Query the user for a wildcard path to files to read in via the GLOB library.
- * --preprocess_file : Path to the sidecar yaml configuration file that defines preprocessing steps. An example can be found [here](scripts/SCALP_CONCAT-EEG/configs/preprocessing.yaml)
- * --feature_file : Path to the sidecar yaml configuration file that defines feature extraction steps. An example can be found [here](scripts/SCALP_CONCAT-EEG/configs/features.yaml)
- * --t_window : Break the data in each file into windows of the provided size in seconds.
+ * --preprocess_file : Path to the sidecar yaml configuration file that defines preprocessing steps.
+ * --feature_file : Path to the sidecar yaml configuration file that defines feature extraction steps.
+ * --outdir : Output directory for the analysis
  * --n_input : Limit how many files to read in. This is useful for testing code or data and not wanting to read in all the data found along the provided path or in the pathing file.
-
-More detailed examples can be found in the examples directory.
+ * --t_window : Break the data in each file into windows of the provided size in seconds.
+ * --t_overlap : Percentag of overlap between consecutive time windows
+ * --ncpu : Number of cpus to use if multithreaded
+ * --multithread : Enable multithreaded analysis.
+ 
+More detailed examples can be found in the [examples][examples/) directory.
 
 # Pipeline Options
 
