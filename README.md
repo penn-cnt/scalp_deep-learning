@@ -136,12 +136,12 @@ Misc Options:
 
 # Major Features Remaining
 - Preprocessing Options
- - Allow multiple preprocessing blocks. This way data can be montaged during preprocessing blocks.
+    - Allow multiple preprocessing blocks. This way data can be montaged during preprocessing blocks.
 - Error logs
- - Errors currently print out to stdout/stderr. This can be difficult to parse with large batches of data. modules/core/error_logging.py is in development to support better error/warning logs.
+    - Errors currently print out to stdout/stderr. This can be difficult to parse with large batches of data. modules/core/error_logging.py is in development to support better error/warning logs.
 - Data Types
- - MEF: Mef 3.0+ is supported. Mef 2.0+ will be released at a later date.
- - CCEP: In Development.  
+    - MEF: Mef 3.0+ is supported. Mef 2.0+ will be released at a later date.
+    - CCEP: In Development.  
 
 # License
 This code is designed to be shared within the CNT, with collaborators, and the wider Epilepsy community. Most of the code provided is open-source and does not contain any important patient health information of proprietary techniques. Due to the flexible nature of this work however, proprietary code development may occur on private branches, and is not to be shared without permission.
