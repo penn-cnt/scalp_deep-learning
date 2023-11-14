@@ -4,9 +4,11 @@ CNT Scalp Concatenation Software
 ![pip](https://img.shields.io/pypi/v/pip.svg)
 ![https://img.shields.io/pypi/pyversions/](https://img.shields.io/pypi/pyversions/4)
 
-This code is designed to facilitate the merging of scalp EEG data collected by different sources. The code is based in the Observer design principal and parent-child inheritance to allow for lab code to be added/modified in a simpler fashion. We aim to let students still have flexible control over their workflow, but to do so in an environment that is easier to track and understand.
+This code is designed to help with the processing of epilepsy datasets commonly used within the Center for Neuroengineering & Therapeutics (CNT) at the University of Pennsylvania. 
 
-This code is also a possible stand-in for DN3, which was originally specced to be a method for preparing data for deep learning tasks. At present DN3 is not ready for lab-wide implementation. This code aims to only prepare the data for deep learning ingested, and leaves the metadata for creating a model to the user.
+This code is meant to be researcher driven, allowing new code libraries to be added to modules that represent common research tasks (i.e. Channel Cleaning, Montaging, Preprocessing, etc.). The code can be accessed both as independent libraries that can be called on for a range of tasks, or as part of a large framework meant to ingest, clean, and prepare data for analysis or deep-learning tasks.
+
+For more information on how to use our code, please see the examples folder for specific use-cases and common practices.
 
 # Prerequisites
 In order to use this repository, you must have access to Python 3+. 
