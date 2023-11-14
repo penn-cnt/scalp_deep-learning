@@ -1,17 +1,16 @@
 # Basic Python Imports
 import sys
 import time
-import seaborn
 import argparse
 import tkinter as tk
 from glob import glob
 import matplotlib.pyplot as PLT
 
 # Local imports
-from modules.data_loader import *
-from modules.channel_clean import *
-from modules.channel_mapping import *
-from modules.channel_montage import *
+from modules.addons.data_loader import *
+from modules.addons.channel_clean import *
+from modules.addons.channel_mapping import *
+from modules.addons.channel_montage import *
 
 #################
 #### Classes ####
@@ -49,6 +48,7 @@ class data_viewer:
             DF,self.fs = DL.direct_inputs(self.infile,'edf')
         else:
             DF,self.fs = pickle.load(open(self.infile,"rb"))
+            self.fs    = self.fs[0]
 
         # Get the cleaned channel names
         clean_channels = CHCLN.direct_inputs(DF.columns)
