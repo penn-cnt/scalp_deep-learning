@@ -38,3 +38,5 @@ You can add new projects, datatypes, channel mappings, and montages by adding th
 If you wish to add an entirely new argument to the pipeline, you will need to add it to the pipeline_manager.py:main inside the argument parser call. If you need help with this, please feel free to reach out to the data team.
 
 The current configuration is meant to cover as many generic use cases as possible, and is not meant to be an exhaustive list.
+
+## Enabling your code in the addon library
