@@ -15,7 +15,9 @@ In order to use this repository, you must have access to Python 3+.
 
 # Installation
 
-The python environment required to run this code can be found in the following location. [Concatenation YAML](/core_libraries/python/scalp/envs/CNT_ENVIRON_SCALP_CONCAT.yml)
+An environment file with all the needed packages to run this suite of code can be found at the following location
+
+> [Concatenation YAML](core_libraries/python/cnt_codehub/envs/cnt_codehub.yml)
 
 This file can be installed using the following call to conda:
 
