@@ -40,3 +40,28 @@ If you wish to add an entirely new argument to the pipeline, you will need to ad
 The current configuration is meant to cover as many generic use cases as possible, and is not meant to be an exhaustive list.
 
 ## Enabling your code in the addon library
+
+Within each addon library, you will find a function similar to the following example:
+
+```
+    def channel_montage_logic(self, montage):
+        """
+        Update this function for the pipeline and direct handler to find new functions.
+
+        Args:
+            montage (str): User provided string for type of montage to perform.
+
+        Returns:
+            array: array of montage data
+        """
+
+        # Logic for different montages
+        if montage.lower() == "hup1020":
+            return self.montage_HUP_1020()
+        elif montage.lower() == "common_average":
+            return self.montage_common_average() 
+```
+
+By adding the keyword you entered into allowed_arguments.yml to this case statement, the code will now be able to find your new function.
+
+**Note** The exact namespace for these case statements will vary to avoid conflicts. Each case statement should be found at the beginning of the user inputted function section, and will generally be named using the following logic: \<class name\>\_logic.
