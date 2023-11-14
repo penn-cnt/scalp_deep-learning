@@ -40,10 +40,9 @@ This repository is meant to serve two main purposes.
 
 Due to the required flexibility of this code, multiple runtime options are available. We have aimed to reduce the need for extensive preparation of sidecar configuration files. Any sidecar files that are needed can be generated at runtime via a cli user-interace that queries the user for processing steps. If the sidecar files are already provided, this step is skipped. An example instantiation of this code is as follows:
 
-> %run -i main.py --input GLOB --preprocess_file configs/preprocessing.yaml --feature_file configs/features.yaml --t_window 60 --n_input 2
+> python pipeline_manager.py --input GLOB --preprocess_file ../../user_data/derivative/trial_00/configs/preprocessing.yaml --feature_file ../../user_data/derivative/trial_00/configs/features.yaml --outdir ../../user_data/derivative/trial_00/features/five_second_two_second_overlap --n_input 500 --t_window 5 --t_overlap 0.4 --ncpu 2 --multithread
 
 **main.py** is the main body of this code. The additional flags are:
- * -i is a special runtime flag for interactive environments. This is required if running multiprocessing in most interactive environments
  * --input GLOB : Query the user for a wildcard path to files to read in via the GLOB library.
  * --preprocess_file : Path to the sidecar yaml configuration file that defines preprocessing steps. An example can be found [here](scripts/SCALP_CONCAT-EEG/configs/preprocessing.yaml)
  * --feature_file : Path to the sidecar yaml configuration file that defines feature extraction steps. An example can be found [here](scripts/SCALP_CONCAT-EEG/configs/features.yaml)
