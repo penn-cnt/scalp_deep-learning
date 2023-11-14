@@ -135,7 +135,13 @@ Misc Options:
 ```
 
 # Major Features Remaining
-- Associating target variables with the each subject
+- Preprocessing Options
+ - Allow multiple preprocessing blocks. This way data can be montaged during preprocessing blocks.
+- Error logs
+ - Errors currently print out to stdout/stderr. This can be difficult to parse with large batches of data. modules/core/error_logging.py is in development to support better error/warning logs.
+- Data Types
+ - MEF: Mef 3.0+ is supported. Mef 2.0+ will be released at a later date.
+ - CCEP: In Development.  
 
 # License
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
