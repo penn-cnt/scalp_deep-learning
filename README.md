@@ -172,7 +172,7 @@ Misc Options:
     - CCEP: In Development.  
 
 # License
-This code is designed to be shared within the CNT, with collaborators, and the wider Epilepsy community. Most of the code provided is open-source and does not contain any important patient health information of proprietary techniques. Due to the flexible nature of this work however, proprietary code development may occur on private branches, and is not to be shared without permission.
+This code is designed to be shared within the CNT, with collaborators, and the wider Epilepsy community. Most of the code provided is open-source and does not contain any patient health information of proprietary techniques. Due to the flexible nature of this work however, proprietary code development may occur on private branches, and is not to be shared without permission.
 
 A more fullsome description of our licensing can be found [here](LICENSE)
 
