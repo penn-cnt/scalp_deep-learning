@@ -38,6 +38,12 @@ This repository is meant to serve two main purposes.
 1. Create a central repository for research code that is maintained in an easy to find/easy to update fashion.
 2. Create a framework for creating pipelines to ingest, clean, and analyze variable amounts of data. We also implement tracking of how the data was analyed for reproducability.
 
+## 1. Code Repository Usage
+
+Within the [modules](scripts/modules/) subfolder, you can find the subdirectory `addons'.
+
+## 2. Pipeline Usage
+
 Due to the required flexibility of this code, multiple runtime options are available. We have aimed to reduce the need for extensive preparation of sidecar configuration files. Any sidecar files that are needed can be generated at runtime via a cli user-interace that queries the user for processing steps. If the sidecar files are already provided, this step is skipped. An example instantiation of this code is as follows:
 
 > python pipeline_manager.py --input GLOB --preprocess_file ../../user_data/derivative/trial_00/configs/preprocessing.yaml --feature_file ../../user_data/derivative/trial_00/configs/features.yaml --outdir ../../user_data/derivative/trial_00/features/five_second_two_second_overlap --n_input 500 --t_window 5 --t_overlap 0.4 --ncpu 2 --multithread
