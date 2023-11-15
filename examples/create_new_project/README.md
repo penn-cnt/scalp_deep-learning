@@ -1,7 +1,10 @@
 # Creating a new pipeline workflow
 
-If you wish to create your own workflow, you will need to add the logic to [project_handler.py](../../scripts/codehub/modules/addons/project_handler.py). You will also need to add the project workflow keyword to [allowed_arguments.yaml](scripts/codehub/allowed_arguments.yaml). More information on how to do this can be found in [add new code](examples/add_new_code/) and [add pipeline arguments](examples/add_pipeline_arguments/) respectively.
+If you wish to create your own workflow, you will need to add the logic to [project_handler.py](../../scripts/codehub/modules/addons/project_handler.py). You will also need to add the project workflow keyword to [allowed_arguments.yaml](scripts/codehub/allowed_arguments.yaml).
 
+More information on how to do this can be found in [add new code](examples/add_new_code/) and [add pipeline arguments](examples/add_pipeline_arguments/) respectively.
+
+## Sample project workflow
 The project handlers class comes with a template workflow that has been designed to work for most use cases. The template is shown below:
 ```
     def template(self):
