@@ -1,6 +1,8 @@
 # Creating a new pipeline workflow
 
-The project handlers class comes with a template workflow that has been designed to work for most use cases. The template itself us as follows:
+If you wish to create your own workflow, you will need to add the logic to [project_handler.py](../../scripts/codehub/modules/addons/project_handler.py). You will also need to add the project workflow keyword to [allowed_arguments.yaml](scripts/codehub/allowed_arguments.yaml). More information on how to do this can be found in [add new code](examples/add_new_code/) and [add pipeline arguments](examples/add_pipeline_arguments/) respectively.
+
+The project handlers class comes with a template workflow that has been designed to work for most use cases. The template is shown below:
 ```
     def template(self):
 
@@ -39,3 +41,14 @@ The project handlers class comes with a template workflow that has been designed
                 # Returning to a list of arrays so it can be passed to different modeling back-ends like PyTorch.
                 output_manager.update_output_list(self,df.values)
 ```
+Generally speaking, the pipeline above attempts to:
+
+1. Read data into memory
+2. Clean the channel labels
+3. Find the channels needed for this analysis and which are present in the data.
+4. Creates a dataframe of the data and cleaned channels
+5. Preprocesses the data
+6. Montages the data
+7. Saves the data for feature extraction
+
+Other steps can be added to this pipeline as needed. Care should be taken however to read the rules for what data is expected to be passed in and out of each class. Information for which can be found in the documentation strings for each class.
