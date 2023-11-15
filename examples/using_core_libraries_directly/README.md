@@ -26,3 +26,20 @@ Each addon module includes a direct_inputs method to pass each module data and o
 
         return PD.DataFrame(montage_data,columns=self.montage_channels)
 ```
+
+For example, I could call on this method in the following way (assuming I have the scripts/codehub/ in my PythonPath):
+
+```
+from modules.addons.channel_montage import channel_montage
+
+# Dataframe generation
+DF = **Your datafrme here**
+
+# Montage choice
+montage = "hup1020"
+
+CM     = channel_montage()
+new_df = CM.direct_inputs(DF,montage)
+```
+
+And you would have a new dataframe that is montaged and labeled accordingly.
