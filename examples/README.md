@@ -2,6 +2,10 @@
 
 This is a location for examples on how to use individual pieces of code within this library, how to run the pipeline, and how to make changes to the code.
 
+# Using core libraries directly
+
+If you want to use any of the core libraries without the pipeline wrapper, please consult [using core libraries](using_core_libraries_directly/)
+
 ## To create a new project workflow
 
 If you want to make a new project without writing any new code, please consult [create new project](create_new_project/)
