@@ -5,7 +5,19 @@ If you wish to create your own workflow, you will need to add the logic to [proj
 More information on how to do this can be found in [add new code](examples/add_new_code/) and [add pipeline arguments](examples/add_pipeline_arguments/) respectively.
 
 ## Sample project workflow
-The project handlers class comes with a template workflow that has been designed to work for most use cases. The template is shown below:
+A benefit to working within the pipeline is that you can create a pipeline very quickly, which can be useful for data exploration and analysis. For example, a pipeline to just clean the data and do basic preprocessing and montaging can be instantiatied with the following seven lines of code:
+```
+if data_loader.pipeline(self):
+    channel_clean.pipeline(self)
+    channel_mapping.pipeline(self)
+    dataframe_manager.__init__(self)
+    dataframe_manager.column_subsection(self,self.channel_map_out)  
+    df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
+    self.montaged_dataframe = channel_montage.pipeline(self,df)
+```
+Obviously, a more robust code would include various documentation and data quality checks, but this is meant to show how much of the processing pipeline can be wrapped up in a simple code block.
+
+The project handlers class comes with a template workflow that has been designed to work for most use cases, including some basic logic gates than can be applied for better control of what data is allowed through. The template is shown below:
 ```
     def template(self):
 
