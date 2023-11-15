@@ -35,7 +35,14 @@ Returns:
 - Output single channel data vector
 
 ### mne_processing
-Class designed to work with built-
+Class designed to work with built-in functions for mne. MNE has a proprietary data format, and requires slightly unique inputs. If working with MNE, you will need to pass it the full data array. You may also encounter warnings about the data processing steps being performed outside of mne. (Basically, buyer beware.)
+
+Data is stored within the following objects:
+- Channel data matrix: self.dataset
+- Single Sampling frequqnecy for all channels: self.fs
+- Cleaned mne channel names for this project: self.mne_channels
+
+Examples for how to work with this data can be found in preprocessing.py:mne_processing:eyeblink_removal
 
 ### New Classes
 all classes should be initialized with a single vector of data (stored to ***self.data***) and the sampling frequency (stored to ***self.fs***). If working within pre-existing classes, 
