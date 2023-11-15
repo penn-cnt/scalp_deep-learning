@@ -56,3 +56,10 @@ If you wish to add a new function, find the class that matches your needs best, 
 ### New Classes
 We recommended users emulate signal_processing or noise_reduction for new classes. The dynamic generation of method_calls requires specific inputs, and exceptions like mne_processing and preprocessing_utils need to be handled separately.
 
+## Feature Extraction
+
+The underlying code for this module functions similarly to preprocessing, with the exception that it is designed to return a scalar (or object that can be serialized into a dataframe object) and a potential tag. This allows the final feature dataframe to store the feature and optional tag to allow for group level statistics to be analyzed later.
+
+### New Functions and Classes
+
+See rules for adding to preprocessing, with the exception of the returned objects. For an example, please see features.py:signal_processing:spectral_energy_welch
