@@ -44,6 +44,15 @@ Data is stored within the following objects:
 
 Examples for how to work with this data can be found in preprocessing.py:mne_processing:eyeblink_removal
 
+### preprocessing_utils
+Class designed to provide some utility functions for preprocessing, such as saving data snapshots at different steps in the preprocessing pipeline.
+
+Not recommended to alter this function without consulting with data team.
+
+### New functions
+
+If you wish to add a new function, find the class that matches your needs best, and add your function following the same rules as laid out in the documentation.
+
 ### New Classes
-all classes should be initialized with a single vector of data (stored to ***self.data***) and the sampling frequency (stored to ***self.fs***). If working within pre-existing classes, 
+We recommended users emulate signal_processing or noise_reduction for new classes. The dynamic generation of method_calls requires specific inputs, and exceptions like mne_processing and preprocessing_utils need to be handled separately.
 
