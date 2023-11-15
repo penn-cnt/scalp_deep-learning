@@ -9,7 +9,8 @@ utils/visualization/edf_viewer.py --file ../../user_data/BIDS/BIDS/sub-0014/ses-
 ```
 where:
 - file: Is the edf file to be read in
-- sleep_wake_power: Is an optional flag. The viewer allows tagging of timeseries data points to draw attention to areas of interest. This flag reads in sleep/wake annotated data. 
+- sleep_wake_power: Optional flag that tags timeseries data.
+    - The viewer allows tagging of timeseries data points to draw attention to areas of interest. This flag reads in sleep/wake annotated data. 
 
 ### Example Views
 The default view for an EDF file following channel name cleanup and montaging might look like the following:
