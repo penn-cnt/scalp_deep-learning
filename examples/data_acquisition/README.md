@@ -23,6 +23,14 @@ For more information, please see the [README.md ](scripts/codehub/utils/acquisit
 
 ## Streaming Data
 
-[stream_ssh.py](../../scripts/codehub/utils/acquisition/stream_ssh.py) Will stream data via a SSH tunnel into memory on your current machine.
+[stream_ssh.py](../../scripts/codehub/utils/acquisition/stream_ssh.py) This enables streaming data between a remote host and a python instance. You can either read data from a remote source into memory using the data access method of your choice (i.e. Pandas, numpy, pyedflib, etc.) with the requisite options or save the data to the remote system.
+
+```
+import pandas as PD
+from functools import partial
+import stream_ssh as STRMSSH
+DF = STRMSSH.read('path/to/file/on/remote/system.csv','borel.seas.upenn.edu','USERNAME','USERPASSWORD',partial(PD.read_csv,names=['a','b'],usecols=[1,2])
+```
+will stream the data on borel into the partial function instantiation of a pandas datafrme and return your data with the associated key:value pairs applied.
 
 For more information, please see the [README.md ](scripts/codehub/utils/acquisition/README.md) on how to use the script.
