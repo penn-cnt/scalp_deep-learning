@@ -32,7 +32,11 @@ class mne_processing:
             raise IndexError("MNE Processing requires that all sampling frequencies match. Please check input data or downsampling arguments.")
 
     @silence_mne_warnings
-    def eyeblink_removal(self,config_path,n_components=10,max_iter=1000):
+    def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
+
+        # Set components if needed
+        if n_components == None:
+            n_components = len(self.ppchannels)
 
         # Get the channel mappings in mne compliant form
         mapping      = yaml.safe_load(open(config_path,'r'))
