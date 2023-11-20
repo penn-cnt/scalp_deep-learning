@@ -136,6 +136,14 @@ class features:
                     iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
                     self.feature_df = PD.concat((self.feature_df,iDF))
 
+                    # Downcast feature array to take up less space in physical and virtual memory
+                    for icol in self.feature_df.columns:
+                        try:
+                            self.feature_df[icol]=PD.to_numeric(self.feature_df[icol], downcast='integer')
+                        except ValueError:
+                            pass
+
+
 
     def feature_aggregation(self):
 
