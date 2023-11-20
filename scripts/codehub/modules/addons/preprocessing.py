@@ -337,6 +337,6 @@ class preprocessing:
                     elif cls.__name__ == 'mne_processing':
                         MP = mne_processing(dataset,fs,self.mne_channels)
                         method_call = getattr(MP,method_name)
-                        method_call(**method_args)
+                        dataset     = method_call(**method_args)
         return dataset
 
