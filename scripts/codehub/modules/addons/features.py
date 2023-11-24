@@ -136,10 +136,11 @@ class features:
                     iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
                     self.feature_df = PD.concat((self.feature_df,iDF))
 
-                    # Downcast feature array to take up less space in physical and virtual memory
-                    for icol in self.feature_df.columns:
+                    # Downcast feature array to take up less space in physical and virtual memory. Use downcast first in case its a feature that cannot be made numeric
+                    for ichannel in channels:
                         try:
-                            self.feature_df[icol]=PD.to_numeric(self.feature_df[icol], downcast='integer')
+                            self.feature_df[ichannel]=PD.to_numeric(self.feature_df[ichannel], downcast='integer')
+                            self.feature_df[ichannel]=self.feature_df[ichannel].astype('float32')
                         except ValueError:
                             pass
 
