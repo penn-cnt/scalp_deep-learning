@@ -1,32 +1,40 @@
+import os
+import yaml
+from sys import exit
 import tkinter as tk
 from tkinter import ttk
 
+# Local imports
+import pipeline_manager as PM
+
 class pipegui:
 
-    def __init__(self):
-        pass
-
-    def on_dropdown_change(self,event):
-        selected_item = dropdown_var.get()
-        update_text_widget(selected_item)
+    def __init__(self,args,allowed_dict,help):
+        self.args         = args
+        self.keys         = list(args.keys())
+        self.allowed_dict = allowed_dict
+        self.help         = help
 
     def update_text_widget(self,selected_item):
-        text_widget.delete("1.0", tk.END)  # Clear previous text
-        # Add explanation for the selected item
-        explanation = explanations.get(selected_item, "No explanation available.")
-        text_widget.insert(tk.END, explanation)
+
+        # Get and clean up the help string
+        newtext = self.help[selected_item]
+        newtext = newtext.lstrip('R|')
+
+        # Update the text object
+        self.text_widget.delete("1.0", tk.END)  # Clear previous text
+        self.text_widget.insert(tk.END, newtext)
 
     def main(self):
-        # Sample explanations for each dropdown item (modify as needed)
-        explanations = {
-            "Option 1": "Explanation for Option 1",
-            "Option 2": "Explanation for Option 2",
-            "Option 3": "Explanation for Option 3",
-        }
 
         # Create the main window
         root = tk.Tk()
-        root.title("GUI Template")
+        root.title("Pipeline Manager GUI")
+
+        # Window sizing
+        window_width  = 1600
+        window_height = 900
+        root.geometry(f"{window_width}x{window_height}")
 
         # Create a frame for the left side (containing widgets)
         left_frame = ttk.Frame(root, padding=10)
@@ -45,27 +53,45 @@ class pipegui:
         separator = ttk.Separator(root, orient="vertical")
         separator.grid(row=0, column=2, sticky="ns", padx=5)
 
-        # Widgets on the left side
-        dropdown_var = tk.StringVar()
-        dropdown_var.set("Option 1")  # Set default selection
-        dropdown = ttk.Combobox(left_frame, textvariable=dropdown_var, values=list(explanations.keys()))
-        dropdown.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
-        dropdown.bind("<<ComboboxSelected>>", self.on_dropdown_change)
+        # Make the labels
+        for idy,ikey in enumerate(self.keys):
+            label=tk.Label(left_frame,text=f"{ikey}")
+            label.grid(row=idy, column=0, padx=5, pady=3, sticky="ew")
 
-        # Add more widgets as needed
+        # Make the drop-down widgets
+        dropdown_dict = {}
+        for idy,ikey in enumerate(self.keys):
+            dropdown_dict[ikey] = tk.StringVar()
+            dropdown = ttk.Combobox(left_frame, textvariable=dropdown_dict[ikey], values=['a','b'], width=40)
+            dropdown.grid(row=idy, column=1, padx=5, pady=3, sticky="ew")
+
+        # Make some help buttons
+        for idy,ikey in enumerate(self.keys):
+            button = tk.Button(left_frame, text="Show Help", command=lambda x=ikey: self.update_text_widget(x))
+            button.grid(row=idy, column=2, padx=5, pady=3, sticky="ew")
 
         # Text widget on the right side
-        text_widget = tk.Text(canvas, wrap="word", width=40, height=20)
-        text_widget.pack(padx=10, pady=10)
+        self.text_widget = tk.Text(canvas, wrap="word")
+        self.text_widget.pack(padx=10, pady=10)
 
         # Run the GUI
         root.mainloop()
 
 if __name__ == '__main__':
 
+    # Get the pathing to the pipeline manager. Allows us to find the argument file
+    pipeline_path = os.path.dirname(os.path.abspath(PM.__file__))+'/'
+
     # Get the arguments
-    pass
+    args, help = PM.argument_handler(argument_dir=pipeline_path,require_flag=False)
+    args       = vars(args)
+
+    # Read in the allowed arguments
+    allowed_dict = {}
+    raw_args     = yaml.safe_load(open(f"{pipeline_path}allowed_arguments.yaml","r"))
+    for ikey in raw_args.keys():
+        exec(f"allowed_dict['{ikey}']={raw_args[ikey]}", globals())
 
     # Create the GUI
-    PG = pipegui()
+    PG = pipegui(args,allowed_dict,help)
     PG.main()

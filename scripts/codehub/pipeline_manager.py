@@ -207,12 +207,12 @@ def start_analysis(data_chunk,args,worker_id,barrier):
 
     DM = data_manager(data_chunk,args,worker_id,barrier)
 
-if __name__ == "__main__":
+def argument_handler(argument_dir='./',require_flag=True):
 
     # Read in the allowed arguments
-    raw_args = yaml.safe_load(open("allowed_arguments.yaml","r"))
+    raw_args = yaml.safe_load(open(f"{argument_dir}allowed_arguments.yaml","r"))
     for ikey in raw_args.keys():
-        exec("%s=%s" %(ikey,raw_args[ikey]))
+        exec("%s=%s" %(ikey,raw_args[ikey]),globals())
     
     # Make a useful help string for each keyword
     allowed_project_help   = make_help_str(allowed_project_args)
@@ -265,13 +265,23 @@ if __name__ == "__main__":
     target_group.add_argument("--targets", action='store_true', default=False, help="Join target data with the final dataframe")
 
     output_group = parser.add_argument_group('Output Options')
-    output_group.add_argument("--outdir", required=True, default="../../user_data/derivative/", help="Output directory.") 
+    output_group.add_argument("--outdir", required=require_flag, help="Output directory.") 
     output_group.add_argument("--exclude", help="Exclude file. If any of the requested data is bad, the path and error gets dumped here. \
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     args = parser.parse_args()
+
+    # Help info if needed to be passed back as an object and not string
+    help_info = {action.dest: action.help for action in parser._get_optional_actions()}
+
+    return args,help_info
+
+if __name__ == "__main__":
+
+    # Get the argument handler
+    args,_ = argument_handler()
 
     # Make the output directory as needed
     if not os.path.exists(args.outdir):
