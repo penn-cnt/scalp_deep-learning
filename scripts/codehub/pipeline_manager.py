@@ -16,6 +16,7 @@ import numpy as np
 import pandas as PD
 from tqdm import tqdm
 import multiprocessing
+from pyedflib.highlevel import read_edf_header
 
 # Import the add on classes
 from modules.addons.project_handler import *
@@ -140,7 +141,8 @@ def test_input_data(args,files,start_times,end_times):
             else:
                 excluded_files.append([ifile,flag[1]])
         excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
-        excluded_df.to_csv(exclude_path,index=False)
+        if not args.debug:
+            excluded_df.to_csv(exclude_path,index=False)
     return files[good_index],start_times[good_index],end_times[good_index]
 
 def overlapping_start_times(start, end, step, overlap_frac):
@@ -271,10 +273,11 @@ if __name__ == "__main__":
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
+    misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
     args = parser.parse_args()
 
     # Make the output directory as needed
-    if not os.path.exists(args.outdir):
+    if not os.path.exists(args.outdir) and not args.debug:
         print("Output directory does not exist. Make directory at %s (Y/y)?" %(args.outdir))
         user_input = input("Response: ")
         if user_input.lower() == 'y':
@@ -350,7 +353,7 @@ if __name__ == "__main__":
 
             # Read in just the header to get duration
             if args.t_end == -1:
-                t_end = highlevel.read_edf_header(ifile)['Duration']
+                t_end = read_edf_header(ifile)['Duration']
             else:
                 t_end = args.t_end
 

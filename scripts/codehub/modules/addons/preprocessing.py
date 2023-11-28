@@ -212,7 +212,7 @@ class noise_reduction:
 
 class preprocessing_utils:
 
-    def __init__(self,dataset,filename,t_start,t_end,step_num,fs,outdir):
+    def __init__(self,dataset,filename,t_start,t_end,step_num,fs,outdir,debug):
         self.dataset  = dataset
         self.filename = filename
         self.t_start  = t_start
@@ -220,6 +220,7 @@ class preprocessing_utils:
         self.step_num = step_num
         self.fs       = fs
         self.outdir   = outdir
+        self.debug    = debug
 
     def data_snapshot_pickle(self,outpath=None):
         """
@@ -233,12 +234,14 @@ class preprocessing_utils:
             outpath = self.outdir+f"/preprocessing_snapshot/pickle/{self.step_num:02}/"
         outfile = outpath+self.filename
 
-        # Make sure path exists
-        if not os.path.exists(outpath):
-            os.system(f"mkdir -p {outpath}")
+        # Debug flag
+        if not self.debug:
+            # Make sure path exists
+            if not os.path.exists(outpath):
+                os.system(f"mkdir -p {outpath}")
 
-        # Write data to file
-        pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
+            # Write data to file
+            pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
 
     def data_snapshot_edf(self,outpath=None):
         """
@@ -331,7 +334,7 @@ class preprocessing:
                         dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
                     elif cls.__name__ == 'preprocessing_utils':
                         filename    = self.metadata[self.file_cntr]['file']
-                        PU          = preprocessing_utils(dataset,filename,self.t_start,self.t_end,istep,fs,self.args.outdir)
+                        PU          = preprocessing_utils(dataset,filename,self.t_start,self.t_end,istep,fs,self.args.outdir,self.args.debug)
                         method_call = getattr(PU,method_name)
                         method_call(**method_args)
                     elif cls.__name__ == 'mne_processing':

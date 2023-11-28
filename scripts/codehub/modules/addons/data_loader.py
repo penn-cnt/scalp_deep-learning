@@ -2,7 +2,8 @@
 import numpy as np
 import pandas as PD
 from sys import exit
-from  pyedflib import highlevel
+from mne.io import read_raw_edf
+from pyedflib.highlevel import read_edf_header
 
 # CNT/EEG Specific
 from ieeg.auth import Session
@@ -29,7 +30,7 @@ class data_loader_test:
 
     def edf_test(self,infile):
         try:
-            highlevel.read_edf_header(infile)
+            read_edf_header(infile)
             return (True,)
         except Exception as e:
             return (False,e)
@@ -67,11 +68,11 @@ class data_loader:
             metadata_handler.set_channels(self,self.channels)
 
             # Calculate the sample frequencies to save the information and make time cuts
-            sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
+            sample_frequency = np.array([self.sfreq for ichannel in self.channel_metadata])
             metadata_handler.set_sampling_frequency(self,sample_frequency)
 
             # Get the rawdata
-            self.raw_dataslice(sample_frequency,majoraxis='row')
+            self.raw_dataslice(sample_frequency,majoraxis='column')
 
             return True
         else:
@@ -97,7 +98,7 @@ class data_loader:
         flag = self.data_loader_logic(filetype)
 
         if flag:
-            sample_frequency = np.array([ichannel['sample_frequency'] for ichannel in self.channel_metadata])
+            sample_frequency = np.array([self.sfreq for ichannel in self.channel_metadata])
             return PD.DataFrame(self.indata.T,columns=self.channels),sample_frequency[0]
         else:
             print("Unable to read in %s." %(self.infile))
@@ -162,13 +163,19 @@ class data_loader:
         # Load current edf data into memory
         if self.infile != self.oldfile:
             try:
-                self.indata, self.channel_metadata, scan_metadata = highlevel.read_edf(self.infile)
-                self.channels = [ival['label'] for ival in self.channel_metadata]
+                # Read in the data via mne backend
+                raw           = read_raw_edf(self.infile,verbose=False)
+                self.indata   = raw.get_data().T
+                self.channels = raw.ch_names
+                self.sfreq    = raw.info.get('sfreq')
+
+                # Keep a static copy of the channels so we can just reference this when using the same input data
+                self.channel_metadata = self.channels.copy()
                 return True
             except OSError:
                 return False
         else:
-            self.channels = [ival['label'] for ival in self.channel_metadata]
+            self.channels = [ival for ival in self.channel_metadata]
             return True
 
     def load_iEEG(self,username,password,dataset_name):
