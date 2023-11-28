@@ -99,7 +99,7 @@ class data_loader:
 
         if flag:
             sample_frequency = np.array([self.sfreq for ichannel in self.channel_metadata])
-            return PD.DataFrame(self.indata.T,columns=self.channels),sample_frequency[0]
+            return PD.DataFrame(self.indata,columns=self.channels),sample_frequency[0]
         else:
             print("Unable to read in %s." %(self.infile))
             return None,None

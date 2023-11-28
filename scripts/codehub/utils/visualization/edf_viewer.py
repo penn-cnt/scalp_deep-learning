@@ -4,6 +4,10 @@ import time
 import argparse
 import tkinter as tk
 from glob import glob
+
+# Matplotlib import and settings
+#import matplotlib
+#matplotlib.use('TkAgg')
 import matplotlib.pyplot as PLT
 
 # Local imports
@@ -18,6 +22,7 @@ from modules.addons.channel_montage import *
 
 class data_viewer:
 
+    @profile
     def __init__(self, infile, args):
         
         # Save the input info
@@ -35,6 +40,7 @@ class data_viewer:
         self.xlim    = []
         self.drawn_y = []
 
+    @profile
     def data_prep(self):
 
         # Create pointers to the relevant classes
@@ -79,6 +85,7 @@ class data_viewer:
         else:
             self.t_flag = False
 
+    @profile
     def read_sleep_wake_data(self):
 
         # Read in the pickled data associations
@@ -103,6 +110,7 @@ class data_viewer:
         self.t_flag     = True
         self.t_colors   = ['r','b','g','m']
 
+    @profile
     def plot_sleep_wake(self):
 
         x_list = {}
@@ -144,6 +152,7 @@ class data_viewer:
                         c_list[ikey][ichan].append(self.t_colors[ii])
         return x_list,y_list,c_list
 
+    @profile
     def montage_plot(self):
         
         # Get the number of channels to plot
@@ -154,10 +163,12 @@ class data_viewer:
         npnt       = int(72*width_frac)
         
         # Create the plotting environment
-        self.fig      = PLT.figure(dpi=100,figsize=(self.width,self.height))
-        gs            = self.fig.add_gridspec(nchan, 1, hspace=0)
-        self.ax_dict  = {}
-        self.lim_dict = {}
+        self.fig       = PLT.figure(dpi=100,figsize=(self.width,self.height))
+        gs             = self.fig.add_gridspec(nchan, 1, hspace=0)
+        self.ax_dict   = {}
+        self.lim_dict  = {}
+        self.xlim_orig = [self.args.t0,self.args.t0+self.args.dur]
+        xvals          = np.arange(self.DF.shape[0])/self.fs
         for idx,ichan in enumerate(self.DF.columns):
             # Define the axes
             if idx == 0:
@@ -168,20 +179,24 @@ class data_viewer:
 
             # Get the data stats 
             idata,ymin,ymax = self.get_stats(ichan)
-            xvals           = np.arange(idata.size)/self.fs
-            self.xlim_orig  = [self.args.t0,self.args.t0+self.args.dur]
 
             # Plot the data
-            nstride = 2
+            nstride = 8
             self.ax_dict[ichan].plot(xvals[::nstride],idata[::nstride],color='k')
-            self.ax_dict[ichan].set_xlim(self.xlim_orig)
             self.ax_dict[ichan].set_ylim([ymin,ymax])
             self.lim_dict[ichan] = [ymin,ymax]
 
             # Clean up the plot
+            for label in self.ax_dict[ichan].get_xticklabels():
+                label.set_alpha(0)
             self.ax_dict[ichan].set_yticklabels([])
             self.ax_dict[ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
+        
+        # X-axis cleanup
         self.refkey2 = ichan
+        self.ax_dict[ichan].set_xlim(self.xlim_orig)
+        for label in self.ax_dict[self.refkey2].get_xticklabels():
+            label.set_alpha(1)
 
         # Plot and hide target data as needed
         self.t_obj = {}
@@ -218,6 +233,7 @@ class data_viewer:
         self.fig.canvas.mpl_connect('key_press_event', self.update_plot)
         PLT.show()
 
+    @profile
     def enlarged_plot(self,channel):
         
         # Get the data view
@@ -244,6 +260,7 @@ class data_viewer:
     #### Helper functions ####
     ##########################
 
+    @profile
     def get_stats(self,ichan):
 
         idata  = self.DF[ichan].values
@@ -254,6 +271,7 @@ class data_viewer:
         ymax   = 5*stdev
         return idata,ymin,ymax
 
+    @profile
     def yscaling(self,ikey,dy):
 
         # Get the limits of the current plot for rescaling and recreating
@@ -281,6 +299,7 @@ class data_viewer:
     #### Event driven functions ####
     ################################
 
+    @profile
     def on_click(self,event):
         """
         Click driven events for the plot object.
@@ -301,6 +320,7 @@ class data_viewer:
             # Update the event driven zoom object
             self.xlim.append(event.xdata)
 
+    @profile
     def update_plot(self,event):
         """
         Key driven events for the plot object.
