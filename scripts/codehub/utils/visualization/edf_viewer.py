@@ -3,11 +3,9 @@ import sys
 import time
 import argparse
 import tkinter as tk
-from glob import glob
+import glob
 
 # Matplotlib import and settings
-#import matplotlib
-#matplotlib.use('TkAgg')
 import matplotlib.pyplot as PLT
 
 # Local imports
@@ -22,13 +20,13 @@ from modules.addons.channel_montage import *
 
 class data_viewer:
 
-    @profile
-    def __init__(self, infile, args):
+    def __init__(self, infile, args, tight_layout_dict):
         
         # Save the input info
-        self.infile = infile
-        self.fname  = infile.split('/')[-1]
-        self.args   = args
+        self.infile            = infile
+        self.fname             = infile.split('/')[-1]
+        self.args              = args
+        self.tight_layout_dict = tight_layout_dict
 
         # Get the approx screen dimensions
         root        = tk.Tk()
@@ -40,7 +38,6 @@ class data_viewer:
         self.xlim    = []
         self.drawn_y = []
 
-    @profile
     def data_prep(self):
 
         # Create pointers to the relevant classes
@@ -85,7 +82,6 @@ class data_viewer:
         else:
             self.t_flag = False
 
-    @profile
     def read_sleep_wake_data(self):
 
         # Read in the pickled data associations
@@ -110,7 +106,6 @@ class data_viewer:
         self.t_flag     = True
         self.t_colors   = ['r','b','g','m']
 
-    @profile
     def plot_sleep_wake(self):
 
         x_list = {}
@@ -152,7 +147,6 @@ class data_viewer:
                         c_list[ikey][ichan].append(self.t_colors[ii])
         return x_list,y_list,c_list
 
-    @profile
     def montage_plot(self):
         
         # Get the number of channels to plot
@@ -226,14 +220,27 @@ class data_viewer:
         self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right;" %(upa, downa, lefta, righta)
         self.ax_dict[self.refkey].set_title(self.title_str)
         
-        # Final plot clean-up and event association
+        # Title info
         PLT.suptitle(self.fname,fontsize=14)
-        self.fig.tight_layout()
+        
+        # Layout handling using previous plot layout or find it for the first time
+        if self.tight_layout_dict == None:
+            self.fig.tight_layout()
+        else:
+            self.fig.subplots_adjust(**self.tight_layout_dict)
+        
+        # Even associations
         self.fig.canvas.mpl_connect('button_press_event', self.on_click)
         self.fig.canvas.mpl_connect('key_press_event', self.update_plot)
+
+        # Show the results
         PLT.show()
 
-    @profile
+        # Store and return tight layout params for faster subsequent plots
+        if self.tight_layout_dict == None:
+            self.tight_layout_dict = {par : getattr(self.fig.subplotpars, par) for par in ["left", "right", "bottom", "top", "wspace", "hspace"]}
+        return self.tight_layout_dict
+
     def enlarged_plot(self,channel):
         
         # Get the data view
@@ -260,7 +267,6 @@ class data_viewer:
     #### Helper functions ####
     ##########################
 
-    @profile
     def get_stats(self,ichan):
 
         idata  = self.DF[ichan].values
@@ -271,7 +277,6 @@ class data_viewer:
         ymax   = 5*stdev
         return idata,ymin,ymax
 
-    @profile
     def yscaling(self,ikey,dy):
 
         # Get the limits of the current plot for rescaling and recreating
@@ -299,7 +304,6 @@ class data_viewer:
     #### Event driven functions ####
     ################################
 
-    @profile
     def on_click(self,event):
         """
         Click driven events for the plot object.
@@ -320,7 +324,6 @@ class data_viewer:
             # Update the event driven zoom object
             self.xlim.append(event.xdata)
 
-    @profile
     def update_plot(self,event):
         """
         Key driven events for the plot object.
@@ -468,10 +471,14 @@ if __name__ == '__main__':
     if args.file != None:
         files = [args.file]
     else:
-        files = glob(args.wildcard)
+        files = glob.glob(args.wildcard)
 
     # Iterate over the data and create the relevant plots
+    tight_layout_dict = None
     for ifile in files:
-        DV = data_viewer(ifile,args)
-        DV.data_prep()
-        DV.montage_plot()
+        DV = data_viewer(ifile,args,tight_layout_dict)
+        try:
+            DV.data_prep()
+            tight_layout_dict = DV.montage_plot()
+        except:
+            pass
