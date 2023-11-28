@@ -58,15 +58,17 @@ class output_manager:
         Save the feature dataframe
         """
 
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        pickle.dump(self.feature_df,open("%s/%s_features_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
-        pickle.dump(self.metadata,open("%s/%s_meta_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
+        if not self.args.debug:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+            pickle.dump(self.feature_df,open("%s/%s_features_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
+            pickle.dump(self.metadata,open("%s/%s_meta_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
 
     def save_output_list(self):
         """
         Save the container of data and metadata to ourput directory.
         """
 
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        pickle.dump(self.output_list,open("%s/%s_data_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
-        pickle.dump(self.metadata,open("%s/%s_meta_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
+        if not self.args.debug:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+            pickle.dump(self.output_list,open("%s/%s_data_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
+            pickle.dump(self.metadata,open("%s/%s_meta_%s.pickle" %(self.args.outdir,timestamp,self.unique_id),"wb"))
