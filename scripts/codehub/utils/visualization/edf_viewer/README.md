@@ -24,5 +24,5 @@ To use this toolkit, we highly recommend you create a python environment. This p
   
 ## Sample Command
 ```
-python utils/visualization/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --sleep_state --spike_state --username bjprager
+python utils/visualization/edf_viewer.py --file ../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-08_eeg.edf --username bjprager --sleep_state --spike_state
 ```
