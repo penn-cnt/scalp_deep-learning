@@ -20,5 +20,9 @@ To use this toolkit, we highly recommend you create a python environment. This p
     - > conda activate cnt_codehub 
         - The environment is set to default to the name `cnt_codehub`. (You can change this by modifying the `name` entry in your local copy of the yaml file. If you change this, you would run the above command on the new name
 5. Finally, all you need to do is add your new code repository to your anaconda path. Run the following command in the terminal or powershell
-    -  conda develop <path-to-repository-root>/scripts/codehub
+    -  conda develop \<path-to-repository-root\>/scripts/codehub
   
+## Sample Command
+```
+python utils/visualization/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --sleep_state --spike_state --username bjprager
+```
