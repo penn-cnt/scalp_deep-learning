@@ -1,12 +1,17 @@
 # Basic Python Imports
 import sys
 import time
-import argparse
-import tkinter as tk
 import glob
+import argparse
+from os import path
+
+# User interface imports
+import tkinter as tk
 
 # Matplotlib import and settings
 import matplotlib.pyplot as PLT
+from matplotlib.text import Text
+from matplotlib.ticker import MultipleLocator
 
 # Local imports
 from modules.addons.data_loader import *
@@ -18,25 +23,10 @@ from modules.addons.channel_montage import *
 #### Classes ####
 #################
 
-class data_viewer:
+class data_handler:
 
-    def __init__(self, infile, args, tight_layout_dict):
-        
-        # Save the input info
-        self.infile            = infile
-        self.fname             = infile.split('/')[-1]
-        self.args              = args
-        self.tight_layout_dict = tight_layout_dict
-
-        # Get the approx screen dimensions
-        root        = tk.Tk()
-        self.height = 0.9*root.winfo_screenheight()/100
-        self.width  = 0.9*root.winfo_screenwidth()/100
-        root.destroy()
-
-        # Save event driven variables
-        self.xlim    = []
-        self.drawn_y = []
+    def __init__(self):
+        pass
 
     def data_prep(self):
 
@@ -106,6 +96,37 @@ class data_viewer:
         self.t_flag     = True
         self.t_colors   = ['r','b','g','m']
 
+class data_viewer(data_handler):
+
+    def __init__(self, infile, args, tight_layout_dict):
+        
+        # Save the input info
+        self.infile            = infile
+        self.fname             = infile.split('/')[-1]
+        self.args              = args
+        self.tight_layout_dict = tight_layout_dict
+
+        # Some tracking variables
+        self.sleep_counter   = 0
+        self.spike_counter   = 0
+        self.sleep_spike_str = '|'
+        self.sleep_var       = ''
+        self.spike_var       = ''
+
+        # Get the approx screen dimensions and set some plot variables
+        self.supsize = 18
+        root         = tk.Tk()
+        self.height  = 0.9*root.winfo_screenheight()/100
+        self.width   = 0.9*root.winfo_screenwidth()/100
+        root.destroy()
+
+        # Save event driven variables
+        self.xlim    = []
+        self.drawn_y = []
+
+        # Prepare the data
+        data_handler.data_prep(self)
+
     def plot_sleep_wake(self):
 
         x_list = {}
@@ -148,7 +169,7 @@ class data_viewer:
         return x_list,y_list,c_list
 
     def montage_plot(self):
-        
+
         # Get the number of channels to plot
         nchan = self.DF.columns.size
 
@@ -157,12 +178,13 @@ class data_viewer:
         npnt       = int(72*width_frac)
         
         # Create the plotting environment
-        self.fig       = PLT.figure(dpi=100,figsize=(self.width,self.height))
-        gs             = self.fig.add_gridspec(nchan, 1, hspace=0)
-        self.ax_dict   = {}
-        self.lim_dict  = {}
-        self.xlim_orig = [self.args.t0,self.args.t0+self.args.dur]
-        xvals          = np.arange(self.DF.shape[0])/self.fs
+        self.fig        = PLT.figure(dpi=100,figsize=(self.width,self.height))
+        gs              = self.fig.add_gridspec(nchan, 1, hspace=0)
+        self.ax_dict    = {}
+        self.lim_dict   = {}
+        self.shade_dict = {}
+        self.xlim_orig  = [self.args.t0,self.args.t0+self.args.dur]
+        xvals           = np.arange(self.DF.shape[0])/self.fs
         for idx,ichan in enumerate(self.DF.columns):
             # Define the axes
             if idx == 0:
@@ -180,17 +202,19 @@ class data_viewer:
             self.ax_dict[ichan].set_ylim([ymin,ymax])
             self.lim_dict[ichan] = [ymin,ymax]
 
+            # Add in shading for the original axes limits
+            self.shade_dict[ichan] = self.ax_dict[ichan].axvspan(self.xlim_orig[0], self.xlim_orig[1], facecolor='orange',alpha=0.2)
+
             # Clean up the plot
             for label in self.ax_dict[ichan].get_xticklabels():
                 label.set_alpha(0)
             self.ax_dict[ichan].set_yticklabels([])
             self.ax_dict[ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
+            self.ax_dict[ichan].xaxis.grid(True)
         
         # X-axis cleanup
         self.refkey2 = ichan
         self.ax_dict[ichan].set_xlim(self.xlim_orig)
-        for label in self.ax_dict[self.refkey2].get_xticklabels():
-            label.set_alpha(1)
 
         # Plot and hide target data as needed
         self.t_obj = {}
@@ -208,20 +232,29 @@ class data_viewer:
                             self.t_obj[ikey].append(self.ax_dict[ichan].scatter(ix[jj],iy[jj],s=2,c=ic[jj],visible=False))
 
         # Add an xlabel to the final object
+        self.ax_dict[self.refkey2].xaxis.set_major_locator(MultipleLocator(1))
         self.ax_dict[self.refkey2].set_xlabel("Time (s)",fontsize=14)
+        for label in self.ax_dict[self.refkey2].get_xticklabels():
+            label.set_alpha(1)
+
 
         # Set the title objects
         upa        = u'\u2191'  # Up arrow
         downa      = u'\u2193'  # Down arrow
         lefta      = u'\u2190'  # Left arrow
         righta     = u'\u2192'  # Right arrow
-        self.title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'a'=Show entire x-axis; '0'=reset y-scale; 'e'=Plot axes mouse is on.; 't'=Toggle targets"
+        self.title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'x'=Show entire x-axis; '0'=reset y-scale; 't'=Toggle targets; 'q'=quit current plot; 'Q'=quit the program entirely"
         self.title_str += '\n'
-        self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right;" %(upa, downa, lefta, righta)
-        self.ax_dict[self.refkey].set_title(self.title_str)
+        self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right; 'e'=Zoom-in plot of axis the mouse is on;" %(upa, downa, lefta, righta)
+        if self.args.sleep_state or self.args.spike_state:
+            self.title_str += '\n'
+            if self.args.sleep_state:self.title_str += r"a=Sleep State Prediction; "
+            if self.args.spike_state:self.title_str += r"p=Spike Presence Prediction;"
+        self.title_str += '\n'
+        self.ax_dict[self.refkey].set_title(self.title_str,fontsize=10)
         
         # Title info
-        PLT.suptitle(self.fname,fontsize=14)
+        PLT.suptitle(self.fname,fontsize=self.supsize)
         
         # Layout handling using previous plot layout or find it for the first time
         if self.tight_layout_dict == None:
@@ -236,6 +269,10 @@ class data_viewer:
         # Show the results
         PLT.show()
 
+        # Update predictions if needed
+        if self.args.sleep_state or self.args.spike_state:
+            self.save_sleep_spike_state()
+            
         # Store and return tight layout params for faster subsequent plots
         if self.tight_layout_dict == None:
             self.tight_layout_dict = {par : getattr(self.fig.subplotpars, par) for par in ["left", "right", "bottom", "top", "wspace", "hspace"]}
@@ -299,6 +336,40 @@ class data_viewer:
 
         # Generate new limits
         self.ax_dict[ikey].set_ylim([ymin,ymax])
+
+    def sleep_spike_toggle(self,options,index,counter,counter2):
+        
+        # Handle the counter logic
+        counter               += 1
+        if counter == 3:
+            counter = 0
+
+        # Update the substring
+        sleep_spike_arr        = self.sleep_spike_str.split('|')
+        sleep_spike_arr[index] = options[counter]
+        self.sleep_spike_str   = '|'.join(sleep_spike_arr)
+        if counter == 0 and counter2 == 0:
+            PLT.suptitle(f"{self.fname}",fontsize=self.supsize)
+        else:
+            stitle = PLT.suptitle(f"{self.fname} ({self.sleep_spike_str})",fontsize=self.supsize)
+        return counter, options[counter]
+
+    def save_sleep_spike_state(self):
+
+        # Check for file
+        if path.exists(self.args.outfile):
+            out_DF = PD.read_csv(self.args.outfile)
+        else:
+            out_DF = PD.DataFrame(columns=['filename','username','sleep_state','spike_state'])
+
+        # Make the temporary dataframe to concat to outputs    
+        iDF = PD.DataFrame([[self.infile,self.args.username,sleep_var,spike_var]],columns=['filename','username','sleep_state','spike_state'])
+
+        # Save the results
+        out_DF = PD.concat((out_DF,iDF),ignore_index=True)
+        if not self.args.debug:
+            out_DF.to_csv(self.args.outfile,index=False)
+
 
     ################################
     #### Event driven functions ####
@@ -368,7 +439,7 @@ class data_viewer:
             for ikey in self.ax_dict.keys():
                 self.ax_dict[ikey].set_xlim(current_xlim)
         # Show the entire x-axis
-        elif event.key == 'a':
+        elif event.key == 'x':
             for ikey in self.ax_dict.keys():
                 self.ax_dict[ikey].set_xlim([0,self.t_max])
         # Reset gain
@@ -391,7 +462,7 @@ class data_viewer:
                         iobj.set_visible(True)
 
                         # Update title
-                        PLT.suptitle(self.fname+" | "+str(ikey),fontsize=14)
+                        PLT.suptitle(self.fname+" | "+str(ikey),fontsize=self.supsize)
                     else:
                         iobj.set_visible(False)
 
@@ -399,10 +470,28 @@ class data_viewer:
                 self.color_cnt += 1
             else:
                 self.color_cnt = 0
-                PLT.suptitle(self.fname,fontsize=14)
+                PLT.suptitle(self.fname,fontsize=self.supsize)
+        # Sleep/awake event mapping
+        elif event.key == 'a' and self.args.sleep_state:
+            self.sleep_counter,self.sleep_var = self.sleep_spike_toggle(['','awake','sleep','unknown'],0,self.sleep_counter,self.spike_counter)
+        # Spike State Mapping
+        elif event.key == 'p' and self.args.spike_state:
+            self.spike_counter,self.spike_var = self.sleep_spike_toggle(['','spikes','spike-free','unknown'],1,self.spike_counter,self.sleep_counter)
+        # Quit functionality
+        elif event.key == 'Q':
+            PLT.close("all")
+            sys.exit()
+
+        # Make sure the axes colorscheme is updated
+        newlim = self.ax_dict[self.refkey2].get_xlim()
+        if (newlim[0] == self.xlim_orig[0]) and (newlim[1] == self.xlim_orig[1]):
+            ialpha = 0.2
+        else:
+            ialpha = 0
+        for ichan in self.DF.columns:
+            self.shade_dict[ichan].set_alpha(ialpha)
 
         PLT.draw()
-
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -450,6 +539,10 @@ if __name__ == '__main__':
     input_group.add_argument("--file", type=str, help="Input file to plot.")
     input_group.add_argument("--wildcard", type=str, help="Wildcard enabled path to plot multiple datasets.")
 
+    output_group = parser.add_argument_group('Output options')
+    output_group.add_argument("--outfile", type=str, help="Output filepath if predicting sleep/spikes/etc.")
+    output_group.add_argument("--username", type=str, help="Username to tag any outputs with.")
+
     prep_group = parser.add_argument_group('Data preparation options')
     prep_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
 
@@ -462,10 +555,21 @@ if __name__ == '__main__':
     duration_group.add_argument("--dur_frac", type=float, help="Duration to plot in fraction of total data.")
 
     misc_group = parser.add_argument_group('Misc options')
+    misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. Save no outputs.")
     misc_group.add_argument("--sleep_wake_power", type=str, help="Optional file with identified groups in alpha/delta for sleep/wake patients")
     misc_group.add_argument("--pickle_load", action='store_true', default=False, help="Load from pickled tuple of dataframe,fs.")
-
+    misc_group.add_argument("--sleep_state", action='store_true', default=False, help="Query user for sleep state.")
+    misc_group.add_argument("--spike_state", action='store_true', default=False, help="Query user for spike freedom.")
     args = parser.parse_args()
+
+    # Get username and output path if needed
+    if args.sleep_state or args.spike_state:
+        if args.username == None:
+            args.username = input("Please enter a username for tagging data: ")
+        if args.outfile == None:
+            args.outfile = './edf_annotations.csv'
+    else:
+        args.outfile = ''
 
     # Create the file list to read in
     if args.file != None:
@@ -473,12 +577,23 @@ if __name__ == '__main__':
     else:
         files = glob.glob(args.wildcard)
 
+    # Use the output file to skip already reviewed files for state analysis
+    if path.exists(args.outfile):
+        ref_DF = PD.read_csv(args.outfile)
+    else:
+        ref_DF = PD.DataFrame(columns=['filename','username'])
+
     # Iterate over the data and create the relevant plots
     tight_layout_dict = None
     for ifile in files:
-        DV = data_viewer(ifile,args,tight_layout_dict)
-        try:
-            DV.data_prep()
-            tight_layout_dict = DV.montage_plot()
-        except:
-            pass
+        
+        # Check if this user has already reviewed this data
+        iDF   = ref_DF.loc[(ref_DF.username==args.username)&(ref_DF.filename==ifile)]
+        if iDF.shape[0] == 0:
+            try:
+                DV = data_viewer(ifile,args,tight_layout_dict)
+                tight_layout_dict = DV.montage_plot()
+            except:
+                pass
+            
+
