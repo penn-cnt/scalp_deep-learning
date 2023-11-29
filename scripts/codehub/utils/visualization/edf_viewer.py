@@ -340,8 +340,8 @@ class data_viewer(data_handler):
     def sleep_spike_toggle(self,options,index,counter,counter2):
         
         # Handle the counter logic
-        counter               += 1
-        if counter == 3:
+        counter += 1
+        if counter == 4:
             counter = 0
 
         # Update the substring
@@ -356,20 +356,23 @@ class data_viewer(data_handler):
 
     def save_sleep_spike_state(self):
 
+        # Create output column list
+        outcols = ['filename','assigned_t0','assigned_t1','username','sleep_state','spike_state','evaluated_t0','evaluated_t1']
+
+        # Make the temporary dataframe to concat to outputs
+        xlims = self.ax_dict[self.refkey2].get_xlim()
+        iDF   = PD.DataFrame([[self.infile,self.xlim_orig[0],self.xlim_orig[1],self.args.username,self.sleep_var,self.spike_var,xlims[0],xlims[1]]],columns=outcols)
+
         # Check for file
         if path.exists(self.args.outfile):
             out_DF = PD.read_csv(self.args.outfile)
+            out_DF = PD.concat((out_DF,iDF),ignore_index=True)
         else:
-            out_DF = PD.DataFrame(columns=['filename','username','sleep_state','spike_state'])
-
-        # Make the temporary dataframe to concat to outputs    
-        iDF = PD.DataFrame([[self.infile,self.args.username,sleep_var,spike_var]],columns=['filename','username','sleep_state','spike_state'])
+            out_DF = iDF
 
         # Save the results
-        out_DF = PD.concat((out_DF,iDF),ignore_index=True)
         if not self.args.debug:
             out_DF.to_csv(self.args.outfile,index=False)
-
 
     ################################
     #### Event driven functions ####
@@ -593,6 +596,7 @@ if __name__ == '__main__':
             try:
                 DV = data_viewer(ifile,args,tight_layout_dict)
                 tight_layout_dict = DV.montage_plot()
+                PLT.close("all")
             except:
                 pass
             
