@@ -8,5 +8,11 @@ To use this toolkit, we highly recommend you create a python environment. This p
 
 1. Install Anaconda
     - Please visit the [Anaconda Downloads](https://www.anaconda.com/download) page to download the appropriate Anaconda installer for your operating system. 
-2. You will need to use your new conda
-    - The build file can be found [here](https://github.com/penn-cnt/CNT-codehub/blob/main/core_libraries/python/cnt_codehub/envs/cnt_codehub.yml) 
+2. You will need to use your new conda installation to install the python environment. The build file can be found [here](https://github.com/penn-cnt/CNT-codehub/blob/main/core_libraries/python/cnt_codehub/envs/cnt_codehub.yml) 
+    - Mac/Linux Users:
+        - Within a terminal application, you can run the following command
+        - > conda env create -f <path-to-build-yml>
+    - Windows Users:
+        - You will need to open the Anaconda Powershell program. Once you do, run the following command
+        - > conda env create -f <path-to-build-yml>
+3. The 
