@@ -8,4 +8,5 @@ To use this toolkit, we highly recommend you create a python environment. This p
 
 1. Install Anaconda
     - Please visit the [Anaconda Downloads](https://www.anaconda.com/download) page to download the appropriate Anaconda installer for your operating system. 
-2. Open the Anaconda 
+2. You will need to use your new conda
+    - The build file can be found [here](https://github.com/penn-cnt/CNT-codehub/blob/main/core_libraries/python/cnt_codehub/envs/cnt_codehub.yml) 
