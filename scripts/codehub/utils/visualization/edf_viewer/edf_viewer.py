@@ -1,6 +1,9 @@
+# Set the random seed
+import random as rnd
+rnd.seed(42)
+
 # Basic Python Imports
 import sys
-import time
 import glob
 import argparse
 from os import path
@@ -10,7 +13,6 @@ import tkinter as tk
 
 # Matplotlib import and settings
 import matplotlib.pyplot as PLT
-from matplotlib.text import Text
 from matplotlib.ticker import MultipleLocator
 
 # Local imports
@@ -55,17 +57,6 @@ class data_handler:
         # Get the montage
         self.DF = CHMON.direct_inputs(DF,"HUP1020")
 
-        # Get the time axis
-        self.t_max = self.DF.shape[0]/self.fs
-        if self.args.t0_frac != None:
-            self.args.t0 = self.args.t0_frac*self.t_max
-        if self.args.dur_frac != None:
-            self.args.dur = self.args.dur_frac*self.t_max
-        if self.args.t0 == None and self.args.t0_frac == None:
-            self.args.t0 = 0
-        if self.args.dur == None and self.args.dur_frac == None:
-            self.args.dur = 10
-
         # Read in optional sleep wake power data if provided
         if self.args.sleep_wake_power != None:
             self.read_sleep_wake_data()
@@ -107,14 +98,20 @@ class data_viewer(data_handler):
         self.tight_layout_dict = tight_layout_dict
 
         # Some tracking variables
-        self.sleep_counter   = 0
-        self.spike_counter   = 0
-        self.sleep_spike_str = '|'
-        self.sleep_var       = ''
-        self.spike_var       = ''
+        self.flagged_out          = ['','','','','']
+        self.sleep_counter        = 0
+        self.spike_counter        = 0
+        self.seizure_counter      = 0
+        self.focal_slow_counter   = 0
+        self.general_slow_counter = 0
+        self.sleep_labels         = ['','awake','sleep','unknown_sleep_state']
+        self.spike_labels         = ['','spikes','spike_free','unknown_spike_state']
+        self.seizure_labels       = ['','seizures','seizure_free','unknown_seizure_state']
+        self.focal_slow_labels    = ['','focal_slowing','no_focal_slowing','unknown_focal_slowing']
+        self.general_slow_labels  = ['','general_slowing','no_general_slowing','unknown_general_slowing']
 
         # Get the approx screen dimensions and set some plot variables
-        self.supsize = 18
+        self.supsize = 16
         root         = tk.Tk()
         self.height  = 0.9*root.winfo_screenheight()/100
         self.width   = 0.9*root.winfo_screenwidth()/100
@@ -126,6 +123,22 @@ class data_viewer(data_handler):
 
         # Prepare the data
         data_handler.data_prep(self)
+
+        # Get the duration
+        self.t_max = self.DF.shape[0]/self.fs
+        if self.args.dur_frac:
+            self.duration = self.args.dur*self.t_max
+        else:
+            self.duration = self.args.dur
+        
+        # Get the start time
+        if self.args.t0_frac and self.args.t0 != None:
+            self.t0 = self.args.t0*self.t_max
+        else:
+            if self.args.t0 != None:
+                self.t0 = self.args.t0
+            else:
+                self.t0 = np.random.rand()*(self.t_max-self.args.dur)
 
     def plot_sleep_wake(self):
 
@@ -183,7 +196,7 @@ class data_viewer(data_handler):
         self.ax_dict    = {}
         self.lim_dict   = {}
         self.shade_dict = {}
-        self.xlim_orig  = [self.args.t0,self.args.t0+self.args.dur]
+        self.xlim_orig  = [self.t0,self.t0+self.duration]
         xvals           = np.arange(self.DF.shape[0])/self.fs
         for idx,ichan in enumerate(self.DF.columns):
             # Define the axes
@@ -237,24 +250,13 @@ class data_viewer(data_handler):
         for label in self.ax_dict[self.refkey2].get_xticklabels():
             label.set_alpha(1)
 
-
-        # Set the title objects
-        upa        = u'\u2191'  # Up arrow
-        downa      = u'\u2193'  # Down arrow
-        lefta      = u'\u2190'  # Left arrow
-        righta     = u'\u2192'  # Right arrow
-        self.title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'x'=Show entire x-axis; '0'=reset y-scale; 't'=Toggle targets; 'q'=quit current plot; 'Q'=quit the program entirely"
-        self.title_str += '\n'
-        self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right; 'e'=Zoom-in plot of axis the mouse is on;" %(upa, downa, lefta, righta)
-        if self.args.sleep_state or self.args.spike_state:
-            self.title_str += '\n'
-            if self.args.sleep_state:self.title_str += r"a=Sleep State Prediction; "
-            if self.args.spike_state:self.title_str += r"p=Spike Presence Prediction;"
-        self.title_str += '\n'
+        # Set the axes title object
+        self.generate_title_str()
         self.ax_dict[self.refkey].set_title(self.title_str,fontsize=10)
         
-        # Title info
-        PLT.suptitle(self.fname,fontsize=self.supsize)
+        # Set the figure title object
+        self.generate_suptitle_str()
+        PLT.suptitle(self.suptitle,fontsize=self.supsize)
         
         # Layout handling using previous plot layout or find it for the first time
         if self.tight_layout_dict == None:
@@ -270,8 +272,8 @@ class data_viewer(data_handler):
         PLT.show()
 
         # Update predictions if needed
-        if self.args.sleep_state or self.args.spike_state:
-            self.save_sleep_spike_state()
+        if self.args.flagging:
+            self.save_flag_state()
             
         # Store and return tight layout params for faster subsequent plots
         if self.tight_layout_dict == None:
@@ -337,31 +339,64 @@ class data_viewer(data_handler):
         # Generate new limits
         self.ax_dict[ikey].set_ylim([ymin,ymax])
 
-    def sleep_spike_toggle(self,options,index,counter,counter2):
+    def generate_title_str(self):
+        upa        = u'\u2191'  # Up arrow
+        downa      = u'\u2193'  # Down arrow
+        lefta      = u'\u2190'  # Left arrow
+        righta     = u'\u2192'  # Right arrow
+        self.title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'x'=Show entire x-axis; '0'=reset y-scale; 't'=Toggle targets; 'q'=quit current plot; 'Q'=quit the program entirely"
+        self.title_str += '\n'
+        self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right; 'e'=Zoom-in plot of axis the mouse is on;" %(upa, downa, lefta, righta)
+        if self.args.flagging:
+            self.title_str += '\n'
+            self.title_str += r"1=Sleep State; 2=Spike Presence; 3=Seizure; 4=Focal Slowing; 5=Generalized Slowing"
+
+    def generate_suptitle_str(self):
+
+        # Base string
+        self.suptitle = self.fname
         
+        # If using flagging, create new string
+        if self.args.flagging:
+            self.suptitle += '\n'
+            for ival in self.flagged_out:
+                self.suptitle += f" {ival} |"
+            self.suptitle = self.suptitle[:-1]
+
+    def flag_toggle(self,label_name,counter_name,str_pos):
+        
+        # Get the labels
+        labels  = getattr(self,label_name)
+        counter = getattr(self,counter_name)
+
         # Handle the counter logic
-        counter += 1
+        counter+=1
         if counter == 4:
             counter = 0
 
         # Update the substring
-        sleep_spike_arr        = self.sleep_spike_str.split('|')
-        sleep_spike_arr[index] = options[counter]
-        self.sleep_spike_str   = '|'.join(sleep_spike_arr)
-        if counter == 0 and counter2 == 0:
-            PLT.suptitle(f"{self.fname}",fontsize=self.supsize)
-        else:
-            stitle = PLT.suptitle(f"{self.fname} ({self.sleep_spike_str})",fontsize=self.supsize)
-        return counter, options[counter]
+        newval  = labels[counter]
+        self.flagged_out[str_pos] = newval
 
-    def save_sleep_spike_state(self):
+        # Generate the new suptilte
+        self.generate_suptitle_str()
+
+        # Set the new title
+        PLT.suptitle(f"{self.suptitle}",fontsize=self.supsize)
+
+        # Set the new counter values
+        setattr(self,counter_name,counter)
+
+    def save_flag_state(self):
 
         # Create output column list
-        outcols = ['filename','assigned_t0','assigned_t1','username','sleep_state','spike_state','evaluated_t0','evaluated_t1']
+        xlims   = self.ax_dict[self.refkey2].get_xlim()
+        outcols = ['filename','username','assigned_t0','assigned_t1','evaluated_t0','evaluated_t1','sleep_state','spike_state','seizure_state','focal_slowing','general_slowing']
+        outvals = [self.infile,self.args.username,self.xlim_orig[0],self.xlim_orig[1],xlims[0],xlims[1]]
+        outvals = outvals+self.flagged_out
 
         # Make the temporary dataframe to concat to outputs
-        xlims = self.ax_dict[self.refkey2].get_xlim()
-        iDF   = PD.DataFrame([[self.infile,self.xlim_orig[0],self.xlim_orig[1],self.args.username,self.sleep_var,self.spike_var,xlims[0],xlims[1]]],columns=outcols)
+        iDF = PD.DataFrame([outvals],columns=outcols)
 
         # Check for file
         if path.exists(self.args.outfile):
@@ -432,13 +467,13 @@ class data_viewer(data_handler):
         # Shift back in time
         elif event.key == 'left':
             current_xlim = self.ax_dict[self.refkey].get_xlim()
-            current_xlim = [ival-self.args.dur for ival in current_xlim]
+            current_xlim = [ival-self.duration for ival in current_xlim]
             for ikey in self.ax_dict.keys():
                 self.ax_dict[ikey].set_xlim(current_xlim)
         # Shift forward in time
         elif event.key == 'right':
             current_xlim = self.ax_dict[self.refkey].get_xlim()
-            current_xlim = [ival+self.args.dur for ival in current_xlim]
+            current_xlim = [ival+self.duration for ival in current_xlim]
             for ikey in self.ax_dict.keys():
                 self.ax_dict[ikey].set_xlim(current_xlim)
         # Show the entire x-axis
@@ -475,11 +510,20 @@ class data_viewer(data_handler):
                 self.color_cnt = 0
                 PLT.suptitle(self.fname,fontsize=self.supsize)
         # Sleep/awake event mapping
-        elif event.key == 'a' and self.args.sleep_state:
-            self.sleep_counter,self.sleep_var = self.sleep_spike_toggle(['','awake','sleep','unknown'],0,self.sleep_counter,self.spike_counter)
+        elif event.key == '1' and self.args.flagging:
+            self.flag_toggle('sleep_labels','sleep_counter',0)
         # Spike State Mapping
-        elif event.key == 'p' and self.args.spike_state:
-            self.spike_counter,self.spike_var = self.sleep_spike_toggle(['','spikes','spike-free','unknown'],1,self.spike_counter,self.sleep_counter)
+        elif event.key == '2' and self.args.flagging:
+            self.flag_toggle('spike_labels','spike_counter',1)
+        # Seizure State Mapping
+        elif event.key == '3' and self.args.flagging:
+            self.flag_toggle('seizure_labels','seizure_counter',2)
+        # Seizure State Mapping
+        elif event.key == '4' and self.args.flagging:
+            self.flag_toggle('focal_slow_labels','focal_slow_counter',3)
+        # Seizure State Mapping
+        elif event.key == '5' and self.args.flagging:
+            self.flag_toggle('general_slow_labels','general_slow_counter',4)
         # Quit functionality
         elif event.key == 'Q':
             PLT.close("all")
@@ -551,22 +595,21 @@ if __name__ == '__main__':
 
     time_group = parser.add_mutually_exclusive_group()
     time_group.add_argument("--t0", type=float, help="Start time to plot from in seconds.")
-    time_group.add_argument("--t0_frac", type=float, help="Start time to plot from in fraction of total data.")
+    time_group.add_argument("--t0_frac", action='store_true', default=False, help="Flag. Start time in fraction of total data.")
 
     duration_group = parser.add_mutually_exclusive_group()
-    duration_group.add_argument("--dur", type=float, help="Duration to plot in seconds.")
-    duration_group.add_argument("--dur_frac", type=float, help="Duration to plot in fraction of total data.")
+    duration_group.add_argument("--dur", type=float, default=10, help="Duration to plot in seconds.")
+    duration_group.add_argument("--dur_frac", action='store_true', default=False, help="Flag. Duration in fraction of total data.")
 
     misc_group = parser.add_argument_group('Misc options')
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. Save no outputs.")
     misc_group.add_argument("--sleep_wake_power", type=str, help="Optional file with identified groups in alpha/delta for sleep/wake patients")
     misc_group.add_argument("--pickle_load", action='store_true', default=False, help="Load from pickled tuple of dataframe,fs.")
-    misc_group.add_argument("--sleep_state", action='store_true', default=False, help="Query user for sleep state.")
-    misc_group.add_argument("--spike_state", action='store_true', default=False, help="Query user for spike freedom.")
+    misc_group.add_argument("--flagging", action='store_true', default=False, help="Let user flag EEG for important properties.")
     args = parser.parse_args()
 
     # Get username and output path if needed
-    if args.sleep_state or args.spike_state:
+    if args.flagging:
         if args.username == None:
             args.username = input("Please enter a username for tagging data: ")
         if args.outfile == None:
@@ -594,10 +637,11 @@ if __name__ == '__main__':
         iDF   = ref_DF.loc[(ref_DF.username==args.username)&(ref_DF.filename==ifile)]
         if iDF.shape[0] == 0:
             try:
-                DV = data_viewer(ifile,args,tight_layout_dict)
+                DV                = data_viewer(ifile,args,tight_layout_dict)
                 tight_layout_dict = DV.montage_plot()
                 PLT.close("all")
             except:
+                PLT.close("all")
                 pass
             
 
