@@ -23,6 +23,12 @@ To use this toolkit, we highly recommend you create a python environment. This p
     -  conda develop \<path-to-repository-root\>/scripts/codehub
   
 ## Sample Command
+Random start time via seed (default behavior)
 ```
-python utils/visualization/edf_viewer.py --file ../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-08_eeg.edf --username bjprager --sleep_state --spike_state
+python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --username bjprager --flagging
+```
+
+Set start time (t=0 in this example)
+```
+python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --username bjprager --flagging --t0 0
 ```
