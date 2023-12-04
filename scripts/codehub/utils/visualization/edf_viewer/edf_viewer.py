@@ -116,6 +116,7 @@ class data_viewer(data_handler):
         self.width   = 0.9*root.winfo_screenwidth()/100
         root.destroy()
         self.supsize = self.fontsize_scaler(16,14,self.width)
+        self.supsize = np.min([self.supsize,16])
 
         # Save event driven variables
         self.xlim    = []
