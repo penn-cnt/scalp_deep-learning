@@ -41,18 +41,27 @@ if __name__ == '__main__':
         nrow   = 2
         if slide_cnt in [0,2]:
             badind = [0,ncol,2*ncol,4*ncol-1,6*ncol-2,7*ncol-2]
-            mask   = np.ones(output.size).astype('bool')
-            mask[badind] = False
-            output = output[mask]
+        elif slide_cnt in [1]:
+            badind = [0,2*ncol-1,4*ncol-2,6*ncol-3]
+        elif slide_cnt in [3]:
+            badind = [0,5]
+        mask   = np.ones(output.size).astype('bool')
+        mask[badind] = False
+        output = output[mask]
 
-        # Make a formatted output
-        ncol   = 16
-        output = output.reshape((-1,ncol))
+        if slide_cnt < 3:
+            # Make a formatted output
+            ncol   = 16
+            output = output.reshape((-1,ncol))
+        else:
+            ncol   = 2
+            output = output[:8].reshape((-1,ncol))
         keys   = output[::2]
         values = output[1::2]
 
+        # Get the mapping and their key
         chmap = dict(zip(keys.ravel(),values.ravel()))
         keys  = list(chmap.keys())
+
         for ikey in keys:
             print(f"{ikey} | {chmap[ikey]}")
-        exit()

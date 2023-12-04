@@ -111,11 +111,11 @@ class data_viewer(data_handler):
         self.general_slow_labels  = ['','general_slowing','no_general_slowing','unknown_general_slowing']
 
         # Get the approx screen dimensions and set some plot variables
-        self.supsize = 16
         root         = tk.Tk()
         self.height  = 0.9*root.winfo_screenheight()/100
         self.width   = 0.9*root.winfo_screenwidth()/100
         root.destroy()
+        self.supsize = self.fontsize_scaler(16,14,self.width)
 
         # Save event driven variables
         self.xlim    = []
@@ -305,6 +305,9 @@ class data_viewer(data_handler):
     ##########################
     #### Helper functions ####
     ##########################
+
+    def fontsize_scaler(self,font_ref,width_ref,width_val):
+        return font_ref+2*np.floor((width_val-width_ref))
 
     def get_stats(self,ichan):
 
