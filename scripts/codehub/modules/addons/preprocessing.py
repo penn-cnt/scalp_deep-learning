@@ -222,7 +222,7 @@ class preprocessing_utils:
         self.outdir   = outdir
         self.debug    = debug
 
-    def data_snapshot_pickle(self,outpath=None):
+    def data_snapshot_pickle(self,outpath=None,substr=None):
         """
         Save a snapshot of the data in pickle format.
         (Useful for testing changes across steps.)
@@ -236,12 +236,13 @@ class preprocessing_utils:
 
         # Debug flag
         if not self.debug:
-            # Make sure path exists
-            if not os.path.exists(outpath):
-                os.system(f"mkdir -p {outpath}")
+            if substr == None or substr in self.filename:
+                # Make sure path exists
+                if not os.path.exists(outpath):
+                    os.system(f"mkdir -p {outpath}")
 
-            # Write data to file
-            pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
+                # Write data to file
+                pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
 
     def data_snapshot_edf(self,outpath=None):
         """
