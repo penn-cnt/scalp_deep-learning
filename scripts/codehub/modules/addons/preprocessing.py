@@ -249,7 +249,6 @@ class preprocessing_utils:
         (Useful for testing changes across steps.)
 
         Still in production. Digital min/max is not working correctly as of 11/12/23.
-        """
 
         # Handle default pathing if needed
         self.filename = self.filename.split('/')[-1].split('.')[0]+f"_{self.t_start}_{self.t_end}_preprocess.edf"
@@ -269,6 +268,8 @@ class preprocessing_utils:
             signal = self.dataset[icol].values
             f.writePhysicalSamples(signal)
         f.close()
+        """
+        pass
         
 class preprocessing:
     """
