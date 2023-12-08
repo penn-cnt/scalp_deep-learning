@@ -272,6 +272,8 @@ if __name__ == "__main__":
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
 
     misc_group = parser.add_argument_group('Misc Options')
+    misc_group.add_argument("--csv_file", type=str, help="If provided, filepath to csv input.")
+    misc_group.add_argument("--glob_str", type=str, help="If provided, glob input.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
     args = parser.parse_args()
@@ -286,11 +288,14 @@ if __name__ == "__main__":
     # Set the input file list
     if args.input == 'CSV':
         
-        # Tab completion enabled input
-        completer = PathCompleter()
-        print("Using CSV input. Enter a three column csv file with filepath,starttime,endtime.")
-        print("If not starttime or endtime provided, defaults to argument inputs. Use --help for more information.")
-        file_path = prompt("Please enter path to input file csv: ", completer=completer)
+        if args.csv_file == None:
+            # Tab completion enabled input
+            completer = PathCompleter()
+            print("Using CSV input. Enter a three column csv file with filepath,starttime,endtime.")
+            print("If not starttime or endtime provided, defaults to argument inputs. Use --help for more information.")
+            file_path = prompt("Please enter path to input file csv: ", completer=completer)
+        else:
+            file_path = args.csv_file
 
         # Read in csv file
         input_csv   = PD.read_csv(file_path)
@@ -303,9 +308,12 @@ if __name__ == "__main__":
         end_times   = np.nan_to_num(end_times,nan=args.t_end)
     elif args.input == 'GLOB':
 
-        # Tab completion enabled input
-        completer = PathCompleter()
-        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        if args.glob_str == None:
+            # Tab completion enabled input
+            completer = PathCompleter()
+            file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        else:
+            file_path = args.glob_str
         files     = glob.glob(file_path)
 
         # Make sure we were handed a good filepath
