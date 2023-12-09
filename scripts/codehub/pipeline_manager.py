@@ -4,6 +4,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
 # General libraries
+import re
 import os
 import sys
 import glob
@@ -351,6 +352,14 @@ if __name__ == "__main__":
         files       = files[:args.n_input]
         start_times = start_times[:args.n_input]
         end_times   = end_times[:args.n_input]
+
+    # Get an approximate subject count
+    subnums = []
+    for ifile in files:
+        regex_match = re.match(r"(\D+)(\d+)", ifile)
+        subnums.append(int(regex_match.group(2)))
+    subcnt = np.unique(subnums).size
+    print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
 
     # If using a sliding time window, duplicate inputs with the correct inputs
     if args.t_window != None:
