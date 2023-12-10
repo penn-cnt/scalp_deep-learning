@@ -4,6 +4,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
 # General libraries
+import re
 import os
 import sys
 import glob
@@ -16,6 +17,7 @@ import numpy as np
 import pandas as PD
 from tqdm import tqdm
 import multiprocessing
+from pyedflib.highlevel import read_edf_header
 
 # Import the add on classes
 from modules.addons.project_handler import *
@@ -140,7 +142,8 @@ def test_input_data(args,files,start_times,end_times):
             else:
                 excluded_files.append([ifile,flag[1]])
         excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
-        excluded_df.to_csv(exclude_path,index=False)
+        if not args.debug:
+            excluded_df.to_csv(exclude_path,index=False)
     return files[good_index],start_times[good_index],end_times[good_index]
 
 def overlapping_start_times(start, end, step, overlap_frac):
@@ -270,7 +273,10 @@ def argument_handler(argument_dir='./',require_flag=True):
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
 
     misc_group = parser.add_argument_group('Misc Options')
+    misc_group.add_argument("--csv_file", type=str, help="If provided, filepath to csv input.")
+    misc_group.add_argument("--glob_str", type=str, help="If provided, glob input.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
+    misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
     args = parser.parse_args()
 
     # Help info if needed to be passed back as an object and not string
@@ -284,7 +290,7 @@ if __name__ == "__main__":
     args,_ = argument_handler()
 
     # Make the output directory as needed
-    if not os.path.exists(args.outdir):
+    if not os.path.exists(args.outdir) and not args.debug:
         print("Output directory does not exist. Make directory at %s (Y/y)?" %(args.outdir))
         user_input = input("Response: ")
         if user_input.lower() == 'y':
@@ -293,11 +299,14 @@ if __name__ == "__main__":
     # Set the input file list
     if args.input == 'CSV':
         
-        # Tab completion enabled input
-        completer = PathCompleter()
-        print("Using CSV input. Enter a three column csv file with filepath,starttime,endtime.")
-        print("If not starttime or endtime provided, defaults to argument inputs. Use --help for more information.")
-        file_path = prompt("Please enter path to input file csv: ", completer=completer)
+        if args.csv_file == None:
+            # Tab completion enabled input
+            completer = PathCompleter()
+            print("Using CSV input. Enter a three column csv file with filepath,starttime,endtime.")
+            print("If not starttime or endtime provided, defaults to argument inputs. Use --help for more information.")
+            file_path = prompt("Please enter path to input file csv: ", completer=completer)
+        else:
+            file_path = args.csv_file
 
         # Read in csv file
         input_csv   = PD.read_csv(file_path)
@@ -310,9 +319,12 @@ if __name__ == "__main__":
         end_times   = np.nan_to_num(end_times,nan=args.t_end)
     elif args.input == 'GLOB':
 
-        # Tab completion enabled input
-        completer = PathCompleter()
-        file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        if args.glob_str == None:
+            # Tab completion enabled input
+            completer = PathCompleter()
+            file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
+        else:
+            file_path = args.glob_str
         files     = glob.glob(file_path)
 
         # Make sure we were handed a good filepath
@@ -351,6 +363,14 @@ if __name__ == "__main__":
         start_times = start_times[:args.n_input]
         end_times   = end_times[:args.n_input]
 
+    # Get an approximate subject count
+    subnums = []
+    for ifile in files:
+        regex_match = re.match(r"(\D+)(\d+)", ifile)
+        subnums.append(int(regex_match.group(2)))
+    subcnt = np.unique(subnums).size
+    print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
+
     # If using a sliding time window, duplicate inputs with the correct inputs
     if args.t_window != None:
         new_files = []
@@ -360,7 +380,7 @@ if __name__ == "__main__":
 
             # Read in just the header to get duration
             if args.t_end == -1:
-                t_end = highlevel.read_edf_header(ifile)['Duration']
+                t_end = read_edf_header(ifile)['Duration']
             else:
                 t_end = args.t_end
 

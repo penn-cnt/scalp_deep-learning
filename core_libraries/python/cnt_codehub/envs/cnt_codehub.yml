@@ -11,7 +11,6 @@ dependencies:
   - deprecation
   - tqdm
   - ipython
-  - pyedflib
   - pytorch
   - scikit-learn
   - pip:
@@ -19,6 +18,7 @@ dependencies:
     - mne
     - mne-bids
     - mne-icalabel
+    - pyEDFlib
     - EDFlib-Python
     - pyyaml
     - ../wheels/ieeg-1.6-py3-none-any.whl

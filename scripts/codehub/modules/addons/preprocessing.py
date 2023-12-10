@@ -14,7 +14,7 @@ from pyedflib import EdfWriter,FILETYPE_EDFPLUS
 from scipy.signal import resample_poly, butter, filtfilt
 
 # Local imports
-from modules.core.yaml_loader import *
+from modules.core.config_loader import *
 from modules.core.error_logging import *
 
 class mne_processing:
@@ -212,7 +212,7 @@ class noise_reduction:
 
 class preprocessing_utils:
 
-    def __init__(self,dataset,filename,t_start,t_end,step_num,fs,outdir):
+    def __init__(self,dataset,filename,t_start,t_end,step_num,fs,outdir,debug):
         self.dataset  = dataset
         self.filename = filename
         self.t_start  = t_start
@@ -220,8 +220,9 @@ class preprocessing_utils:
         self.step_num = step_num
         self.fs       = fs
         self.outdir   = outdir
+        self.debug    = debug
 
-    def data_snapshot_pickle(self,outpath=None):
+    def data_snapshot_pickle(self,outpath=None,substr=None):
         """
         Save a snapshot of the data in pickle format.
         (Useful for testing changes across steps.)
@@ -233,12 +234,15 @@ class preprocessing_utils:
             outpath = self.outdir+f"/preprocessing_snapshot/pickle/{self.step_num:02}/"
         outfile = outpath+self.filename
 
-        # Make sure path exists
-        if not os.path.exists(outpath):
-            os.system(f"mkdir -p {outpath}")
+        # Debug flag
+        if not self.debug:
+            if substr == None or substr in self.filename:
+                # Make sure path exists
+                if not os.path.exists(outpath):
+                    os.system(f"mkdir -p {outpath}")
 
-        # Write data to file
-        pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
+                # Write data to file
+                pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
 
     def data_snapshot_edf(self,outpath=None):
         """
@@ -246,7 +250,6 @@ class preprocessing_utils:
         (Useful for testing changes across steps.)
 
         Still in production. Digital min/max is not working correctly as of 11/12/23.
-        """
 
         # Handle default pathing if needed
         self.filename = self.filename.split('/')[-1].split('.')[0]+f"_{self.t_start}_{self.t_end}_preprocess.edf"
@@ -266,6 +269,8 @@ class preprocessing_utils:
             signal = self.dataset[icol].values
             f.writePhysicalSamples(signal)
         f.close()
+        """
+        pass
         
 class preprocessing:
     """
@@ -283,7 +288,7 @@ class preprocessing:
         """
         
         # Read in the preprocessing configuration
-        YL = yaml_loader(self.args.preprocess_file)
+        YL = config_loader(self.args.preprocess_file)
         config,self.preprocess_commands = YL.return_handler()
 
         # Get the current module (i.e., the script itself)
@@ -331,7 +336,7 @@ class preprocessing:
                         dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
                     elif cls.__name__ == 'preprocessing_utils':
                         filename    = self.metadata[self.file_cntr]['file']
-                        PU          = preprocessing_utils(dataset,filename,self.t_start,self.t_end,istep,fs,self.args.outdir)
+                        PU          = preprocessing_utils(dataset,filename,self.t_start,self.t_end,istep,fs,self.args.outdir,self.args.debug)
                         method_call = getattr(PU,method_name)
                         method_call(**method_args)
                     elif cls.__name__ == 'mne_processing':
