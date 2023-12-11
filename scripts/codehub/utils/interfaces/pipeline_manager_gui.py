@@ -88,8 +88,9 @@ if __name__ == '__main__':
     pipeline_path = os.path.dirname(os.path.abspath(PM.__file__))+'/'
 
     # Get the arguments
-    args, help = PM.argument_handler(argument_dir=pipeline_path,require_flag=False)
-    args       = vars(args)
+    args, metadata = PM.argument_handler(argument_dir=pipeline_path,require_flag=False)
+    help           = metadata[0]
+    args           = vars(args)
 
     # Read in the allowed arguments
     allowed_dict = {}
