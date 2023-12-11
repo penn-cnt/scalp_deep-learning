@@ -61,8 +61,13 @@ class pipegui:
         # Make the drop-down widgets
         dropdown_dict = {}
         for idy,ikey in enumerate(self.keys):
+            try:
+                values = allowed_dict[ikey]
+            except KeyError:
+                values = ['a','b']
+
             dropdown_dict[ikey] = tk.StringVar()
-            dropdown = ttk.Combobox(left_frame, textvariable=dropdown_dict[ikey], values=['a','b'], width=40)
+            dropdown = ttk.Combobox(left_frame, textvariable=dropdown_dict[ikey], values=values, width=40)
             dropdown.grid(row=idy, column=1, padx=5, pady=3, sticky="ew")
 
         # Make some help buttons
