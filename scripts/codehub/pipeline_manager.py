@@ -1,3 +1,7 @@
+# Set the random seed
+import random as rnd
+rnd.seed(42)
+
 # Libraries to help path complete raw inputs
 from pathlib import Path
 from prompt_toolkit import prompt
@@ -342,6 +346,12 @@ if __name__ == "__main__":
     # Get the useable files from the request
     files, start_times, end_times = test_input_data(args,files,start_times,end_times)
 
+    # Shuffle data to get a better sampling of patients
+    shuffled_index = np.random.permutation(len(files))
+    files          = files[shuffled_index]
+    start_times    = start_times[shuffled_index]
+    end_times      = end_times[shuffled_index]
+
     # Apply any file offset as needed
     files       = files[args.n_offset:]
     start_times = start_times[args.n_offset:]
@@ -352,6 +362,12 @@ if __name__ == "__main__":
         files       = files[:args.n_input]
         start_times = start_times[:args.n_input]
         end_times   = end_times[:args.n_input]
+
+    # Sort the results so we access any duplicate files (but different read times) in order
+    sorted_index = np.argsort(files)
+    files          = files[sorted_index]
+    start_times    = start_times[sorted_index]
+    end_times      = end_times[sorted_index]
 
     # Get an approximate subject count
     subnums = []
