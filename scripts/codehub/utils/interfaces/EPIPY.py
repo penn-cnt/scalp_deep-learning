@@ -9,25 +9,14 @@ from EPIPY_modules.theme import applyTheme
 from EPIPY_modules.pipelines import showPipelines
 from EPIPY_modules.configuration import showConfiguration
 
-"""
-    A classe Interface é responsável por gerar os elementos visuais do programa.
-    O uso da biblioteca DearPyGUI faz com que seja possível executar o programa em windows ou linux
-    e ainda utilizar dos benefícios da acerelação de hardware.        
-"""
 class Interface:
 
-    """
-        Define os parâmetros e inicia a função Show.
-    """
     def __init__(self,args,metadata):
         self.args = args
         self.help = metadata
         self.show()
         pass
 
-    """
-        Cria o contexto e a janela do DPG e invoca a função showTabBar para a renderização de cada uma das tabs e seus conteúdos.
-    """
     def show(self):
         dpg.create_context()
         dpg.create_viewport(title='EPIPY: Epilepsy Processing and Interpretation using PYthon', width=1280, height=720, min_height=600, min_width=900)
@@ -44,22 +33,11 @@ class Interface:
         dpg.destroy_context()
         pass
 
-    """
-        Responsável pela invocação das tabs individuais.
-    """
     def showTabBar(self):
         with dpg.tab_bar():
             self.showTabs()
         pass
 
-    """
-        Cria as diferentes tabs do programa e chama o método show<Tab> para popular cada uma das abas.
-        Processing: Importação e Cropping da imagem.
-        Filtering: Ajustes em níveis de cor, brilho, contraste e blurring na imagem.
-        Thresholding: Ajustes na binarização da imagem. Para que a binarização ocorra a imagem é automaticamente convertida para tons de cinza.
-        Contour Extraction: Extrai o contorno dos objetos presentes na imagem binarizada. Permite a exportação do arquivo .txt com os dados do contorno.
-        Mesh Generation: Gera a malha e possibilita as configurações necessária para método matemáticos com os pontos resultantes da aba anterior. Permite a importação de novos pontos.
-    """
     def showTabs(self):
         dpg.add_texture_registry(show=False, tag='textureRegistry')
         with dpg.tab(label='Configurations'):
