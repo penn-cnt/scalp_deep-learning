@@ -98,17 +98,19 @@ class data_viewer(data_handler):
         self.tight_layout_dict = tight_layout_dict
 
         # Some tracking variables
-        self.flagged_out          = ['','','','','']
+        self.flagged_out          = ['','','','','','']
         self.sleep_counter        = 0
         self.spike_counter        = 0
         self.seizure_counter      = 0
         self.focal_slow_counter   = 0
         self.general_slow_counter = 0
+        self.artifact_counter     = 0
         self.sleep_labels         = ['','awake','sleep','unknown_sleep_state']
         self.spike_labels         = ['','spikes','spike_free','unknown_spike_state']
         self.seizure_labels       = ['','seizures','seizure_free','unknown_seizure_state']
         self.focal_slow_labels    = ['','focal_slowing','no_focal_slowing','unknown_focal_slowing']
         self.general_slow_labels  = ['','general_slowing','no_general_slowing','unknown_general_slowing']
+        self.artifact_labels      = ['','artifact_heavy']
 
         # Get the approx screen dimensions and set some plot variables
         root         = tk.Tk()
@@ -353,7 +355,7 @@ class data_viewer(data_handler):
         self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right; 'e'=Zoom-in plot of axis the mouse is on;" %(upa, downa, lefta, righta)
         if self.args.flagging:
             self.title_str += '\n'
-            self.title_str += r"1=Sleep State; 2=Spike Presence; 3=Seizure; 4=Focal Slowing; 5=Generalized Slowing"
+            self.title_str += r"1=Sleep State; 2=Spike Presence; 3=Seizure; 4=Focal Slowing; 5=Generalized Slowing; 6=Artifact Heavy"
 
     def generate_suptitle_str(self):
 
@@ -375,7 +377,9 @@ class data_viewer(data_handler):
 
         # Handle the counter logic
         counter+=1
-        if counter == 4:
+        if counter == 4 and counter_name != 'artifact_counter':
+            counter = 0
+        elif counter == 3 and counter_name == 'artifact_counter':
             counter = 0
 
         # Update the substring
@@ -528,6 +532,9 @@ class data_viewer(data_handler):
         # Seizure State Mapping
         elif event.key == '5' and self.args.flagging:
             self.flag_toggle('general_slow_labels','general_slow_counter',4)
+        # Seizure State Mapping
+        elif event.key == '6' and self.args.flagging:
+            self.flag_toggle('artifact_labels','artifact_counter',5)
         # Quit functionality
         elif event.key == 'Q':
             PLT.close("all")
