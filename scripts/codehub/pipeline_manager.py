@@ -455,5 +455,5 @@ if __name__ == "__main__":
         for process in processes:
             process.join()
     else:
-        # Run a non parallel version
+        # Run a non parallel version.
         start_analysis(input_parameters, args, 0, None)
