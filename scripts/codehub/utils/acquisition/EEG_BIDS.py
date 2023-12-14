@@ -41,7 +41,7 @@ if __name__ == '__main__':
     other_group.add_argument("--inputs_file", type=str, help="File of input datasets to (download and) turn into BIDS.")
     other_group.add_argument("--subject_file", type=str, default='subject_map.csv', help="File mapping subject id to ieeg file. (Defaults to bidroot+'subject_map.csv)")
     other_group.add_argument("--uid", default=0, type=str, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
-    other_group.add_argument("--target", default=None, type=str, help="Target value to associate with the subject. (i.e. epilepsy vs. pnes)")
+    other_group.add_argument("--target", default=None, type=str, help="Target value to associate with single subject inputs. (i.e. epilepsy vs. pnes)")
 
     selection_group = parser.add_mutually_exclusive_group()
     selection_group.add_argument("--cli", action='store_true', default=False, help="Use start and duration from this CLI.")
