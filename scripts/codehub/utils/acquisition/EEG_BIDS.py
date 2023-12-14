@@ -43,7 +43,7 @@ if __name__ == '__main__':
     other_group.add_argument("--uid", default=0, type=str, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
     other_group.add_argument("--target", default=None, type=str, help="Target value to associate with single subject inputs. (i.e. epilepsy vs. pnes)")
     other_group.add_argument("--multithread", action='store_true', default=False, help="Multithreaded download.")
-    other_group.add_argument("--npcu", default=1, type=int, help="Number of CPUs to use when downloading.")
+    other_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
 
     selection_group = parser.add_mutually_exclusive_group()
     selection_group.add_argument("--cli", action='store_true', default=False, help="Use start and duration from this CLI.")
@@ -81,7 +81,10 @@ if __name__ == '__main__':
     # If iEEG.org, pass inputs to that handler to get the data
     if args.ieeg:
         IH = ieeg_handler(args,map_data,input_files)
-        IH.pull_data()
+        if not args.multithread:
+            IH.single_pull()
+        else:
+            IH.multicore_pull()
     elif args.edf:
         EH = EDF_handler(args,map_data,input_files)
         EH.save_data()
