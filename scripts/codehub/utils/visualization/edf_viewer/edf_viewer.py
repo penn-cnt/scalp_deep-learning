@@ -3,6 +3,7 @@ import random as rnd
 rnd.seed(42)
 
 # Basic Python Imports
+import re
 import sys
 import glob
 import argparse
@@ -123,6 +124,7 @@ class data_viewer(data_handler):
         # Save event driven variables
         self.xlim    = []
         self.drawn_y = []
+        self.drawn_a = []
 
         # Prepare the data
         data_handler.data_prep(self)
@@ -142,6 +144,19 @@ class data_viewer(data_handler):
                 self.t0 = self.args.t0
             else:
                 self.t0 = np.random.rand()*(self.t_max-self.args.dur)
+
+        # Attempt to get any annotations
+        pattern = r'(.*?)_(\D+).edf'
+        match = re.search(pattern, infile)
+        if match:
+            base_filename   = match.group(1)
+            events_filename = f"{base_filename}_events.tsv"
+            if path.exists(events_filename):
+                self.events_df = PD.read_csv(events_filename,delimiter="\t")
+            else:
+                self.events_df = PD.DataFrame()
+        else:
+            self.events_df = PD.DataFrame()
 
     def plot_sleep_wake(self):
 
@@ -200,7 +215,7 @@ class data_viewer(data_handler):
         self.lim_dict   = {}
         self.shade_dict = {}
         self.xlim_orig  = [self.t0,self.t0+self.duration]
-        xvals           = np.arange(self.DF.shape[0])/self.fs
+        self.xvals      = np.arange(self.DF.shape[0])/self.fs
         for idx,ichan in enumerate(self.DF.columns):
             # Define the axes
             if idx == 0:
@@ -214,7 +229,7 @@ class data_viewer(data_handler):
 
             # Plot the data
             nstride = 8
-            self.ax_dict[ichan].plot(xvals[::nstride],idata[::nstride],color='k')
+            self.ax_dict[ichan].plot(self.xvals[::nstride],idata[::nstride],color='k')
             self.ax_dict[ichan].set_ylim([ymin,ymax])
             self.lim_dict[ichan] = [ymin,ymax]
 
@@ -497,6 +512,23 @@ class data_viewer(data_handler):
             for ikey in self.ax_dict.keys():
                 if event.inaxes == self.ax_dict[ikey]:
                     self.enlarged_plot(ikey)
+        # Show annotations
+        elif event.key == 'A':
+            if 'trial_type' in self.events_df.columns:
+                annot_xval = self.events_df['onset'][0]
+                annot_text = self.events_df['trial_type'][0]
+                
+                if len(self.drawn_a) == 0:
+                    for ikey in self.ax_dict.keys():
+                        self.drawn_a.append(self.ax_dict[ikey].axvline(annot_xval, color='blue', linestyle='--',lw=2))
+                    self.ax_dict[self.refkey2].text(annot_xval, 0, annot_text,bbox=dict(boxstyle='round', facecolor='lightgray', edgecolor='none', alpha=1.0)
+                                                    ,verticalalignment='center', horizontalalignment='left', fontsize=12)
+
+                else:
+                    # Remove the vertical lines on the plot
+                    for iobj in self.drawn_a:
+                        iobj.remove()
+                    self.draw_a = []
         # Iterate over target dictionary if available to show mapped colors
         elif event.key == 't' and hasattr(self,'color_dict'):
             for icnt in range(len(self.t_colors)):
@@ -633,7 +665,7 @@ if __name__ == '__main__':
         files = [args.file]
     else:
         files = glob.glob(args.wildcard)
-
+        
     # Use the output file to skip already reviewed files for state analysis
     if path.exists(args.outfile):
         ref_DF = PD.read_csv(args.outfile)
