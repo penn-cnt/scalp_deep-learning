@@ -6,7 +6,7 @@
 
 #### Sample Call
 ```
-python EEG_BIDS.py --ieeg --username BJPrager --password ****** --bidsroot ../../user_data/BIDS/ --session preimplant --inputs_file ../../../scalp_deep-learning/user_data/targets.csv --annotations --multithread --ncpu 2
+python EEG_BIDS.py --ieeg --username BJPrager --password ****** --bidsroot ../../user_data/BIDS/ --session preimplant --inputs_file samples/targets.csv --annotations --multithread --ncpu 2
 ```
 
 Where
