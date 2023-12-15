@@ -2,13 +2,11 @@ import numpy as np
 import pandas as PD
 from os import path
 from tqdm import tqdm
+from time import sleep
 from ieeg.auth import Session
 
 # Multicore support
-import threading
 import multiprocessing
-import concurrent.futures
-from functools import partial
 
 # Local imports
 from modules.BIDS_handler import BIDS_handler
@@ -23,31 +21,34 @@ class TimeoutException(Exception):
     pass
 
 class Timeout:
-    def __init__(self, seconds=1, error_message='Function call timed out'):
-        self.seconds = seconds
+    def __init__(self, seconds=1, multiflag=False, error_message='Function call timed out'):
+        self.seconds       = seconds
         self.error_message = error_message
+        self.multiflag     = multiflag
 
     def handle_timeout(self, signum, frame):
-        print("A")
         raise TimeoutException(self.error_message)
 
     def __enter__(self):
-        print("B")
-        signal.signal(signal.SIGALRM, self.handle_timeout)
-        signal.alarm(self.seconds)
+        if not self.multiflag:
+            signal.signal(signal.SIGALRM, self.handle_timeout)
+            signal.alarm(self.seconds)
+        else:
+            pass
 
     def __exit__(self, exc_type, exc_value, traceback):
-        print("C")
-        signal.alarm(0)
+        if not self.multiflag:
+            signal.alarm(0)
+        else:
+            pass
 
 class iEEG_download(BIDS_handler):
 
-    def __init__(self, args, file_lock):
+    def __init__(self, args):
         
         # Store variables based on input params
         self.args           = args
         self.subject_path   = args.bidsroot+args.subject_file
-        self.file_lock      = file_lock
 
         # Hard coded variables based on ieeg api
         self.n_retry        = 3
@@ -154,11 +155,7 @@ class iEEG_download(BIDS_handler):
         try:
             if len(self.raws) > 0:
                 BIDS_handler.event_mapper(self)
-                if self.file_lock != None:
-                    with self.file_lock:
-                        BIDS_handler.save_bids(self)
-                else:
-                    BIDS_handler.save_bids(self)
+                BIDS_handler.save_bids(self)
         except AttributeError as e:
             print(e)
 
@@ -178,7 +175,7 @@ class iEEG_download(BIDS_handler):
 
         n_attempts = 0
         while True:
-            with Timeout(self.global_timeout):
+            with Timeout(self.global_timeout,self.args.multithread):
                 try:
                     self.session_method(start,duration,annotation_flag)
                     self.success_flag = True
@@ -193,7 +190,6 @@ class iEEG_download(BIDS_handler):
                         fp.write("%s,%f,%f,%s\n" %(self.current_file,start,duration,e))
                         fp.close()
                         break
-        print("DONE")
 
     def session_method(self,start,duration,annotation_flag):
         """
@@ -271,34 +267,55 @@ class ieeg_handler:
             self.processed_files = []
 
     def single_pull(self):
-        
-        # Create a dummy lock to pass the multithread lock
-        self.file_lock = None
 
-        for file_idx in range(self.input_files.size):
-            self.pull_data(file_idx)
+        file_indices = np.array(range(self.input_files.size))
+        self.pull_data(file_indices)
 
     def multicore_pull(self):
 
-        # Create a lock to synchronize file access
-        self.file_lock = threading.Lock()
+        # Make the BIDS root data structure with a single core to avoid top-level directory issues
+        self.pull_data(np.array([0]))
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.args.ncpu) as executor:
-            executor.map(self.pull_data, range(self.input_files.size))
+        # Calculate the size of each subset based on the number of processes
+        file_indices = np.array(range(self.input_files.size-1))+1
+        subset_size  = (file_indices.size) // self.args.ncpu
+        list_subsets = [file_indices[i:i + subset_size] for i in range(0, file_indices.size, subset_size)]
 
-    def pull_data(self,file_idx):
+        # Handle leftovers
+        if len(list_subsets) > self.args.ncpu:
+            arr_ncpu  = list_subsets[self.args.ncpu-1]
+            arr_ncpu1 = list_subsets[self.args.ncpu]
+
+            list_subsets[self.args.ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
+            list_subsets.pop(-1)
+
+        processes = []
+        for data_chunk in list_subsets:
+            process = multiprocessing.Process(target=self.pull_data, args=(np.array([data_chunk])))
+            processes.append(process)
+            process.start()
+        
+        # Wait for all processes to complete
+        for process in processes:
+            process.join()
+
+    def pull_data(self,file_indices):
 
         # Loop over files
-        IEEG = iEEG_download(self.args,self.file_lock)
-        ifile = self.input_files[file_idx]
-        if ifile not in self.processed_files:
-            print("Downloading %s. (%04d/%04d)" %(ifile,file_idx,self.input_files.size))
-            iid    = self.map_data['uid'].values[file_idx]
-            target = self.map_data['target'].values[file_idx]
-            if self.args.annotations:
-                IEEG.download_by_annotation(iid,ifile,target)
-                IEEG = iEEG_download(self.args,self.file_lock)
+        IEEG = iEEG_download(self.args)
+        for file_idx in file_indices:
+            ifile = self.input_files[file_idx]
+            if ifile not in self.processed_files:
+                if not self.args.multithread:
+                    print("Downloading %s. (%04d/%04d)" %(ifile,file_idx+1,self.input_files.size))
+                else:
+                    print(f"Downloading {ifile}.")
+                iid    = self.map_data['uid'].values[file_idx]
+                target = self.map_data['target'].values[file_idx]
+                if self.args.annotations:
+                    IEEG.download_by_annotation(iid,ifile,target)
+                    IEEG = iEEG_download(self.args)
+                else:
+                    IEEG.download_by_cli(iid,ifile,target,self.args.start,self.args.duration)
             else:
-                IEEG.download_by_cli(iid,ifile,target,self.args.start,self.args.duration)
-        else:
-            print("Skipping %s. (%04d/%04d)" %(ifile,file_idx,self.input_files.size))
+                print("Skipping %s. (%04d/%04d)" %(ifile,file_idx,self.input_files.size))

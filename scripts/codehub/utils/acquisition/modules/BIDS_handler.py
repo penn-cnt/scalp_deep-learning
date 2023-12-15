@@ -42,16 +42,22 @@ class BIDS_handler:
 
     def get_session_number(self):
 
-        # Get the folder strings
-        folders = glob.glob("%ssub-%04d/*" %(self.args.bidsroot,self.subject_num))
-        folders = [ifolder.split('/')[-1] for ifolder in folders]
-        
-        # Search for the session numbers
-        regex = re.compile(r'\d+$')
-        if len(folders) > 0:
-            self.session_number = max([int(re.search(regex, ival).group()) for ival in folders])+1
+        # Get the session number by file if possible, otherwise intuit by number of folders
+        pattern = r'Day(\d+)'
+        match = re.search(pattern, self.current_file)
+        if match:
+            self.session_number = int(match.group(1))
         else:
-            self.session_number = 1
+            # Get the folder strings
+            folders = glob.glob("%ssub-%04d/*" %(self.args.bidsroot,self.subject_num))
+            folders = [ifolder.split('/')[-1] for ifolder in folders]
+
+            # Search for the session numbers
+            regex = re.compile(r'\d+$')
+            if len(folders) > 0:
+                self.session_number = max([int(re.search(regex, ival).group()) for ival in folders])+1
+            else:
+                self.session_number = 1
 
     def get_channel_type(self, threshold=15):
 
@@ -115,7 +121,7 @@ class BIDS_handler:
                 # Save the edf in bids format
                 session_str = "%s%03d" %(self.args.session,self.session_number)
                 bids_path   = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%04d' %(self.subject_num), run=idx+1, task='task')
-                write_raw_bids(bids_path=bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False,overwrite=True)
+                write_raw_bids(bids_path=bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
                 # Save the targets with the edf path paired up to filetype
                 target_path = str(bids_path.copy()).rstrip('.edf')+'_targets.pickle'
