@@ -521,13 +521,14 @@ class data_viewer(data_handler):
                 if len(self.drawn_a) == 0:
                     for ikey in self.ax_dict.keys():
                         self.drawn_a.append(self.ax_dict[ikey].axvline(annot_xval, color='blue', linestyle='--',lw=2))
-                    self.ax_dict[self.refkey2].text(annot_xval, 0, annot_text,bbox=dict(boxstyle='round', facecolor='lightgray', edgecolor='none', alpha=1.0)
-                                                    ,verticalalignment='center', horizontalalignment='left', fontsize=12)
+                    self.annot_obj = self.ax_dict[self.refkey2].text(annot_xval, 0, annot_text,bbox=dict(boxstyle='round', facecolor='lightgray', 
+                                                                    edgecolor='none', alpha=1.0),verticalalignment='center', horizontalalignment='left', fontsize=12)
 
                 else:
                     # Remove the vertical lines on the plot
                     for iobj in self.drawn_a:
                         iobj.remove()
+                    self.annot_obj.remove()
                     self.draw_a = []
         # Iterate over target dictionary if available to show mapped colors
         elif event.key == 't' and hasattr(self,'color_dict'):
