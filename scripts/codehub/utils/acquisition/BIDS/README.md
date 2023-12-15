@@ -6,5 +6,5 @@
 
 #### Sample Call
 ```
-python utils/acquisition/EEG_BIDS.py --ieeg --username BJPrager --password ****** --bidsroot ../../user_data/multiscratch --session preimplant --inputs_file ../../../scalp_deep-learning/user_data/test_targets.csv --annotations --multithread --ncpu 2
+python utils/acquisition/EEG_BIDS.py --ieeg --username BJPrager --password ****** --bidsroot ../../user_data/BIDS/ --session preimplant --inputs_file ../../../scalp_deep-learning/user_data/targets.csv --annotations --multithread --ncpu 2
 ```
