@@ -345,4 +345,4 @@ class ieeg_handler:
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.args.start,self.args.duration)
             else:
-                print("Skipping %s." %(ifile,file_idx,self.input_files.size))
+                print("Skipping %s." %(ifile))
