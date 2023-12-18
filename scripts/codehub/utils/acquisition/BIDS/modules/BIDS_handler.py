@@ -2,10 +2,12 @@ import re
 import mne
 import glob
 import pickle
+import getpass
 import mne_bids
 import numpy as np
 import pandas as PD
 from os import path
+from datetime import date
 from mne_bids import BIDSPath, write_raw_bids
 
 class BIDS_handler:
@@ -161,9 +163,20 @@ class BIDS_handler:
             except AttributeError:
                 self.direct_save(idx,raw)
 
+        # Prepare some metadata for download
+        source  = np.array(['ieeg.org','edf'])
+        inds    = [self.args.ieeg,self.args.edf]
+        source  = source[inds][0]
+        user    = getpass.getuser()
+        gendate = date.today().strftime("%d-%m-%y")
+        if self.args.annotations:
+            times = 'annots'
+        else:
+            times = f"{self.args.start}_{self.args.duration}"
+
         # Save the subject file info with source metadata
-        source = np.array(['ieeg.org','edf'][self.args.ieeg,self.args.edf])
-        iDF    = PD.DataFrame([[self.current_file,source,self.uid,self.subject_num,self.session_number]],columns=['orig_filename','source','uid','subject_number','session_number'])
+        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','times']
+        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,times]],columns=columns)
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()

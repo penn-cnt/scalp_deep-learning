@@ -263,9 +263,12 @@ class ieeg_handler:
         # Get list of files to skip that already exist locally
         subject_path = self.args.bidsroot+self.args.subject_file
         if path.exists(subject_path):
-            self.processed_files = PD.read_csv(subject_path)['iEEG file'].values
+            self.subject_cache   = PD.read_csv(subject_path)
+            self.processed_files = self.subject_cache['orig_filename'].values
+            self.processed_times = self.subject_cache['times'].values
         else:
             self.processed_files = []
+            self.processed_times = []
 
     def single_pull(self):
 
@@ -275,11 +278,11 @@ class ieeg_handler:
 
     def multicore_pull(self):
 
-        # Make the BIDS root data structure with a single core to avoid top-level directory issues
-        self.pull_data(np.array([0]))
-
         # Make a multiprocess lock
         self.write_lock = multiprocessing.Lock()
+
+        # Make the BIDS root data structure with a single core to avoid top-level directory issues
+        self.pull_data(np.array([0]))
 
         # Calculate the size of each subset based on the number of processes
         file_indices = np.array(range(self.input_files.size-1))+1
@@ -309,8 +312,26 @@ class ieeg_handler:
         # Loop over files
         IEEG = iEEG_download(self.args,self.write_lock)
         for file_idx in file_indices:
+
+            # Get the current file
             ifile = self.input_files[file_idx]
-            if ifile not in self.processed_files:
+
+            # Make sure the data exists or not
+            runflag = True
+            pinds   = (self.processed_files==ifile)
+            try:
+                times   = self.processed_times[pinds]
+                if self.args.annotations:
+                    if (times=='annot').any():
+                        runflag = False
+                else:
+                    itime = f"{self.args.start}_{self.args.duration}"
+                    if (times==itime).any():
+                        runflag = False
+            except IndexError:
+                pass
+
+            if runflag:
                 if not self.args.multithread:
                     print("Downloading %s. (%04d/%04d)" %(ifile,file_idx+1,self.input_files.size))
                 else:
