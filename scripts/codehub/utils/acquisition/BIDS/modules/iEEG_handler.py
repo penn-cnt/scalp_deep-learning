@@ -320,15 +320,16 @@ class ieeg_handler:
             runflag = True
             pinds   = (self.processed_files==ifile)
             try:
-                times   = self.processed_times[pinds]
-                if self.args.annotations:
-                    if (times=='annot').any():
-                        runflag = False
-                else:
-                    itime = f"{self.args.start}_{self.args.duration}"
-                    if (times==itime).any():
-                        runflag = False
-            except IndexError:
+                if pinds.any():
+                    times = self.processed_times[pinds]
+                    if self.args.annotations:
+                        if (times=='annots').any():
+                            runflag = False
+                    else:
+                        itime = f"{self.args.start}_{self.args.duration}"
+                        if (times==itime).any():
+                            runflag = False
+            except (IndexError, AttributeError):
                 pass
 
             if runflag:
@@ -344,4 +345,4 @@ class ieeg_handler:
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.args.start,self.args.duration)
             else:
-                print("Skipping %s. (%04d/%04d)" %(ifile,file_idx,self.input_files.size))
+                print("Skipping %s." %(ifile,file_idx,self.input_files.size))
