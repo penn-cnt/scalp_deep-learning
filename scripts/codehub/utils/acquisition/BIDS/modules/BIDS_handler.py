@@ -161,8 +161,9 @@ class BIDS_handler:
             except AttributeError:
                 self.direct_save(idx,raw)
 
-        # Save the subject file info
-        iDF = PD.DataFrame([[self.current_file,self.uid,self.subject_num,self.session_number]],columns=['iEEG file','uid','subject_number','session_number'])
+        # Save the subject file info with source metadata
+        source = np.array(['ieeg.org','edf'][self.args.ieeg,self.args.edf])
+        iDF    = PD.DataFrame([[self.current_file,source,self.uid,self.subject_num,self.session_number]],columns=['orig_filename','source','uid','subject_number','session_number'])
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()
