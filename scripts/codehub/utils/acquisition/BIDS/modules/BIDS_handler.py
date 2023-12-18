@@ -170,4 +170,10 @@ class BIDS_handler:
             subject_DF = PD.read_csv(self.subject_path)
             subject_DF = PD.concat((subject_DF,iDF))
         subject_DF['subject_number'] = subject_DF['subject_number'].astype(str).str.zfill(4)
-        subject_DF.to_csv(self.subject_path,index=False)
+
+        # Only write files one at a time
+        if self.write_lock != None:
+            with self.write_lock:
+                subject_DF.to_csv(self.subject_path,index=False)
+        else:
+            subject_DF.to_csv(self.subject_path,index=False)

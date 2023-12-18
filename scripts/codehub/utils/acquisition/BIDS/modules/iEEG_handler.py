@@ -44,11 +44,12 @@ class Timeout:
 
 class iEEG_download(BIDS_handler):
 
-    def __init__(self, args):
+    def __init__(self, args, write_lock):
         
         # Store variables based on input params
         self.args           = args
         self.subject_path   = args.bidsroot+args.subject_file
+        self.write_lock     = write_lock
 
         # Hard coded variables based on ieeg api
         self.n_retry        = 3
@@ -268,13 +269,17 @@ class ieeg_handler:
 
     def single_pull(self):
 
-        file_indices = np.array(range(self.input_files.size))
+        self.write_lock = None
+        file_indices    = np.array(range(self.input_files.size))
         self.pull_data(file_indices)
 
     def multicore_pull(self):
 
         # Make the BIDS root data structure with a single core to avoid top-level directory issues
         self.pull_data(np.array([0]))
+
+        # Make a multiprocess lock
+        self.write_lock = multiprocessing.Lock()
 
         # Calculate the size of each subset based on the number of processes
         file_indices = np.array(range(self.input_files.size-1))+1
@@ -302,7 +307,7 @@ class ieeg_handler:
     def pull_data(self,file_indices):
 
         # Loop over files
-        IEEG = iEEG_download(self.args)
+        IEEG = iEEG_download(self.args,self.write_lock)
         for file_idx in file_indices:
             ifile = self.input_files[file_idx]
             if ifile not in self.processed_files:
@@ -314,7 +319,7 @@ class ieeg_handler:
                 target = self.map_data['target'].values[file_idx]
                 if self.args.annotations:
                     IEEG.download_by_annotation(iid,ifile,target)
-                    IEEG = iEEG_download(self.args)
+                    IEEG = iEEG_download(self.args,self.write_lock)
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.args.start,self.args.duration)
             else:

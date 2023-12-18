@@ -73,7 +73,11 @@ def manual_entry(myid, out, gnd, ref):
             break
     return electrodes
 
-def ppt_read(ppt_file):
+def ppt_read(ppt_file,nlead):
+
+    # Get the user to add lead info
+    if nlead == None:
+        nlead = int(input("Please provide number of leads in the powerpoint file: "))
 
     # Read in the file provided by the user
     prs = Presentation(ppt_file)
@@ -83,7 +87,14 @@ def ppt_read(ppt_file):
     for slide in prs.slides:
         slides_list.append(slide)
 
-    # Leads are supposed to always be the last four pages
+    # Calculate the number of rows that are complete and the remainder
+    ncol   = 16
+    nrows  = np.floor(nlead/ncol).astype('int')
+    ntail  = nlead%ncol
+    rowcnt = 0
+
+    # Parse the channel pages, save to dict. (Leads are supposed to always be the last four pages)
+    chmap     = {}
     electrodes = []
     for slide_cnt,slide in enumerate(slides_list[-4:]):
         
@@ -107,43 +118,38 @@ def ppt_read(ppt_file):
                     output.append(ivalue)
                     flag = True
 
-        # Clean up and setup logic to split
-        output = np.array(output)
-        ncol   = 16+1   # +1 because of the annoying whitespace object for headers
-        nrow   = 2
-        if slide_cnt in [0,2]:
-            badind = [0,ncol,2*ncol,4*ncol-1,6*ncol-2,7*ncol-2]
-        elif slide_cnt in [1]:
-            badind = [0,2*ncol-1,4*ncol-2,6*ncol-3]
-        elif slide_cnt in [3]:
-            badind = [0,5]
-        mask   = np.ones(output.size).astype('bool')
-        mask[badind] = False
-        output = output[mask]
+        # Attempt to clean up the grnd and ref cells
+        try:
+            output.pop(0)
+            if slide_cnt in [0,2]: output.pop(ncol)
+            output.pop(2*ncol)
+            output.pop(4*ncol)
+            output.pop(6*ncol)
+            if slide_cnt in [0,2]: output.pop(7*ncol)
+        except IndexError:
+            pass
 
-        if slide_cnt < 3:
-            # Make a formatted output
-            ncol   = 16
-            output = output.reshape((-1,ncol))
-        else:
-            ncol   = 4
-            output = output[:8].reshape((-1,ncol))
-        keys   = output[::2]
-        values = output[1::2]
-        print(keys)
-
-        # Get the mapping and their key
-        chmap = dict(zip(keys.ravel(),values.ravel()))
-        keys  = list(chmap.keys())
-
-        for ikey in keys:
-            electrodes.append(f"{ikey}{chmap[ikey]}")
-        for ikey in keys:
-            print(f"{ikey} | {chmap[ikey]}")
+        # Iterate over number of rows on this page, checking against maximum number
+        while len(output) > 0:
+            if rowcnt < nrows:
+                channels = output[:ncol]
+                output   = output[ncol:]
+                leads    = output[:ncol]
+                output   = output[ncol:]
+                rowcnt  += 1
+            else:
+                output.pop(ntail)
+                channels = output[:ntail]
+                output   = output[ntail:]
+                leads    = output[:ntail]
+                output   = []
+            for idx,ichannel in enumerate(channels):
+                chmap[ichannel] = leads[idx]
+                electrodes.append(f"{ichannel.replace(" ", "")}-{leads[idx]}")
 
     return electrodes
 
-def main(myid=None, out=None, gnd=None, ref=None, ppt_file=None):
+def main(myid=None, out=None, gnd=None, ref=None, ppt_file=None, nlead=None):
     
     # Obtain patient id if calld as a function. 
     if not myid:
@@ -154,8 +160,9 @@ def main(myid=None, out=None, gnd=None, ref=None, ppt_file=None):
     if ppt_file == None:
         electrodes = manual_entry(myid, out, gnd, ref)
     else:
-        electrodes = ppt_read(ppt_file)
-    #print(electrodes)
+        electrodes = ppt_read(ppt_file,nlead)
+    
+    print(electrodes)
     exit()
 
     # Output logic
@@ -187,8 +194,9 @@ if __name__=='__main__':
     parser.add_argument("--out", dest="out", type=str, help="output", default=None)
     parser.add_argument("--gnd", dest="gnd", type=str, help="ground", default=None)
     parser.add_argument("--ref", dest="ref", type=str, help="reference", default=None)
-    parser.add_argument("--ppt_file", dest="ppt_file", type=str, help="Path to powerpoint file of channel mapping. If provided, the code will attempt to interpret the channel map.", default=None)
+    parser.add_argument("--ppt_file", dest="ppt_file", type=str, help="Path to powerpoint file. If provided, automatically assign channels.", default=None)
+    parser.add_argument("--nlead", dest="nlead", type=int, help="Number of leads in the powerpoint file. Needed for auto assigning.", default=None)
     args = parser.parse_args()
 
     # Call the main function
-    main(myid=args.id, out=args.out, gnd=args.gnd, ref=args.ref, ppt_file=args.ppt_file)
+    main(myid=args.id, out=args.out, gnd=args.gnd, ref=args.ref, ppt_file=args.ppt_file, nlead=args.nlead)

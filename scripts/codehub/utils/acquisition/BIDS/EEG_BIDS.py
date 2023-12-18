@@ -91,6 +91,6 @@ if __name__ == '__main__':
 
     # Make a bids ignore file
     fp = open(args.bidsroot+'.bidsignore','w')
-    fp.write('subject_map.csv\n')
+    fp.write('%s\n' %(args.subject_file))
     fp.write('**targets**pickle')
     fp.close()
