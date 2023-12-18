@@ -255,9 +255,9 @@ class iEEG_download(BIDS_handler):
 
 class ieeg_handler:
 
-    def __init__(self,args,map_data,input_files):
+    def __init__(self,args,input_data,input_files):
         self.args        = args
-        self.map_data    = map_data
+        self.input_data  = input_data
         self.input_files = input_files
 
         # Get list of files to skip that already exist locally
@@ -337,8 +337,8 @@ class ieeg_handler:
                     print("Downloading %s. (%04d/%04d)" %(ifile,file_idx+1,self.input_files.size))
                 else:
                     print(f"Downloading {ifile}.")
-                iid    = self.map_data['uid'].values[file_idx]
-                target = self.map_data['target'].values[file_idx]
+                iid    = self.input_data['uid'].values[file_idx]
+                target = self.input_data['target'].values[file_idx]
                 if self.args.annotations:
                     IEEG.download_by_annotation(iid,ifile,target)
                     IEEG = iEEG_download(self.args,self.write_lock)

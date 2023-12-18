@@ -7,17 +7,17 @@ from modules.BIDS_handler import BIDS_handler
 
 class EDF_handler(BIDS_handler):
 
-    def __init__(self,args,map_data,input_files):
+    def __init__(self,args,input_data,input_files):
         self.args         = args
-        self.map_data     = map_data
+        self.input_data   = input_data
         self.input_files  = input_files
         self.subject_path = args.bidsroot+args.subject_file
         self.old_uid      = -999
     
     def save_data(self):
         for ii,self.current_file in enumerate(self.input_files):
-            self.uid    = self.map_data['uid'].values[ii]
-            self.target = self.map_data['target'].values[ii] 
+            self.uid    = self.input_data['uid'].values[ii]
+            self.target = self.input_data['target'].values[ii] 
             flag        = self.edf_test()
             if self.uid != self.old_uid:
                 BIDS_handler.__init__(self)

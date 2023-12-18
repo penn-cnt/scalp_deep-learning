@@ -59,34 +59,34 @@ if __name__ == '__main__':
         if args.cli:
             start_time  = args.start
             duration    = args.duration
-            map_data    = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
+            input_data  = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
         elif args.annotations:
             if args.inputs_file == None:
                 input_files = [args.dataset]
-                map_data    = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
+                input_data  = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
             else:
                 # Read in the mapping file
-                map_data = PD.read_csv(args.inputs_file)
+                input_data = PD.read_csv(args.inputs_file)
     elif args.edf:
         if args.inputs_file == None:
             input_files = [args.dataset]
-            map_data    = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
+            input_data  = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
         else:
             # Read in the mapping file
-            map_data = PD.read_csv(args.inputs_file)
+            input_data = PD.read_csv(args.inputs_file)
 
     # Store files to query
-    input_files = map_data['orig_filename'].values
+    input_files = input_data['orig_filename'].values
 
     # If iEEG.org, pass inputs to that handler to get the data
     if args.ieeg:
-        IH = ieeg_handler(args,map_data,input_files)
+        IH = ieeg_handler(args,input_data,input_files)
         if not args.multithread:
             IH.single_pull()
         else:
             IH.multicore_pull()
     elif args.edf:
-        EH = EDF_handler(args,map_data,input_files)
+        EH = EDF_handler(args,input_data,input_files)
         EH.save_data()
 
     # Make a bids ignore file
