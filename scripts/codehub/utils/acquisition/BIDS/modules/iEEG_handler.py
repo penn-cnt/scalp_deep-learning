@@ -188,7 +188,7 @@ class iEEG_download(BIDS_handler):
                     else:
                         self.success_flag = False
                         fp = open(self.args.bidsroot+self.args.failure_file,"a")
-                        fp.write("%s,%f,%f,%s\n" %(self.current_file,start,duration,e))
+                        fp.write(f"{self.uid},{self.current_file},{start},{duration},{self.target}\n")
                         fp.close()
                         break
 
