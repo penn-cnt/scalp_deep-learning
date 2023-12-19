@@ -255,10 +255,12 @@ class iEEG_download(BIDS_handler):
 
 class ieeg_handler:
 
-    def __init__(self,args,input_data,input_files):
+    def __init__(self,args,input_data):
         self.args        = args
         self.input_data  = input_data
-        self.input_files = input_files
+        self.input_files = input_data['orig_filename'].values
+        self.start_times = input_data['start']
+        self.durations   = input_data['duration']
 
         # Get list of files to skip that already exist locally
         subject_path = self.args.bidsroot+self.args.subject_file
@@ -343,6 +345,6 @@ class ieeg_handler:
                     IEEG.download_by_annotation(iid,ifile,target)
                     IEEG = iEEG_download(self.args,self.write_lock)
                 else:
-                    IEEG.download_by_cli(iid,ifile,target,self.args.start,self.args.duration)
+                    IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx])
             else:
                 print("Skipping %s." %(ifile))
