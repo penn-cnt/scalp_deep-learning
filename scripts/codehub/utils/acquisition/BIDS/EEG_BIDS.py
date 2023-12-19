@@ -55,22 +55,23 @@ if __name__ == '__main__':
         args.bidsroot += '/'
 
     # Selection criteria
+    incols = ['uid','orig_filename','start','duration','target']
     if args.ieeg:    
         if args.cli:
             start_time  = args.start
             duration    = args.duration
-            input_data  = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
+            input_data  = PD.DataFrame([[args.uid,args.dataset,start_time,duration,args.target]],columns=incols)
         elif args.annotations:
             if args.inputs_file == None:
                 input_files = [args.dataset]
-                input_data  = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
+                input_data  = PD.DataFrame([[args.uid,args.dataset,-1,-1,args.target]],columns=incols)
             else:
                 # Read in the mapping file
                 input_data = PD.read_csv(args.inputs_file)
     elif args.edf:
         if args.inputs_file == None:
             input_files = [args.dataset]
-            input_data  = PD.DataFrame([[args.uid,args.dataset,args.target]],columns=['uid','orig_filename','target'])
+            input_data  = PD.DataFrame([[args.uid,args.dataset,-1,-1,args.target]],columns=incols)
         else:
             # Read in the mapping file
             input_data = PD.read_csv(args.inputs_file)
