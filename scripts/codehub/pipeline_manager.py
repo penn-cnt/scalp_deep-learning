@@ -246,6 +246,10 @@ if __name__ == "__main__":
     datachunk_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
     datachunk_group.add_argument("--t_overlap", default=0, type=float, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
 
+    ssh_group = parser.add_argument_group('SSH Data Loading Options')
+    ssh_group.add_argument("--ssh_host", type=str, help="If loading data via ssh tunnel, this is the host ssh connection string.")
+    ssh_group.add_argument("--ssh_username", type=str, help="If loading data via ssh tunnel, this is the host ssh username to log in as.")
+
     datatype_group = parser.add_argument_group('Input datatype Options')
     datatype_group.add_argument("--datatype", default='EDF', choices=list(allowed_datatypes.keys()), help=f"R|Choose an option:\n{allowed_datatype_help}")
 
