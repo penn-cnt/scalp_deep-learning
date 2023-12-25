@@ -213,13 +213,14 @@ def start_analysis(data_chunk,args,worker_id,barrier):
 def argument_handler(argument_dir='./',require_flag=True):
 
     # Read in the allowed arguments
-    raw_args = yaml.safe_load(open(f"{argument_dir}allowed_arguments.yaml","r"))
-    for ikey in raw_args.keys():
-        exec("%s=%s" %(ikey,raw_args[ikey]),globals())
-    
+    raw_args  = yaml.safe_load(open(f"{argument_dir}allowed_arguments.yaml","r"))
+    for key, inner_dict in raw_args.items():
+        globals()[key] = inner_dict
+
     # Make a useful help string for each keyword
     allowed_project_help   = make_help_str(allowed_project_args)
     allowed_datatype_help  = make_help_str(allowed_datatypes)
+    allowed_clean_help     = make_help_str(allowed_clean_args)
     allowed_channel_help   = make_help_str(allowed_channel_args)
     allowed_montage_help   = make_help_str(allowed_montage_args)
     allowed_input_help     = make_help_str(allowed_input_args)
@@ -230,11 +231,11 @@ def argument_handler(argument_dir='./',require_flag=True):
 
     datamerge_group = parser.add_argument_group('Data Merging Options')
     datamerge_group.add_argument("--input", type=str, choices=list(allowed_input_args.keys()), default="GLOB", help=f"R|Choose an option:\n{allowed_input_help}")
-    datamerge_group.add_argument("--n_input", type=int, help=f"Limit number of files read in. Useful for testing or working in batches.")
+    datamerge_group.add_argument("--n_input", type=int, default=0, help=f"Limit number of files read in. Useful for testing or working in batches.")
     datamerge_group.add_argument("--n_offset", type=int, default=0, help=f"Offset the files read in. Useful for testing or working in batch.")
-    datamerge_group.add_argument("--project", type=str, choices=list(allowed_project_args.keys()), default="SCALP_00", help=f"R|Choose an option:\n{allowed_project_help}")
+    datamerge_group.add_argument("--project", type=str, choices=list(allowed_project_args.keys()), default="SCALP_BASIC", help=f"R|Choose an option:\n{allowed_project_help}")
     datamerge_group.add_argument("--multithread", action='store_true', default=False, help="Multithread flag.")
-    datamerge_group.add_argument("--ncpu", type=int, default=2, help="Number of CPUs to use if multithread.")
+    datamerge_group.add_argument("--ncpu", type=int, default=1, help="Number of CPUs to use if multithread.")
 
     datachunk_group = parser.add_argument_group('Data Chunking Options')
     datachunk_group.add_argument("--t_start", type=float, default=0, help="Time in seconds to start data collection.")
@@ -244,6 +245,9 @@ def argument_handler(argument_dir='./',require_flag=True):
 
     datatype_group = parser.add_argument_group('Input datatype Options')
     datatype_group.add_argument("--datatype", type=str, default='EDF', choices=list(allowed_datatypes.keys()), help=f"R|Choose an option:\n{allowed_datatype_help}")
+
+    channel_group = parser.add_argument_group('Channel cleaning Options')
+    channel_group.add_argument("--channel_clean", type=str,  choices=list(allowed_clean_args.keys()), default="HUP", help=f"R|Choose an option:\n{allowed_clean_help}")
 
     channel_group = parser.add_argument_group('Channel label Options')
     channel_group.add_argument("--channel_list", type=str,  choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
@@ -283,6 +287,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     help_info    = {}
     type_info    = {}
     default_info = {}
+
     for action in parser._get_optional_actions():
         default_val               = action.default
         type_val                  = action.type
@@ -295,7 +300,7 @@ def argument_handler(argument_dir='./',require_flag=True):
                 type_info[action.dest] = bool
             else:
                 type_info[action.dest] = str
-    return args,(help_info,type_info,default_info)
+    return args,(help_info,type_info,default_info,raw_args)
 
 if __name__ == "__main__":
 

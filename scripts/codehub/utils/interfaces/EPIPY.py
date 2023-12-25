@@ -7,15 +7,19 @@ import pipeline_manager as PM
 # Interface imports
 from EPIPY_modules.theme import applyTheme
 from EPIPY_modules.pipelines import showPipelines
-from EPIPY_modules.configuration import showConfiguration
+from EPIPY_modules.callbacks import callback_handler
+from EPIPY_modules.dataimport import dataimport_handler
+from EPIPY_modules.configuration import configuration_handler
 
-class Interface:
+class Interface(callback_handler,configuration_handler,dataimport_handler):
 
     def __init__(self,args,metadata):
-        self.args = args
-        self.help = metadata
+        self.args     = args
+        self.help     = metadata[0]
+        self.types    = metadata[1]
+        self.defaults = metadata[2]
+        self.options  = metadata[3]
         self.show()
-        pass
 
     def show(self):
         dpg.create_context()
@@ -41,13 +45,10 @@ class Interface:
     def showTabs(self):
         dpg.add_texture_registry(show=False, tag='textureRegistry')
         with dpg.tab(label='Configurations'):
-            showConfiguration()
+            configuration_handler.showConfiguration(self)
             pass
-        with dpg.tab(label='Pipelines'):
-            showPipelines()
-            pass
-        with dpg.tab(label='Channel Settings'):
-            #showFiltering(self.callbacks)
+        with dpg.tab(label='Data Preparation'):
+            dataimport_handler.showDataImport(self)
             pass
         with dpg.tab(label='Acceptance Criteria'):
             #showThresholding(self.callbacks)

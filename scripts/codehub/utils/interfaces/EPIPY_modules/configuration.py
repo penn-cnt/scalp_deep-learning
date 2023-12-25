@@ -1,68 +1,118 @@
 import dearpygui.dearpygui as dpg
 
-def submit_fnc(sender, app_data):
-    pass
+class configuration_handler:
 
-def help_fnc(sender,app_data):
-    pass
+    def __init__(self):
+        pass
 
-def combo_callback(sender,app_data):
-    selected_item = dpg.get_value(sender)
+    def showConfiguration(self, main_window_width = 1280):
 
-def radio_button_callback(sender, app_data):
-    selected_item = dpg.get_value(sender)
+        # Child Window Geometry
+        child_window_width = int(0.66*main_window_width)
+        help_window_width  = int(0.33*main_window_width)
+        
+        # Get the approximate number of characters allowed per-line. One time call to self to be visible across all widgets.
+        max_pixel_width = 8
+        self.nchar_help = int(help_window_width/max_pixel_width)
 
-def folder_selection_callback(sender, app_data):
-    selected_folder = dpg.get_value(sender)
+        with dpg.file_dialog(directory_selector=True, show=False, callback=self.folder_selection_callback, height=400) as file_dialog:
+            dpg.add_input_text(label="Output Folder", width=400, callback=self.folder_selection_callback)
+            dpg.add_button(label="Select Folder", callback=lambda: dpg.configure_item(file_dialog, show=True))
 
-def showConfiguration(main_window_width = 1280):
+        with dpg.group(horizontal=True):
+            with dpg.child_window(width=child_window_width):
 
-    # Child Window Geometry
-    child_window_width = int(0.66*main_window_width)
+                # Output directory selection
+                with dpg.group(horizontal=True):
+                    dpg.add_text(f"{'Output Directory':20}")
+                    output_widget_text = dpg.add_input_text(width=int(0.5*child_window_width))
+                    self.output_widget = dpg.add_button(label="Select Folder", callback=lambda: dpg.configure_item(file_dialog, show=True))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag="outdir")
 
-    with dpg.file_dialog(directory_selector=True, show=False, callback=folder_selection_callback, height=400) as file_dialog:
-        dpg.add_input_text(label="Output Folder", width=400, callback=folder_selection_callback)
-        dpg.add_button(label="Select Folder", callback=lambda: dpg.configure_item(file_dialog, show=True))
+                # Multithread Options
+                dpg.add_separator()
+                with dpg.group(horizontal=True):
+                    arg_var = 'multithread'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'Multithreaded':40}")
+                    self.multithread_widget  = dpg.add_radio_button(items=[True,False], callback=self.radio_button_callback, horizontal=True, default_value=default)
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
+                with dpg.group(horizontal=True):
+                    arg_var = 'ncpu'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'# CPUs':40}")
+                    self.ncpu_widget = dpg.add_input_int(default_value=default,step_fast=4,min_value=1,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
-    with dpg.group(horizontal=True):
-        with dpg.child_window(width=child_window_width):
+                # Input options for skipping around files
+                with dpg.group(horizontal=True):
+                    arg_var = 'n_input'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'# of input files':40}")
+                    self.n_input_widget = dpg.add_input_int(default_value=default,step_fast=25,min_value=1,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
+                with dpg.group(horizontal=True):
+                    arg_var = 'n_offset'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'# of skipped inputs':40}")
+                    self.n_offset_widget = dpg.add_input_int(default_value=default,step_fast=25,min_value=0,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
-            # Output directory selection
-            with dpg.group(horizontal=True):
-                dpg.add_text(f"{'Output Directory':20}")
-                output_widget_text   = dpg.add_input_text(width=int(0.5*child_window_width))
-                output_widget_button = dpg.add_button(label="Select Folder", callback=lambda: dpg.configure_item(file_dialog, show=True))
-                dpg.add_button(label="Help", callback=help_fnc)
+                ########################## 
+                ###### Timing Block ######
+                ##########################
+                dpg.add_separator()
+                # Start time
+                with dpg.group(horizontal=True):
+                    arg_var = 't_start'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'File start times (s)':40}")
+                    self.t_start_widget = dpg.add_input_int(default_value=default,step_fast=25,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
-            # Multithread Options
-            with dpg.group(horizontal=True):
-                dpg.add_text(f"{'Multithreaded':20}")
-                radio_multithread_true  = dpg.add_radio_button(items=[True,False], callback=radio_button_callback, horizontal=True, default_value=False)
-                dpg.add_button(label="Help", callback=help_fnc)
-            with dpg.group(horizontal=True):
-                dpg.add_text(f"{'# CPUs':20}", tag='nCPU')
-                dpg.add_input_int(default_value=1,step_fast=4)
-                dpg.add_button(label="Help", callback=help_fnc)
+                # End Time
+                with dpg.group(horizontal=True):
+                    arg_var = 't_end'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'File end times (s)':40}")
+                    self.t_end_widget = dpg.add_input_int(default_value=default,step_fast=25,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
-            # Input options for skipping around files
-            with dpg.group(horizontal=True):
-                dpg.add_text(f"{'# of input files':20}")
-                dpg.add_input_int(default_value=0,step_fast=25)
-                dpg.add_button(label="Help", callback=help_fnc)
-            with dpg.group(horizontal=True):
-                dpg.add_text(f"{'# of skipped inputs':20}")
-                dpg.add_input_int(default_value=0,step_fast=25)
-                dpg.add_button(label="Help", callback=help_fnc)
+                # Time Window
+                with dpg.group(horizontal=True):
+                    arg_var = 't_window'
+                    default = self.defaults[arg_var]
+                    if default == None: default = ''
+                    dpg.add_text(f"{'Time windows (comma list,secs,""=all)':40}")
+                    self.t_window_widget = dpg.add_input_text(default_value=default,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
-            # Setup the project selections
-            dpg.add_separator()
-            with dpg.group(horizontal=True):
-                dpg.add_text(f"{'Project Workflow':20}")
-                combo_box = dpg.add_combo(items=["Scalp 00"], callback=combo_callback)
-                dpg.add_button(label="Help", callback=help_fnc)
+                # Time Overlap
+                with dpg.group(horizontal=True):
+                    arg_var = 't_overlap'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'Time window overlap (fractional)':40}")
+                    self.t_overlap_widget = dpg.add_input_float(default_value=default,step_fast=5,max_value=1.0,min_value=0.0,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
-            # Submit a job
-            dpg.add_spacing(height=400)
-            dpg.add_separator()
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Submit Job", callback=submit_fnc)
+                ########################### 
+                ###### Project Block ######
+                ###########################
+                project_list = list(self.options['allowed_project_args'].keys())
+                dpg.add_separator()
+                with dpg.group(horizontal=True):
+                    arg_var = 'project'
+                    dpg.add_text(f"{'Project Workflow':20}")
+                    self.project_widget = dpg.add_combo(items=project_list, callback=self.combo_callback, default_value=self.defaults[arg_var])
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_combo_help(self.configuration_help,sender,app_data), tag=arg_var)
+
+                # Submit a job
+                dpg.add_spacing(height=300)
+                dpg.add_separator()
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Submit Job", callback=self.submit_fnc)
+
+            # Text widget
+            with dpg.group():
+                dpg.add_text("Help:")
+                self.configuration_help = dpg.add_text("")
