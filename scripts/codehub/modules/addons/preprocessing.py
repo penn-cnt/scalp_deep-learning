@@ -20,6 +20,18 @@ from modules.core.error_logging import *
 class mne_processing:
 
     def __init__(self,dataset,fs,mne_channels):
+        """
+        MNE Initilization
+
+        Args:
+            dataset (_type_): _description_
+            fs (_type_): _description_
+            mne_channels (_type_): _description_
+
+        Raises:
+            IndexError: _description_
+        """
+
         self.dataset      = dataset
         self.ppchannels   = list(dataset.columns)
         self.mne_channels = mne_channels
@@ -33,6 +45,17 @@ class mne_processing:
 
     @silence_mne_warnings
     def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
+        """
+        Remove eyeblinks from the data.
+
+        Args:
+            config_path (_type_): _description_
+            n_components (_type_, optional): _description_. Defaults to None.
+            max_iter (int, optional): _description_. Defaults to 1000.
+
+        Returns:
+            _type_: _description_
+        """
 
         # Set components if needed
         if n_components == None:
@@ -98,6 +121,14 @@ class mne_processing:
 class signal_processing:
     
     def __init__(self, data, fs):
+        """
+        Signal proecessing initilization.
+
+        Args:
+            data (_type_): _description_
+            fs (_type_): _description_
+        """
+
         self.data = data
         self.fs   = fs
     
@@ -158,6 +189,14 @@ class signal_processing:
 class noise_reduction:
     
     def __init__(self, data, fs):
+        """
+        Noise reduction initilization.
+
+        Args:
+            data (_type_): _description_
+            fs (_type_): _description_
+        """
+
         self.data = data
         self.fs   = fs
     
@@ -213,6 +252,20 @@ class noise_reduction:
 class preprocessing_utils:
 
     def __init__(self,dataset,filename,t_start,t_end,step_num,fs,outdir,debug):
+        """
+        Utility initilization.
+
+        Args:
+            dataset (_type_): _description_
+            filename (_type_): _description_
+            t_start (_type_): _description_
+            t_end (_type_): _description_
+            step_num (_type_): _description_
+            fs (_type_): _description_
+            outdir (_type_): _description_
+            debug (_type_): _description_
+        """
+
         self.dataset  = dataset
         self.filename = filename
         self.t_start  = t_start

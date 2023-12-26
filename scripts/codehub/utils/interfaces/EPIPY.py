@@ -10,8 +10,9 @@ from EPIPY_modules.pipelines import showPipelines
 from EPIPY_modules.callbacks import callback_handler
 from EPIPY_modules.dataimport import dataimport_handler
 from EPIPY_modules.configuration import configuration_handler
+from EPIPY_modules.epi_preprocess import epi_preprocess_handler
 
-class Interface(callback_handler,configuration_handler,dataimport_handler):
+class Interface(callback_handler,configuration_handler,dataimport_handler,epi_preprocess_handler):
 
     def __init__(self,args,metadata):
         self.args     = args
@@ -54,7 +55,7 @@ class Interface(callback_handler,configuration_handler,dataimport_handler):
             #showThresholding(self.callbacks)
             pass
         with dpg.tab(label='Preprocessing Options'):
-            #showContourExtraction(self.callbacks)
+            epi_preprocess_handler.showPreprocess(self)
             pass
         with dpg.tab(label='Feature Extraction'):
             #showInterpolation(self.callbacks)

@@ -430,12 +430,14 @@ if __name__ == "__main__":
         os.system("mkdir -p %s" %(dirpath))
         args.preprocess_file = dirpath+"preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
+        config_handler.create_config()
     if args.feature_file == None:
         from modules import features
         dirpath           = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.feature_file = dirpath+"features_"+timestamp+".yaml"
         config_handler    = make_config(features,args.feature_file)
+        config_handler.create_config()
 
     # Multithread options
     input_parameters = np.column_stack((files, start_times, end_times))
