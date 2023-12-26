@@ -50,7 +50,7 @@ class Interface(callback_handler,configuration_handler,dataimport_handler):
         with dpg.tab(label='Data Preparation'):
             dataimport_handler.showDataImport(self)
             pass
-        with dpg.tab(label='Acceptance Criteria'):
+        with dpg.tab(label='Imaging Options'):
             #showThresholding(self.callbacks)
             pass
         with dpg.tab(label='Preprocessing Options'):

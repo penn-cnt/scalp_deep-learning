@@ -43,17 +43,41 @@ class callback_handler:
         button_alias = dpg.get_item_alias(sender)
         if button_alias == 'project':
             combo_value = dpg.get_value(self.project_widget)
-            new_text = getattr(project_handlers, combo_value.lower()).__doc__
+            try:
+                new_text = getattr(project_handlers, combo_value.lower()).__doc__
+            except AttributeError:
+                new_text = self.options['allowed_project_args'][combo_value]
+        elif button_alias == 'input':
+            combo_value = dpg.get_value(self.input_widget)
+            new_text    = self.options['allowed_input_args'][combo_value]
         elif button_alias == 'channel_clean':
             combo_value = dpg.get_value(self.channel_clean_widget)
-            new_text = getattr(channel_clean, f"clean_{combo_value.lower()}").__doc__
+            try:
+                new_text = getattr(channel_clean, f"clean_{combo_value.lower()}").__doc__
+            except AttributeError:
+                new_text = self.options['allowed_clean_args'][combo_value]
         elif button_alias == 'channel_list':
             combo_value = dpg.get_value(self.channel_list_widget)
-            new_text = getattr(channel_mapping, f"mapping_{combo_value.lower()}").__doc__
+            try:
+                new_text = getattr(channel_mapping, f"mapping_{combo_value.lower()}").__doc__
+            except AttributeError:
+                new_text = self.options['allowed_channel_args'][combo_value]
         elif button_alias == 'montage':
             combo_value = dpg.get_value(self.montage_widget)
-            new_text = getattr(channel_montage, f"montage_{combo_value.lower()}").__doc__
+            try:
+                new_text = getattr(channel_montage, f"montage_{combo_value.lower()}").__doc__
+            except AttributeError:
+                new_text = self.options['allowed_montage_args'][combo_value]
+        elif button_alias == 'viability':
+            combo_value = dpg.get_value(self.viability_widget)
+            new_text    = self.options['allowed_viability_args'][combo_value]
 
+        # Remove tabs
         new_text = new_text.replace("    ","")
-        new_text = '\n'.join([new_text[i:i+self.nchar_help] for i in range(0, len(new_text), self.nchar_help)])
+        
+        # Resize the string to fit in the help window
+        new_text_arr = new_text.split('\n')
+        for idx,iline in enumerate(new_text_arr):
+            new_text_arr[idx] = '\n'.join([iline[i:i+self.nchar_help] for i in range(0, len(iline), self.nchar_help)])
+        new_text = '\n'.join(new_text_arr)
         dpg.set_value(help_obj, new_text)

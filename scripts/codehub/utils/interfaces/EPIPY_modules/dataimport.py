@@ -44,15 +44,31 @@ class dataimport_handler:
                 ############################# 
                 ###### Viability Block ######
                 #############################
+                dpg.add_spacer(height=10)
                 dpg.add_separator()
                 # Viability info
                 viability_list = list(self.options['allowed_viability_args'].keys())
                 with dpg.group(horizontal=True):
                     arg_var = 'viability'
                     dpg.add_text(f"{'Viability Method':40}")
-                    self.montage_widget = dpg.add_combo(items=viability_list, callback=self.combo_callback, default_value=self.defaults[arg_var],width=int(0.5*child_window_width))
+                    self.viability_widget = dpg.add_combo(items=viability_list, callback=self.combo_callback, default_value=self.defaults[arg_var],width=int(0.5*child_window_width))
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_combo_help(self.channel_help,sender,app_data), tag=arg_var)
 
+                # NaN interpolation flag
+                with dpg.group(horizontal=True):
+                    arg_var = 'interp'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'Interpolation of NaNs':40}")
+                    self.interp_widget  = dpg.add_radio_button(items=[True,False], callback=self.radio_button_callback, horizontal=True, default_value=default)
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.channel_help, sender, app_data), tag=arg_var)
+
+                # If interpolating of NaNs, how many to interp over
+                with dpg.group(horizontal=True):
+                    arg_var = 'n_interp'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'Max # of NaNs to interpolate over':40}")
+                    self.ncpu_widget = dpg.add_input_int(default_value=default,step_fast=4,min_value=1,width=int(0.5*child_window_width))
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.channel_help, sender, app_data), tag=arg_var)
 
             # Text widget
             with dpg.group():
