@@ -109,7 +109,7 @@ class project_handlers:
 
         # Case statement the workflow
         if self.args.project.lower() == 'scalp_basic':
-            project_handlers.scalp_00(self)
+            project_handlers.scalp_basic(self)
 
     def scalp_basic(self):
         """
