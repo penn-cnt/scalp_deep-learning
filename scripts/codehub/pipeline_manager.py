@@ -425,14 +425,14 @@ if __name__ == "__main__":
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None and not args.no_preprocess_flag:
-        from modules import preprocessing
+        from modules.addons import preprocessing
         dirpath              = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.preprocess_file = dirpath+"preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
         config_handler.create_config()
     if args.feature_file == None:
-        from modules import features
+        from modules.addons import features
         dirpath           = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.feature_file = dirpath+"features_"+timestamp+".yaml"

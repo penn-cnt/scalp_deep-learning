@@ -8,8 +8,8 @@ class configuration_handler:
     def showConfiguration(self, main_window_width = 1280):
 
         # Child Window Geometry
-        child_window_width = int(0.66*main_window_width)
-        help_window_width  = int(0.33*main_window_width)
+        child_window_width = int(0.65*main_window_width)
+        help_window_width  = int(0.32*main_window_width)
         
         # Get the approximate number of characters allowed per-line. One time call to self to be visible across all widgets.
         max_pixel_width = 8
@@ -162,6 +162,7 @@ class configuration_handler:
                     dpg.add_button(label="Submit Job", callback=self.submit_fnc)
 
             # Text widget
-            with dpg.group():
-                dpg.add_text("Help:")
-                self.configuration_help = dpg.add_text("")
+            with dpg.child_window(width=help_window_width):
+                with dpg.group():
+                    dpg.add_text("Help:")
+                    self.configuration_help = dpg.add_text("", wrap=0.95*help_window_width)

@@ -2,30 +2,30 @@ import os
 import dearpygui.dearpygui as dpg
 from configs.makeconfigs import *
 
-import modules.addons.preprocessing as PP
+import modules.addons.features as FEATS
 
-class epi_preprocess_handler:
+class epi_features_handler:
 
     def __init__(self):
         pass
 
-    def showPreprocess(self, main_window_width = 1280):
+    def showFeatures(self, main_window_width = 1280):
 
         # Child Window Geometry
         child_window_width = int(0.66*main_window_width)
         help_window_width  = int(0.33*main_window_width)
 
         # Get the module info
-        MC         = make_config(PP,None)
+        MC         = make_config(FEATS,None)
         method_str = MC.print_methods(silent=True)
         method_str = method_str.replace("    ","")
 
         # Get the example yaml
         script_path             = os.path.abspath(__file__)
         script_dir              = '/'.join(script_path.split('/')[:-1])
-        fp                      = open(f"{script_dir}/defaults/default_preprocess_yaml.txt")
+        fp                      = open(f"{script_dir}/defaults/default_features_yaml.txt")
         example_str_arr         = fp.readlines()
-        self.preprocess_example = ''.join(example_str_arr)
+        self.features_example   = ''.join(example_str_arr)
         fp.close()
 
         with dpg.group(horizontal=True):
@@ -36,14 +36,14 @@ class epi_preprocess_handler:
 
                 # Input Options
                 with dpg.group(horizontal=True):
-                    dpg.add_text(f"{'Load Preprocessing YAML File?':40}")
-                    self.preprocess_yaml_widget  = dpg.add_radio_button(items=[True,False], callback=self.radio_button_callback, horizontal=True, default_value=True)
+                    dpg.add_text(f"{'Load Features YAML File?':40}")
+                    self.features_yaml_widget  = dpg.add_radio_button(items=[True,False], callback=self.radio_button_callback, horizontal=True, default_value=True)
 
                 # Input pathing
                 with dpg.group(horizontal=True):
                     dpg.add_text(f"{'Input YAML Path':40}")
-                    self.preprocess_yaml_path_widget_text = dpg.add_input_text(width=int(0.35*child_window_width))
-                    self.preprocess_yaml_path_widget      = dpg.add_button(label="Select File", callback=lambda: dpg.configure_item(file_dialog, show=True),width=int(0.14*child_window_width))
+                    self.features_yaml_path_widget_text = dpg.add_input_text(width=int(0.35*child_window_width))
+                    self.features_yaml_path_widget      = dpg.add_button(label="Select File", callback=lambda: dpg.configure_item(file_dialog, show=True),width=int(0.14*child_window_width))
 
                 ########################## 
                 ###### Output Block ######
@@ -65,12 +65,12 @@ class epi_preprocess_handler:
                 height  = 0.925*self.height_fnc()
                 width   = int(0.98*child_window_width)
                 dpg.add_text(f"Please enter YAML configuration settings below.")
-                self.yaml_input_preprocess_widget = dpg.add_input_text(default_value=default,height=height,width=width,multiline=True)
+                self.yaml_input_features_widget = dpg.add_input_text(default_value=default,height=height,width=width,multiline=True)
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="Resize Textbox", callback=self.update_yaml_input_preprocess_widget)
-                    dpg.add_button(label="Save YAML", callback=self.update_yaml_input_preprocess_widget)
-                    dpg.add_button(label="Show Example", callback=self.display_example_preprocess)
-                    dpg.add_button(label="Clear Text", callback=self.clear_preprocess)
+                    dpg.add_button(label="Resize Textbox", callback=self.update_yaml_input_features_widget)
+                    dpg.add_button(label="Save YAML", callback=self.update_yaml_input_features_widget)
+                    dpg.add_button(label="Show Example", callback=self.display_example_features)
+                    dpg.add_button(label="Clear Text", callback=self.clear_features)
                 
                 with dpg.group(horizontal=True):
                     dpg.add_text(f"More examples:{self.url}")
@@ -81,4 +81,4 @@ class epi_preprocess_handler:
             with dpg.child_window(width=help_window_width):
                 with dpg.group():
                     dpg.add_text("Preprocessing Options:")
-                    self.preprocess_help = dpg.add_text(method_str, wrap=0.95*help_window_width)
+                    self.features_help = dpg.add_text(method_str, wrap=0.95*help_window_width)

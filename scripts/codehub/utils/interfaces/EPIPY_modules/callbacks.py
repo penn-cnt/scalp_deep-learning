@@ -1,3 +1,5 @@
+import pyperclip
+import numpy as np
 import dearpygui.dearpygui as dpg
 
 # Local imports to get documentation
@@ -23,6 +25,43 @@ class callback_handler:
         for ikey,ival in outputs.items():
             print(f"{ikey}|{ival}")
 
+    def height_fnc(self):
+        """
+        Find a suitable height for the yaml multiline text object.
+        Could use a better method for figuring out a decent height.
+        """
+
+        height     = dpg.get_viewport_client_height()
+        open_space = 1-self.yaml_frac
+        modifier   = np.amin([open_space,np.log10(height/self.height)])
+        if height>=self.height:
+            scale = (self.yaml_frac+modifier)
+        else:
+            scale = (self.yaml_frac-modifier) 
+        return height*scale
+
+    def update_yaml_input_preprocess_widget(self, sender, app_data):
+        widget_height = self.height_fnc()
+        dpg.configure_item(self.yaml_input_preprocess_widget, height=widget_height)
+
+    def update_yaml_input_features_widget(self, sender, app_data):
+        widget_height = self.height_fnc()
+        dpg.configure_item(self.yaml_input_features_widget, height=widget_height)
+
+    def yaml_example_url(self):
+        pyperclip.copy(self.url)
+
+    def display_example_preprocess(self):
+        dpg.configure_item(self.yaml_input_preprocess_widget, default_value=self.preprocess_example)
+
+    def clear_preprocess(self):
+        dpg.configure_item(self.yaml_input_preprocess_widget, default_value='')
+
+    def display_example_features(self):
+        dpg.configure_item(self.yaml_input_features_widget, default_value=self.features_example)
+
+    def clear_features(self):
+        dpg.configure_item(self.yaml_input_features_widget, default_value='')
 
     def combo_callback(self, sender, app_data):
         selected_item = dpg.get_value(sender)
@@ -75,9 +114,5 @@ class callback_handler:
         # Remove tabs
         new_text = new_text.replace("    ","")
         
-        # Resize the string to fit in the help window
-        new_text_arr = new_text.split('\n')
-        for idx,iline in enumerate(new_text_arr):
-            new_text_arr[idx] = '\n'.join([iline[i:i+self.nchar_help] for i in range(0, len(iline), self.nchar_help)])
-        new_text = '\n'.join(new_text_arr)
+        # Set the text
         dpg.set_value(help_obj, new_text)

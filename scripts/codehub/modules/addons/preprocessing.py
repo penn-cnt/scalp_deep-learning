@@ -296,34 +296,6 @@ class preprocessing_utils:
 
                 # Write data to file
                 pickle.dump((self.dataset,self.fs),open(outfile,"wb"))
-
-    def data_snapshot_edf(self,outpath=None):
-        """
-        Save a snapshot of the data in edf format.
-        (Useful for testing changes across steps.)
-
-        Still in production. Digital min/max is not working correctly as of 11/12/23.
-
-        # Handle default pathing if needed
-        self.filename = self.filename.split('/')[-1].split('.')[0]+f"_{self.t_start}_{self.t_end}_preprocess.edf"
-        if outpath == None:
-            outpath = self.outdir+f"/preprocessing_snapshot/edf/{self.step_num:02}/"
-        outfile = outpath+self.filename
-
-        # Make sure path exists
-        if not os.path.exists(outpath):
-            os.system(f"mkdir -p {outpath}")
-
-        # Write data to file
-        f = EdfWriter(outfile, len(self.dataset.columns), file_type=FILETYPE_EDFPLUS)
-        for ii in range(self.dataset.columns.size):
-            f.setSamplefrequency(ii, self.fs[ii])
-        for icol in self.dataset.columns:
-            signal = self.dataset[icol].values
-            f.writePhysicalSamples(signal)
-        f.close()
-        """
-        pass
         
 class preprocessing:
     """

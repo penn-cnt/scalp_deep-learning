@@ -29,24 +29,29 @@ class make_config:
 
         # Iterate through the members
         output_str = ''
+        spacer     = "===================================="
         for name, member in members:
 
             # Check if it's a class defined in the module
             if inspect.isclass(member) and member.__module__ == self.config_library.__name__:
-                print("====================================\n")
+                if not silent:
+                    print(f"{spacer}\n")
 
                 # Iterate through the methods of the class and print their docstrings
                 for method_name, method in inspect.getmembers(member):
                     if method_name != '__init__':
                         if inspect.isfunction(method):
                             docstring = inspect.getdoc(method)
-                            docstring = docstring.replace("\n","\n    ")
+                            try:
+                                docstring = docstring.replace("\n","\n    ")
+                            except AttributeError:
+                                pass
                             if docstring:
                                 
                                 # Print clean output to screen
                                 if not silent:
-                                    print(f"Method: {method_name}\nDocstring: {docstring}\n")
-                                output_str += f"{method_name}\n{docstring}\n"
+                                    print(f"Method: {method_name}\n{spacer}\nDocstring: {docstring}\n")
+                                output_str += f"{method_name}\n{spacer}\n{docstring}\n\n\n"
                                 
                                 # Save arguments to dictionary for easier access
                                 signature = inspect.signature(getattr(member,method_name))

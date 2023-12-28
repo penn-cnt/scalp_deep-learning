@@ -71,6 +71,7 @@ class dataimport_handler:
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.channel_help, sender, app_data), tag=arg_var)
 
             # Text widget
-            with dpg.group():
-                dpg.add_text("Help:")
-                self.channel_help = dpg.add_text("")
+            with dpg.child_window(width=help_window_width):
+                with dpg.group():
+                    dpg.add_text("Help:")
+                    self.channel_help = dpg.add_text("", wrap=0.95*help_window_width)
