@@ -33,10 +33,11 @@ class configuration_handler:
 
                 # Input pathing
                 with dpg.group(horizontal=True):
+                    arg_var = 'input_str'
                     dpg.add_text(f"{'Input Path':40}")
                     self.input_path_widget_text = dpg.add_input_text(width=int(0.35*child_window_width))
                     self.input_path_widget      = dpg.add_button(label="Select File", width=int(0.14*child_window_width), callback=lambda sender, app_data:self.init_file_selection(self.input_path_widget_text, sender, app_data))
-                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag="input_path")
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
                 ########################## 
                 ###### Output Block ######

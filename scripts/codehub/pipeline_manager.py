@@ -277,7 +277,7 @@ def argument_handler(argument_dir='./',require_flag=True):
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
 
     misc_group = parser.add_argument_group('Misc Options')
-    misc_group.add_argument("--input_str", type=str, help="Optional. If glob input, glob string. If csv, filepath to input.")
+    misc_group.add_argument("--input_str", type=str, help="Optional. If glob input, wildcard path. If csv/manual, filepath to input csv/raw data.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
     args = parser.parse_args()

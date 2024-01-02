@@ -21,7 +21,7 @@ class Interface(callback_handler,configuration_handler,dataimport_handler,epi_pr
         self.types     = metadata[1]
         self.defaults  = metadata[2]
         self.options   = metadata[3]
-        self.yaml_frac = 0.6
+        self.yaml_frac = 0.55
         self.height    = 720
         self.width     = 1280 
         self.url       = "https://github.com/penn-cnt/CNT-codehub/tree/main/examples/making_configuration_files"

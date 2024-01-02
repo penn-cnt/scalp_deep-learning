@@ -1,3 +1,5 @@
+import os
+import ast
 import pyperclip
 import numpy as np
 import dearpygui.dearpygui as dpg
@@ -92,6 +94,102 @@ class callback_handler:
         selected_path = list(app_data['selections'].values())[0]
         dpg.set_value(self.current_path_obj,selected_path)
 
+    #################################
+    ###### Save/Load Functions ######
+    #################################
+
+    def load_preprocess_yaml(self):
+        yaml_path = dpg.get_value(self.preprocess_yaml_path_widget_text)
+        if yaml_path != '' and yaml_path != None:
+            if os.path.exists(yaml_path):
+                fp       = open(yaml_path,'r')
+                contents = fp.readlines()
+                fp.close()
+                yaml_text = ''.join(contents)
+                dpg.set_value(self.yaml_input_preprocess_widget,yaml_text) 
+
+    def load_feature_yaml(self):
+        yaml_path = dpg.get_value(self.features_yaml_path_widget_text)
+        if yaml_path != '' and yaml_path != None:
+            if os.path.exists(yaml_path):
+                fp       = open(yaml_path,'r')
+                contents = fp.readlines()
+                fp.close()
+                yaml_text = ''.join(contents)
+                dpg.set_value(self.yaml_input_features_widget,yaml_text) 
+
+    def save_preprocess_yaml(self):
+        """
+        Save the preprocessing yaml that was created.
+        """
+
+        # Define variables
+        writeflag       = False
+        outpath         = dpg.get_value(self.preprocess_output_yaml_widget_text)
+        preprocess_yaml = dpg.get_value(self.yaml_input_preprocess_widget)
+        
+        # Handle different possible outcomes from widgets and pathing
+        if outpath == '' or outpath == None:
+            dpg.set_value(self.yaml_input_preprocess_widget,"Please specify an output directory/path.")
+        else:
+            if preprocess_yaml == '' or preprocess_yaml == None:
+                dpg.set_value(self.yaml_input_preprocess_widget,"Cannot save empty YAML entry.")
+            else:
+                if os.path.exists(outpath):
+                    if os.path.isdir(outpath):
+                        outpath   = outpath+"preprocess.yaml"
+                        writeflag = True
+                    else:
+                         dpg.set_value(self.yaml_input_preprocess_widget,"Output filepath already exists.")
+                else:
+                    writeflag = True
+
+        # If the path is available, and we have data, write output
+        if writeflag:
+            fp = open(outpath,'w')
+            fp.write(preprocess_yaml)
+            fp.close()
+            dpg.set_value(self.yaml_input_preprocess_widget,f"Output saved to {outpath}.")
+
+        # Update the input pathing widget so the CLI gets the new filepath
+        dpg.set_value(self.preprocess_yaml_path_widget_text,outpath)
+
+    def save_features_yaml(self):
+        """
+        Save the featuresing yaml that was created.
+        """
+
+        # Define variables
+        writeflag       = False
+        outpath         = dpg.get_value(self.features_output_yaml_widget_text)
+        features_yaml = dpg.get_value(self.yaml_input_features_widget)
+        
+        # Handle different possible outcomes from widgets and pathing
+        if outpath == '' or outpath == None:
+            dpg.set_value(self.yaml_input_features_widget,"Please specify an output directory/path.")
+        else:
+            if features_yaml == '' or features_yaml == None:
+                dpg.set_value(self.yaml_input_features_widget,"Cannot save empty YAML entry.")
+            else:
+                if os.path.exists(outpath):
+                    if os.path.isdir(outpath):
+                        outpath   = outpath+"features.yaml"
+                        writeflag = True
+                    else:
+                         dpg.set_value(self.yaml_input_features_widget,"Output filepath already exists.")
+                else:
+                    writeflag = True
+
+        # If the path is available, and we have data, write output
+        if writeflag:
+            fp = open(outpath,'w')
+            fp.write(features_yaml)
+            fp.close()
+            dpg.set_value(self.yaml_input_features_widget,f"Output saved to {outpath}.")
+
+        # Update the input pathing widget so the CLI gets the new filepath
+        dpg.set_value(self.features_yaml_path_widget_text,outpath)
+
     ############################
     ###### Misc Functions ######
     ############################    
@@ -178,7 +276,7 @@ class callback_handler:
             # Input handler
             input_type = dpg.get_value(self.input_widget)
             base_cmd   = f"{base_cmd} --input {input_type}"
-            input_path = dpg.get_value(self.input_path_widget)
+            input_path = dpg.get_value(self.input_path_widget_text)
             if input_path not in excl:
                 base_cmd   = f"{base_cmd} --input_str {input_path}"
             
@@ -191,7 +289,7 @@ class callback_handler:
                 base_cmd = f"{base_cmd} --outdir {output_path}"
 
             # Multiprocessing handler
-            multithread = dpg.get_value(self.multithread_widget)
+            multithread = ast.literal_eval(dpg.get_value(self.multithread_widget))
             ncpu        = dpg.get_value(self.ncpu_widget)
             if multithread:
                 base_cmd = f"{base_cmd} --multithread --ncpu {ncpu}"
@@ -226,14 +324,48 @@ class callback_handler:
 
             # Data Viability options
             viability = dpg.get_value(self.viability_widget) 
-            interp    = dpg.get_value(self.interp_widget)
+            interp    = ast.literal_eval(dpg.get_value(self.interp_widget))
             n_interp  = dpg.get_value(self.n_interp_widget)
             base_cmd  = f"{base_cmd} --viability {viability}"
             if interp:
                 base_cmd  = f"{base_cmd} --interp --n_interp {n_interp}"
 
+            # Project options
+            project = dpg.get_value(self.project_widget)
+            base_cmd = f"{base_cmd} --project {project}"
+
+            # Preprocessing config options
+            skip_preprocess = ast.literal_eval(dpg.get_value(self.skip_preprocess_widget))
+            if not skip_preprocess:
+                use_preprocess = ast.literal_eval(dpg.get_value(self.use_preprocess_yaml_widget))
+                if use_preprocess:
+                    preprocess_fpath = dpg.get_value(self.preprocess_yaml_path_widget_text)
+                    if preprocess_fpath == None or preprocess_fpath == '':
+                        base_cmd = "You selected to use an existing preprocessing YAML file, but selected no file."
+                        base_cmd = f"{base_cmd} Please select a file or uncheck this option for runtime generation."
+                        break
+                    else:
+                        base_cmd = f"{base_cmd} --preprocess_file {preprocess_fpath}"
+            else:
+                base_cmd = f"{base_cmd} --no_preprocess_flag"
+
+            # Feature config options
+            skip_feature = ast.literal_eval(dpg.get_value(self.skip_feature_widget))
+            if not skip_feature:
+                use_features = ast.literal_eval(dpg.get_value(self.use_features_yaml_widget))
+                if use_features:
+                    features_fpath = dpg.get_value(self.features_yaml_path_widget_text)
+                    if features_fpath == None or features_fpath == '':
+                        base_cmd = "You selected to use an existing feature extraction YAML file, but selected no file."
+                        base_cmd = f"{base_cmd} Please select a file or uncheck this option for runtime generation."
+                        break
+                    else:
+                        base_cmd = f"{base_cmd} --feature_file {preprocess_fpath}"
+            else:
+                base_cmd = f"{base_cmd} --no_feature_flag"
+
             # Verbose
-            silent = dpg.get_value(self.verbose_widget)
+            silent = ast.literal_eval(dpg.get_value(self.verbose_widget))
             if silent:
                 base_cmd = f"{base_cmd} --silent"
 
