@@ -6,6 +6,7 @@ import pipeline_manager as PM
 
 # Interface imports
 from EPIPY_modules.theme import applyTheme
+from EPIPY_modules.submit import submit_handler
 from EPIPY_modules.callbacks import callback_handler
 from EPIPY_modules.dataimport import dataimport_handler
 from EPIPY_modules.epi_features import epi_features_handler
@@ -20,7 +21,7 @@ class Interface(callback_handler,configuration_handler,dataimport_handler,epi_pr
         self.types     = metadata[1]
         self.defaults  = metadata[2]
         self.options   = metadata[3]
-        self.yaml_frac = 0.6
+        self.yaml_frac = 0.55
         self.height    = 720
         self.width     = 1280 
         self.url       = "https://github.com/penn-cnt/CNT-codehub/tree/main/examples/making_configuration_files"
@@ -49,7 +50,7 @@ class Interface(callback_handler,configuration_handler,dataimport_handler,epi_pr
 
     def showTabs(self):
         dpg.add_texture_registry(show=False, tag='textureRegistry')
-        with dpg.tab(label='Configurations'):
+        with dpg.tab(label='Configurations',tag="configtab"):
             configuration_handler.showConfiguration(self)
             pass
         with dpg.tab(label='Data Preparation'):
@@ -63,6 +64,9 @@ class Interface(callback_handler,configuration_handler,dataimport_handler,epi_pr
             pass
         with dpg.tab(label='Feature Extraction'):
             epi_features_handler.showFeatures(self)
+            pass
+        with dpg.tab(label="Submit Job"):
+            submit_handler.showSubmit(self)
             pass
         pass
 
