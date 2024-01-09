@@ -36,7 +36,7 @@ class epi_features_handler:
                 ################################
                 # Skip Button
                 with dpg.group(horizontal=True):
-                    dpg.add_text(f"{'Skip Preprocessing?':40}")
+                    dpg.add_text(f"{'Skip Feature Extraction?':40}")
                     self.skip_feature_widget = dpg.add_radio_button(items=[True,False], callback=self.radio_button_callback, horizontal=True, default_value=False)
 
                 ######################### 
