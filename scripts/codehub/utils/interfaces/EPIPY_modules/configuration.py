@@ -50,6 +50,14 @@ class configuration_handler:
                     self.output_widget_text = dpg.add_input_text(width=int(0.35*child_window_width))
                     self.output_widget      = dpg.add_button(label="Select Folder", width=int(0.14*child_window_width), callback=lambda sender, app_data:self.init_folder_selection(self.output_widget_text, sender, app_data))
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag="outdir")
+                
+                # Join targets to output
+                with dpg.group(horizontal=True):
+                    arg_var = 'targets'
+                    default = self.defaults[arg_var]
+                    dpg.add_text(f"{'Join Targets with output?':40}")
+                    self.target_widget  = dpg.add_radio_button(items=[True,False], callback=self.radio_button_callback, horizontal=True, default_value=default)
+                    dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
                 ########################## 
                 ###### Config Block ######

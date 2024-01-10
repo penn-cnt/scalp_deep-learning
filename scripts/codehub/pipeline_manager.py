@@ -84,6 +84,10 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         output_manager.save_features(self)
 
     def feature_manager(self):
+        """
+        Kick off function for feature extraction if requested by the user.
+        Also handles multithreading and screen appearance for verbose options. (tqdm with multithreading requires management of terminal whitespace)
+        """
 
         if not self.args.no_feature_flag:
             if self.args.multithread:
@@ -99,6 +103,9 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
             features.__init__(self)
 
     def target_manager(self):
+        """
+        Kick off function for loading targets.
+        """
 
         if self.args.targets:
             for ikey in self.metadata.keys():
@@ -277,7 +284,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     feature_group.add_argument("--feature_file", type=str,  help="Path to preprocessing YAML file. If not provided, code will walk user through generation of a pipeline.")
 
     target_group = parser.add_argument_group('Target Association Options')
-    target_group.add_argument("--targets", action='store_true', default=False, help="Join target data with the final dataframe")
+    target_group.add_argument("--targets", action='store_true', default=True, help="Join target data with the final dataframe")
 
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument("--outdir", type=str,  required=require_flag, help="Output directory.") 

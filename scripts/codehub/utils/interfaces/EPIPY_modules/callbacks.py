@@ -51,10 +51,16 @@ class callback_handler:
         dpg.configure_item(self.submit_widget_text, height=widget_height)
 
     def update_yaml_input_preprocess_widget(self, sender, app_data):
+        """
+        Fix the height of the preprocessing yaml text widget if rescaled.
+        """
         widget_height = self.height_fnc()
         dpg.configure_item(self.yaml_input_preprocess_widget, height=widget_height)
 
     def update_yaml_input_features_widget(self, sender, app_data):
+        """
+        Fix the height of the feature extraction yaml text widget if rescaled.
+        """
         widget_height = self.height_fnc()
         dpg.configure_item(self.yaml_input_features_widget, height=widget_height)
 
@@ -77,7 +83,10 @@ class callback_handler:
         dpg.show_item("folder_dialog_id")
 
     def init_file_selection(self,obj,sender,app_data):
-        
+        """
+        Intialize the file selection here. Need to send the object to populate with a path, and using a direct show_item doesn't allow this.
+        """
+
         # Make a file and folder dialoge item
         self.current_path_obj = obj
         try:
@@ -99,6 +108,10 @@ class callback_handler:
     #################################
 
     def load_preprocess_yaml(self):
+        """
+        Load the preprocessing yaml selected by the user and populate the yaml textbox with formatted results.
+        """
+
         yaml_path = dpg.get_value(self.preprocess_yaml_path_widget_text)
         if yaml_path != '' and yaml_path != None:
             if os.path.exists(yaml_path):
@@ -109,6 +122,10 @@ class callback_handler:
                 dpg.set_value(self.yaml_input_preprocess_widget,yaml_text) 
 
     def load_feature_yaml(self):
+        """
+        Load the feature extraction yaml selected by the user and populate the yaml textbox with formatted results.
+        """
+
         yaml_path = dpg.get_value(self.features_yaml_path_widget_text)
         if yaml_path != '' and yaml_path != None:
             if os.path.exists(yaml_path):
@@ -195,30 +212,54 @@ class callback_handler:
     ############################    
 
     def display_example_preprocess(self):
+        """
+        Display the example preprocessing yaml example.
+        """
         dpg.configure_item(self.yaml_input_preprocess_widget, default_value=self.preprocess_example)
 
     def clear_preprocess(self):
+        """
+        Clear the preprocessing yaml text widget.
+        """
         dpg.configure_item(self.yaml_input_preprocess_widget, default_value='')
 
     def display_example_features(self):
+        """
+        Display the example feature extraction yaml example.
+        """
         dpg.configure_item(self.yaml_input_features_widget, default_value=self.features_example)
 
     def clear_features(self):
+        """
+        Clear the feature extraction yaml text widget.
+        """
         dpg.configure_item(self.yaml_input_features_widget, default_value='')
 
     def combo_callback(self, sender, app_data):
+        """
+        Get the selected value from a drop down widget.
+        """
         selected_item = dpg.get_value(sender)
 
     def radio_button_callback(self, sender, app_data):
+        """
+        Get the selected value from a radio button widget.
+        """
         selected_item = dpg.get_value(sender)
 
     def update_help(self, help_obj, sender, app_data):
+        """
+        Update the help text widget.
+        """
         button_alias = dpg.get_item_alias(sender)
         new_text     = f"{self.help[button_alias]}"
         new_text     = '\n'.join([new_text[i:i+self.nchar_help] for i in range(0, len(new_text), self.nchar_help)])
         dpg.set_value(help_obj, new_text)
 
     def update_combo_help(self, help_obj, sender, app_data):
+        """
+        For drop down menus, where we need more specific help options, case statement through known pipeline arguments.
+        """
         button_alias = dpg.get_item_alias(sender)
         if button_alias == 'project':
             combo_value = dpg.get_value(self.project_widget)
@@ -258,14 +299,8 @@ class callback_handler:
         dpg.set_value(help_obj, new_text)
 
     def create_submit_cmd(self):
-
         """
-        python pipeline_manager.py --input GLOB --glob_str "/mnt/leif/littlab/users/bjprager/DATA/IEEG/BIDS/*/*/sub*/*/eeg/*edf" 
-        --preprocess_file /mnt/leif/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/preprocessing_grid/configs/preprocessing.yaml 
-        --feature_file /mnt/leif/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/preprocessing_grid/configs/features.yaml 
-        --outdir /mnt/leif/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/preprocessing_grid/output/ 
-        --targets --n_input 500 --t_window 5 --t_overlap 0.4 --ncpu 32 --multithread 
-        --exclude /mnt/leif/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/preprocessing_grid/output/excluded.txt
+        Make the submission command.
         """
 
         # Base command to the code
@@ -287,6 +322,11 @@ class callback_handler:
                 break
             else:
                 base_cmd = f"{base_cmd} --outdir {output_path}"
+
+            # Target join handler
+            target = ast.literal_eval(dpg.get_value(self.target_widget))
+            if target:
+                base_cmd = f"{base_cmd} --targets"
 
             # Multiprocessing handler
             multithread = ast.literal_eval(dpg.get_value(self.multithread_widget))
