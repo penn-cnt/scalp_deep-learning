@@ -29,7 +29,7 @@ if __name__ == '__main__':
             obj_cols  = ['t_start', 'dt', 'uid']
         else:
             col_info = yaml.safe_load(open(args.col_config,'r'))
-            for key, inner_dict in data.items():
+            for key, inner_dict in col_info.items():
                 globals()[key] = inner_dict
 
         # Loop over the files and save the outputs
