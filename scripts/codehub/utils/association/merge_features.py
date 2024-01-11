@@ -54,12 +54,22 @@ if __name__ == '__main__':
         iDF = PD.concat(meta_obj)
         pickle.dump(iDF,open(f"{args.indir}{args.outfile_meta}","wb"))
 
-        # Model generation
-        print("Making the model file")
+        # Make the cleaned up model view
         iDF                                = PD.concat(model_obj)
         iDF['tag'], tag_mapping_dict       = PD.factorize(iDF['tag'])
         iDF['target'], target_mapping_dict = PD.factorize(iDF['target'])
-        output_dict                        = {'tag':tag_mapping_dict,'target':target_mapping_dict}
+
+        # Final downcasting attempt
+        for icol in iDF:
+            itype     = iDF[icol].dtype
+            iDF[icol] = PD.to_numeric(iDF[icol],downcast='integer')
+            if iDF[icol].dtype == itype:
+                iDF[icol] = PD.to_numeric(iDF[icol],downcast='float')
+
+        # Make the mapping dictionary
+        output_dict = {'tag':tag_mapping_dict,'target':target_mapping_dict}
+
+        print("Making the model file")
         pickle.dump(iDF,open(f"{args.indir}{args.outfile_model}","wb"))
         pickle.dump(output_dict,open(f"{args.indir}{args.outfile_map}","wb"))
     else:
