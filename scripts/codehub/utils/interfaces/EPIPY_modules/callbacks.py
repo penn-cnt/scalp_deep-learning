@@ -291,6 +291,9 @@ class callback_handler:
         elif button_alias == 'viability':
             combo_value = dpg.get_value(self.viability_widget)
             new_text    = self.options['allowed_viability_args'][combo_value]
+        elif button_alias.split('_')[0] == 'imaging':
+            combo_value = button_alias.split('_')[1]
+            new_text    = self.options['allowed_imaging_programs'][combo_value]['help']
 
         # Remove tabs
         new_text = new_text.replace("    ","")

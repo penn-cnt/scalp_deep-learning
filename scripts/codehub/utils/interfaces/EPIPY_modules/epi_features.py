@@ -12,8 +12,8 @@ class epi_features_handler:
     def showFeatures(self, main_window_width = 1280):
 
         # Child Window Geometry
-        child_window_width = int(0.66*main_window_width)
-        help_window_width  = int(0.33*main_window_width)
+        child_window_width = int(0.65*main_window_width)
+        help_window_width  = int(0.32*main_window_width)
 
         # Get the module info
         MC         = make_config(FEATS,None)

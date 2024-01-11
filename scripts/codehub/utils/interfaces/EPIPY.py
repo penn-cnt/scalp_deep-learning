@@ -7,6 +7,7 @@ import pipeline_manager as PM
 # Interface imports
 from EPIPY_modules.theme import applyTheme
 from EPIPY_modules.submit import submit_handler
+from EPIPY_modules.imaging import imaging_handler
 from EPIPY_modules.callbacks import callback_handler
 from EPIPY_modules.dataimport import dataimport_handler
 from EPIPY_modules.epi_features import epi_features_handler
@@ -90,7 +91,7 @@ class Interface(callback_handler,configuration_handler,dataimport_handler,epi_pr
             dataimport_handler.showDataImport(self)
             pass
         with dpg.tab(label='Imaging Options'):
-            #showThresholding(self.callbacks)
+            imaging_handler.showImaging(self)
             pass
         with dpg.tab(label='Preprocessing Options'):
             epi_preprocess_handler.showPreprocess(self)

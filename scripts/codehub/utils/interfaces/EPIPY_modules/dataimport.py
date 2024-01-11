@@ -8,8 +8,8 @@ class dataimport_handler:
     def showDataImport(self, main_window_width = 1280):
 
         # Child Window Geometry
-        child_window_width = int(0.66*main_window_width)
-        help_window_width  = int(0.33*main_window_width)
+        child_window_width = int(0.65*main_window_width)
+        help_window_width  = int(0.32*main_window_width)
 
         with dpg.group(horizontal=True):
             with dpg.child_window(width=child_window_width):
