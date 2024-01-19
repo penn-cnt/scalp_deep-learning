@@ -457,7 +457,7 @@ if __name__ == "__main__":
         args.preprocess_file = dirpath+"preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
         config_handler.create_config()
-    if args.feature_file == None:
+    if args.feature_file == None and not args.no_feature_flag:
         from modules.addons import features
         dirpath           = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
