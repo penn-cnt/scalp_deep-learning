@@ -1,6 +1,14 @@
 # BIDS Data Generation
 
+BIDS data is a means of organizing and naming epilepsy datasets in a cross-platform multi-institute manner that removes confusion from differing naming schema.
+
 ## EEG Data to BIDS
+
+When possible, we should aim to download data into a BIDS compliant format. The underlying data can still be accessed using direct invocation via your preferred language,  This code will create a bids dataset from
+- Local files
+- iEEG.org datasets.
+
+The following sections detail how to 
 
 ### iEEG.org
 
