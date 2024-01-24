@@ -12,7 +12,10 @@ The following sections detail how to
 
 ### iEEG.org
 
-#### Sample Call
+This section gives some examples on how to obtain data from iEEG.org.
+
+#### Download all annotation layers
+
 ```
 python EEG_BIDS.py --ieeg --username BJPrager --password ****** --bidsroot ../../user_data/BIDS/ --session preimplant --inputs_file samples/targets.csv --annotations --multithread --ncpu 2
 ```
@@ -28,7 +31,4 @@ Where
 - multithread : Download and prepare BIDS data using multiple cpus
 - ncpu : Number of cpus to use if multithread is selected
 
-For more information and other options, please consult:
-```
-python EEG_BIDS.py --help
-```
+#### Download a list of select start times
