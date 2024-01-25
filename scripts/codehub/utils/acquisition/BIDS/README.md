@@ -32,3 +32,17 @@ Where
 - ncpu : Number of cpus to use if multithread is selected
 
 #### Download a list of select start times
+
+```
+python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username bjprager --password ********* --bidsroot ../../user_data/BIDS --session preimplant --inputs_file utils/acquisition/BIDS/samples/input_file.csv --cli
+```
+
+Where
+- cli : Download by start times and durations found either in the inputs_file or in the cli
+
+
+#### Download a single file
+
+```
+python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username bjprager --password ********* --bidsroot ../../user_data/BIDS --session preimplant --cli --start=8832031250 --duration=1e6 --dataset=EMU1144_Day01_1
+```
