@@ -698,7 +698,12 @@ if __name__ == '__main__':
         # Check if this user has already reviewed this data
         iDF = ref_DF.loc[(ref_DF.username==args.username)&(ref_DF.filename==ifile)]
         if iDF.shape[0] == 0:
-            DV                = data_viewer(ifile,args,tight_layout_dict,filetype)
-            tight_layout_dict = DV.montage_plot()
-            PLT.close("all")
+            try:
+                DV                = data_viewer(ifile,args,tight_layout_dict,filetype)
+                tight_layout_dict = DV.montage_plot()
+                PLT.close("all")
+            except ValueError as e:
+                print("Unable to load data. This is likely due to formatting issues in an EDF header.")
+                print(f"A detail error is as follows: {e}")
+                PLT.close("all")
 
