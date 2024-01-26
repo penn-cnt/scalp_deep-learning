@@ -698,10 +698,7 @@ if __name__ == '__main__':
         # Check if this user has already reviewed this data
         iDF = ref_DF.loc[(ref_DF.username==args.username)&(ref_DF.filename==ifile)]
         if iDF.shape[0] == 0:
-            try:
-                DV                = data_viewer(ifile,args,tight_layout_dict,filetype)
-                tight_layout_dict = DV.montage_plot()
-                PLT.close("all")
-            except:
-                PLT.close("all")
+            DV                = data_viewer(ifile,args,tight_layout_dict,filetype)
+            tight_layout_dict = DV.montage_plot()
+            PLT.close("all")
 
