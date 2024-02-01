@@ -114,7 +114,7 @@ class yaml_loader:
 
                     # Update the output path
                     output_str = "--outdir"
-                    cmd_arr    = cmd.split(output_str)
+                    cmd_arr    = new_cmd.split(output_str)
                     cmd_arr2   = cmd_arr[1].split()[1:]
                     cmd_tail   = ' '.join(cmd_arr2) 
                     new_cmd    = f"{cmd_arr[0]} {output_str} {output_dir}/ {cmd_tail}"
