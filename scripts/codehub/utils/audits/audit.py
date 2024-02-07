@@ -75,6 +75,9 @@ class audit:
 
     def perform_audit_linux(self):
 
+        if not os.path.exists(self.outdir):
+            os.system(f"mkdir -p {self.outdir}")
+
         for ifolder in self.input_paths:
 
             # Modify the input directory name to make an output filename
