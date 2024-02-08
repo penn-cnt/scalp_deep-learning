@@ -47,6 +47,18 @@ class signal_processing:
         optional_tag = '['+low_freq_str+','+hi_freq_str+']'
 
         return spectral_energy,optional_tag
+    
+class basic_statistics:
+
+    def __init__(self, data, fs):
+        self.data = data
+        self.fs   = fs
+
+    def median(self):
+        return np.median(self.data)
+    
+    def stdev(self):
+        return np.std(self.data)
 
 class features:
     """
