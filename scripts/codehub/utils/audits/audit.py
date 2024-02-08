@@ -78,7 +78,13 @@ class audit:
         if not os.path.exists(self.outdir):
             os.system(f"mkdir -p {self.outdir}")
 
-        for ifolder in self.input_paths:
+        for idx,ifolder in enumerate(self.input_paths):
+
+            # User update
+            print(f"Performing audit on {ifolder}.")
+
+            # Save the input string to a different name in case of modifications
+            instr = ifolder
 
             # Modify the input directory name to make an output filename
             delimiter = '.'
@@ -87,8 +93,12 @@ class audit:
                 self.outname = self.outname[1:]
             self.outname = f"{self.outdir}{self.outname}"
 
+            # Add a recursion depth limit to the last entry to get files in the top folder
+            if idx == (len(self.input_paths)-1):
+                instr += ' -maxdepth 1'
+
             # Update the cmd string for this case
-            cmd = self.cmd_master.replace("INDIR_SUBSTR",ifolder)
+            cmd = self.cmd_master.replace("INDIR_SUBSTR",instr)
             cmd = cmd.replace("OUTDIR_SUBSTR",self.outname)
             
             # Try Except catch our shell command
@@ -106,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument("--search_root", type=str, required=True, help="Root directory to recursively audit down from.")
     parser.add_argument("--outdir", type=str, required=True, help="Path to output directory to store the audit.")
     parser.add_argument("--os", type=str, default='unix', help="OS architecture. Allowed Arguments='unix' or 'windows'.")
-    parser.add_argument("--cmd_path", type=str, default='config/audit.md5.linux', help="Path to command string to execute.")
+    parser.add_argument("--cmd_path", type=str, default='config/audit.md5sum.linux', help="Path to command string to execute.")
     parser.add_argument("--audit_history", type=str, help="Path to the audit history.")
     args = parser.parse_args()
 
