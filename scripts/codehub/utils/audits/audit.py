@@ -64,8 +64,11 @@ class audit:
         self.input_paths  = []
         completed_folders = self.history['directory_path'].values
         for ifolder in folders:
-            if ifolder not in completed_folders:
+            alt_path = str(ifolder) + '/'
+            if ifolder not in completed_folders and alt_path not in completed_folders:
                 self.input_paths.append(str(ifolder))
+            else:
+                print(f"Skipping {ifolder}.")
         self.input_paths.append(str(self.rootdir))
 
         # Clean up the paths as needed
