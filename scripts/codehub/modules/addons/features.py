@@ -55,10 +55,24 @@ class basic_statistics:
         self.fs   = fs
 
     def median(self):
-        return np.median(self.data)
+        """
+        Returns the median value in a channel.
+
+        Returns:
+            float: Median channel intensity.
+        """
+
+        return np.median(self.data),'median'
     
     def stdev(self):
-        return np.std(self.data)
+        """
+        Returns the standard deviation in a channel.
+
+        Returns:
+            float: Standard deviation in a channel.
+        """
+
+        return np.std(self.data),'stdev'
 
 class features:
     """
