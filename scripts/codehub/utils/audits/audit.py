@@ -26,6 +26,7 @@ class audit:
             self.audit_history = audit_history
         else:
             self.audit_history = self.outdir+'audit_history.csv'
+            self.lock_file     = self.outdir+'audit_history.lock'
 
     def argcheck(self):
 
@@ -106,9 +107,23 @@ class audit:
             
             # Try Except catch our shell command
             try:
+                # Run command
                 subprocess.run(cmd, shell=True, check=True)
+
+                # Update audit history
                 self.history.loc[len(self.history.index)] = [ifolder,datetime.now().timestamp()]
+
+                # Check if lock file is active
+                while os.path.exists(self.lock_file):
+                    time.sleep(1)
+
+                # Write the lock file so another processing cant write to the audit history yet
+                with open(self.lock_file, "w") as lock_file:
+                    lock_file.write("locked")
+
+                # Write the history and remove the lock
                 self.history.to_csv(self.audit_history)
+                os.remove(self.lock_file)
             except:
                 pass
 
