@@ -12,3 +12,8 @@ The above is an example view of the data audit gui. An explanation of each field
 - **Search by:** This radio button sets whether you wish to look for your search entry within the file path, or by md5.
     - Since an md5 value is a unique value for each file, a near match does not mean a nearly similar file.
     - It is recommended to search by a complete md5, or enter an exact substring of a known md5 checksum to find any matches across systems.
+- **Fuzzy Match:** This radio button toggles fuzzy string matching filenames. Fuzzy matching is a means of finding nearly similar strings, and can be used if you expect the filenames you are searching for may be close to your inputted string, but not exact.
+    - This option is slower than an exact match. Use only as needed.
+- **Apply to:** Apply the above settings to the data tables for the selected computer system.
+- **Shrink Path:** Due to the long filepaths, this shrinks/collapses the folders in the filepath. The larger the number, the more top level folders are hidden from the display.
+- **Sort by:** Sort the table values by the selected field. Clicking multiple times toggles between ascending and descending values.
