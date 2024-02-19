@@ -1,9 +1,10 @@
 import os
+import ast
 import numpy as np
 import pandas as PD
+from thefuzz import fuzz
 import dearpygui.dearpygui as dpg
-from prettytable import PrettyTable
-from prettytable import ALL
+from prettytable import PrettyTable, ALL
 
 class callback_handler:
 
@@ -91,9 +92,16 @@ class callback_handler:
         # Get the search type
         search_type = dpg.get_value(search_type_widget)
 
+        # Check if fuzzy matching
+        fuzz_flag = ast.literal_eval(dpg.get_value(self.leifborel_fuzzysearch_widget))
+
         # Find the index to display
         if search_type == 'path':
-            self.display_index = self.DF[systag].index[self.DF[systag]['path'].apply(lambda x:search_str in x).values]
+            if not fuzz_flag:
+                self.display_index = self.DF[systag].index[self.DF[systag]['path'].apply(lambda x:search_str in x).values]
+            else:
+                ratios             = self.DF[systag]['path'].apply(lambda x:fuzz.token_sort_ratio(x.split('/')[-1],search_str)).values
+                self.display_index = self.DF[systag].index[np.argsort(ratios)[::-1]]
         else:
             self.display_index = self.DF[systag].index[self.DF[systag]['md5'].apply(lambda x:search_str in x).values]
         

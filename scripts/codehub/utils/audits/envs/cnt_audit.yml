@@ -12,3 +12,6 @@ dependencies:
     - dearpygui
     - pyperclip
     - prettytable
+    - thefuzz
+    - rapidfuzz
+    - pyyaml

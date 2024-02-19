@@ -22,6 +22,7 @@ class leifborel_handler:
         with dpg.group(horizontal=True):
             dpg.add_text(f"{'Fuzzy Match? ':{str_width}}")
             self.leifborel_fuzzysearch_widget = dpg.add_radio_button(items=[True,False], horizontal=True, default_value=False)
+            dpg.add_text(f"(Only applies to *filenames*. Do not use for md5 or absolute path.)")
         with dpg.group(horizontal=True):
             dpg.add_text(f"{'Apply to: ':{str_width}}")
             self.apply_bsc   = dpg.add_button(label="BSC", width=int(0.10*self.width))
@@ -40,11 +41,7 @@ class leifborel_handler:
             self.sort_owner = dpg.add_button(label="owner", width=int(0.10*self.width), callback=lambda sender, app_data:self.sort_data(self.leifborel_text_id,'leifborel','owner',sender,app_data))
         dpg.add_spacer(height=10)
 
-        # Make a widget to help shrink the folder structure
-        self.nfolder_shrink  = 0 #9
-
         # Add a multiline text input widget
         height = 0.85*self.height_fnc()
         self.leifborel_text_id = dpg.add_input_text(multiline=True, readonly=True, width=0.95*self.width,height=height)
-        self.show_all_data("/Users/bjprager/Documents/GitHub/CNT-codehub/user_data/audits/audit_data.csv",self.leifborel_text_id,'leifborel')
         

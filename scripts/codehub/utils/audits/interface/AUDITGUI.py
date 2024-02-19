@@ -18,9 +18,10 @@ class Interface(callback_handler,configuration_handler,leifborel_handler):
             metadata (tuple): Metadata about the cli arguments (defaults,help strings, etc.)
         """
 
-        # Program wide vartiable initialization
-        self.DF    = {}
-        self.table = {}
+        # Program wide variable initialization
+        self.DF             = {}
+        self.table          = {}
+        self.nfolder_shrink = 0
 
         # Set some hardcoded values for the GUI dimensions
         self.yaml_frac = 0.9
