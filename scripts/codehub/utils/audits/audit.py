@@ -5,18 +5,22 @@ import subprocess
 import numpy as np
 import pandas as PD
 from sys import exit
+from tqdm import tqdm
 from pathlib import Path
 from datetime import datetime
 
 class audit:
 
-    def __init__(self,search_root,outdir,os,cmd_path,audit_history):
+    def __init__(self,search_root,outdir,ostype,cmd_path,audit_history):
 
         # Save the inputs to class instance
         self.rootdir       = search_root
         self.outdir        = outdir
-        self.os            = os
+        self.os            = ostype
         self.cmd_path      = cmd_path
+
+        if not os.path.exists(self.outdir):
+            os.system(f"mkdir -p {self.outdir}")
 
         # Define the delimter we will use for folder breaks
         self.delimiter     = '.'
@@ -115,13 +119,10 @@ class audit:
         Perform a data audit on a linux/unix filesystem.
         """
 
-        if not os.path.exists(self.outdir):
-            os.system(f"mkdir -p {self.outdir}")
-
-        for idx,ifolder in enumerate(self.input_paths):
+        for idx,ifolder in tqdm(enumerate(self.input_paths), desc='Audit: ', total=len(self.input_paths)):
 
             # User update
-            print(f"Performing audit on {ifolder}.")
+            #print(f"Performing audit on {ifolder}.")
 
             # Save the input string to a different name in case of modifications
             instr = ifolder
