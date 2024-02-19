@@ -24,7 +24,7 @@ class Interface(callback_handler,configuration_handler,leifborel_handler):
         self.nfolder_shrink = 0
 
         # Set some hardcoded values for the GUI dimensions
-        self.yaml_frac = 0.9
+        self.yaml_frac = 0.6
         self.height    = 900
         self.width     = 1600
 

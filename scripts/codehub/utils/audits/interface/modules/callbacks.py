@@ -35,6 +35,17 @@ class callback_handler:
         """
         pyperclip.copy(self.url)
 
+    ################################
+    ###### Resizing Functions ######
+    ################################
+
+    def update_leif_widget(self, sender, app_data):
+        """
+        Fix the height of the submission text widget if rescaled.
+        """
+        widget_height = self.height_fnc()
+        dpg.configure_item(self.leifborel_text_id, height=widget_height)
+
     ###############################
     #### File/Folder Selection ####
     ###############################

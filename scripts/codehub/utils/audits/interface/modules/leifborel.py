@@ -42,6 +42,7 @@ class leifborel_handler:
         dpg.add_spacer(height=10)
 
         # Add a multiline text input widget
-        height = 0.85*self.height_fnc()
+        height = 1.0*self.height_fnc()
         self.leifborel_text_id = dpg.add_input_text(multiline=True, readonly=True, width=0.95*self.width,height=height)
+        dpg.add_button(label="Resize Box",callback=self.update_leif_widget)
         
