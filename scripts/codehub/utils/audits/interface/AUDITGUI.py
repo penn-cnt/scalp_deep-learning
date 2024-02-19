@@ -28,7 +28,14 @@ class Interface(callback_handler,configuration_handler,leifborel_handler):
         self.width     = 1600
 
         # Table sizing variables
-        self.path_width = 80
+        self.path_width = 120
+
+        # Store sort orders
+        self.sort_order                       = {}
+        self.sort_order['path']               = False
+        self.sort_order['size-(MB)']          = False
+        self.sort_order['last-modified-date'] = False
+        self.sort_order['owner']              = False
 
         # Get some relative path info for various fields to use
         self.script_dir  = '/'.join(os.path.abspath(__file__).split('/')[:-1])

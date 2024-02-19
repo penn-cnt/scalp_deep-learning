@@ -129,7 +129,7 @@ class callback_handler:
         # Initialize a pretty table for easy reading
         table = PrettyTable(hrules=ALL)
         table.field_names = self.cols
-        for irow in DF.index:
+        for irow in DF.index[:250]:
             iDF           = DF.loc[irow]
             ipath         = iDF['smallpath']
             ipath         = '\n'.join([ipath[i:i+self.path_width-1] for i in range(0, len(ipath), self.path_width-1)])
@@ -138,7 +138,43 @@ class callback_handler:
         table.align['path'] = 'l'
         return table
     
-    def sort_data(self,text_widget, systag)
+    def sort_data(self, text_widget, systag, axis, sender, app_data):
+        
+        # Get the sort flag
+        sort_flag = self.sort_order[axis]
+
+        # Update the sort order for next time
+        self.sort_order[axis] = not self.sort_order[axis]
+
+        # Sort the dataframe by the requested axis
+        self.DF[systag] = self.DF[systag].sort_values(by=[axis],ascending=sort_flag)
+
+        # Set the display index to be all of the data
+        self.display_index = list(self.DF[systag].index)
+
+        # Make the pretty table
+        self.table[str(text_widget)] = self.make_pretty_table(self.DF[systag].loc[self.display_index])
+
+        # Clear the current pretty table
+        dpg.configure_item(text_widget, default_value='')
+
+        # Display the new slice
+        dpg.set_value(text_widget, self.table[str(text_widget)])
+
+    def shrink_path(self, text_widget, systag, sender, app_data):
+        
+        # Make a new shrink path
+        self.nfolder_shrink = dpg.get_value(sender)
+        self.DF[systag]['smallpath'] = self.DF[systag]['path'].apply(lambda x:'/'.join(x.split('/')[self.nfolder_shrink:]))        
+        
+        # Make the pretty table
+        self.table[str(text_widget)] = self.make_pretty_table(self.DF[systag].loc[self.display_index])
+
+        # Clear the current pretty table
+        dpg.configure_item(text_widget, default_value='')
+
+        # Display the new slice
+        dpg.set_value(text_widget, self.table[str(text_widget)])
 
     def show_all_data(self,fpath,widget,systag):
 
