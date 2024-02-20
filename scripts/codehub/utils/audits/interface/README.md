@@ -7,6 +7,10 @@ Due to the increasing data volume, regular data audits are required to remove du
 The audit tracks five individual fields for the end-user to explore:
 
 1. **path** The fullpath to a file on the given computer system.
+2. **md5** A cryptographic sum that represents data within a file. This is basically the fingerprint of the file, and allows us to find matching files regardless of their host system or filename.
+3. **size** The filesize in MB.
+4. **Last Modified Date** Last modification date for the file.
+5. **owner** Owner of the file.
 
 ## Layout
 
