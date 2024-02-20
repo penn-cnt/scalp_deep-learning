@@ -2,6 +2,12 @@
 
 Due to the increasing data volume, regular data audits are required to remove duplicate data and identify non-essential data to send to deep storage. This tool is meant to help staff interact with audit data in an easier format.
 
+## Audit Fields
+
+The audit tracks five individual fields for the end-user to explore:
+
+1. **path** The fullpath to a file on the given computer system.
+
 ## Layout
 
 ![GUI](audit_gui.png)
