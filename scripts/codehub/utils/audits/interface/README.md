@@ -27,3 +27,19 @@ The above is an example view of the data audit gui. An explanation of each field
 - **Apply to:** Apply the above settings to the data tables for the selected computer system.
 - **Shrink Path:** Due to the long filepaths, this shrinks/collapses the folders in the filepath. The larger the number, the more top level folders are hidden from the display.
 - **Sort by:** Sort the table values by the selected field. Clicking multiple times toggles between ascending and descending values.
+
+## Installation
+
+1. Download and install anaconda.
+2. Install the needed python environment using the provided environment file.
+    > conda env create --file ../envs/cnt_audit.yml 
+3. Activate the conda environment
+    > conda activate cnt_audit
+4. Run the code
+    > python AUDITGUI.py
+
+## Modifying the default filepaths
+
+As this is still in development, we do not have a static location for the audit files yet. Please check your email if you are part of the project for where to obtain a sample audit file.
+
+You can change the path the GUI tries to find the data by editing the following file: [../config/auditpaths.yaml](../config/auditpaths.yaml)

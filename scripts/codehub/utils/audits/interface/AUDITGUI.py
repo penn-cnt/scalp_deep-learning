@@ -22,6 +22,7 @@ class Interface(callback_handler,configuration_handler,leifborel_handler):
         self.DF             = {}
         self.table          = {}
         self.nfolder_shrink = 0
+        self.old_fpath      = ''
 
         # Set some hardcoded values for the GUI dimensions
         self.yaml_frac = 0.6
