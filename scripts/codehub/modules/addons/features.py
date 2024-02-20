@@ -49,6 +49,18 @@ class signal_processing:
         return spectral_energy,optional_tag
     
     def topographic_peaks(self,min_height,min_width,height_unit='zscore',width_unit='seconds'):
+        """
+        Find the topographic peaks in channel data. This is a naive/fast way of finding spikes or slowing.
+
+        Args:
+            min_height (_type_): _description_
+            min_width (_type_): _description_
+            height_unit (str, optional): _description_. Defaults to 'zscore'.
+            width_unit (str, optional): _description_. Defaults to 'seconds'.
+
+        Returns:
+            _type_: _description_
+        """
 
         # Recast height into a pure number as needed
         if height_unit == 'zscore':
@@ -65,7 +77,9 @@ class signal_processing:
         peak       = output[0][0]
         lwidth     = peak-output[1]['left_ips'][0]
         rwidth     = output[1]['right_ips'][0]-peak
-        peak_width = np.mean([lwidth,rwidth])
+        
+        # Return a tuple of (peak, left width, right width) to store all of the peak info
+        return (peak,lwidth,rwidth)
 
 class basic_statistics:
 
