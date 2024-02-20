@@ -4,7 +4,7 @@ import inspect
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
-from scipy.signal import welch
+from scipy.signal import welch, find_peaks
 
 # Local imports
 from modules.core.config_loader import *
@@ -48,6 +48,25 @@ class signal_processing:
 
         return spectral_energy,optional_tag
     
+    def topographic_peaks(self,min_height,min_width,height_unit='zscore',width_unit='seconds'):
+
+        # Recast height into a pure number as needed
+        if height_unit == 'zscore':
+            min_height = np.median(self.data)+min_height*np.std(self.data)
+
+        # Recast width into a pure number as needed
+        if width_unit == 'seconds':
+            min_width = min_width*self.fs
+
+        # Calculate the peak info
+        output = find_peaks(self.data,prominence=min_height,width=min_width)
+
+        # Get peak info
+        peak       = output[0][0]
+        lwidth     = peak-output[1]['left_ips'][0]
+        rwidth     = output[1]['right_ips'][0]-peak
+        peak_width = np.mean([lwidth,rwidth])
+
 class basic_statistics:
 
     def __init__(self, data, fs):
