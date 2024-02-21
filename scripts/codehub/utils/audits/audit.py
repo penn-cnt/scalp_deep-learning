@@ -11,7 +11,7 @@ from datetime import datetime
 
 class audit:
 
-    def __init__(self,search_root,outdir,ostype,cmd_path,audit_history):
+    def __init__(self,search_root,outdir,ostype,cmd_path,audit_history,username):
 
         # Save the inputs to class instance
         self.rootdir       = search_root
@@ -35,7 +35,7 @@ class audit:
         if audit_history != None:
             self.audit_history = audit_history
         else:
-            self.audit_history = self.outdir+'audit_history.csv'
+            self.audit_history = self.outdir+'audit_history_{username}.csv'
 
         # Create a temporary file that stores all of the input paths for the given root directory. This speeds up runs if testing/restarting.
         fname           = f"{self.rootdir.replace('/',self.delimiter)}inputs"
@@ -44,10 +44,10 @@ class audit:
         self.input_file = f"{self.outdir}{fname}"
 
         # Create a lock file. This is meant to prevent parallel processes from opening a file at the same time
-        self.lock_file  = self.outdir+'audit_history.lock'
+        self.lock_file  = self.outdir+'audit_history_{username}.lock'
 
         # Output audit location
-        self.audit_data = self.outdir+'audit_data.csv'
+        self.audit_data = self.outdir+'audit_data_{username}.csv'
 
     def argcheck(self):
         """
@@ -205,10 +205,11 @@ if __name__ == '__main__':
     parser.add_argument("--cmd_path", type=str, default='config/audit.md5sum.linux', help="Path to command string to execute.")
     parser.add_argument("--audit_history", type=str, help="Path to the audit history.")
     parser.add_argument("--merge", action='store_true', default=False, help="Merge outputs to final audit file.")
+    parser.add_argument("--username", type=str, default='main', help="Username for data audit.")
     args = parser.parse_args()
 
     # Run through the audit
-    AH = audit(args.search_root,args.outdir,args.os,args.cmd_path,args.audit_history)
+    AH = audit(args.search_root,args.outdir,args.os,args.cmd_path,args.audit_history,args.username)
     AH.argcheck()
     AH.read_cmd()
     AH.define_inputs()
