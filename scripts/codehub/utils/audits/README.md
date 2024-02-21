@@ -10,7 +10,7 @@ Due to the increasing data volume, regular data audits are required to remove du
 3. Activate the conda environment
     > conda activate cnt_audit
 4. Run the code
-    > python audit.py --search_root <directory-to_audit> --outdir <directory-to-store-audit-files> --username <username> --merge
+    > python audit.py --search_root /<directory-to_audit/> --outdir /<directory-to-store-audit-files/> --username /<username/> --merge
 
 ## Basic Workflow
 
