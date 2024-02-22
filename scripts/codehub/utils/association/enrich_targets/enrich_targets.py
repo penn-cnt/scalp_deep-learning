@@ -3,6 +3,7 @@ import pickle
 import argparse
 import numpy as np
 import pandas as PD
+from sys import exit
 
 class CustomFormatter(argparse.HelpFormatter):
     """
@@ -66,7 +67,10 @@ if __name__ == '__main__':
 
     # Check which type of input format we are working with, and create relevant work list
     if args.enrichment_map != None and args.enrichment_file == None:
-        pass
+        enrichment_df    = PD.read_csv(args.enrichment_map)
+        enrichment_files = enrichment_df['enrichment_files'].values 
+        target_files     = enrichment_df['target_files'].values
+        enrichment_types = enrichment_df['enrichment_types'].values
     elif args.enrichment_map == None and args.enrichment_file != None:
         # Store the enrichment data
         enrichment_files = [args.enrichment_file]
