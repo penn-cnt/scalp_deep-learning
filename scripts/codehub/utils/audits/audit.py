@@ -35,7 +35,7 @@ class audit:
         if audit_history != None:
             self.audit_history = audit_history
         else:
-            self.audit_history = self.outdir+'audit_history_{username}.csv'
+            self.audit_history = self.outdir+f"audit_history_{username}.csv"
 
         # Create a temporary file that stores all of the input paths for the given root directory. This speeds up runs if testing/restarting.
         fname           = f"{self.rootdir.replace('/',self.delimiter)}inputs"
@@ -44,10 +44,10 @@ class audit:
         self.input_file = f"{self.outdir}{fname}"
 
         # Create a lock file. This is meant to prevent parallel processes from opening a file at the same time
-        self.lock_file  = self.outdir+'audit_history_{username}.lock'
+        self.lock_file  = self.outdir+f"audit_history_{username}.lock"
 
         # Output audit location
-        self.audit_data = self.outdir+'audit_data_{username}.csv'
+        self.audit_data = self.outdir+f"audit_data_{username}.csv"
 
     def argcheck(self):
         """
