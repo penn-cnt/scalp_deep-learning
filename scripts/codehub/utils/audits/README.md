@@ -24,6 +24,10 @@ Once all the audits are done, it will merge the results and remove all the tempo
 
 If the code dies halfway through, or you need to restart, it should be able to find where it left off. It will inform you that it is skipping folders it has already completed.
 
+## Sample Output
+
+A sample output audit file can be found [here](interface/modules/samples/sample.audit).
+
 ## Commands
 
 For more information about any given input argument, you can always run
