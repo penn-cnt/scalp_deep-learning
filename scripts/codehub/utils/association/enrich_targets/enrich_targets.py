@@ -22,10 +22,17 @@ class data_reader:
         self.infile = infile
 
     def TUEG_dt(self):
-        DF = PD.read_csv(self.infile,skiprows=2,delimiter=' ',names=['t0','t1','tag','prob'])
         
-        print(DF)
-        print(DF.shape)
+        # Read in the tsv using pandas so we can just skip rows and assign column headers
+        DF     = PD.read_csv(self.infile,skiprows=2,delimiter=' ', names=['t0','t1','tag','prob'])
+        
+        # Create an output dictionary that will be merged with the current targets
+        output = {}
+        output['TUEG_dt_t0']  = '_'.join([f"{ival:.1f}" for ival in DF['t0'].values])
+        output['TUEG_dt_t1']  = '_'.join([f"{ival:.1f}" for ival in DF['t1'].values])
+        output['TUEG_dt_tag'] = '_'.join(DF['tag'].values)
+        
+        return output
 
 def make_help_str(idict):
     """
@@ -93,4 +100,8 @@ if __name__ == '__main__':
 
         # Apply the right enrichment logic to get out data
         if args.enrichment_type == 'TUEG_TSV_dt':
-            DR.TUEG_dt()
+            additional_targets = DR.TUEG_dt()
+            new_targets        = {**targets,**additional_targets}
+
+        # Save the new target file
+        pickle.dump(new_targets,open(ifile,"wb"))
