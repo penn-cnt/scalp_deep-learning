@@ -4,7 +4,7 @@ import inspect
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
-from scipy.signal import welch, find_peaks
+from scipy.signal import welch, find_peaks, detrend
 
 # Local imports
 from modules.core.config_loader import *
@@ -48,30 +48,37 @@ class signal_processing:
 
         return spectral_energy,optional_tag
     
-    def topographic_peaks(self,min_height,min_width,height_unit='zscore',width_unit='seconds'):
+    def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend=False):
         """
         Find the topographic peaks in channel data. This is a naive/fast way of finding spikes or slowing.
 
         Args:
-            min_height (_type_): _description_
-            min_width (_type_): _description_
-            height_unit (str, optional): _description_. Defaults to 'zscore'.
-            width_unit (str, optional): _description_. Defaults to 'seconds'.
+            prominence_height (_type_): Prominence threshold.
+            min_width (_type_): Minimum width of peak.
+            height_unit (str, optional): Unit for prominence height. zscore=Height by zscore. Else, absolute height. Defaults to 'zscore'.
+            width_unit (str, optional): Unit for width of peaks. 'seconds'=width in seconds. Else, width in bins. Defaults to 'seconds'.
+            detrend (bool, optional): Detrend the data before searching for peaks. Defaults to False.
 
         Returns:
             _type_: _description_
         """
 
+        # Detrend as needed
+        if detrend:
+            data = detrend(self.data)
+        else:
+            data = np.copy(self.data)
+
         # Recast height into a pure number as needed
         if height_unit == 'zscore':
-            min_height = np.median(self.data)+min_height*np.std(self.data)
+            prominence_height = np.median(data)+prominence_height*np.std(data)
 
         # Recast width into a pure number as needed
         if width_unit == 'seconds':
             min_width = min_width*self.fs
 
         # Calculate the peak info
-        output = find_peaks(self.data,prominence=min_height,width=min_width)
+        output = find_peaks(data,prominence=prominence_height,width=min_width)
 
         # Get peak info
         peak       = output[0][0]
