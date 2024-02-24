@@ -60,7 +60,8 @@ class signal_processing:
             detrend_flag (bool, optional): Detrend the data before searching for peaks. Defaults to False.
 
         Returns:
-            _type_: _description_
+            out (string): Underscore concatenated string of peak, left edge of peak, and right edge of peak
+            tag (string): Underscore concatenated string of prominence height, width, and their unit types for this feature step.
         """
 
         # Detrend as needed
