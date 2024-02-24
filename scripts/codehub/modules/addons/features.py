@@ -48,7 +48,7 @@ class signal_processing:
 
         return spectral_energy,optional_tag
     
-    def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend=False):
+    def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
         """
         Find the topographic peaks in channel data. This is a naive/fast way of finding spikes or slowing.
 
@@ -57,36 +57,49 @@ class signal_processing:
             min_width (_type_): Minimum width of peak.
             height_unit (str, optional): Unit for prominence height. zscore=Height by zscore. Else, absolute height. Defaults to 'zscore'.
             width_unit (str, optional): Unit for width of peaks. 'seconds'=width in seconds. Else, width in bins. Defaults to 'seconds'.
-            detrend (bool, optional): Detrend the data before searching for peaks. Defaults to False.
+            detrend_flag (bool, optional): Detrend the data before searching for peaks. Defaults to False.
 
         Returns:
             _type_: _description_
         """
 
         # Detrend as needed
-        if detrend:
+        if detrend_flag:
             data = detrend(self.data)
         else:
             data = np.copy(self.data)
 
         # Recast height into a pure number as needed
         if height_unit == 'zscore':
-            prominence_height = np.median(data)+prominence_height*np.std(data)
+            prominence_height_input = np.median(data)+prominence_height*np.std(data)
+        else:
+            prominence_height_input = prominence_height
 
         # Recast width into a pure number as needed
         if width_unit == 'seconds':
-            min_width = min_width*self.fs
+            min_width_input = min_width*self.fs
+        else:
+            min_width_input = min_width
 
         # Calculate the peak info
-        output = find_peaks(data,prominence=prominence_height,width=min_width)
+        output = find_peaks(data,prominence=prominence_height_input,width=min_width_input)
 
         # Get peak info
-        peak       = output[0][0]
-        lwidth     = peak-output[1]['left_ips'][0]
-        rwidth     = output[1]['right_ips'][0]-peak
-        
+        try:
+            peak       = output[0][0]
+            lwidth     = peak-output[1]['left_ips'][0]
+            rwidth     = output[1]['right_ips'][0]-peak
+        except IndexError:
+            peak   = np.nan
+            lwidth = np.nan
+            rwidth = np.nan
+
+        # We can only return a single object that is readable by pandas, so pack results into a string to be broken down later by user
+        out = f"{peak}_{lwidth}_{rwidth}"
+        tag = f"{prominence_height:.2f}_{height_unit}_{min_width:.2f}_{width_unit}_{detrend_flag}"
+
         # Return a tuple of (peak, left width, right width) to store all of the peak info
-        return (peak,lwidth,rwidth)
+        return out,tag
 
 class basic_statistics:
 
