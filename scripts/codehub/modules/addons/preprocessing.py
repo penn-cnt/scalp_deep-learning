@@ -370,6 +370,7 @@ class preprocessing:
                                 output_fs = method_args['output_hz']
                                 if input_fs == None or input_fs == output_fs:
                                     self.metadata[self.file_cntr]['fs'][ichannel] = output_fs
+                                fs = self.metadata[self.file_cntr]['fs']
 
                         # Recreate the dataframe
                         dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
