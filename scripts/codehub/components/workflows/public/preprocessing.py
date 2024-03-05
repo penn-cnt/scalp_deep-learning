@@ -17,9 +17,21 @@ from scipy.signal import resample_poly, butter, filtfilt
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
-# Local imports
-from modules.core.config_loader import *
-from modules.core.error_logging import *
+# Import the internal classes
+from components.core.internal import *
+from components.curation.internal import *
+from components.features.internal import *
+from components.metadata.internal import *
+from components.validation.internal import *
+from components.workflows.internal import *
+
+# Import the public classes
+from components.core.public import *
+from components.curation.public import *
+from components.features.public import *
+from components.metadata.public import *
+from components.validation.public import *
+from components.workflows.public import *
 
 class mne_processing:
 
