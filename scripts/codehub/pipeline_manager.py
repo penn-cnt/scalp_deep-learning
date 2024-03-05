@@ -21,23 +21,12 @@ import numpy as np
 import pandas as PD
 from tqdm import tqdm
 import multiprocessing
-from pyedflib.highlevel import read_edf_header
 
-# Import the add on classes
-from modules.addons.project_handler import *
-from modules.addons.data_loader import *
-from modules.addons.channel_clean import *
-from modules.addons.channel_mapping import *
-from modules.addons.channel_montage import *
-from modules.addons.preprocessing import *
-from modules.addons.features import *
+# Import the internal classes
+from components.curation.internal import *
 
-# Import the core classes
-from modules.core.metadata_handler import *
-from modules.core.target_loader import *
-from modules.core.dataframe_manager import *
-from modules.core.output_manager import *
-from modules.core.data_viability import *
+# Import the public classes
+from components.curation.public import *
 
 from configs.makeconfigs import *
 
@@ -126,37 +115,6 @@ class CustomFormatter(argparse.HelpFormatter):
 ############################
 ##### Helper Functions #####
 ############################
-
-def test_input_data(args,files,start_times,end_times):
-    
-    # Get the pathing to the excluded data
-    if args.exclude == None:
-        exclude_path = args.outdir+"excluded.txt"
-    else:
-        exclude_path = args.exclude
-
-    # Get the files to use and which to save
-    good_index = []
-    bad_index  = []
-    if os.path.exists(exclude_path):
-        excluded_files = PD.read_csv(exclude_path)['file'].values
-        for idx,ifile in enumerate(files):
-            if ifile not in excluded_files:
-                good_index.append(idx)
-    else:
-        # Confirm that data can be read in properly
-        excluded_files = []
-        for idx,ifile in enumerate(files):
-            DLT  = data_loader_test()
-            flag = DLT.edf_test(ifile)
-            if flag[0]:
-                good_index.append(idx)
-            else:
-                excluded_files.append([ifile,flag[1]])
-        excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
-        if not args.debug:
-            excluded_df.to_csv(exclude_path,index=False)
-    return files[good_index],start_times[good_index],end_times[good_index]
 
 def overlapping_start_times(start, end, step, overlap_frac):
 
@@ -381,73 +339,6 @@ if __name__ == "__main__":
     files       = np.array(files)
     start_times = np.array(start_times)
     end_times   = np.array(end_times)
-
-    # Get the useable files from the request
-    files, start_times, end_times = test_input_data(args,files,start_times,end_times)
-
-    # Shuffle data to get a better sampling of patients
-    shuffled_index = np.random.permutation(len(files))
-    files          = files[shuffled_index]
-    start_times    = start_times[shuffled_index]
-    end_times      = end_times[shuffled_index]
-
-    # Apply any file offset as needed
-    files       = files[args.n_offset:]
-    start_times = start_times[args.n_offset:]
-    end_times   = end_times[args.n_offset:]
-
-    # Limit file length as needed
-    if args.n_input > 0:
-        files       = files[:args.n_input]
-        start_times = start_times[:args.n_input]
-        end_times   = end_times[:args.n_input]
-
-    # Sort the results so we access any duplicate files (but different read times) in order
-    sorted_index = np.argsort(files)
-    files          = files[sorted_index]
-    start_times    = start_times[sorted_index]
-    end_times      = end_times[sorted_index]
-
-    # Get an approximate subject count
-    subnums = []
-    for ifile in files:
-        regex_match = re.match(r"(\D+)(\d+)", ifile)
-        subnums.append(int(regex_match.group(2)))
-    subcnt = np.unique(subnums).size
-    print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
-
-    # If using a sliding time window, duplicate inputs with the correct inputs
-    if args.t_window != None:
-        new_files = []
-        new_start = []
-        new_end   = []
-        for ifile in files:
-
-            # Read in just the header to get duration
-            if args.t_end == -1:
-                t_end = read_edf_header(ifile)['Duration']
-            else:
-                t_end = args.t_end
-
-            # Get the start time for the windows
-            if args.t_start == None:
-                t_start = 0
-            else:
-                t_start = args.t_start
-
-            for iwindow in args.t_window:
-                
-                # Get the list of windows start and end times
-                windowed_start, windowed_end = overlapping_start_times(t_start,t_end,iwindow,args.t_overlap)
-
-                # Loop over the new entries and tile the input lists as needed
-                for idx,istart in enumerate(windowed_start):
-                    new_files.append(ifile)
-                    new_start.append(istart)
-                    new_end.append(windowed_end[idx])
-        files       = new_files
-        start_times = new_start
-        end_times   = new_end 
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
