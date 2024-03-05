@@ -116,35 +116,6 @@ class CustomFormatter(argparse.HelpFormatter):
 ##### Helper Functions #####
 ############################
 
-def overlapping_start_times(start, end, step, overlap_frac):
-
-    # Define tracking variables
-    current_time = start
-    start_times  = []
-    end_times    = []
-
-    # Sanity check on step and overlap sizes
-    if overlap_frac >= 1:
-        raise ValueError("--t_overlap must be smaller than --t_window.")
-    else:
-        overlap = overlap_frac*step
-
-    # Loop over the time range using the start, end, and step values. But then backup by windowed overlap as need
-    while current_time <= end:
-        start_times.append(current_time)
-        if (current_time + step) < end:
-            end_times.append(current_time+step)
-        else:
-            end_times.append(end)
-        current_time = current_time + step - overlap
-    start_times = np.array(start_times)
-    end_times   = np.array(end_times)
-
-    # Find edge cases where taking large steps with small offsets means multiple slices that reach the end time
-    limiting_index = np.argwhere(end_times>=end).min()+1
-
-    return start_times[:limiting_index],end_times[:limiting_index]
-
 def make_help_str(idict):
     """
     Make a well-formated help string for the possible keyword mappings
@@ -340,17 +311,21 @@ if __name__ == "__main__":
     start_times = np.array(start_times)
     end_times   = np.array(end_times)
 
+    # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
+    DC                            = data_curation(args,files,start_times,end_times)
+    files, start_times, end_times = self.get_dataload()
+
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None and not args.no_preprocess_flag:
-        from modules.addons import preprocessing
+        from components.workflows.public import preprocessing
         dirpath              = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.preprocess_file = dirpath+"preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
         config_handler.create_config()
     if args.feature_file == None and not args.no_feature_flag:
-        from modules.addons import features
+        from components.features.public import features
         dirpath           = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.feature_file = dirpath+"features_"+timestamp+".yaml"

@@ -62,19 +62,6 @@ class data_curation:
         self.start_times = self.start_times[good_index]
         self.end_times   = self.end_times[good_index]
 
-    def subject_count(self):
-        """
-        Calculate the approximate number of subjects loaded into this analysis.
-        """
-
-        self.subnums = []
-        for ifile in self.files:
-            regex_match = re.match(r"(\D+)(\d+)", ifile)
-            self.subnums.append(int(regex_match.group(2)))
-        subcnt = np.unique(self.subnums).size
-        if not self.args.silent:
-            print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
-
     def stratified_resample_index(self,arr,strat,window_size=100):
         """
         Provide a stratified series of data window. This way we can maintain class balance for a limited data load, and also allow offsets and windowed number of files.
@@ -165,11 +152,11 @@ class data_curation:
         Apply stratification and data limits.
         """
 
-        # Get the subject list/counts
-        self.subject_count()
+        # Get the stratification array
+        self.stratifier_logic()
 
         # Get the stratified indices
-        sorted_index = self.stratified_resample_index(self.subnums,self.subnums)
+        sorted_index = self.stratified_resample_index(self.stratification_array,self.stratification_array)
 
         # Apply the sorting index
         self.files       = self.files[sorted_index]
@@ -193,3 +180,25 @@ class data_curation:
         self.limit_data_volume()
         self.create_time_windows()
         return self.files,self.start_times,self.end_times
+
+    ########################################################
+    ##### Functions for different stratification types. ####
+    ########################################################
+
+    def stratifier_logic(self,strat_type='bids_subject'):
+        
+        if strat_type == 'bids_subject':
+            self.stratifier_BIDS_subject_count()
+
+    def stratifier_BIDS_subject_count(self):
+        """
+        Calculate the approximate number of subjects loaded into this analysis.
+        """
+
+        self.stratification_array = []
+        for ifile in self.files:
+            regex_match = re.match(r"(\D+)(\d+)", ifile)
+            self.stratification_array.append(int(regex_match.group(2)))
+        subcnt = np.unique(self.stratification_array).size
+        if not self.args.silent:
+            print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
