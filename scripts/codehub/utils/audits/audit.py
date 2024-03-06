@@ -187,8 +187,9 @@ class audit:
                 rawdata = np.array(fp2.readlines())
                 rawdata = rawdata.reshape((-1,4))
                 for irow in rawdata:
+                    irow[0]    = f"{' '.join(irow[0].split()[:-1])},{irow[0].split()[-1]}"
                     rawstring  = ' '.join(irow)
-                    clean_data = rawstring.replace('\n','').replace(' MB','').replace(' ',',')
+                    clean_data = rawstring.replace('\n','').replace(' MB','')
                     fp.write(f"{clean_data}\n")
                     rawdata = fp2.readline()
                 fp2.close()
