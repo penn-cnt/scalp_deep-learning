@@ -22,21 +22,30 @@ import pandas as PD
 from tqdm import tqdm
 import multiprocessing
 
-# Import the internal classes
-from components.core.internal import *
-from components.curation.internal import *
-from components.features.internal import *
-from components.metadata.internal import *
-from components.validation.internal import *
-from components.workflows.internal import *
+# Core imports
+from components.core.internal.target_loader import *
+from components.core.internal.output_manager import *
+from components.core.internal.dataframe_manager import *
 
-# Import the public classes
-from components.core.public import *
-from components.curation.public import *
-from components.features.public import *
-from components.metadata.public import *
-from components.validation.public import *
-from components.workflows.public import *
+# Curation imports
+from components.curation.public.data_loader import *
+from components.curation.internal.data_curation import *
+
+# Feature imports
+from components.features.public.features import *
+
+# Metadata imports
+from components.metadata.public.metadata_handler import *
+
+# Validation imports
+from components.validation.public.data_viability import *
+
+# Workflow imports
+from components.workflows.public.preprocessing import *
+from components.workflows.public.channel_clean import *
+from components.workflows.public.channel_mapping import *
+from components.workflows.public.channel_montage import *
+from components.workflows.public.project_handler import *
 
 # Import the configuration maker
 from configs.makeconfigs import *
@@ -324,7 +333,7 @@ if __name__ == "__main__":
 
     # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
     DC                            = data_curation(args,files,start_times,end_times)
-    files, start_times, end_times = self.get_dataload()
+    files, start_times, end_times = DC.get_dataload()
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")

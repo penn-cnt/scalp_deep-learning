@@ -1,25 +1,10 @@
 # General libraries
+import re
 import os
 import numpy as  np
 import pandas as PD
 from pyedflib.highlevel import read_edf_header
 from sklearn.model_selection import train_test_split
-
-# Import the internal classes
-from components.core.internal import *
-from components.curation.internal import *
-from components.features.internal import *
-from components.metadata.internal import *
-from components.validation.internal import *
-from components.workflows.internal import *
-
-# Import the public classes
-from components.core.public import *
-from components.curation.public import *
-from components.features.public import *
-from components.metadata.public import *
-from components.validation.public import *
-from components.workflows.public import *
 
 class data_curation:
     """
@@ -88,12 +73,20 @@ class data_curation:
             array: Array of indices that maintain a windowed stratification.
         """
 
-        indices                   = np.arange(arr.size)
-        sorted_index,remain_index = train_test_split(indices,train_size=window_size,stratify=strat,random_state=42)
-        while remain_index.size > window_size:
-            current_index,remain_index = train_test_split(remain_index,train_size=window_size,stratify=strat[remain_index],random_state=42)
-            sorted_index               = np.concatenate((sorted_index,current_index))
-        sorted_index = np.concatenate((sorted_index,remain_index))
+        # Make an index array to allow subscripts
+        nvals   = len(arr)
+        indices = np.arange(nvals)
+
+        # If we have more entries than our window size, enforce stratification
+        if nvals > window_size:
+            sorted_index,remain_index = train_test_split(indices,train_size=window_size,stratify=strat,random_state=42)
+            while remain_index.size > window_size:
+                current_index,remain_index = train_test_split(remain_index,train_size=window_size,stratify=strat[remain_index],random_state=42)
+                sorted_index               = np.concatenate((sorted_index,current_index))
+            sorted_index = np.concatenate((sorted_index,remain_index))
+        else:
+            sorted_index = indices.copy()
+
         return sorted_index
 
     def overlapping_start_times(self, start, end, step, overlap_frac):

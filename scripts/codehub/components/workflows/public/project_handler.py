@@ -1,20 +1,15 @@
 from sys import exit
+from tqdm import tqdm
 
-# Import the internal classes
-from components.core.internal import *
-from components.curation.internal import *
-from components.features.internal import *
-from components.metadata.internal import *
-from components.validation.internal import *
-from components.workflows.internal import *
-
-# Import the public classes
-from components.core.public import *
-from components.curation.public import *
-from components.features.public import *
-from components.metadata.public import *
-from components.validation.public import *
-from components.workflows.public import *
+# Component imports
+from components.curation.public.data_loader import *
+from components.core.internal.output_manager import *
+from components.workflows.public.channel_clean import *
+from components.workflows.public.preprocessing import *
+from components.core.internal.dataframe_manager import *
+from components.workflows.public.channel_mapping import *
+from components.workflows.public.channel_montage import *
+from components.metadata.public.metadata_handler import *
 
 class project_handlers:
     """

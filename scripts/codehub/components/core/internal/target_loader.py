@@ -2,22 +2,6 @@ import re
 import glob
 import pickle
 
-# Import the internal classes
-from components.core.internal import *
-from components.curation.internal import *
-from components.features.internal import *
-from components.metadata.internal import *
-from components.validation.internal import *
-from components.workflows.internal import *
-
-# Import the public classes
-from components.core.public import *
-from components.curation.public import *
-from components.features.public import *
-from components.metadata.public import *
-from components.validation.public import *
-from components.workflows.public import *
-
 class target_loader:
 
     def __init__(self):

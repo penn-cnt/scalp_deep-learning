@@ -11,21 +11,8 @@ from pyedflib.highlevel import read_edf_header
 # CNT/EEG Specific
 from ieeg.auth import Session
 
-# Import the internal classes
-from components.core.internal import *
-from components.curation.internal import *
-from components.features.internal import *
-from components.metadata.internal import *
-from components.validation.internal import *
-from components.workflows.internal import *
-
-# Import the public classes
-from components.core.public import *
-from components.curation.public import *
-from components.features.public import *
-from components.metadata.public import *
-from components.validation.public import *
-from components.workflows.public import *
+# Component imports
+from components.metadata.public.metadata_handler import *
 
 class data_loader_test:
 
