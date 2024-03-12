@@ -22,6 +22,23 @@ class data_reader:
         # Create class-wide variables
         self.infile = infile
 
+    def enrichment_keypair(self):
+        
+        # Read in the key-pair
+        fp   = open(self.infile,'r')
+        data = fp.readline()
+        fp.close()
+
+        # Clean up the string and break it up
+        data       = data.replace('\n','')
+        data_array = data.split(',')
+
+        # Make the new output target dict 
+        output = {}
+        output[data_array[0]] = data_array[1]
+
+        return output
+
     def TUEG_dt(self):
         
         # Read in the tsv using pandas so we can just skip rows and assign column headers
@@ -105,7 +122,9 @@ if __name__ == '__main__':
         # Apply the right enrichment logic to get out data
         if args.enrichment_type == 'TUEG_TSV_dt':
             additional_targets = DR.TUEG_dt()
-            new_targets        = {**targets,**additional_targets}
+        elif args.enrichment_type == 'keypair':
+            additional_targets = DR.enrichment_keypair()
+        new_targets = {**targets,**additional_targets}
 
         # Save the new target file
         pickle.dump(new_targets,open(ifile,"wb"))
