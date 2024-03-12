@@ -17,9 +17,9 @@ from scipy.signal import resample_poly, butter, filtfilt
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
-# Local imports
-from modules.core.config_loader import *
-from modules.core.error_logging import *
+# Import error logging (primarily for mne)
+from components.core.internal.error_logging import *
+from components.core.internal.config_loader import *
 
 class mne_processing:
 
