@@ -6,6 +6,9 @@ import pandas as PD
 from pyedflib.highlevel import read_edf_header
 from sklearn.model_selection import train_test_split
 
+# Component imports
+from components.curation.public.data_loader import *
+
 class data_curation:
     """
     Class devoted to loading in raw data into the shared class instance.
