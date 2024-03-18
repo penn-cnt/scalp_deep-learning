@@ -100,14 +100,18 @@ class audit:
 
         # Check for already completed entries
         self.input_paths  = []
+        self.output_names = []
+        raw_output        = np.arange(len(self.folders))
         completed_folders = self.history['directory_path'].values
-        for ifolder in self.folders:
+        for ii,ifolder in enumerate(self.folders):
             alt_path = str(ifolder) + '/'
             if ifolder not in completed_folders and alt_path not in completed_folders:
                 self.input_paths.append(str(ifolder))
+                self.output_names.append(f"{raw_output[ii]:07}")
             else:
                 print(f"Skipping {ifolder}.")
         self.input_paths.append(str(self.rootdir))
+        self.output_names.append(f"{len(self.folders):07}")
 
         # Clean up the paths as needed
         for idx in range(len(self.input_paths)):
@@ -121,17 +125,11 @@ class audit:
 
         for idx,ifolder in tqdm(enumerate(self.input_paths), desc='Audit: ', total=len(self.input_paths)):
 
-            # User update
-            #print(f"Performing audit on {ifolder}.")
-
             # Save the input string to a different name in case of modifications
             instr = ifolder
 
             # Modify the input directory name to make an output filename
-            self.outname   = f"{ifolder.replace('/',self.delimiter)[:-1]}.audit"
-            if self.outname[0] == self.delimiter:
-                self.outname = self.outname[1:]
-            self.outname = f"{self.outdir}{self.outname}"
+            self.outname = f"{self.outdir}{self.output_names[idx]}"
 
             # Update the cmd string for this case
             cmd = self.cmd_master.replace("INDIR_SUBSTR",instr)
