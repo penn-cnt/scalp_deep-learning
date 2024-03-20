@@ -33,7 +33,7 @@ A sample output audit file can be found [here](interface/modules/samples/sample.
 ## Commands
 
 For more information about any given input argument, you can always run
-> python audit.py --help
+> python multiaudit.py --help
 
 A brief summary of each argument follows:
 - search_root: Top level directory to recursively search down from for data to audit
