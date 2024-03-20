@@ -10,7 +10,9 @@ Due to the increasing data volume, regular data audits are required to remove du
 3. Activate the conda environment
     > conda activate cnt_audit
 4. Run the code
-    > python audit.py --search_root `<directory-to_audit>` --outdir `<directory-to-store-audit-files>` --username `<username>` --merge
+    > python multiaudit.py --search_root `<directory-to_audit>` --outdir `<directory-to-store-audit-files>` --username `<username>` --merge --ncpu XXX
+
+where XXX is the number of cores you wish to run the code across. This can vary depending on the system and current cpu usage. Please make sure to use a value that makes sense for your system. (We recommend using `top` and `lscpu` to gather information about usage of and the total number of cpus.)
 
 ## Basic Workflow
 
