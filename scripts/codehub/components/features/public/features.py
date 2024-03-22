@@ -101,7 +101,7 @@ class signal_processing:
             rwidth = np.nan
 
         # We can only return a single object that is readable by pandas, so pack results into a string to be broken down later by user
-        out = f"{peak}_{lwidth}_{rwidth}"
+        out = [peak,lwidth,rwidth]
 
         # Return a tuple of (peak, left width, right width) to store all of the peak info
         return out,self.optional_tag
@@ -200,9 +200,16 @@ class features:
 
                             # Perform preprocessing step
                             try:
+                                # Create namespace for this step then call the function
                                 namespace           = cls(dataset[:,ichannel],fs[ichannel])
                                 method_call         = getattr(namespace,method_name)
                                 result_a, result_b  = method_call(**method_args)
+
+                                # Check if we have a multivalue output
+                                if type(result_a) == list:
+                                    metadata_handler.add_metadata(idx,method_name,result_a)
+                                    result_a = result_a[0]
+
                                 output.append(result_a)
                             except:
                                 # We need a flexible solution to errors, so just populating a nan value
