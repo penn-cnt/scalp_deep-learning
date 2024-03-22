@@ -96,9 +96,9 @@ class signal_processing:
             lwidth     = peak-output[1]['left_ips'][0]
             rwidth     = output[1]['right_ips'][0]-peak
         except IndexError:
-            peak   = np.nan
-            lwidth = np.nan
-            rwidth = np.nan
+            peak   = None
+            lwidth = None
+            rwidth = None
 
         # We can only return a single object that is readable by pandas, so pack results into a string to be broken down later by user
         out = [peak,lwidth,rwidth]
@@ -207,13 +207,13 @@ class features:
 
                                 # Check if we have a multivalue output
                                 if type(result_a) == list:
-                                    metadata_handler.add_metadata(idx,method_name,result_a)
+                                    metadata_handler.add_metadata(self,idx,method_name,result_a)
                                     result_a = result_a[0]
 
                                 output.append(result_a)
                             except:
                                 # We need a flexible solution to errors, so just populating a nan value
-                                output.append(np.nan)
+                                output.append(None)
                                 try:
                                     result_b = getattr(namespace,'optional_tag')
                                 except:
