@@ -186,13 +186,10 @@ class project_handlers:
                 # tend to take up more memory and have slower operations. 
                 dataframe_manager.__init__(self)
                 dataframe_manager.column_subsection(self,self.channel_map_out)  
-                print(f"DATAFRAME CRITERIA: {int(max(self.metadata[self.file_cntr]['fs']))} rows")
 
                 # We can use the dataframe to set criteria for continued analysis.
                 # In this example, the data must have at least the sampling frequency worth of values
                 if self.dataframe.shape[0] > int(max(self.metadata[self.file_cntr]['fs'])):
-                    print("PASSED DATAFRAME CRITERIA")
-
                     # You can either montage first, then preprocess, or vice versa.
                     # At present you cannot mix these steps. But later updates will allow
                     # to provide the ability to define multiple preprocessing blocks that
