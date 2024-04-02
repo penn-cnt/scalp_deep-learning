@@ -4,6 +4,8 @@ import dearpygui.dearpygui as dpg
 # Interface imports
 from modules.theme import applyTheme
 from modules.configuration import configuration_handler
+from modules.bsc import bsc_handler
+from modules.habitat import habitat_handler
 from modules.leifborel import leifborel_handler
 from modules.callbacks import callback_handler
 
@@ -89,6 +91,12 @@ class Interface(callback_handler,configuration_handler,leifborel_handler):
         # Define the different tabs. Associate with classes that handle the different pages of the gui to show.
         with dpg.tab(label='Leif/Borel'):
             leifborel_handler.showLeifBorel(self)
+            pass
+        with dpg.tab(label='BSC'):
+            bsc_handler.showbsc(self)
+            pass
+        with dpg.tab(label='HABITAT'):
+            habitat_handler.showhabitat(self)
             pass
         with dpg.tab(label='Configurations',tag="configtab"):
             configuration_handler.showConfiguration(self)

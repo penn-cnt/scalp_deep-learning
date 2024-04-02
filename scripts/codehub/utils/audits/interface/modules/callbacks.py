@@ -46,6 +46,20 @@ class callback_handler:
         widget_height = self.height_fnc()
         dpg.configure_item(self.leifborel_text_id, height=widget_height)
 
+    def update_bsc_widget(self, sender, app_data):
+        """
+        Fix the height of the submission text widget if rescaled.
+        """
+        widget_height = self.height_fnc()
+        dpg.configure_item(self.bsc_text_id, height=widget_height)
+
+    def update_habitat_widget(self, sender, app_data):
+        """
+        Fix the height of the submission text widget if rescaled.
+        """
+        widget_height = self.height_fnc()
+        dpg.configure_item(self.habitat_text_id, height=widget_height)
+
     ###############################
     #### File/Folder Selection ####
     ###############################
@@ -94,7 +108,22 @@ class callback_handler:
     #############################
     ###### Search Function ######
     #############################
-        
+
+    def apply_leifborel(self, new_text_widget):
+        search_str = dpg.get_value(new_text_widget)
+        dpg.set_value(self.leifborel_search_text_widget,search_str)
+        self.search_fnc(self.leifborel_search_text_widget, self.leifborel_text_id, self.leifborel_search_type_widget, 'leifborel', None, None)
+
+    def apply_bsc(self, new_text_widget):
+        search_str = dpg.get_value(new_text_widget)
+        dpg.set_value(self.bsc_search_text_widget,search_str)
+        self.search_fnc(self.bsc_search_text_widget, self.bsc_text_id, self.bsc_search_type_widget, 'bsc', None, None)
+
+    def apply_habitat(self, new_text_widget):
+        search_str = dpg.get_value(new_text_widget)
+        dpg.set_value(self.habitat_search_text_widget,search_str)
+        self.search_fnc(self.habitat_search_text_widget, self.habitat_text_id, self.habitat_search_type_widget, 'habitat', None, None)
+
     def search_fnc(self, search_widget, text_widget, search_type_widget, systag, sender, app_data):
         
         # Get the search string
@@ -165,14 +194,20 @@ class callback_handler:
         # Update the sort order for next time
         self.sort_order[axis] = not self.sort_order[axis]
 
+        # Make a temporary dataslice for sorting
+        iDF = self.DF[systag].copy()
+        iDF = iDF.loc[self.display_index]
+
         # Sort the dataframe by the requested axis
-        self.DF[systag] = self.DF[systag].sort_values(by=[axis],ascending=sort_flag)
+        #self.DF[systag] = self.DF[systag].sort_values(by=[axis],ascending=sort_flag)
+        iDF = iDF.sort_values(by=[axis],ascending=sort_flag)
 
         # Set the display index to be all of the data
-        self.display_index = list(self.DF[systag].index)
+        #self.display_index = list(self.DF[systag].index)
 
         # Make the pretty table
-        self.table[str(text_widget)] = self.make_pretty_table(self.DF[systag].loc[self.display_index])
+        #self.table[str(text_widget)] = self.make_pretty_table(self.DF[systag].loc[self.display_index])
+        self.table[str(text_widget)] = self.make_pretty_table(iDF)
 
         # Clear the current pretty table
         dpg.configure_item(text_widget, default_value='')
@@ -198,7 +233,7 @@ class callback_handler:
     def show_all_data(self,fpath,widget,systag):
 
         # Load data
-        self.DF[systag] = PD.read_csv(fpath)
+        self.DF[systag] = PD.read_csv(fpath,nrows=10000)
 
         # Get the columns for pretty table
         self.cols = list(self.DF[systag].columns)

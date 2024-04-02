@@ -25,9 +25,9 @@ class leifborel_handler:
             dpg.add_text(f"(Only applies to *filenames*. Do not use for md5 or absolute path.)")
         with dpg.group(horizontal=True):
             dpg.add_text(f"{'Apply to: ':{str_width}}")
-            self.apply_bsc   = dpg.add_button(label="BSC", width=int(0.10*self.width))
-            self.apply_cnt1  = dpg.add_button(label="cnt1", width=int(0.10*self.width))
-            self.apply_cntfs = dpg.add_button(label="cnt-fs", width=int(0.10*self.width))
+            self.apply_leifborel_widget = dpg.add_button(label="Leif/Borel", width=int(0.10*self.width), callback=lambda sender, app_data:self.apply_leifborel(self.leifborel_search_text_widget))
+            self.apply_bsc_widget       = dpg.add_button(label="BSC", width=int(0.10*self.width), callback=lambda sender, app_data:self.apply_bsc(self.leifborel_search_text_widget))
+            self.apply_habitat_widget   = dpg.add_button(label="Habitat", width=int(0.10*self.width), callback=lambda sender, app_data:self.apply_habitat(self.leifborel_search_text_widget))
         with dpg.group(horizontal=True):
             dpg.add_text(f"{'Shrink path: ':{str_width}}")
             self.folder_shrink_input_widget = dpg.add_input_int(default_value=0,step_fast=2,min_value=1,width=int(0.10*self.width),callback=lambda sender, app_data:self.shrink_path(self.leifborel_text_id,'leifborel',sender,app_data))
