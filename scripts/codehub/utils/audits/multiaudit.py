@@ -223,7 +223,7 @@ class audit:
 
         else:
             if os.lower() == 'unix':
-                self.perform_audit_linux(self.input_paths,self.output_names,0)
+                self.perform_audit_linux((self.input_paths,self.output_names,0))
 
     def perform_audit_linux(self,args):
         """
