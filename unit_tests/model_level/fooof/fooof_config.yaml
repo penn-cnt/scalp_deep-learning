@@ -1,0 +1,7 @@
+timeseries:
+    #dirac:
+    #    - 512
+    white:
+        - None
+    #pink:
+    #    - None
