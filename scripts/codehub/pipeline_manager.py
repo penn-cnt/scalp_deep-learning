@@ -204,6 +204,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     allowed_montage_help   = make_help_str(allowed_montage_args)
     allowed_input_help     = make_help_str(allowed_input_args)
     allowed_viability_help = make_help_str(allowed_viability_args)
+    allowed_majoraxis_help = make_help_str(allowed_majoraxis_args)
 
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="Simplified data merging tool.", formatter_class=CustomFormatter)
@@ -237,6 +238,9 @@ def argument_handler(argument_dir='./',require_flag=True):
 
     montage_group = parser.add_argument_group('Montage Options')
     montage_group.add_argument("--montage", type=str,  choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
+
+    orientation_group = parser.add_argument_group('Orientation Options')
+    orientation_group.add_argument("--orientation", type=str,  choices=list(allowed_majoraxis_args.keys()), default="column", help=f"R|Choose an option:\n{allowed_majoraxis_help}")
 
     viability_group = parser.add_argument_group('Data viability Options')
     viability_group.add_argument("--viability", type=str,  choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")

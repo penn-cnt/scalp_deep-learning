@@ -48,3 +48,6 @@ allowed_viability_args:
     VIABLE_DATA: Drop datasets that contain a NaN column. (default)
     VIABLE_COLUMNS: Use the minimum cross section of columns across all datasets that contain no NaNs.
     None: Do not remove data with NaNs.
+allowed_majoraxis_args:
+    column: Default. Raw data is in [samples,channel] (i.e. Columnar) format.
+    row: Raw data is in [channel,samples] (i.e. Row) format.  
