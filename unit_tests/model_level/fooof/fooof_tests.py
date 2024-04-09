@@ -1,25 +1,29 @@
-# Set the random seed
-import random as rnd
-rnd.seed(42)
-
+import os
 import yaml
 import numpy as np
 import pylab as PLT
+import random as rnd
 from sys import argv
 from fooof import FOOOF
 from neurodsp import sim
 from scipy.integrate import simpson
 from neurodsp.utils import create_times
+from fooof.sim.utils import set_random_seed
 from neurodsp.spectral import compute_spectrum_welch
+
+seednum = 42
+np.random.seed(seednum)
+rnd.seed(seednum)
+os.environ['PYTHONHASHSEED'] = str(seednum)
+set_random_seed(seednum)
 
 class create_data:
 
-    def __init__(self,config_path,dt=10,fs=512):
+    def __init__(self,config_path,dt=10,fs=1024):
         self.dt     = dt
         self.fs     = fs
         self.times  = create_times(self.dt, self.fs)
         self.config = yaml.safe_load(open(config_path))
-        print(self.config)
         
     def get_timeseries(self):
 
@@ -31,6 +35,8 @@ class create_data:
             tdict['white'] = self.white_noise()
         if 'pink' in tkeys:
             tdict['pink'] = self.pink_noise()
+        if 'sinusoid' in tkeys:
+            tdict['sinusoid'] = self.sinusoid()
         return self.times,tdict
 
     def dirac_delta(self):
@@ -47,11 +53,21 @@ class create_data:
     def pink_noise(self):
 
        return sim.sim_powerlaw(self.dt, self.fs, exponent=-1)
+    
+    def sinusoid(self):
+        params = self.config['timeseries']['sinusoid']
+        signal = params[0]*np.sin(2*np.pi*self.times/params[1])
+        return signal
 
-def bandpower_fooof(signal, fs=512, win_size=2, win_stride=1):
+def bandpower_fooof(signal, fs=1024, win_size=2, win_stride=1):
 
     # Define the frequency bands
-    bands = {"equal_bands_0": (1,8), "equal_bands_1": (8,15), "equal_bands_2": (15,22), "equal_bands_3":(22,29)}
+    start = 1
+    dstep = 6
+    nstep = 5
+    bands = {}
+    for idx in range(start,nstep*dstep,dstep):
+        bands[idx] = (idx,idx+dstep)
 
     # Calculate the power spectrum using welch
     freqs, powers = compute_spectrum_welch(signal, fs)
@@ -60,7 +76,7 @@ def bandpower_fooof(signal, fs=512, win_size=2, win_stride=1):
     fg = FOOOF()
 
     # Set the frequency range to fit the model
-    freq_range = [0.5, 30]
+    freq_range = [0, nstep*dstep+1]
 
     # Report: fit the model, print the resulting parameters, and plot the reconstruction
     fg.fit(freqs, powers, freq_range)
@@ -74,15 +90,15 @@ def bandpower_fooof(signal, fs=512, win_size=2, win_stride=1):
     
     # Get the residual periodic fit
     periodic_comp = powers-one_over_f
-
+    
     # Loop over the bands to get the periodic power within
     power_dict = {'b0':b0,'b1':b1}
     for i_band, (lo, hi) in enumerate(bands.values()):
         inds = (freqs>=lo)&(freqs<hi)
         bp   = simpson(y=periodic_comp[inds],x=freqs[inds])
-        power_dict[i_band] = bp
+        power_dict[f"[{lo}-{hi}]"] = bp
 
-    return freqs,powers,fg,power_dict
+    return freqs,powers,fg,power_dict,periodic_comp
 
 if __name__ == '__main__':
 
@@ -95,7 +111,15 @@ if __name__ == '__main__':
     for v in tdict.values():signal+=v
 
     # Get the bandpower
-    freqs,powers,fg,power_dict = bandpower_fooof(signal)
+    freqs,powers,fg,power_dict,periodic_comp = bandpower_fooof(signal)
 
+    # Show the fooof report
     fg.report()
     PLT.show()
+
+    # Print the band powers
+    for k,v in power_dict.items():
+        if k in ['b0','b1']:
+            print(f"Aperiodic parameter {k} = {v}")
+        else:
+            print(f"Band {k} power is: {v}")
