@@ -4,13 +4,91 @@ import inspect
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
+from fooof import FOOOF
+from scipy.integrate import simpson
 from scipy.signal import welch, find_peaks, detrend
+from neurodsp.spectral import compute_spectrum_welch
 
 # Import error logging (primarily for mne)
 from components.core.internal.config_loader import *
 from components.metadata.public.metadata_handler import *
 
+# In some cases, we want variables to persist through steps. (i.e. A solver or fitting class.) Persistance_dict can store results across steps.
+global persistance_dict
+persistance_dict = {}
+
+class FOOOF_processing:
+
+    def __init__(self, data, fs, freq_range, ichannel):
+        self.data       = data
+        self.fs         = fs
+        self.freq_range = freq_range
+        self.ichannel   = ichannel
+
+    def initial_power_spectra(self):
+        self.freqs, self.initial_power_spectrum = compute_spectrum_welch(self.data, self.fs)
+
+    def fit_fooof(self):
+
+        # Initialize a FOOOF object
+        fg = FOOOF()
+
+        # Report: fit the model, print the resulting parameters, and plot the reconstruction
+        fg.fit(self.freqs, self.initial_power_spectra, self.freq_range)
+
+        # get the one over f curve
+        b0,b1      = fg.get_results().aperiodic_params
+        one_over_f = b0-np.log10(self.freqs**b1)
+
+        # Get the residual periodic fit
+        periodic_comp = self.initial_power_spectra-one_over_f
+
+        # Store the results for persistant fitting
+        persistance_dict['fooof']                         = {}
+        persistance_dict['fooof'][self.ichannel]          = {}
+        persistance_dict['fooof'][self.ichannel]['model'] = fg
+        persistance_dict['fooof'][self.ichannel]['data']  = (self.freqs,periodic_comp)
+
+    def check_persistance(self):
+        try:
+            persistance_dict['fooof'][self.ichannel]
+        except KeyError:
+            self.fit_fooof()
+
+    def fooof_aperiodic_b0(self):
+        """
+        Return the constant offset for the aperiodic fit.
+
+        Returns:
+            float: Unitless float for the aperiodic offset parameter.
+        """
+
+        self.check_persistance()
+        return persistance_dict['fooof'][self.ichannel]['model'].aperiodic_params_[0]
+    
+    def fooof_aperiodic_b1(self):
+        """
+        Return the powerlaw exponent for the aperiodic fit.
+
+        Returns:
+            float: Unitless float for the aperiodic powerlaw parameter.
+        """
+
+        self.check_persistance()
+        return persistance_dict['fooof'][self.ichannel]['model'].aperiodic_params_[1]
+
+    def fooof_bandpower(self,lo_freq,hi_freq):
+
+        self.check_persistance()
+        x,y = persistance_dict['fooof'][self.ichannel]['data']
+
+        inds = (x>=lo_freq)&(x<hi_freq)
+        return simpson(y=y[inds],x=x[inds])
+
 class signal_processing:
+    """
+    Class devoted to basic signal processing tasks. (Band-power/peak-finder/etc.)
+    """
     
     def __init__(self, data, fs):
         self.data = data
