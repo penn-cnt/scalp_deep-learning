@@ -65,7 +65,7 @@ class FOOOF_processing:
         """
 
         # Make the optional tag to identify the dataslice
-        self.optional_tag = 'fooof_aperiodic_b0'
+        self.optional_tag = ''
 
         # Check for fooof model, then get aperiodic b0
         self.check_persistance()
@@ -80,7 +80,7 @@ class FOOOF_processing:
         """
 
         # Make the optional tag to identify the dataslice
-        self.optional_tag = 'fooof_aperiodic_b1'
+        self.optional_tag = ''
 
         # Check for fooof model, then get aperiodic b1
         self.check_persistance()
@@ -94,8 +94,10 @@ class FOOOF_processing:
             float: Bandpower in the periodic component in the given frequency band.
         """
 
-        # Make the optional tag to identify the dataslice
-        self.optional_tag = f"fooof_bandpower_{lo_freq}_{hi_freq}"
+        # Add in the optional tagging to denote frequency range of this step
+        low_freq_str      = f"{lo_freq:.2f}"
+        hi_freq_str       = f"{hi_freq:.2f}"
+        self.optional_tag = '['+low_freq_str+','+hi_freq_str+']'
 
         # Check for fooof model, then get aperiodic b1
         self.check_persistance()
@@ -130,8 +132,8 @@ class signal_processing:
         """
 
         # Add in the optional tagging to denote frequency range of this step
-        low_freq_str      = str(np.floor(low_freq))
-        hi_freq_str       = str(np.floor(hi_freq))
+        low_freq_str      = f"{low_freq:.2f}"
+        hi_freq_str       = f"{hi_freq:.2f}"
         self.optional_tag = '['+low_freq_str+','+hi_freq_str+']'
 
         # Get the number of samples in each window for welch average and the overlap
@@ -314,7 +316,7 @@ class features:
                                 if cls.__name__ != 'FOOOF_processing':
                                     namespace = cls(dataset[:,ichannel],fs[ichannel])
                                 else:
-                                    namespace = cls(dataset[:,ichannel],fs[ichannel],[0,128], ichannel)
+                                    namespace = cls(dataset[:,ichannel],fs[ichannel],[0.5,128], ichannel)
 
                                 # Get the method name and return results from the method
                                 method_call         = getattr(namespace,method_name)
