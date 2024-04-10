@@ -25,7 +25,7 @@ class FOOOF_processing:
         self.freq_range = freq_range
         self.ichannel   = ichannel
 
-    def initial_power_spectra(self):
+    def create_initial_power_spectra(self):
         self.freqs, self.initial_power_spectrum = compute_spectrum_welch(self.data, self.fs)
 
     def fit_fooof(self):
@@ -34,14 +34,14 @@ class FOOOF_processing:
         fg = FOOOF()
 
         # Report: fit the model, print the resulting parameters, and plot the reconstruction
-        fg.fit(self.freqs, self.initial_power_spectra, self.freq_range)
+        fg.fit(self.freqs, self.initial_power_spectrum, self.freq_range)
 
         # get the one over f curve
         b0,b1      = fg.get_results().aperiodic_params
         one_over_f = b0-np.log10(self.freqs**b1)
 
         # Get the residual periodic fit
-        periodic_comp = self.initial_power_spectra-one_over_f
+        periodic_comp = self.initial_power_spectrum-one_over_f
 
         # Store the results for persistant fitting
         persistance_dict['fooof']                         = {}
@@ -53,6 +53,7 @@ class FOOOF_processing:
         try:
             persistance_dict['fooof'][self.ichannel]
         except KeyError:
+            self.create_initial_power_spectra()
             self.fit_fooof()
 
     def fooof_aperiodic_b0(self):
@@ -63,8 +64,12 @@ class FOOOF_processing:
             float: Unitless float for the aperiodic offset parameter.
         """
 
+        # Make the optional tag to identify the dataslice
+        self.optional_tag = 'fooof_aperiodic_b0'
+
+        # Check for fooof model, then get aperiodic b0
         self.check_persistance()
-        return persistance_dict['fooof'][self.ichannel]['model'].aperiodic_params_[0]
+        return persistance_dict['fooof'][self.ichannel]['model'].aperiodic_params_[0],self.optional_tag
     
     def fooof_aperiodic_b1(self):
         """
@@ -74,16 +79,31 @@ class FOOOF_processing:
             float: Unitless float for the aperiodic powerlaw parameter.
         """
 
+        # Make the optional tag to identify the dataslice
+        self.optional_tag = 'fooof_aperiodic_b1'
+
+        # Check for fooof model, then get aperiodic b1
         self.check_persistance()
-        return persistance_dict['fooof'][self.ichannel]['model'].aperiodic_params_[1]
+        return persistance_dict['fooof'][self.ichannel]['model'].aperiodic_params_[1],self.optional_tag
 
     def fooof_bandpower(self,lo_freq,hi_freq):
+        """
+        Return the bandpower with the aperiodic component removed.
 
+        Returns:
+            float: Bandpower in the periodic component in the given frequency band.
+        """
+
+        # Make the optional tag to identify the dataslice
+        self.optional_tag = f"fooof_bandpower_{lo_freq}_{hi_freq}"
+
+        # Check for fooof model, then get aperiodic b1
         self.check_persistance()
         x,y = persistance_dict['fooof'][self.ichannel]['data']
 
+        # Get the correct array slice to return the simpson integration
         inds = (x>=lo_freq)&(x<hi_freq)
-        return simpson(y=y[inds],x=x[inds])
+        return simpson(y=y[inds],x=x[inds]),self.optional_tag
 
 class signal_processing:
     """
@@ -290,8 +310,13 @@ class features:
 
                             # Perform preprocessing step
                             try:
-                                # Create namespace for this step then call the function
-                                namespace           = cls(dataset[:,ichannel],fs[ichannel])
+                                # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
+                                if cls.__name__ != 'FOOOF_processing':
+                                    namespace = cls(dataset[:,ichannel],fs[ichannel])
+                                else:
+                                    namespace = cls(dataset[:,ichannel],fs[ichannel],[0,128], ichannel)
+
+                                # Get the method name and return results from the method
                                 method_call         = getattr(namespace,method_name)
                                 result_a, result_b  = method_call(**method_args)
 
@@ -301,7 +326,7 @@ class features:
                                     result_a = result_a[0]
 
                                 output.append(result_a)
-                            except:
+                            except IndexError:
                                 # We need a flexible solution to errors, so just populating a nan value
                                 output.append(None)
                                 try:
@@ -318,14 +343,16 @@ class features:
 
                             # Dataframe creations
                             iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
-                            self.feature_df = PD.concat((self.feature_df,iDF))
+                            if not iDF[channels].isnull().values.all() and not iDF[channels].isna().values.all():
+                                self.feature_df = PD.concat((self.feature_df,iDF))
 
                             # Clean up the dummy list
                             df_values = []
 
                     # Dataframe creations
                     iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
-                    self.feature_df = PD.concat((self.feature_df,iDF))
+                    if not iDF[channels].isnull().values.all() and not iDF[channels].isna().values.all():
+                        self.feature_df = PD.concat((self.feature_df,iDF))
 
                     # Downcast feature array to take up less space in physical and virtual memory. Use downcast first in case its a feature that cannot be made numeric
                     for ichannel in channels:
