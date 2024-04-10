@@ -328,13 +328,14 @@ class features:
                                     result_a = result_a[0]
 
                                 output.append(result_a)
-                            except IndexError:
+                            except:
                                 # We need a flexible solution to errors, so just populating a nan value
                                 output.append(None)
                                 try:
                                     result_b = getattr(namespace,'optional_tag')
                                 except:
                                     result_b = "None"
+                                print(f"Error encountered in {method_name}. Returning nulls.")
 
                         # Use metadata to allow proper feature grouping
                         meta_arr = [imeta['file'],imeta['t_start'],imeta['t_end'],imeta['dt'],method_name,result_b]
