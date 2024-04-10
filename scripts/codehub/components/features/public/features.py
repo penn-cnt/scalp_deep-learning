@@ -345,7 +345,7 @@ class features:
                         if (idx%5000==0):
 
                             # Dataframe creations
-                            iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
+                            iDF = PD.DataFrame(df_values,columns=self.feature_df.columns)
                             if not iDF[channels].isnull().values.all() and not iDF[channels].isna().values.all():
                                 self.feature_df = PD.concat((self.feature_df,iDF))
 
@@ -353,7 +353,7 @@ class features:
                             df_values = []
 
                     # Dataframe creations
-                    iDF             = PD.DataFrame(df_values,columns=self.feature_df.columns)
+                    iDF = PD.DataFrame(df_values,columns=self.feature_df.columns)
                     if not iDF[channels].isnull().values.all() and not iDF[channels].isna().values.all():
                         self.feature_df = PD.concat((self.feature_df,iDF))
 
@@ -364,3 +364,6 @@ class features:
                             self.feature_df[ichannel]=self.feature_df[ichannel].astype('float32')
                         except ValueError:
                             pass
+
+        # The stagger condition seems to add duplicates. Need to fix eventually.
+        self.feature_df = self.feature_df.drop_duplicates(ignore_index=True)
