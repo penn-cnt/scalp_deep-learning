@@ -265,6 +265,10 @@ def argument_handler(argument_dir='./',require_flag=True):
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
     args = parser.parse_args()
 
+    # Make sure the output directory has a trailing /
+    if args.outdir[-1] != '/':
+        args.outdir += '/'
+
     # Help info if needed to be passed back as an object and not string
     help_info    = {}
     type_info    = {}
