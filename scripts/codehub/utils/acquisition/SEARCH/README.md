@@ -2,6 +2,17 @@
 
 This code is meant to acquire the latest data cache report and help the user search for data in the cache. This tool allows users to find out if data already exists in the CNT data cache before downloading data needlessly.
 
+## Installation
+
+You will need the following packages to run the search software. You can run the following commands to install the packages.
+
+```
+pip install argparse
+pip install paramiko
+pip install pandas
+pip install prettytable
+```
+
 ## Example usage
 
 > python data_search.py --username bjprager
