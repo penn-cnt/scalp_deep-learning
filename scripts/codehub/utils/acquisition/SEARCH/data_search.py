@@ -121,4 +121,4 @@ if __name__ == '__main__':
     cache = SC.read_data_collection()
 
     # Display the data collection
-    CS = cache_search(cache)
+    CS = cache_search(cache[:150])
