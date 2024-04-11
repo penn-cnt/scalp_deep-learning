@@ -195,4 +195,7 @@ class channel_montage:
         """
         TODO: add Neurovista montaging.
         """
-        pass
+        montage_data          = self.dataframe.values
+        self.montage_channels = self.dataframe.columns
+        self.new_fs           = self.metadata[self.file_cntr]['fs']
+        return montage_data

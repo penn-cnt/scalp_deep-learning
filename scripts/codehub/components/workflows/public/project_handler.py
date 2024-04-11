@@ -189,16 +189,20 @@ class project_handlers:
 
                 # We can use the dataframe to set criteria for continued analysis.
                 # In this example, the data must have at least the sampling frequency worth of values
-                if self.dataframe.shape[0] > int(max(self.metadata[self.file_cntr]['fs'])):
+                min_fs = int(max(self.metadata[self.file_cntr]['fs']))
+                if self.dataframe.shape[0] > min_fs:
                     # You can either montage first, then preprocess, or vice versa.
                     # At present you cannot mix these steps. But later updates will allow
                     # to provide the ability to define multiple preprocessing blocks that
                     # can be ordered independently.
-                    df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
+                    #df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 
                     # Montage the data
-                    self.montaged_dataframe = channel_montage.pipeline(self,df)
+                    self.montaged_dataframe = channel_montage.pipeline(self,self.dataframe)
 
                     # Store the data to the output handler so we can pass everything to the feature extractor
                     # Returning to a list of arrays so it can be passed to different modeling back-ends like PyTorch.
-                    output_manager.update_output_list(self,df.values)
+                    output_manager.update_output_list(self,self.montaged_dataframe.values)
+                else:
+                    if not self.args.silent:
+                        print(f"Dataframe of shape {self.dataframe.shape} does not contain at least {min_fs} samples.")

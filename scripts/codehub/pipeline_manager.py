@@ -104,8 +104,12 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # In the case that all of the data is removed, skip write step
         if len(self.metadata.keys()) > 0:
+            
             # Save the results
             output_manager.save_features(self)
+
+            if not self.args.skip_clean_save:
+                output_manager.save_output_list(self)
 
     def feature_manager(self):
         """
@@ -267,6 +271,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     misc_group.add_argument("--input_str", type=str, help="Optional. If glob input, wildcard path. If csv/manual, filepath to input csv/raw data.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
+    misc_group.add_argument("--skip_clean_save", action='store_true', default=False, help="Do not save cleaned up raw data. Mostly useful if you just want features.")
     args = parser.parse_args()
 
     # Help info if needed to be passed back as an object and not string

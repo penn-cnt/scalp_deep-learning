@@ -126,7 +126,10 @@ class data_loader:
 
             # Calculate the index of the end
             if self.t_end == -1:
-                samp_end = int(len(self.indata[ii]))
+                if majoraxis.lower() == 'column':
+                    samp_end = int(len(self.indata[:,ii]))
+                elif majoraxis.lower() == 'row':
+                    samp_end = int(len(self.indata[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
 
@@ -137,8 +140,7 @@ class data_loader:
 
         # Get the underlying data shapes
         self.ncol = len(self.raw_data)
-        self.nrow = max([ival.size for ival in self.raw_data])        
-
+        self.nrow = max([ival.size for ival in self.raw_data])
 
     ###################################
     #### User Provided Logic Below ####
