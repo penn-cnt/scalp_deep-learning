@@ -33,6 +33,7 @@ You will get back a table with all the entries that match your query. You can th
 
 ### Sample output
 
+```
 python data_search.py --username bjprager
 Please enter password for remote system:
 Password: 
@@ -80,6 +81,7 @@ Please enter substring to search for: EMU2014
 | EMU2014_Day02_1 | ieeg.org | bjprager | 02-04-24 | 3.0 |       7        |       2        | annots |
 +-----------------+----------+----------+----------+-----+----------------+----------------+--------+
 Search for entry (y/n) or reset table (R/r)? 
+```
 
 ## Notes
 
