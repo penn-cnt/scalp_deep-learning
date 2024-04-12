@@ -54,6 +54,8 @@ class FOOOF_processing:
         persistance_dict['fooof'][self.file][self.ichannel]          = {}
         persistance_dict['fooof'][self.file][self.ichannel]['model'] = fg
         persistance_dict['fooof'][self.file][self.ichannel]['data']  = (self.freqs,periodic_comp)
+        print(persistance_dict)
+        exit()
 
     def check_persistance(self):
         try:
@@ -337,7 +339,7 @@ class features:
                                 output.append(result_a)
                             except Exception as e:
                                 # We need a flexible solution to errors, so just populating a nan value
-                                output.append(np.nan)
+                                output.append(None)
                                 try:
                                     result_b = getattr(namespace,'optional_tag')
                                 except:
