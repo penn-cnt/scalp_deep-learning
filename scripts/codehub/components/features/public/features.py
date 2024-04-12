@@ -29,7 +29,7 @@ class FOOOF_processing:
 
     def create_initial_power_spectra(self):
         self.freqs, self.initial_power_spectrum = compute_spectrum_welch(self.data, self.fs)
-        inds                                    = (self.freqs>0)&(self.initial_power_spectrum>0)&np.isfinite(initial_power_spectrum)
+        inds                                    = (self.freqs>0)
         self.freqs                              = self.freqs[inds]
         self.initial_power_spectrum             = self.initial_power_spectrum[inds]
 
