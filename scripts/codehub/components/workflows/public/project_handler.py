@@ -85,6 +85,7 @@ class project_handlers:
                 # At present you cannot mix these steps. But later updates will allow
                 # to provide the ability to define multiple preprocessing blocks that
                 # can be ordered independently.
+                exit()
                 df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 
                 # Montage the data
