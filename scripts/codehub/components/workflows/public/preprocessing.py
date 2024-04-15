@@ -41,10 +41,6 @@ class mne_processing:
         self.mne_channels = mne_channels
         self.errors       = []
 
-        #for idx,ival in enumerate(self.ppchannels):
-        #    print(ival,fs[idx])
-        #print(fs)
-
         # Make sure that all of the frequencies match for mne
         if len(np.unique(fs)) == 1:
             self.fs = np.unique(fs)[0]
