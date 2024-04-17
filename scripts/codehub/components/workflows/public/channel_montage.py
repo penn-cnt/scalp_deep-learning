@@ -186,6 +186,7 @@ class channel_montage:
                     self.new_fs.append(np.nan)
             
             # Update in place the frequencies that did not update correctly
+            self.fs          = np.array(self.fs)
             naninds          = np.isnan(self.new_fs)
             newval           = np.unique(self.new_fs[~naninds])[0]
             self.fs[naninds] = newval
