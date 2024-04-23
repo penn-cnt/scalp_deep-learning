@@ -32,7 +32,7 @@ The above is an example view of the data audit gui. An explanation of each field
 
 1. Download and install anaconda.
 2. Install the needed python environment using the provided environment file.
-    > conda env create --file ../envs/cnt_audit.yml 
+    > conda env create --file envs/cnt_audit.yml 
 3. Activate the conda environment
     > conda activate cnt_audit
 4. Run the code
