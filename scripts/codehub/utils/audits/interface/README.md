@@ -42,4 +42,4 @@ The above is an example view of the data audit gui. An explanation of each field
 
 As this is still in development, we do not have a static location for the audit files yet. Please check your email if you are part of the project for where to obtain a sample audit file.
 
-You can change the path the GUI tries to find the data by editing the following file: [../config/auditpaths.yaml](../config/auditpaths.yaml)
+You can change the path the GUI tries to find the data by editing the following file: [config/auditpaths.yaml](../config/auditpaths.yaml)
