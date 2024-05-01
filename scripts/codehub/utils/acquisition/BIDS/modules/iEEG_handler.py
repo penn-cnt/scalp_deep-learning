@@ -264,7 +264,7 @@ class ieeg_handler:
         if path.exists(subject_path):
             self.subject_cache   = PD.read_csv(subject_path)
             self.processed_files = self.subject_cache['orig_filename'].values
-            self.processed_times = self.subject_cache['start'].values
+            self.processed_types = self.subject_cache['creation_type'].values
         else:
             self.processed_files = []
             self.processed_times = []
@@ -320,11 +320,8 @@ class ieeg_handler:
             pinds   = (self.processed_files==ifile)
             try:
                 if pinds.any():
-                    times = self.processed_times[pinds]
-                    tinds = (times==self.start_times[file_idx])
-                    print(file_idx)
-                    print(self.start_times[file_idx])
-                    exit()
+                    types = self.processed_types[pinds]
+                    tinds = (types=='annot')
                     if tinds.any():
                         runflag = False
             except (IndexError, AttributeError):
