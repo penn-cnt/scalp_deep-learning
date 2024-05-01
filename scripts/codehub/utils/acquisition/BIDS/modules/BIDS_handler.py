@@ -7,6 +7,7 @@ import mne_bids
 import numpy as np
 import pandas as PD
 from os import path
+from sys import exit
 from datetime import date
 from mne_bids import BIDSPath, write_raw_bids
 
@@ -117,6 +118,9 @@ class BIDS_handler:
 
         # Make the events file and save the results
         for itime in list(self.annotations[idx].keys()):
+            print(itime)
+            print(self.annotations[idx])
+            exit()
             try:
                 desc   = self.annotations[idx][itime]
                 index  = (1e-6*itime)*self.fs
