@@ -142,6 +142,7 @@ class BIDS_handler:
 
             # Create the lookup table
             self.create_lookup(idx)
+        print("===")
 
     def direct_save(self,idx,raw):
 
