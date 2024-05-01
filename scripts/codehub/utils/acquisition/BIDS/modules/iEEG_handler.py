@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as PD
 from os import path
+from sys import exit
 from tqdm import tqdm
 from time import sleep
 from ieeg.auth import Session
@@ -145,6 +146,9 @@ class iEEG_download(BIDS_handler):
             BIDS_handler.__init__(self)
             for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
                 self.session_method_handler(istart, self.clip_durations[idx])
+                print(self.annotations)
+                print(self.clip_durations)
+                exit()
                 if self.success_flag == True:
                     BIDS_handler.get_channel_type(self)
                     BIDS_handler.make_info(self)
