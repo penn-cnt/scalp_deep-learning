@@ -119,14 +119,10 @@ class BIDS_handler:
         # Make the events file and save the results
         for itime in list(self.annotations[idx].keys()):
             try:
-                events   = []
-                all_desc = '' 
-                for iannot in self.annotations[idx].keys():
-                    desc   = self.annotations[idx][itime]
-                    index  = (1e-6*itime)*self.fs
-                    events.append([[int(index),0,self.event_mapping[desc]]])
-                    all_desc = f"{all_desc}_{desc}"
-                events = np.array(events)
+                print(self.annotations[idx])
+                desc   = self.annotations[idx][itime]
+                index  = (1e-6*itime)*self.fs
+                events = np.array([[int(index),0,self.event_mapping[desc]]])
 
                 # Save the edf in bids format
                 session_str    = "%s%03d" %(self.args.session,self.session_number)
@@ -135,7 +131,7 @@ class BIDS_handler:
 
                 # Save the targets with the edf path paired up to filetype
                 target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
-                target_dict = {'uid':self.uid,'target':self.target,'annotation':all_desc}
+                target_dict = {'uid':self.uid,'target':self.target,'annotation':desc}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
             except:
