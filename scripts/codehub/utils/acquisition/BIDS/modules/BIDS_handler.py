@@ -185,7 +185,6 @@ class BIDS_handler:
                     self.annotation_save(idx,raw)
             except AttributeError:
                 self.direct_save(idx,raw)
-        exit()
 
     def create_lookup(self,idx):
 
@@ -208,6 +207,7 @@ class BIDS_handler:
             subject_DF = PD.concat((subject_DF,iDF))
         subject_DF['subject_number'] = subject_DF['subject_number'].astype(str).str.zfill(4)
         subject_DF['session_number'] = subject_DF['session_number'].astype(str).str.zfill(4)
+        subject_DF                   = subject_DF.drop_duplicates()
 
         # Only write files one at a time
         if self.write_lock != None:
