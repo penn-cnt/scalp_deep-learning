@@ -119,6 +119,7 @@ class BIDS_handler:
         # Make the events file and save the results
         for itime in list(self.annotations[idx].keys()):
             try:
+                print(raw.shape)
                 print(self.annotations[idx])
                 desc   = self.annotations[idx][itime]
                 index  = (1e-6*itime)*self.fs
@@ -168,9 +169,6 @@ class BIDS_handler:
         self.create_lookup(idx,0)
 
     def save_bids(self):
-
-        print(len(self.raws))
-        print(self.annotations)
 
         # Loop over all the raw data, add annotations, save
         for idx, raw in enumerate(self.raws):
