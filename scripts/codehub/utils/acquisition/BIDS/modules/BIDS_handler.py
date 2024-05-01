@@ -136,7 +136,7 @@ class BIDS_handler:
 
                 # Save the targets with the edf path paired up to filetype
                 target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
-                target_dict = {'uid':self.uid,'target':self.target,'annotation':'_'.join(alldesc)}
+                target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc)}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
             except NameError:
