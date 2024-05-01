@@ -24,6 +24,9 @@ class BIDS_handler:
                 delattr(self, var_name)
 
     def get_subject_number(self):
+        """
+        Assigns a subject number to a dataset. 
+        """
 
         # Load the mapping if available, otherwise dummy dataframe
         if not path.exists(self.subject_path):
@@ -135,6 +138,9 @@ class BIDS_handler:
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
                 pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
 
+            # Create the lookup table
+            self.create_lookup(idx,itime)
+
     def direct_save(self,idx,raw):
 
         # Save the edf in bids format
@@ -142,16 +148,21 @@ class BIDS_handler:
         session_str    = "%s%03d" %(self.args.session,self.session_number)
         self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=run_number, task='task')
 
+        # Update the data to remove NaNs
         data = raw.get_data()
         data[np.isnan(data)] = 0
         raw._data = data
 
+        # Write the bids file
         write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False,overwrite=True)
         
         # Save the targets with the edf path paired up to filetype
         target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
         target_dict = {'uid':self.uid,'target':self.target}
         pickle.dump(target_dict,open(target_path,"wb"))
+
+        # Create the lookup table
+        self.create_lookup(idx,0)
 
     def save_bids(self):
 
@@ -168,6 +179,8 @@ class BIDS_handler:
             except AttributeError:
                 self.direct_save(idx,raw)
 
+    def create_lookup(self,run_number,itime):
+
         # Prepare some metadata for download
         source  = np.array(['ieeg.org','edf'])
         inds    = [self.args.ieeg,self.args.edf]
@@ -177,8 +190,8 @@ class BIDS_handler:
         times   = f"{self.args.start}_{self.args.duration}"
 
         # Save the subject file info with source metadata
-        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','times']
-        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,times]],columns=columns)
+        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','time']
+        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,run_number,itime]],columns=columns)
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()
