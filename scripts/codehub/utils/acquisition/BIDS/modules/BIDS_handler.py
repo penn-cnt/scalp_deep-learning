@@ -119,11 +119,13 @@ class BIDS_handler:
         # Make the events file and save the results
         for itime in list(self.annotations[idx].keys()):
             try:
-                events = []
+                events  = []
+                alldesc = []
                 for iannot in self.annotations[idx].keys():
                     desc  = self.annotations[idx][iannot]
                     index = (1e-6*iannot)*self.fs
                     events.append([index,0,self.event_mapping[desc]])
+                    alldesc.append(desc)
                 #events = np.array([[int(index),0,self.event_mapping[desc]]])
                 events = np.array(events)
 
@@ -134,7 +136,7 @@ class BIDS_handler:
 
                 # Save the targets with the edf path paired up to filetype
                 target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
-                target_dict = {'uid':self.uid,'target':self.target,'annotation':desc}
+                target_dict = {'uid':self.uid,'target':self.target,'annotation':'_'.join(alldesc)}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
             except NameError:
@@ -145,7 +147,6 @@ class BIDS_handler:
 
             # Create the lookup table
             self.create_lookup(idx)
-        print("===")
 
     def direct_save(self,idx,raw):
 
