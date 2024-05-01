@@ -119,8 +119,10 @@ class BIDS_handler:
         # Make the events file and save the results
         for itime in list(self.annotations[idx].keys()):
             try:
-                print(raw)
-                print(self.annotations[idx])
+                for iannot in self.annotations[idx].keys():
+                    desc  = self.annotations[idx][iannot]
+                    index = (1e-6*iannot)*self.fs
+                    print(desc,index)
                 desc   = self.annotations[idx][itime]
                 index  = (1e-6*itime)*self.fs
                 events = np.array([[int(index),0,self.event_mapping[desc]]])
