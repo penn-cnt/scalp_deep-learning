@@ -139,7 +139,7 @@ class BIDS_handler:
                 target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc)}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
-            except NameError:
+            except:
 
                 # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'

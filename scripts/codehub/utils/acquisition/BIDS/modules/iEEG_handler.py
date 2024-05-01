@@ -322,6 +322,7 @@ class ieeg_handler:
                 if pinds.any():
                     times = self.processed_times[pinds]
                     tinds = (times==self.start_times[file_idx])
+                    print(file_idx)
                     print(self.start_times[file_idx])
                     exit()
                     if tinds.any():
