@@ -126,7 +126,6 @@ class BIDS_handler:
                     events.append([index,0,desc])
                 #events = np.array([[int(index),0,self.event_mapping[desc]]])
                 events = np.array(events)
-                print(events)
 
                 # Save the edf in bids format
                 session_str    = "%s%03d" %(self.args.session,self.session_number)
@@ -138,7 +137,7 @@ class BIDS_handler:
                 target_dict = {'uid':self.uid,'target':self.target,'annotation':desc}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
-            except:
+            except NameError:
 
                 # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
