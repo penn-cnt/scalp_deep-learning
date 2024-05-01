@@ -167,6 +167,9 @@ class BIDS_handler:
 
     def save_bids(self):
 
+        print(len(self.raws))
+        print(self.annotations)
+
         # Loop over all the raw data, add annotations, save
         for idx, raw in enumerate(self.raws):
             
@@ -179,6 +182,7 @@ class BIDS_handler:
                     self.annotation_save(idx,raw)
             except AttributeError:
                 self.direct_save(idx,raw)
+        exit()
 
     def create_lookup(self,idx):
 
