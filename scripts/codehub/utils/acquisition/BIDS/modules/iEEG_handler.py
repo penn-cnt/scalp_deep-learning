@@ -144,11 +144,11 @@ class iEEG_download(BIDS_handler):
         # Loop over clips
         if self.success_flag == True:
             BIDS_handler.__init__(self)
-            for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
-                self.session_method_handler(istart, self.clip_durations[idx])
-                print(self.annotations)
-                print(self.clip_start_times)
-                print(self.clip_durations)
+            for idx,self.istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
+                self.iduration = self.clip_durations[idx]
+                self.session_method_handler(self.istart, self.iduration)
+                print(self.istart)
+                print(self.iduration)
                 exit()
                 if self.success_flag == True:
                     BIDS_handler.get_channel_type(self)
