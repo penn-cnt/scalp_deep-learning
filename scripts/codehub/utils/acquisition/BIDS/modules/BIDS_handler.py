@@ -119,7 +119,7 @@ class BIDS_handler:
         # Make the events file and save the results
         for itime in list(self.annotations[idx].keys()):
             try:
-                print(raw.shape)
+                print(raw)
                 print(self.annotations[idx])
                 desc   = self.annotations[idx][itime]
                 index  = (1e-6*itime)*self.fs
