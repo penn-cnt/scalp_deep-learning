@@ -123,7 +123,7 @@ class BIDS_handler:
                 for iannot in self.annotations[idx].keys():
                     desc  = self.annotations[idx][iannot]
                     index = (1e-6*iannot)*self.fs
-                    events.append([index,0,desc])
+                    events.append([index,0,self.event_mapping[desc]])
                 #events = np.array([[int(index),0,self.event_mapping[desc]]])
                 events = np.array(events)
 
