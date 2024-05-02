@@ -276,16 +276,6 @@ class ieeg_handler:
         self.durations    = input_data['duration'].values
         self.proposed_sub = input_data['proposed_subnum'].values
 
-        # Get list of files to skip that already exist locally
-        subject_path = self.args.bidsroot+self.args.subject_file
-        if path.exists(subject_path):
-            self.subject_cache   = PD.read_csv(subject_path)
-            self.processed_files = self.subject_cache['orig_filename'].values
-            self.processed_types = self.subject_cache['creation_type'].values
-        else:
-            self.processed_files = []
-            self.processed_times = []
-
     def single_pull(self):
 
         self.write_lock = None
