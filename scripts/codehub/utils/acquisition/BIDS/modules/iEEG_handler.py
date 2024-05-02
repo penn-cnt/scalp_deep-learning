@@ -157,14 +157,16 @@ class iEEG_download(BIDS_handler):
 
                 # Check if this combo has already been processed before
                 pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
-                print(pinds.sum())
-                exit()
-
-                self.session_method_handler(istart, self.clip_durations[idx])
-                if self.success_flag == True:
-                    BIDS_handler.get_channel_type(self)
-                    BIDS_handler.make_info(self)
-                    BIDS_handler.add_raw(self)
+                if pinds.any():
+                    self.raws.append("SKIP")
+                    print(f"Skipping {self.current_file} annotation at {istart}.")
+                else:
+                    print(f"Downloading {self.current_file} annotation at {istart}")
+                    self.session_method_handler(istart, self.clip_durations[idx])
+                    if self.success_flag == True:
+                        BIDS_handler.get_channel_type(self)
+                        BIDS_handler.make_info(self)
+                        BIDS_handler.add_raw(self)
 
         # Save the bids files if we have any data
         try:
@@ -328,34 +330,15 @@ class ieeg_handler:
         for file_idx in file_indices:
 
             # Get the current file
-            ifile = self.input_files[file_idx]
-
-            # Make sure the data exists or not
-            runflag = True
-            pinds   = (self.processed_files==ifile)
+            ifile  = self.input_files[file_idx]
+            iid    = self.input_data['uid'].values[file_idx]
+            target = self.input_data['target'].values[file_idx]
             try:
-                if pinds.any():
-                    types = self.processed_types[pinds]
-                    tinds = (types=='annot')
-                    if tinds.any():
-                        runflag = False
-            except (IndexError, AttributeError):
+                if self.args.annotations:
+                    IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
+                    IEEG = iEEG_download(self.args,self.write_lock)
+                else:
+                    IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
+            except UnboundLocalError:
                 pass
 
-            if runflag:
-                if not self.args.multithread:
-                    print("Downloading %s. (%04d/%04d)" %(ifile,file_idx+1,self.input_files.size))
-                else:
-                    print(f"Downloading {ifile}.")
-                iid    = self.input_data['uid'].values[file_idx]
-                target = self.input_data['target'].values[file_idx]
-                try:
-                    if self.args.annotations:
-                        IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                        IEEG = iEEG_download(self.args,self.write_lock)
-                    else:
-                        IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
-                except UnboundLocalError:
-                    pass
-            else:
-                print("Skipping %s." %(ifile))

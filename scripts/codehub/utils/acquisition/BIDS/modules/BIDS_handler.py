@@ -175,16 +175,20 @@ class BIDS_handler:
 
         # Loop over all the raw data, add annotations, save
         for idx, raw in enumerate(self.raws):
-            
-            # Set the channel types
-            raw.set_channel_types(self.channel_types.type)
 
-            # Check for annotations
-            try:
-                if len(self.annotations[idx].keys()):
-                    self.annotation_save(idx,raw)
-            except AttributeError:
-                self.direct_save(idx,raw)
+            if raw == 'SKIP':
+                pass
+            else:
+                
+                # Set the channel types
+                raw.set_channel_types(self.channel_types.type)
+
+                # Check for annotations
+                try:
+                    if len(self.annotations[idx].keys()):
+                        self.annotation_save(idx,raw)
+                except AttributeError:
+                    self.direct_save(idx,raw)
 
     def create_lookup(self,idx,creation_flag):
 
