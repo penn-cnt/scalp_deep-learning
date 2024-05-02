@@ -126,12 +126,16 @@ class BIDS_handler:
                     index = (1e-6*iannot)*self.fs
                     events.append([index,0,self.event_mapping[desc]])
                     alldesc.append(desc)
-                #events = np.array([[int(index),0,self.event_mapping[desc]]])
                 events = np.array(events)
 
-                # Save the edf in bids format
+                # Make the bids path
                 session_str    = "%s%03d" %(self.args.session,self.session_number)
                 self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
+
+                # Update lookup table
+                self.create_lookup(idx)
+
+                # Save the bids data
                 write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False,overwrite=True)
 
                 # Save the targets with the edf path paired up to filetype
@@ -144,15 +148,6 @@ class BIDS_handler:
                 # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
                 pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
-
-            # Create the lookup table
-            try:
-                self.create_lookup(idx)
-            except Exception as e:
-                iDF = PD.read_csv(self.subject_path)
-                print(iDF)
-                print(e)
-                exit()
 
     def direct_save(self,idx,raw):
 
