@@ -58,6 +58,15 @@ class iEEG_download(BIDS_handler):
         self.clip_layer     = 'EEG clip times'
         self.natus_layer    = 'Imported Natus ENT annotations'
 
+        # Get list of files to skip that already exist locally
+        if path.exists(self.subject_path):
+            self.subject_cache      = PD.read_csv(self.subject_path)
+            self.processed_files    = self.subject_cache['orig_filename'].values
+            self.processed_start    = self.subject_cache['start'].values
+        else:
+            self.processed_files    = []
+            self.processed_start    = []
+
     def reset_variables(self):
             # Delete all variables in the object's namespace
             for var_name in list(self.__dict__.keys()):
@@ -145,6 +154,11 @@ class iEEG_download(BIDS_handler):
         if self.success_flag == True:
             BIDS_handler.__init__(self)
             for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
+
+                print(self.current_file)
+                print(istart)
+                exit()
+
                 self.session_method_handler(istart, self.clip_durations[idx])
                 if self.success_flag == True:
                     BIDS_handler.get_channel_type(self)
