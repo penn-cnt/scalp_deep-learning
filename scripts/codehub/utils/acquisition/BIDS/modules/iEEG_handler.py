@@ -155,8 +155,9 @@ class iEEG_download(BIDS_handler):
             BIDS_handler.__init__(self)
             for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
 
-                print(self.current_file)
-                print(istart)
+                # Check if this combo has already been processed before
+                pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
+                print(pinds.sum())
                 exit()
 
                 self.session_method_handler(istart, self.clip_durations[idx])
