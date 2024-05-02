@@ -146,7 +146,7 @@ class BIDS_handler:
                 pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
 
             # Create the lookup table
-            self.create_lookup(idx,'annot')
+            self.create_lookup(idx)
 
     def direct_save(self,idx,raw):
 
@@ -169,7 +169,7 @@ class BIDS_handler:
         pickle.dump(target_dict,open(target_path,"wb"))
 
         # Create the lookup table
-        self.create_lookup(idx,'cli')
+        self.create_lookup(idx)
 
     def save_bids(self):
 
@@ -190,7 +190,7 @@ class BIDS_handler:
                 except AttributeError:
                     self.direct_save(idx,raw)
 
-    def create_lookup(self,idx,creation_flag):
+    def create_lookup(self,idx):
 
         # Prepare some metadata for download
         source  = np.array(['ieeg.org','edf'])
@@ -201,8 +201,8 @@ class BIDS_handler:
         times   = f"{self.args.start}_{self.args.duration}"
 
         # Save the subject file info with source metadata
-        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start','duration','creation_type']
-        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx,self.clip_start_times[idx],self.clip_durations[idx],creation_flag]],columns=columns)
+        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start','duration']
+        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx,self.clip_start_times[idx],self.clip_durations[idx]]],columns=columns)
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()
