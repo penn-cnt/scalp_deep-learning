@@ -146,7 +146,12 @@ class BIDS_handler:
                 pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
 
             # Create the lookup table
-            self.create_lookup(idx)
+            try:
+                self.create_lookup(idx)
+            except:
+                iDF = PD.read_csv(self.subject_path)
+                print(iDF)
+                exit()
 
     def direct_save(self,idx,raw):
 
