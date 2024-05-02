@@ -148,9 +148,10 @@ class BIDS_handler:
             # Create the lookup table
             try:
                 self.create_lookup(idx)
-            except:
+            except Exception as e:
                 iDF = PD.read_csv(self.subject_path)
                 print(iDF)
+                print(e)
                 exit()
 
     def direct_save(self,idx,raw):
