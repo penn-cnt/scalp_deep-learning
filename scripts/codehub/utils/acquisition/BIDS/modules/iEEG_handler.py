@@ -15,6 +15,7 @@ from modules.BIDS_handler import BIDS_handler
 # Allows us to catch ieeg api errors
 import ieeg.ieeg_api as IIA
 from requests.exceptions import ReadTimeout as RTIMEOUT
+from pandas.errors import EmptyDataError
 
 # API timeout class
 import signal
@@ -338,6 +339,6 @@ class ieeg_handler:
                     IEEG = iEEG_download(self.args,self.read_lock,self.write_lock)
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
-            except UnboundLocalError:
+            except:
                 pass
 
