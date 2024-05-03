@@ -33,7 +33,11 @@ class BIDS_handler:
         if not path.exists(self.subject_path):
             subject_uid_df = PD.DataFrame(np.empty((1,3)),columns=['iEEG file','uid','subject_number'])
         else:
-            subject_uid_df = PD.read_csv(self.subject_path)
+            if self.read_lock != None:
+                with self.read_lock:
+                    subject_uid_df = PD.read_csv(self.subject_path)
+            else:
+                subject_uid_df = PD.read_csv(self.subject_path)
 
         # Check if we already have this subject
         uids = subject_uid_df['uid'].values
