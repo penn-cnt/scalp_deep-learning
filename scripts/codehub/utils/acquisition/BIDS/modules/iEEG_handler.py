@@ -45,11 +45,12 @@ class Timeout:
 
 class iEEG_download(BIDS_handler):
 
-    def __init__(self, args, write_lock):
+    def __init__(self, args, read_lock, write_lock):
         
         # Store variables based on input params
         self.args           = args
         self.subject_path   = args.bidsroot+args.subject_file
+        self.read_lock      = read_lock
         self.write_lock     = write_lock
 
         # Hard coded variables based on ieeg api
@@ -60,9 +61,15 @@ class iEEG_download(BIDS_handler):
 
         # Get list of files to skip that already exist locally
         if path.exists(self.subject_path):
-            self.subject_cache      = PD.read_csv(self.subject_path)
-            self.processed_files    = self.subject_cache['orig_filename'].values
-            self.processed_start    = self.subject_cache['start'].values
+            if self.read_lock != None:
+                with self.read_lock:
+                    self.subject_cache      = PD.read_csv(self.subject_path)
+                    self.processed_files    = self.subject_cache['orig_filename'].values
+                    self.processed_start    = self.subject_cache['start'].values
+            else:
+                self.subject_cache      = PD.read_csv(self.subject_path)
+                self.processed_files    = self.subject_cache['orig_filename'].values
+                self.processed_start    = self.subject_cache['start'].values
         else:
             self.processed_files    = []
             self.processed_start    = []
@@ -278,6 +285,7 @@ class ieeg_handler:
 
     def single_pull(self):
 
+        self.read_lock  = None
         self.write_lock = None
         file_indices    = np.array(range(self.input_files.size))
         self.pull_data(file_indices)
@@ -285,6 +293,7 @@ class ieeg_handler:
     def multicore_pull(self):
 
         # Make a multiprocess lock
+        self.read_lock  = multiprocessing.Lock()
         self.write_lock = multiprocessing.Lock()
 
         # Make the BIDS root data structure with a single core to avoid top-level directory issues
@@ -316,7 +325,7 @@ class ieeg_handler:
     def pull_data(self,file_indices):
 
         # Loop over files
-        IEEG = iEEG_download(self.args,self.write_lock)
+        IEEG = iEEG_download(self.args,self.read_lock,self.write_lock)
         for file_idx in file_indices:
 
             # Get the current file
@@ -326,7 +335,7 @@ class ieeg_handler:
             try:
                 if self.args.annotations:
                     IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                    IEEG = iEEG_download(self.args,self.write_lock)
+                    IEEG = iEEG_download(self.args,self.read_lock,self.write_lock)
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
             except UnboundLocalError:
