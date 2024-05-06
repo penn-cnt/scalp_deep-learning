@@ -45,11 +45,11 @@ class audit:
             fname = fname[1:]
         self.input_file = f"{self.outdir}{fname}"
 
-        # Create a lock file. This is meant to prevent parallel processes from opening a file at the same time
-        self.lock_file  = self.outdir+f"audit_history_{username}.lock"
-
         # Output audit location
         self.audit_data = self.outdir+f"audit_data_{username}.csv"
+
+        # Lock file location for staggered history update
+        self.lock_file = self.outdir+f"audit_history_{username}.lock"
 
     def argcheck(self):
         """
@@ -99,6 +99,7 @@ class audit:
             self.history = PD.read_csv(self.audit_history)
         else:
             self.history = PD.DataFrame(columns=['directory_path','mjd'])
+            self.history.to_csv(self.audit_history,index=False)
 
         # Check for already completed entries
         self.input_paths  = []
@@ -175,15 +176,71 @@ class audit:
 
     def audit_handler(self,os,ncpu):
 
-        if os.lower() == 'unix':
-            self.perform_audit_linux(self.input_paths,self.output_names)
+        # Handle multiprocessing if needed, otherwise just pass the results through
+        if ncpu > 1:
 
-    def perform_audit_linux(self,inpaths,outpaths):
+            # Break up the inputs across the cpus
+            index_arr   = np.arange(len(self.input_paths))
+            subset_size = len(self.input_paths) // ncpu
+            while subset_size == 0:
+                ncpu       -= 1
+                subset_size = len(self.input_paths) // ncpu
+            print(f"Indexing solution found with {ncpu:02} cpus for {len(self.input_paths)} folders.")
+            index_subsets = [index_arr[i:i + subset_size] for i in range(0, len(self.input_paths), subset_size)]
+
+            # Handle leftovers
+            if len(index_subsets) > ncpu:
+                arr_ncpu  = index_subsets[ncpu-1]
+                arr_ncpu1 = index_subsets[ncpu]
+
+                index_subsets[ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
+                index_subsets.pop(-1)
+
+            # Make an input data object
+            indata = []
+            for worker_id,data_chunk in enumerate(index_subsets):
+                indata.append((self.input_paths[data_chunk],self.output_names[data_chunk],worker_id))
+
+            # Check for the right operating system logic
+            if os.lower() == 'unix':
+
+                # Create a multiprocessing pool
+                pool = multiprocessing.Pool()
+
+                # Run the multiprocessing map
+                results = pool.map(self.perform_audit_linux, indata)
+
+                # Close the pool to free up resources
+                pool.close()
+                pool.join()
+            
+            # Add the results to the audit history and save
+            self.history = PD.read_csv(self.audit_history)
+            for iresult in results:
+                results_DF   = PD.DataFrame(iresult,columns=self.history.columns)
+                self.history = PD.concat([self.history,results_DF],ignore_index=True)
+            self.history.to_csv(self.audit_history,index=False)
+
+        else:
+            if os.lower() == 'unix':
+                self.perform_audit_linux((self.input_paths,self.output_names,0))
+
+    def perform_audit_linux(self,args):
         """
         Perform a data audit on a linux/unix filesystem. 
         """
 
-        for idx,ifolder in tqdm(enumerate(inpaths), desc='Audit: ', total=len(inpaths)):
+        # Unpack arguments
+        inpaths,outpaths,worker_number = args
+
+        # Output object
+        output = []
+
+        # Make a reference time so we know when to make a backup
+        start_time = time.time()
+
+        # Loop over the folders to audit
+        for idx,ifolder in tqdm(enumerate(inpaths), desc='Audit: ', total=len(inpaths), position=worker_number, disable=False):
 
             # Save the input string to a different name in case of modifications
             instr = ifolder
@@ -194,28 +251,43 @@ class audit:
             # Update the cmd string for this case
             cmd = self.cmd_master.replace("INDIR_SUBSTR",instr)
             cmd = cmd.replace("OUTDIR_SUBSTR",self.outname)
-            
+
             # Run command
             subprocess.run(cmd, shell=True, check=True)
 
             # Update audit history
-            self.history.loc[len(self.history.index)] = [ifolder,datetime.now().timestamp()]
+            output.append([ifolder,datetime.now().timestamp()])
 
-            """
-            # Check if lock file is active
-            if os.path.exists(self.lock_file):
+            # Update the audit history ocassionally to speed up subsequent loads
+            current_time = time.time()
+            dt           = (current_time-start_time)
+            stagger_time = 60+5*worker_number 
+            
+            if dt > stagger_time:
+
                 while os.path.exists(self.lock_file):
                     time.sleep(1)
 
-            # Write the lock file so another processing cant write to the audit history yet
-            with open(self.lock_file, "w") as lock_file:
-                lock_file.write("locked")
-            """
+                # Write the lock file so another processing cant write to the audit history yet
+                os.system(f"echo locked > {self.lock_file}")
 
-            # Write the history and remove the lock
-            self.history.to_csv(self.audit_history,index=False)
-            #os.remove(self.lock_file)
+                # Read in the latest audit history
+                self.history = PD.read_csv(self.audit_history)
 
+                # Write the current history for this process to the audit history file
+                results_DF   = PD.DataFrame(np.array(output),columns=self.history.columns)
+                self.history = PD.concat([self.history,results_DF],ignore_index=True)
+                self.history.to_csv(self.audit_history,index=False)
+
+                # Update the current process's outputs and stagger time
+                start_time = time.time()
+                output     = []
+
+                # Release the lock file in case any other process is waiting
+                os.remove(self.lock_file)
+                        
+
+        return np.array(output)
 
 if __name__ == '__main__':
     
