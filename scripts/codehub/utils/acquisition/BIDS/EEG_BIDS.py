@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import pandas as PD
 from os import path
+from sys import exit
 from time import sleep
 
 # Locate import
@@ -15,6 +16,9 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 def get_proposal_subnums(args,input_data):
+
+    print(input_data)
+    exit()
 
     files = glob.glob(args.bidsroot+'sub-*')
     if len(files) > 0:
@@ -57,7 +61,8 @@ if __name__ == '__main__':
     other_group = parser.add_argument_group('Other options')
     other_group.add_argument("--inputs_file", type=str, help="Optional file of input datasets to (download and) turn into BIDS.")
     other_group.add_argument("--subject_file", type=str, default='subject_map.csv', help="File mapping subject id to ieeg file. (Defaults to bidroot+'subject_map.csv)")
-    other_group.add_argument("--uid", default=0, type=str, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
+    other_group.add_argument("--uid", default=0, type=int, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
+    other_group.add_argument("--subnum", default=0, type=int, help="Subject number to use for the bids folders.")
     other_group.add_argument("--target", default=None, type=str, help="Target value to associate with single subject inputs. (i.e. epilepsy vs. pnes)")
     other_group.add_argument("--multithread", action='store_true', default=False, help="Multithreaded download.")
     other_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
@@ -72,11 +77,11 @@ if __name__ == '__main__':
         args.bidsroot += '/'
 
     # Input data array generation
-    incols = ['uid','orig_filename','start','duration','target']
+    incols = ['orig_filename','uid','subject_number','start','duration','target']
     if args.cli:
-        input_data  = PD.DataFrame([[args.uid,args.dataset,args.start,args.duration,args.target]],columns=incols)
+        input_data  = PD.DataFrame([[args.dataset,args.uid,args.subnum,args.start,args.duration,args.target]],columns=incols)
     elif args.annotations:
-        input_data  = PD.DataFrame([[args.uid,args.dataset,-1,-1,args.target]],columns=incols)
+        input_data  = PD.DataFrame([[args.dataset,args.uid,args.subnum,-1,-1,args.target]],columns=incols)
     
     # Use input file if provided. Cleanup if missing columns
     if args.inputs_file != None:
