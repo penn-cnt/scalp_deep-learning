@@ -21,24 +21,33 @@ import numpy as np
 import pandas as PD
 from tqdm import tqdm
 import multiprocessing
-from pyedflib.highlevel import read_edf_header
 
-# Import the add on classes
-from modules.addons.project_handler import *
-from modules.addons.data_loader import *
-from modules.addons.channel_clean import *
-from modules.addons.channel_mapping import *
-from modules.addons.channel_montage import *
-from modules.addons.preprocessing import *
-from modules.addons.features import *
+# Core imports
+from components.core.internal.target_loader import *
+from components.core.internal.output_manager import *
+from components.core.internal.dataframe_manager import *
 
-# Import the core classes
-from modules.core.metadata_handler import *
-from modules.core.target_loader import *
-from modules.core.dataframe_manager import *
-from modules.core.output_manager import *
-from modules.core.data_viability import *
+# Curation imports
+from components.curation.public.data_loader import *
+from components.curation.internal.data_curation import *
 
+# Feature imports
+from components.features.public.features import *
+
+# Metadata imports
+from components.metadata.public.metadata_handler import *
+
+# Validation imports
+from components.validation.public.data_viability import *
+
+# Workflow imports
+from components.workflows.public.preprocessing import *
+from components.workflows.public.channel_clean import *
+from components.workflows.public.channel_mapping import *
+from components.workflows.public.channel_montage import *
+from components.workflows.public.project_handler import *
+
+# Import the configuration maker
 from configs.makeconfigs import *
 
 class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
@@ -68,11 +77,24 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         # Initialize the output list so it can be updated with each file
         output_manager.__init__(self)
         
+        ##############################################
+        ##### Start the actual project workflows #####
+        ##############################################
+
         # File management
         project_handlers.file_manager(self)
 
         # Select valid data slices
         data_viability.__init__(self)
+
+        # Consolidate the metadata for failed chunks and successful chunks, and squeeze the successful object to match output list
+        bad_metadata_keys = np.setdiff1d(list(self.metadata.keys()),self.output_meta)
+        if bad_metadata_keys.size > 0:
+            bad_metadata = self.metadata[bad_metadata_keys]
+        else:
+            bad_metadata = {}
+        for idx,ikey in enumerate(self.output_meta):
+            self.metadata[idx] = self.metadata.pop(ikey)
 
         # Pass to feature selection managers
         self.feature_manager()
@@ -80,8 +102,14 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         # Associate targets if requested
         self.target_manager()
 
-        # Save the results
-        output_manager.save_features(self)
+        # In the case that all of the data is removed, skip write step
+        if len(self.metadata.keys()) > 0:
+            
+            # Save the results
+            output_manager.save_features(self)
+
+            if not self.args.skip_clean_save:
+                output_manager.save_output_list(self)
 
     def feature_manager(self):
         """
@@ -100,7 +128,10 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
                 if self.worker_number == 0:
                     sys.stdout.write("\033[H")
                     sys.stdout.flush()
-            features.__init__(self)
+
+            # In the case that all of the data is removed, skip the feature step
+            if len(self.metadata.keys()) > 0:
+                features.__init__(self)
 
     def target_manager(self):
         """
@@ -126,66 +157,6 @@ class CustomFormatter(argparse.HelpFormatter):
 ############################
 ##### Helper Functions #####
 ############################
-
-def test_input_data(args,files,start_times,end_times):
-    
-    # Get the pathing to the excluded data
-    if args.exclude == None:
-        exclude_path = args.outdir+"excluded.txt"
-    else:
-        exclude_path = args.exclude
-
-    # Get the files to use and which to save
-    good_index = []
-    bad_index  = []
-    if os.path.exists(exclude_path):
-        excluded_files = PD.read_csv(exclude_path)['file'].values
-        for idx,ifile in enumerate(files):
-            if ifile not in excluded_files:
-                good_index.append(idx)
-    else:
-        # Confirm that data can be read in properly
-        excluded_files = []
-        for idx,ifile in enumerate(files):
-            DLT  = data_loader_test()
-            flag = DLT.edf_test(ifile)
-            if flag[0]:
-                good_index.append(idx)
-            else:
-                excluded_files.append([ifile,flag[1]])
-        excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
-        if not args.debug:
-            excluded_df.to_csv(exclude_path,index=False)
-    return files[good_index],start_times[good_index],end_times[good_index]
-
-def overlapping_start_times(start, end, step, overlap_frac):
-
-    # Define tracking variables
-    current_time = start
-    start_times  = []
-    end_times    = []
-
-    # Sanity check on step and overlap sizes
-    if overlap_frac >= 1:
-        raise ValueError("--t_overlap must be smaller than --t_window.")
-    else:
-        overlap = overlap_frac*step
-
-    # Loop over the time range using the start, end, and step values. But then backup by windowed overlap as need
-    while current_time <= end:
-        start_times.append(current_time)
-        if (current_time + step) < end:
-            end_times.append(current_time+step)
-        else:
-            end_times.append(end)
-        current_time = current_time + step - overlap
-    start_times = np.array(start_times)
-    end_times   = np.array(end_times)
-
-    # Find edge cases where taking large steps with small offsets means multiple slices that reach the end time
-    limiting_index = np.argwhere(end_times>=end).min()+1
-
-    return start_times[:limiting_index],end_times[:limiting_index]
 
 def make_help_str(idict):
     """
@@ -237,6 +208,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     allowed_montage_help   = make_help_str(allowed_montage_args)
     allowed_input_help     = make_help_str(allowed_input_args)
     allowed_viability_help = make_help_str(allowed_viability_args)
+    allowed_majoraxis_help = make_help_str(allowed_majoraxis_args)
 
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="Simplified data merging tool.", formatter_class=CustomFormatter)
@@ -271,6 +243,9 @@ def argument_handler(argument_dir='./',require_flag=True):
     montage_group = parser.add_argument_group('Montage Options')
     montage_group.add_argument("--montage", type=str,  choices=list(allowed_montage_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_montage_help}")
 
+    orientation_group = parser.add_argument_group('Orientation Options')
+    orientation_group.add_argument("--orientation", type=str,  choices=list(allowed_majoraxis_args.keys()), default="column", help=f"R|Choose an option:\n{allowed_majoraxis_help}")
+
     viability_group = parser.add_argument_group('Data viability Options')
     viability_group.add_argument("--viability", type=str,  choices=list(allowed_viability_args.keys()), default="VIABLE_DATA", help=f"R|Choose an option:\n{allowed_viability_help}")
     viability_group.add_argument("--interp", action='store_true', default=False, help="Interpolate over NaN values of sequence length equal to n_interp.")
@@ -296,7 +271,12 @@ def argument_handler(argument_dir='./',require_flag=True):
     misc_group.add_argument("--input_str", type=str, help="Optional. If glob input, wildcard path. If csv/manual, filepath to input csv/raw data.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
+    misc_group.add_argument("--skip_clean_save", action='store_true', default=False, help="Do not save cleaned up raw data. Mostly useful if you just want features.")
     args = parser.parse_args()
+
+    # Make sure the output directory has a trailing /
+    if args.outdir[-1] != '/':
+        args.outdir += '/'
 
     # Help info if needed to be passed back as an object and not string
     help_info    = {}
@@ -382,84 +362,21 @@ if __name__ == "__main__":
     start_times = np.array(start_times)
     end_times   = np.array(end_times)
 
-    # Get the useable files from the request
-    files, start_times, end_times = test_input_data(args,files,start_times,end_times)
-
-    # Shuffle data to get a better sampling of patients
-    shuffled_index = np.random.permutation(len(files))
-    files          = files[shuffled_index]
-    start_times    = start_times[shuffled_index]
-    end_times      = end_times[shuffled_index]
-
-    # Apply any file offset as needed
-    files       = files[args.n_offset:]
-    start_times = start_times[args.n_offset:]
-    end_times   = end_times[args.n_offset:]
-
-    # Limit file length as needed
-    if args.n_input > 0:
-        files       = files[:args.n_input]
-        start_times = start_times[:args.n_input]
-        end_times   = end_times[:args.n_input]
-
-    # Sort the results so we access any duplicate files (but different read times) in order
-    sorted_index = np.argsort(files)
-    files          = files[sorted_index]
-    start_times    = start_times[sorted_index]
-    end_times      = end_times[sorted_index]
-
-    # Get an approximate subject count
-    subnums = []
-    for ifile in files:
-        regex_match = re.match(r"(\D+)(\d+)", ifile)
-        subnums.append(int(regex_match.group(2)))
-    subcnt = np.unique(subnums).size
-    print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
-
-    # If using a sliding time window, duplicate inputs with the correct inputs
-    if args.t_window != None:
-        new_files = []
-        new_start = []
-        new_end   = []
-        for ifile in files:
-
-            # Read in just the header to get duration
-            if args.t_end == -1:
-                t_end = read_edf_header(ifile)['Duration']
-            else:
-                t_end = args.t_end
-
-            # Get the start time for the windows
-            if args.t_start == None:
-                t_start = 0
-            else:
-                t_start = args.t_start
-
-            for iwindow in args.t_window:
-                
-                # Get the list of windows start and end times
-                windowed_start, windowed_end = overlapping_start_times(t_start,t_end,iwindow,args.t_overlap)
-
-                # Loop over the new entries and tile the input lists as needed
-                for idx,istart in enumerate(windowed_start):
-                    new_files.append(ifile)
-                    new_start.append(istart)
-                    new_end.append(windowed_end[idx])
-        files       = new_files
-        start_times = new_start
-        end_times   = new_end 
+    # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
+    DC                            = data_curation(args,files,start_times,end_times)
+    files, start_times, end_times = DC.get_dataload()
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None and not args.no_preprocess_flag:
-        from modules.addons import preprocessing
+        from components.workflows.public import preprocessing
         dirpath              = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.preprocess_file = dirpath+"preprocessing_"+timestamp+".yaml"
         config_handler       = make_config(preprocessing,args.preprocess_file)
         config_handler.create_config()
     if args.feature_file == None and not args.no_feature_flag:
-        from modules.addons import features
+        from components.features.public import features
         dirpath           = args.outdir+"configs/"
         os.system("mkdir -p %s" %(dirpath))
         args.feature_file = dirpath+"features_"+timestamp+".yaml"
@@ -498,3 +415,6 @@ if __name__ == "__main__":
     else:
         # Run a non parallel version.
         start_analysis(input_parameters, args, 0, None)
+    
+    # Final clean up of the terminal
+    os.system("clear")

@@ -11,21 +11,8 @@ from pyedflib.highlevel import read_edf_header
 # CNT/EEG Specific
 from ieeg.auth import Session
 
-# Import the add on classes
-from modules.addons.data_loader import *
-from modules.addons.channel_clean import *
-from modules.addons.channel_mapping import *
-from modules.addons.channel_montage import *
-from modules.addons.preprocessing import *
-from modules.addons.features import *
-
-# Import the core classes
-from modules.core.metadata_handler import *
-from modules.core.target_loader import *
-from modules.core.dataframe_manager import *
-from modules.core.output_manager import *
-from modules.core.data_viability import *
-from modules.core.data_stream import *
+# Component imports
+from components.metadata.public.metadata_handler import *
 
 class data_loader_test:
 
@@ -80,13 +67,13 @@ class data_loader:
             metadata_handler.set_sampling_frequency(self,sample_frequency)
 
             # Get the rawdata
-            self.raw_dataslice(sample_frequency,majoraxis='column')
+            self.raw_dataslice(sample_frequency,majoraxis=self.args.orientation)
 
             return True
         else:
             return False
 
-    def direct_inputs(self,infile,filetype,ssh_host=None,ssh_username=None):
+    def direct_inputs(self,infile,filetype,ssh_host=None,ssh_username=None,majoraxis='column'):
         """
         Method for loading data directly outside of the pipeline environment.
 
@@ -104,10 +91,17 @@ class data_loader:
         self.ssh_host     = ssh_host
         self.ssh_username = ssh_username
 
+        # Check for valid major axis
+        if majoraxis.lower() not in ['row','column']:
+            raise ValueError(f"Invalid majoraxis {majoraxis}. Please select 'column' or 'row'.")
+
         # Try to load data
         flag = self.data_loader_logic(filetype)
 
         if flag:
+            if majoraxis == 'row':
+                self.indata = self.indata.T
+
             sample_frequency = np.array([self.sfreq for ichannel in self.channel_metadata])
             return PD.DataFrame(self.indata,columns=self.channels),sample_frequency[0]
         else:
@@ -132,19 +126,21 @@ class data_loader:
 
             # Calculate the index of the end
             if self.t_end == -1:
-                samp_end = int(len(self.indata[ii]))
+                if majoraxis.lower() == 'column':
+                    samp_end = int(len(self.indata[:,ii]))
+                elif majoraxis.lower() == 'row':
+                    samp_end = int(len(self.indata[ii]))
             else:
                 samp_end = int(isamp*self.t_end)
 
-            if majoraxis == 'column':
+            if majoraxis.lower() == 'column':
                 self.raw_data.append(self.indata[samp_start:samp_end,ii])
-            elif majoraxis == 'row':
+            elif majoraxis.lower() == 'row':
                 self.raw_data.append(self.indata[ii][samp_start:samp_end])
 
         # Get the underlying data shapes
         self.ncol = len(self.raw_data)
-        self.nrow = max([ival.size for ival in self.raw_data])        
-
+        self.nrow = max([ival.size for ival in self.raw_data])
 
     ###################################
     #### User Provided Logic Below ####

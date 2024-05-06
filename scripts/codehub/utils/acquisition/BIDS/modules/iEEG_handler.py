@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as PD
 from os import path
+from sys import exit
 from tqdm import tqdm
 from time import sleep
 from ieeg.auth import Session
@@ -14,6 +15,7 @@ from modules.BIDS_handler import BIDS_handler
 # Allows us to catch ieeg api errors
 import ieeg.ieeg_api as IIA
 from requests.exceptions import ReadTimeout as RTIMEOUT
+from pandas.errors import EmptyDataError
 
 # API timeout class
 import signal
@@ -44,11 +46,12 @@ class Timeout:
 
 class iEEG_download(BIDS_handler):
 
-    def __init__(self, args, write_lock):
+    def __init__(self, args, read_lock, write_lock):
         
         # Store variables based on input params
         self.args           = args
         self.subject_path   = args.bidsroot+args.subject_file
+        self.read_lock      = read_lock
         self.write_lock     = write_lock
 
         # Hard coded variables based on ieeg api
@@ -56,6 +59,21 @@ class iEEG_download(BIDS_handler):
         self.global_timeout = 60
         self.clip_layer     = 'EEG clip times'
         self.natus_layer    = 'Imported Natus ENT annotations'
+
+        # Get list of files to skip that already exist locally
+        if path.exists(self.subject_path):
+            if self.read_lock != None:
+                with self.read_lock:
+                    self.subject_cache      = PD.read_csv(self.subject_path)
+                    self.processed_files    = self.subject_cache['orig_filename'].values
+                    self.processed_start    = self.subject_cache['start'].values
+            else:
+                self.subject_cache      = PD.read_csv(self.subject_path)
+                self.processed_files    = self.subject_cache['orig_filename'].values
+                self.processed_start    = self.subject_cache['start'].values
+        else:
+            self.processed_files    = []
+            self.processed_start    = []
 
     def reset_variables(self):
             # Delete all variables in the object's namespace
@@ -144,11 +162,19 @@ class iEEG_download(BIDS_handler):
         if self.success_flag == True:
             BIDS_handler.__init__(self)
             for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
-                self.session_method_handler(istart, self.clip_durations[idx])
-                if self.success_flag == True:
-                    BIDS_handler.get_channel_type(self)
-                    BIDS_handler.make_info(self)
-                    BIDS_handler.add_raw(self)
+
+                # Check if this combo has already been processed before
+                pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
+                if pinds.any():
+                    self.raws.append("SKIP")
+                    print(f"Skipping {self.current_file} annotation at {istart}.")
+                else:
+                    print(f"Downloading {self.current_file} annotation at {istart}")
+                    self.session_method_handler(istart, self.clip_durations[idx])
+                    if self.success_flag == True:
+                        BIDS_handler.get_channel_type(self)
+                        BIDS_handler.make_info(self)
+                        BIDS_handler.add_raw(self)
 
         # Save the bids files if we have any data
         try:
@@ -258,18 +284,9 @@ class ieeg_handler:
         self.durations    = input_data['duration'].values
         self.proposed_sub = input_data['proposed_subnum'].values
 
-        # Get list of files to skip that already exist locally
-        subject_path = self.args.bidsroot+self.args.subject_file
-        if path.exists(subject_path):
-            self.subject_cache   = PD.read_csv(subject_path)
-            self.processed_files = self.subject_cache['orig_filename'].values
-            self.processed_times = self.subject_cache['times'].values
-        else:
-            self.processed_files = []
-            self.processed_times = []
-
     def single_pull(self):
 
+        self.read_lock  = None
         self.write_lock = None
         file_indices    = np.array(range(self.input_files.size))
         self.pull_data(file_indices)
@@ -277,6 +294,7 @@ class ieeg_handler:
     def multicore_pull(self):
 
         # Make a multiprocess lock
+        self.read_lock  = multiprocessing.Lock()
         self.write_lock = multiprocessing.Lock()
 
         # Make the BIDS root data structure with a single core to avoid top-level directory issues
@@ -308,39 +326,19 @@ class ieeg_handler:
     def pull_data(self,file_indices):
 
         # Loop over files
-        IEEG = iEEG_download(self.args,self.write_lock)
+        IEEG = iEEG_download(self.args,self.read_lock,self.write_lock)
         for file_idx in file_indices:
 
             # Get the current file
-            ifile = self.input_files[file_idx]
-
-            # Make sure the data exists or not
-            runflag = True
-            pinds   = (self.processed_files==ifile)
+            ifile  = self.input_files[file_idx]
+            iid    = self.input_data['uid'].values[file_idx]
+            target = self.input_data['target'].values[file_idx]
             try:
-                if pinds.any():
-                    times = self.processed_times[pinds]
-                    if self.args.annotations:
-                        if (times=='annots').any():
-                            runflag = False
-                    else:
-                        itime = f"{self.args.start}_{self.args.duration}"
-                        if (times==itime).any():
-                            runflag = False
-            except (IndexError, AttributeError):
-                pass
-
-            if runflag:
-                if not self.args.multithread:
-                    print("Downloading %s. (%04d/%04d)" %(ifile,file_idx+1,self.input_files.size))
-                else:
-                    print(f"Downloading {ifile}.")
-                iid    = self.input_data['uid'].values[file_idx]
-                target = self.input_data['target'].values[file_idx]
                 if self.args.annotations:
                     IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                    IEEG = iEEG_download(self.args,self.write_lock)
+                    IEEG = iEEG_download(self.args,self.read_lock,self.write_lock)
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
-            else:
-                print("Skipping %s." %(ifile))
+            except:
+                pass
+

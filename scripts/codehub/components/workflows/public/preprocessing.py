@@ -17,17 +17,21 @@ from scipy.signal import resample_poly, butter, filtfilt
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import PathCompleter
 
-# Local imports
-from modules.core.config_loader import *
-from modules.core.error_logging import *
+# Import error logging (primarily for mne)
+from components.core.internal.error_logging import *
+from components.core.internal.config_loader import *
+
+# In some cases, we want variables to persist through steps. (i.e. A solver, fitting class, disk i/o, etc.) Persistance_dict can store results across steps.
+global persistance_dict
+persistance_dict = {}
 
 class mne_processing:
 
-    def __init__(self,dataset,fs,mne_channels):
+    def __init__(self,dataset,fs,mne_channels,fname):
         """
         MNE Initilization
 
-        Args:
+        Args: 
             dataset (_type_): _description_
             fs (_type_): _description_
             mne_channels (_type_): _description_
@@ -40,12 +44,18 @@ class mne_processing:
         self.ppchannels   = list(dataset.columns)
         self.mne_channels = mne_channels
         self.errors       = []
-        
+
         # Make sure that all of the frequencies match for mne
         if len(np.unique(fs)) == 1:
             self.fs = np.unique(fs)[0]
         else:
             raise IndexError("MNE Processing requires that all sampling frequencies match. Please check input data or downsampling arguments.")
+
+    def make_montage_object(self,config_path):
+
+        #Create the mne channel types
+        mapping = yaml.safe_load(open(config_path,'r'))
+        persistance_dict['mne_mapping'] = mapping
 
     @silence_mne_warnings
     def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
@@ -74,7 +84,9 @@ class mne_processing:
                 raise FileNotFoundError("No valid MNE channel configuration file provided. Quitting.")
 
         # Get the channel mappings in mne compliant form
-        mapping      = yaml.safe_load(open(config_path,'r'))
+        if 'mne_mspping' not in persistance_dict.keys():
+            self.make_montage_object(config_path)
+        mapping      = persistance_dict['mne_mapping']
         mapping_keys = list(mapping.keys())
         ch_types     = []
         for ichannel in self.ppchannels:
@@ -83,14 +95,15 @@ class mne_processing:
             else:
                 ch_types.append('eeg')
 
-        # Create the mne object
+        # Create the mne montage
         info         = mne.create_info(self.ppchannels, self.fs, ch_types=ch_types,verbose=False)
-        raw          = mne.io.RawArray(self.dataset.T, info,verbose=False)
         montage      = mne.channels.make_standard_montage("standard_1020")
         mne_chan_map = dict(zip(montage.ch_names,self.mne_channels))
         montage.rename_channels(mne_chan_map)
+        persistance_dict['mne_montage'] = (info,montage)
 
-        # Set the montages
+        # Create the raw mne object and set the montages
+        raw = mne.io.RawArray(self.dataset.T, info,verbose=False)
         raw.set_montage(montage)
 
         # Create the ICA object and fit
@@ -165,10 +178,12 @@ class signal_processing:
 
         """
 
-        if filter_type in ["bandpass","bandstop"]:
+        keyname = f"butterworth_{butterorder}_{freq_filter_array}_{filter_type}_{self.fs}"
+        try:
+            bandpass_b,bandpass_a = persistance_dict[keyname]
+        except KeyError:
             bandpass_b, bandpass_a = butter(butterorder,freq_filter_array, btype=filter_type, fs=self.fs)
-        elif filter_type in ["lowpass","highpass"]:
-            bandpass_b, bandpass_a = butter(butterorder,freq_filter_array, btype=filter_type, fs=self.fs)
+            persistance_dict[keyname] = (bandpass_b,bandpass_a)
             
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
 
@@ -360,9 +375,13 @@ class preprocessing:
                         for ichannel in range(dataset.shape[1]):
 
                             # Perform preprocessing step
-                            namespace           = cls(dataset.values[:,ichannel],fs[ichannel])
-                            method_call         = getattr(namespace,method_name)
-                            output.append(method_call(**method_args))
+                            try:
+                                namespace           = cls(dataset.values[:,ichannel],fs[ichannel])
+                                method_call         = getattr(namespace,method_name)
+                                output.append(method_call(**method_args))
+                            except:
+                                # We need a flexible solution to errors, so just populating a nan array to be caught by the data validator
+                                output.append(np.nan*np.ones(dataset.shape[0]))
 
                             # Store the new frequencies if downsampling
                             if method_name == 'frequency_downsample':
@@ -370,6 +389,7 @@ class preprocessing:
                                 output_fs = method_args['output_hz']
                                 if input_fs == None or input_fs == output_fs:
                                     self.metadata[self.file_cntr]['fs'][ichannel] = output_fs
+                                fs = self.metadata[self.file_cntr]['fs']
 
                         # Recreate the dataframe
                         dataset = PD.DataFrame(np.column_stack(output),columns=dataset.columns)
@@ -379,8 +399,15 @@ class preprocessing:
                         method_call = getattr(PU,method_name)
                         method_call(**method_args)
                     elif cls.__name__ == 'mne_processing':
-                        MP = mne_processing(dataset,fs,self.mne_channels)
-                        method_call = getattr(MP,method_name)
-                        dataset     = method_call(**method_args)
+                        
+                        try:
+                            # MNE requires special handling, so we send it the mne channels object (and filename for debugging)
+                            fname       = self.metadata[self.file_cntr]['file']
+                            MP          = mne_processing(dataset,fs,self.mne_channels,fname)
+                            method_call = getattr(MP,method_name)
+                            dataset     = method_call(**method_args)
+                        except Exception as e:
+                            print(f"MNE Error {e}")
+                            dataset *= np.nan
         return dataset
 
