@@ -46,12 +46,12 @@ class Timeout:
 
 class iEEG_download(BIDS_handler):
 
-    def __init__(self, args):
+    def __init__(self, args, semaphore):
         
         # Store variables based on input params
         self.args           = args
         self.subject_path   = args.bidsroot+args.subject_file
-        self.lock_file      = args.bidsroot+args.subject_file+'.lock'
+        self.semaphore      = semaphore
 
         # Hard coded variables based on ieeg api
         self.n_retry        = 3
@@ -61,13 +61,9 @@ class iEEG_download(BIDS_handler):
 
         # Get list of files to skip that already exist locally
         if path.exists(self.subject_path):
-            
-            # Check if new data is being added to the subject path, wait until it is closed for reading
-            while path.exists(self.lock_file):
-                sleep(0.25)
-
             # Read in the subject information
-            self.subject_cache      = PD.read_csv(self.subject_path)
+            with self.semaphore:
+                self.subject_cache      = PD.read_csv(self.subject_path)
             self.processed_files    = self.subject_cache['orig_filename'].values
             self.processed_start    = self.subject_cache['start'].values
         else:
@@ -145,7 +141,7 @@ class iEEG_download(BIDS_handler):
             print(e)
             pass
 
-    def download_by_annotation(self, uid, file, target, proposed_sub):
+    def download_by_annotation(self, uid, file, target, proposed_sub, semaphore):
 
         # Store the ieeg filename
         self.uid          = uid
@@ -181,9 +177,9 @@ class iEEG_download(BIDS_handler):
         try:
             if len(self.raws) > 0:
                 BIDS_handler.event_mapper(self)
-                BIDS_handler.save_bids(self)
+                BIDS_handler.save_bids(self,semaphore)
         except AttributeError as e:
-            pass
+            print(f"Download error {e}")
 
     def session_method_handler(self,start,duration,annotation_flag=False):
         """
@@ -287,13 +283,20 @@ class ieeg_handler:
 
     def single_pull(self):
 
+        # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
+        semaphore = multiprocessing.Semaphore(1)
+
+        # Grab all the file indices to pass to the data pulling manager
         file_indices = np.array(range(self.input_files.size))
-        self.pull_data(file_indices)
+        self.pull_data(file_indices,semaphore)
 
     def multicore_pull(self):
 
+        # Add a sempahore to allow orderly file access
+        semaphore = multiprocessing.Semaphore(1)
+
         # Make the BIDS root data structure with a single core to avoid top-level directory issues
-        self.pull_data(np.array([0]))
+        self.pull_data(np.array([0]),semaphore)
 
         # Calculate the size of each subset based on the number of processes
         file_indices = np.array(range(self.input_files.size-1))+1
@@ -310,7 +313,7 @@ class ieeg_handler:
 
         processes = []
         for data_chunk in list_subsets:
-            process = multiprocessing.Process(target=self.pull_data, args=(np.array([data_chunk])))
+            process = multiprocessing.Process(target=self.pull_data, args=(np.array([data_chunk]),semaphore))
             processes.append(process)
             process.start()
         
@@ -318,29 +321,23 @@ class ieeg_handler:
         for process in processes:
             process.join()
 
-    def pull_data(self,file_indices):
+    def pull_data(self,file_indices,semaphore):
 
         # Loop over files
-        efile = "error.lock"
-        IEEG = iEEG_download(self.args)
+        IEEG = iEEG_download(self.args,semaphore)
         for file_idx in file_indices:
 
-            try:
-                if not path.exists(efile):
-                    # Get the current file
-                    ifile  = self.input_files[file_idx]
-                    iid    = self.input_data['uid'].values[file_idx]
-                    target = self.input_data['target'].values[file_idx]
+            # Get the current file
+            ifile  = self.input_files[file_idx]
+            iid    = self.input_data['uid'].values[file_idx]
+            target = self.input_data['target'].values[file_idx]
 
-                    if self.args.annotations:
-                        IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                        IEEG = iEEG_download(self.args)
-                    else:
-                        IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
-                else:
-                    exit()
-            except Exception as e:
-                system(f"echo locked > {efile}")
-        
+            if self.args.annotations:
+                IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
+                IEEG = iEEG_download(self.args)
+            else:
+                IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
+
+
 
 
