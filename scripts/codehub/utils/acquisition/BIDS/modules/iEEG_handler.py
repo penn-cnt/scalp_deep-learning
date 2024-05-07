@@ -303,9 +303,6 @@ class ieeg_handler:
         subset_size  = (file_indices.size) // self.args.ncpu
         list_subsets = [file_indices[i:i + subset_size] for i in range(0, file_indices.size, subset_size)]
 
-        print(list_subsets)
-        exit()
-
         # Handle leftovers
         if len(list_subsets) > self.args.ncpu:
             arr_ncpu  = list_subsets[self.args.ncpu-1]
@@ -313,6 +310,9 @@ class ieeg_handler:
 
             list_subsets[self.args.ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
             list_subsets.pop(-1)
+
+        print(list_subsets)
+        exit()
 
         processes = []
         for data_chunk in list_subsets:
