@@ -15,25 +15,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
-def get_proposal_subnums(args,input_data):
-
-    print(input_data)
-    exit()
-
-    files = glob.glob(args.bidsroot+'sub-*')
-    if len(files) > 0:
-        existing_subnums = np.array([int(ifile.split('sub-')[-1]) for ifile in files])
-    else:
-        existing_subnums = np.array([0])
-    uuid            = np.unique(input_data['uid'].values)
-    uuid_sub        = np.arange(uuid.size+existing_subnums.max())+1
-    uuid_sub        = np.setdiff1d(uuid_sub,existing_subnums)[:uuid.size]
-    subject_mapping = dict(zip(uuid.ravel(),uuid_sub.ravel()))
-    subject_array   = [subject_mapping[ival] for ival in input_data['uid'].values]
-    input_data['proposed_subnum'] = subject_array
-    
-    return input_data
-
 if __name__ == '__main__':
 
     # Command line options needed to obtain data.
@@ -96,9 +77,6 @@ if __name__ == '__main__':
             input_data[icol] = PD.to_numeric(input_data[icol],downcast='float')
         except ValueError:
             pass
-
-    # Get the proposed subnums
-    input_data = get_proposal_subnums(args,input_data)
 
     # If iEEG.org, pass inputs to that handler to get the data
     if args.ieeg:

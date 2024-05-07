@@ -33,11 +33,10 @@ class BIDS_handler:
         if not path.exists(self.subject_path):
             subject_uid_df = PD.DataFrame(np.empty((1,3)),columns=['iEEG file','uid','subject_number'])
         else:
-            if self.read_lock != None:
-                with self.read_lock:
-                    subject_uid_df = PD.read_csv(self.subject_path)
-            else:
-                subject_uid_df = PD.read_csv(self.subject_path)
+            # Check if new data is being added to the subject path, wait until it is closed for reading
+            while path.exists(self.lock_file):
+                sleep(0.25)
+            subject_uid_df = PD.read_csv(self.subject_path)
 
         # Check if we already have this subject
         uids = subject_uid_df['uid'].values
@@ -212,15 +211,19 @@ class BIDS_handler:
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()
         else:
+            # Check if new data is being added to the subject path, wait until it is closed for reading
+            while path.exists(self.lock_file):
+                sleep(0.25)
+
             subject_DF = PD.read_csv(self.subject_path)
             subject_DF = PD.concat((subject_DF,iDF))
         subject_DF['subject_number'] = subject_DF['subject_number'].astype(str).str.zfill(4)
         subject_DF['session_number'] = subject_DF['session_number'].astype(str).str.zfill(4)
         subject_DF                   = subject_DF.drop_duplicates()
 
-        # Only write files one at a time
-        if self.write_lock != None:
-            with self.write_lock:
-                subject_DF.to_csv(self.subject_path,index=False)
-        else:
-            subject_DF.to_csv(self.subject_path,index=False)
+        # Check if new data is being added to the subject path, wait until it is closed for reading
+        while path.exists(self.lock_file):
+            sleep(0.25)
+        os.system(f"echo locked > {self.lock_file}")
+        subject_DF.to_csv(self.subject_path,index=False)
+        os.remove(self.lock_file)
