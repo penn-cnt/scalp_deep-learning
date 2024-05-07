@@ -328,13 +328,11 @@ class ieeg_handler:
             ifile  = self.input_files[file_idx]
             iid    = self.input_data['uid'].values[file_idx]
             target = self.input_data['target'].values[file_idx]
-            try:
-                if self.args.annotations:
-                    IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                    IEEG = iEEG_download(self.args)
-                else:
-                    IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
-            except Exception as e:
-                print(f"Encountered error {e}")
-                exit()
+
+            if self.args.annotations:
+                IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
+                IEEG = iEEG_download(self.args)
+            else:
+                IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
+
 
