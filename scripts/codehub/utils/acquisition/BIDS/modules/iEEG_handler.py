@@ -321,18 +321,26 @@ class ieeg_handler:
     def pull_data(self,file_indices):
 
         # Loop over files
+        efile = "error.lock"
         IEEG = iEEG_download(self.args)
         for file_idx in file_indices:
 
-            # Get the current file
-            ifile  = self.input_files[file_idx]
-            iid    = self.input_data['uid'].values[file_idx]
-            target = self.input_data['target'].values[file_idx]
+            try:
+                if not path.exists(efile):
+                    # Get the current file
+                    ifile  = self.input_files[file_idx]
+                    iid    = self.input_data['uid'].values[file_idx]
+                    target = self.input_data['target'].values[file_idx]
 
-            if self.args.annotations:
-                IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                IEEG = iEEG_download(self.args)
-            else:
-                IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
+                    if self.args.annotations:
+                        IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
+                        IEEG = iEEG_download(self.args)
+                    else:
+                        IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
+                else:
+                    exit()
+            except:
+                os.system(f"echo locked>{efile}")
+        
 
 
