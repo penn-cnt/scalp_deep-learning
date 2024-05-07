@@ -1,3 +1,4 @@
+import os
 import re
 import mne
 import glob
@@ -146,7 +147,7 @@ class BIDS_handler:
                 target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc)}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
-            except NameError:
+            except Exception as e:
 
                 print(f"Annotation save error {e}")
                 exit()
