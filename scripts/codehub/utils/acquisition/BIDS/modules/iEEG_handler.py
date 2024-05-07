@@ -311,9 +311,7 @@ class ieeg_handler:
             list_subsets[self.args.ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
             list_subsets.pop(-1)
 
-        print(file_indices)
-        print(self.input_files)
-        print(self.input_files.size)
+        print(list_subsets)
         exit()
 
         processes = []
