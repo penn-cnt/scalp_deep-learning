@@ -9,6 +9,7 @@ import numpy as np
 import pandas as PD
 from os import path
 from sys import exit
+from time import sleep
 from datetime import date
 from mne_bids import BIDSPath, write_raw_bids
 
