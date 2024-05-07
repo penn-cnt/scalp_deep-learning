@@ -314,6 +314,7 @@ class ieeg_handler:
             list_subsets.pop(-1)
 
         print(list_subsets)
+        print(file_indices.size,self.args.ncpu,subset_size)
         exit()
 
         processes = []
