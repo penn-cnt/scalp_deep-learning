@@ -135,9 +135,6 @@ class BIDS_handler:
                 session_str    = "%s%03d" %(self.args.session,self.session_number)
                 self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
 
-                # Update lookup table
-                self.create_lookup(idx)
-
                 # Save the bids data
                 write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False,overwrite=True)
 
@@ -146,15 +143,18 @@ class BIDS_handler:
                 target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc)}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
+                # Update lookup table
+                self.create_lookup(idx)
+
             except Exception as e:
 
                 print(f"Annotation save error {e}")
-                exit()
 
                 # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
                 pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
-
+                self.create_lookup(idx)
+                
     def direct_save(self,idx,raw):
 
         # Save the edf in bids format
