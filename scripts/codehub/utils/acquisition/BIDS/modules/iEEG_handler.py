@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as PD
-from os import path
 from sys import exit
 from tqdm import tqdm
 from time import sleep
+from os import path,system
 from ieeg.auth import Session
 
 # Multicore support
@@ -339,8 +339,8 @@ class ieeg_handler:
                         IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
                 else:
                     exit()
-            except:
-                os.system(f"echo locked>{efile}")
+            except Exception as e:
+                system(f"echo locked > {efile}")
         
 
 
