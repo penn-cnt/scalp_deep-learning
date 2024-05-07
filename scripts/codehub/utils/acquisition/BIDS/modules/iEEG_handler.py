@@ -332,8 +332,6 @@ class ieeg_handler:
             iid    = self.input_data['uid'].values[file_idx]
             target = self.input_data['target'].values[file_idx]
 
-            print(f"++++{file_idx,file_indices}+++")
-
             if self.args.annotations:
                 IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
                 IEEG = iEEG_download(self.args,semaphore)
