@@ -303,6 +303,9 @@ class ieeg_handler:
         subset_size  = (file_indices.size) // self.args.ncpu
         list_subsets = [file_indices[i:i + subset_size] for i in range(0, file_indices.size, subset_size)]
 
+        print(list_subsets)
+        exit()
+
         # Handle leftovers
         if len(list_subsets) > self.args.ncpu:
             arr_ncpu  = list_subsets[self.args.ncpu-1]
