@@ -138,7 +138,8 @@ class iEEG_download(BIDS_handler):
             if len(self.raws) > 0:
                 BIDS_handler.save_bids(self)
         except AttributeError as e:
-            print(e)
+            if self.args.debug:
+                print(f"Save error {e}")
             pass
 
     def download_by_annotation(self, uid, file, target, proposed_sub):
@@ -179,7 +180,8 @@ class iEEG_download(BIDS_handler):
                 BIDS_handler.event_mapper(self)
                 BIDS_handler.save_bids(self)
         except AttributeError as e:
-            print(f"Download error {e}")
+            if self.args.debug:
+                print(f"Download error {e}")
 
     def session_method_handler(self,start,duration,annotation_flag=False):
         """
@@ -203,7 +205,8 @@ class iEEG_download(BIDS_handler):
                         sleep(5)
                         n_attempts += 1
                     else:
-                        print(f"Connection Error: {e}")
+                        if self.args.debug:
+                            print(f"Connection Error: {e}")
                         self.success_flag = False
                         fp = open(self.args.bidsroot+self.args.failure_file,"a")
                         fp.write(f"{self.uid},{self.current_file},{start},{duration},{self.target},'{e}'\n")

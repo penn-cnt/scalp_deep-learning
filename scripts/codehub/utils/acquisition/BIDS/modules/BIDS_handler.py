@@ -148,13 +148,14 @@ class BIDS_handler:
 
             except Exception as e:
 
-                print(f"Annotation save error {e}")
+                if self.args.debug:
+                    print(f"Annotation save error {e}")
 
                 # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
                 pickle.dump((raw,events,self.event_mapping),open(error_path,"wb"))
                 self.create_lookup(idx)
-                
+
     def direct_save(self,idx,raw):
 
         # Save the edf in bids format
