@@ -166,9 +166,11 @@ class iEEG_download(BIDS_handler):
                 pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
                 if pinds.any():
                     self.raws.append("SKIP")
-                    print(f"Skipping {self.current_file} annotation at {istart}.")
+                    if self.args.multithread:
+                        print(f"Skipping {self.current_file} annotation at {istart}.")
                 else:
-                    print(f"Downloading {self.current_file} annotation at {istart}")
+                    if self.args.multithread:
+                        print(f"Downloading {self.current_file} annotation at {istart}")
                     self.session_method_handler(istart, self.clip_durations[idx])
                     if self.success_flag == True:
                         BIDS_handler.get_channel_type(self)
@@ -205,7 +207,7 @@ class iEEG_download(BIDS_handler):
                         sleep(5)
                         n_attempts += 1
                     else:
-                        print(f"Error: {e}")
+                        print(f"Connection Error: {e}")
                         self.success_flag = False
                         fp = open(self.args.bidsroot+self.args.failure_file,"a")
                         fp.write(f"{self.uid},{self.current_file},{start},{duration},{self.target},'{e}'\n")
