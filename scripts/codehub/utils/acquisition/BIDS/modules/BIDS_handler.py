@@ -228,6 +228,8 @@ class BIDS_handler:
         # Check if new data is being added to the subject path, wait until it is closed for reading
         while path.exists(self.lock_file):
             sleep(0.25)
+            exit()
         os.system(f"echo locked > {self.lock_file}")
+        exit()
         subject_DF.to_csv(self.subject_path,index=False)
         os.remove(self.lock_file)
