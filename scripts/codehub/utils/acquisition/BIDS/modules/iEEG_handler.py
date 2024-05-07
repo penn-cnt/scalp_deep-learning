@@ -301,20 +301,14 @@ class ieeg_handler:
         # Calculate the size of each subset based on the number of processes
         file_indices = np.array(range(self.input_files.size-1))+1
         subset_size  = (file_indices.size) // self.args.ncpu
-        list_subsets = [file_indices[i:i + subset_size] for i in range(0, file_indices.size, subset_size)]
-
-        print(list_subsets)
+        list_subsets = [file_indices[i:i + subset_size] for i in range(0, self.args.ncpu*subset_size, subset_size)]
 
         # Handle leftovers
-        if len(list_subsets) > self.args.ncpu:
-            arr_ncpu  = list_subsets[self.args.ncpu-1]
-            arr_ncpu1 = list_subsets[self.args.ncpu]
-
-            list_subsets[self.args.ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
-            list_subsets.pop(-1)
-
+        remainder = file_indices[self.args.ncpu*subset_size:]
+        for idx,ival in enumerate(remainder):
+            list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
+        
         print(list_subsets)
-        print(file_indices.size,self.args.ncpu,subset_size)
         exit()
 
         processes = []
