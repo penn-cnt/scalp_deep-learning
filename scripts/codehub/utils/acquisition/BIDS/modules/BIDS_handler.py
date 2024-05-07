@@ -139,14 +139,17 @@ class BIDS_handler:
                 self.create_lookup(idx)
 
                 # Save the bids data
-                write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False,overwrite=True)
+                write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
                 # Save the targets with the edf path paired up to filetype
                 target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
                 target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc)}
                 pickle.dump(target_dict,open(target_path,"wb"))
 
-            except:
+            except NameError:
+
+                print(f"Annotation save error {e}")
+                exit()
 
                 # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                 error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'

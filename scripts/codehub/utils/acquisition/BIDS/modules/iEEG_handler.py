@@ -283,12 +283,9 @@ class ieeg_handler:
         self.durations    = input_data['duration'].values
         self.proposed_sub = input_data['subject_number'].values
 
-        print(self.proposed_sub)
-        exit()
-
     def single_pull(self):
 
-        file_indices    = np.array(range(self.input_files.size))
+        file_indices = np.array(range(self.input_files.size))
         self.pull_data(file_indices)
 
     def multicore_pull(self):
@@ -335,6 +332,7 @@ class ieeg_handler:
                     IEEG = iEEG_download(self.args)
                 else:
                     IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
-            except:
-                pass
+            except Exception as e:
+                print(f"Encountered error {e}")
+                exit()
 
