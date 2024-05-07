@@ -333,6 +333,7 @@ class ieeg_handler:
             target = self.input_data['target'].values[file_idx]
 
             print(f"++++{ifile}+++")
+            exit()
 
             if self.args.annotations:
                 IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
