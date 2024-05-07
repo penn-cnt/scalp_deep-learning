@@ -312,6 +312,7 @@ class ieeg_handler:
             list_subsets.pop(-1)
 
         print(file_indices)
+        print(self.input_files)
         print(self.input_files.size)
         exit()
 
