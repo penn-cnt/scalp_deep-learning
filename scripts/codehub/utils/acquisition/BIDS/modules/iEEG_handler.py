@@ -141,7 +141,7 @@ class iEEG_download(BIDS_handler):
             print(e)
             pass
 
-    def download_by_annotation(self, uid, file, target, proposed_sub, semaphore):
+    def download_by_annotation(self, uid, file, target, proposed_sub):
 
         # Store the ieeg filename
         self.uid          = uid
@@ -177,7 +177,7 @@ class iEEG_download(BIDS_handler):
         try:
             if len(self.raws) > 0:
                 BIDS_handler.event_mapper(self)
-                BIDS_handler.save_bids(self,semaphore)
+                BIDS_handler.save_bids(self)
         except AttributeError as e:
             print(f"Download error {e}")
 
