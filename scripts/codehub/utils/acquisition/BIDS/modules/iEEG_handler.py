@@ -307,9 +307,6 @@ class ieeg_handler:
         remainder = file_indices[self.args.ncpu*subset_size:]
         for idx,ival in enumerate(remainder):
             list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
-        
-        print(list_subsets)
-        exit()
 
         processes = []
         for data_chunk in list_subsets:
