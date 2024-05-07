@@ -334,7 +334,7 @@ class ieeg_handler:
 
             if self.args.annotations:
                 IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
-                IEEG = iEEG_download(self.args)
+                IEEG = iEEG_download(self.args,semaphore)
             else:
                 IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
 
