@@ -313,7 +313,7 @@ class ieeg_handler:
 
         processes = []
         for data_chunk in list_subsets:
-            process = multiprocessing.Process(target=self.pull_data, args=(np.array([data_chunk]),semaphore))
+            process = multiprocessing.Process(target=self.pull_data, args=(np.array([data_chunk]).flatten(),semaphore))
             processes.append(process)
             process.start()
         
