@@ -29,9 +29,11 @@ An example for the montage class is as follows:
         return PD.DataFrame(montage_data,columns=self.montage_channels)
 ```
 
-For a complete example of how to read in, clean, and montage a dataframe please see [here](./example_direct_invocation.py)
+For a complete example of how to read in, clean, and montage a dataframe please see [here](./example_direct_invocation.py).
 
-For example, I could call on this method in the following way (assuming I have the scripts/codehub/ in my PythonPath):
+## Sample Instantiation
+
+An example of montaging data can be accomplished as follows (assuming you have the scripts/codehub/ in my PythonPath):
 
 ```
 from modules.addons.channel_montage import channel_montage

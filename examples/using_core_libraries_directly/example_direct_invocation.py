@@ -11,7 +11,7 @@ class data_handler:
     def __init__(self,infile):
         self.infile = infile
 
-    def data_prep(self):
+    def data_prep(self,datatype='edf',channeltype='HUP1020',montagetype='HUP1020'):
 
         # Create pointers to the relevant classes
         DL    = data_loader()
@@ -20,13 +20,13 @@ class data_handler:
         CHMON = channel_montage()
 
         # Get the raw data
-        DF,self.fs = DL.direct_inputs(self.infile,'edf')
+        DF,self.fs = DL.direct_inputs(self.infile,datatype)
 
         # Get the cleaned channel names
         clean_channels = CHCLN.direct_inputs(DF.columns)
 
         # Get the needed channels for this project
-        channel_map = CHMAP.direct_inputs(clean_channels,"HUP1020")
+        channel_map = CHMAP.direct_inputs(clean_channels,channeltype)
 
         # Clean up the dataframe with the new labels and the right channels
         channel_dict = dict(zip(DF.columns,clean_channels))
@@ -34,7 +34,7 @@ class data_handler:
         DF = DF[channel_map]
 
         # Get the montage
-        self.DF = CHMON.direct_inputs(DF,"HUP1020")
+        self.DF = CHMON.direct_inputs(DF,montagetype)
 
         return self.DF
 
