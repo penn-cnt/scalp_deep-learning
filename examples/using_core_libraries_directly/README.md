@@ -4,7 +4,9 @@ There are two methods for using the core libraries kept within this framework. W
 
 ## Direct Inputs Method
 
-Each addon module includes a direct_inputs method to pass each module data and obtain its relevant output. An example for the montage class is as follows:
+Each addon module includes a direct_inputs method to pass each module data and obtain its relevant output. 
+
+An example for the montage class is as follows:
 ```
     def direct_inputs(self,DF,montage):
         """
@@ -27,13 +29,15 @@ Each addon module includes a direct_inputs method to pass each module data and o
         return PD.DataFrame(montage_data,columns=self.montage_channels)
 ```
 
+For a complete example of how to read in, clean, and montage a dataframe please see [here](./example_direct_invocation.py)
+
 For example, I could call on this method in the following way (assuming I have the scripts/codehub/ in my PythonPath):
 
 ```
 from modules.addons.channel_montage import channel_montage
 
 # Dataframe generation
-DF = **Your datafrme here**
+DF = **Your dataframe here**
 
 # Montage choice
 montage = "hup1020"
