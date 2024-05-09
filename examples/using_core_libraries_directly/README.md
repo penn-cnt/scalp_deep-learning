@@ -4,7 +4,7 @@ There are two methods for using the core libraries kept within this framework. T
 
 To directly invoke a library, you simply call the `direct_inputs` method for each class. You can call the document string for more info on how each class' direct method works, as different tasks may require different inputs.
 
-To find out what arguments are allowed for each class, you can either run the pipeline manager (found (here)[../scripts/codehub/]) as follows `pipeline_manager.py --help` to get all the documentation, or you can directly view the allowed arguments and their help strings (here)[../scripts/codehub/allowed_arguments.yaml].
+To find out what arguments are allowed for each class, you can either run the pipeline manager (found [here](../scripts/codehub/)) as follows `pipeline_manager.py --help` to get all the documentation, or you can directly view the allowed arguments and their help strings [here]()../scripts/codehub/allowed_arguments.yaml).
 
 ## Example Direct Inputs Method
 
