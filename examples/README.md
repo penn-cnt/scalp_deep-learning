@@ -2,7 +2,11 @@
 
 This is a location for examples on how to use individual pieces of code within this library, how to run the pipeline, and how to make changes to the code.
 
-# Using core libraries directly
+## Loading
+
+If you want to load data directly into memory, please consult [loading data](loading_data/)
+
+## Using core libraries directly
 
 If you want to use any of the core libraries without the pipeline wrapper, please consult [using core libraries](using_core_libraries_directly/)
 
