@@ -13,13 +13,14 @@ from datetime import datetime
 
 class audit:
 
-    def __init__(self,search_root,outdir,ostype,cmd_path,audit_history,username):
+    def __init__(self,search_root,outdir,ostype,cmd_path,audit_history,username,systemname):
 
         # Save the inputs to class instance
         self.rootdir       = search_root
         self.outdir        = outdir
         self.os            = ostype
         self.cmd_path      = cmd_path
+        self.systemname    = systemname
 
         if not os.path.exists(self.outdir):
             os.system(f"mkdir -p {self.outdir}")
@@ -46,7 +47,7 @@ class audit:
         self.input_file = f"{self.outdir}{fname}"
 
         # Output audit location
-        self.audit_data = self.outdir+f"audit_data_{username}.csv"
+        self.audit_data = self.outdir+f"audit_data_{systemname}_{username}.csv"
 
         # Lock file location for staggered history update
         self.lock_file = self.outdir+f"audit_history_{username}.lock"
@@ -90,6 +91,7 @@ class audit:
         if os.path.exists(self.input_file):
             self.folders = pickle.load(open(self.input_file,'rb'))
         else:
+            print("Getting all the subdirectories to search. This may take awhile.")
             folders = get_all_subdirectories(self.rootdir)
             self.folders = np.sort(folders)
             pickle.dump(self.folders,open(self.input_file,"wb"))
@@ -196,27 +198,30 @@ class audit:
                 index_subsets[ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
                 index_subsets.pop(-1)
 
-            # Make an input data object
-            indata = []
-            for worker_id,data_chunk in enumerate(index_subsets):
-                indata.append((self.input_paths[data_chunk],self.output_names[data_chunk],worker_id))
+            # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
+            semaphore = multiprocessing.Semaphore(1)
+
+            # Setup an output object
+            manager     = multiprocessing.Manager()
+            return_dict = manager.dict()
 
             # Check for the right operating system logic
             if os.lower() == 'unix':
 
-                # Create a multiprocessing pool
-                pool = multiprocessing.Pool()
+                processes = []
+                for worker_id,data_chunk in enumerate(index_subsets):
+                    indata = (self.input_paths[data_chunk],self.output_names[data_chunk],worker_id)
+                    process = multiprocessing.Process(target=self.perform_audit_linux, args=(indata,semaphore,return_dict))
+                    processes.append(process)
+                    process.start()
 
-                # Run the multiprocessing map
-                results = pool.map(self.perform_audit_linux, indata)
-
-                # Close the pool to free up resources
-                pool.close()
-                pool.join()
+                # Wait for all processes to complete
+                for process in processes:
+                    process.join()
             
             # Add the results to the audit history and save
             self.history = PD.read_csv(self.audit_history)
-            for iresult in results:
+            for iresult in return_dict.values():
                 results_DF   = PD.DataFrame(iresult,columns=self.history.columns)
                 self.history = PD.concat([self.history,results_DF],ignore_index=True)
             self.history.to_csv(self.audit_history,index=False)
@@ -225,7 +230,7 @@ class audit:
             if os.lower() == 'unix':
                 self.perform_audit_linux((self.input_paths,self.output_names,0))
 
-    def perform_audit_linux(self,args):
+    def perform_audit_linux(self,args,semaphore,return_dict):
         """
         Perform a data audit on a linux/unix filesystem. 
         """
@@ -265,32 +270,27 @@ class audit:
             
             if dt > stagger_time:
 
-                while os.path.exists(self.lock_file):
-                    time.sleep(1)
+                with semaphore:
 
-                # Write the lock file so another processing cant write to the audit history yet
-                os.system(f"echo locked > {self.lock_file}")
+                    # Read in the latest audit history
+                    self.history = PD.read_csv(self.audit_history)
 
-                # Read in the latest audit history
-                self.history = PD.read_csv(self.audit_history)
+                    # Write the current history for this process to the audit history file
+                    results_DF   = PD.DataFrame(np.array(output),columns=self.history.columns)
+                    self.history = PD.concat([self.history,results_DF],ignore_index=True)
+                    self.history.to_csv(self.audit_history,index=False)
 
-                # Write the current history for this process to the audit history file
-                results_DF   = PD.DataFrame(np.array(output),columns=self.history.columns)
-                self.history = PD.concat([self.history,results_DF],ignore_index=True)
-                self.history.to_csv(self.audit_history,index=False)
+                    # Update the current process's outputs and stagger time
+                    start_time = time.time()
+                    output     = []                        
 
-                # Update the current process's outputs and stagger time
-                start_time = time.time()
-                output     = []
-
-                # Release the lock file in case any other process is waiting
-                os.remove(self.lock_file)
-                        
-
-        return np.array(output)
+        return_dict[worker_number] = np.array(output)
 
 if __name__ == '__main__':
     
+    # Define the system choices
+    systemchoices = ['leif','bsc','pioneer','cnt1','cntfs']
+
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="iEEG to bids conversion tool.")
     parser.add_argument("--search_root", type=str, required=True, help="Root directory to recursively audit down from.")
@@ -301,10 +301,11 @@ if __name__ == '__main__':
     parser.add_argument("--merge", action='store_true', default=False, help="Merge outputs to final audit file.")
     parser.add_argument("--username", type=str, default='main', help="Username for data audit.")
     parser.add_argument("--ncpu", type=int, default=1, help="Multiprocessing. Number of cpus to use.")
+    parser.add_argument("--system", type=str, required=True, choices=systemchoices, help="System name.")
     args = parser.parse_args()
 
     # Run through the audit
-    AH = audit(args.search_root,args.outdir,args.os,args.cmd_path,args.audit_history,args.username)
+    AH = audit(args.search_root,args.outdir,args.os,args.cmd_path,args.audit_history,args.username,args.system)
     AH.argcheck()
     AH.read_cmd()
     AH.define_inputs()
