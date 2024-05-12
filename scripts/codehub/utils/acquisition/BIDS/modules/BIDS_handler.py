@@ -136,11 +136,13 @@ class BIDS_handler:
                 self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
 
                 # Save the bids data
-                import sys
-                print(self.bids_path)
-                sys.exit()
-
                 write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
+
+                # Overwrite the edf file only with set physical/digital maxima/minima
+                outpath = f"{str(self.bids_path)}_eeg.edf"
+                pmin    = raw.get_data().min()
+                pmax    = raw.get_data().max()
+                mne.export.export_raw(outpath,raw,physical_rang=(pmin,pmax),overwrite=True)
 
                 # Save the targets with the edf path paired up to filetype
                 target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
