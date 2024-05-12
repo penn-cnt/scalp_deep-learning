@@ -137,9 +137,8 @@ class BIDS_handler:
 
                 # Save the bids data
                 import sys
-                import pickle
-                pickle.dump(raw,open("raw.tmp","wb"))
-                exit()
+                print(self.bids_path)
+                sys.exit()
 
                 write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
