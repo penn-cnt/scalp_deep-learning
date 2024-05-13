@@ -38,7 +38,7 @@ class audit:
         if audit_history != None:
             self.audit_history = audit_history
         else:
-            self.audit_history = self.outdir+f"audit_history_{username}.csv"
+            self.audit_history = self.outdir+f"audit_history_{systemname}_{username}.csv"
 
         # Create a temporary file that stores all of the input paths for the given root directory. This speeds up runs if testing/restarting.
         fname           = f"{self.rootdir.replace('/',self.delimiter)}inputs"
