@@ -144,6 +144,8 @@ class BIDS_handler:
                 pmax    = int(raw.get_data().max())
                 print(pmin,type(pmin))
                 print(pmax,type(pmax))
+                print(str(outpath))
+                print(outpath,type(outpath))
                 mne.export.export_raw(outpath,raw,physical_range=(pmin,pmax),overwrite=True)
 
                 # Save the targets with the edf path paired up to filetype
