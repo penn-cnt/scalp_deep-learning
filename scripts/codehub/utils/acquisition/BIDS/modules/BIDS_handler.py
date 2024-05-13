@@ -140,8 +140,8 @@ class BIDS_handler:
 
                 # Overwrite the edf file only with set physical/digital maxima/minima
                 outpath = f"{str(self.bids_path)}_eeg.edf"
-                pmin    = str(int(raw.get_data().min()))[:8]
-                pmax    = str(int(raw.get_data().max()))[:8]
+                pmin    = int(raw.get_data().min())
+                pmax    = int(raw.get_data().max())
                 print(pmin,type(pmin))
                 print(pmax,type(pmax))
                 mne.export.export_raw(outpath,raw,physical_range=(pmin,pmax),overwrite=True)
