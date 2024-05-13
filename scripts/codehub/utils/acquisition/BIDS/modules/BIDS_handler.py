@@ -9,6 +9,7 @@ import numpy as np
 import pandas as PD
 from os import path
 from sys import exit
+from tqdm import tqdm
 from time import sleep
 from datetime import date
 from mne_bids import BIDSPath, write_raw_bids
@@ -186,7 +187,7 @@ class BIDS_handler:
     def save_bids(self):
 
         # Loop over all the raw data, add annotations, save
-        for idx, raw in enumerate(self.raws):
+        for idx, raw in tqdm(enumerate(self.raws),desc="Saving Clip Data", total=len(self.raws), leave=False, disable=self.args.multithread):
 
             if raw == 'SKIP':
                 pass
