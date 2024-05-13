@@ -201,6 +201,9 @@ class audit:
             # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
             semaphore = multiprocessing.Semaphore(1)
 
+            # Create a barrier for synchronization
+            barrier = multiprocessing.Barrier(args.ncpu)
+
             # Setup an output object
             manager     = multiprocessing.Manager()
             return_dict = manager.dict()
@@ -211,7 +214,7 @@ class audit:
                 processes = []
                 for worker_id,data_chunk in enumerate(index_subsets):
                     indata = (self.input_paths[data_chunk],self.output_names[data_chunk],worker_id)
-                    process = multiprocessing.Process(target=self.perform_audit_linux, args=(indata,semaphore,return_dict))
+                    process = multiprocessing.Process(target=self.perform_audit_linux, args=(indata,semaphore,barrier,return_dict))
                     processes.append(process)
                     process.start()
 
@@ -230,7 +233,7 @@ class audit:
             if os.lower() == 'unix':
                 self.perform_audit_linux((self.input_paths,self.output_names,0))
 
-    def perform_audit_linux(self,args,semaphore,return_dict):
+    def perform_audit_linux(self,args,semaphore,barrier,return_dict):
         """
         Perform a data audit on a linux/unix filesystem. 
         """
@@ -285,6 +288,7 @@ class audit:
                     output     = []                        
 
         return_dict[worker_number] = np.array(output)
+        barrier.wait()
 
 if __name__ == '__main__':
     
