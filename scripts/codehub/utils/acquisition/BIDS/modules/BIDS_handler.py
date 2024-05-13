@@ -139,7 +139,7 @@ class BIDS_handler:
                 write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
                 # Overwrite the edf file only with set physical/digital maxima/minima
-                outpath = f"{str(self.bids_path)}_eeg.edf"
+                outpath = f"{str(self.bids_path)}"
                 pmin    = int(raw.get_data().min())
                 pmax    = int(raw.get_data().max())
                 print(pmin,type(pmin))
