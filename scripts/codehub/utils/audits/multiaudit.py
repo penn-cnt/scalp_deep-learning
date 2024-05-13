@@ -178,60 +178,53 @@ class audit:
 
     def audit_handler(self,os,ncpu):
 
-        # Handle multiprocessing if needed, otherwise just pass the results through
-        if ncpu > 1:
-
-            # Break up the inputs across the cpus
-            index_arr   = np.arange(len(self.input_paths))
+        # Break up the inputs across the cpus
+        index_arr   = np.arange(len(self.input_paths))
+        subset_size = len(self.input_paths) // ncpu
+        while subset_size == 0:
+            ncpu       -= 1
             subset_size = len(self.input_paths) // ncpu
-            while subset_size == 0:
-                ncpu       -= 1
-                subset_size = len(self.input_paths) // ncpu
-            print(f"Indexing solution found with {ncpu:02} cpus for {len(self.input_paths)} folders.")
-            index_subsets = [index_arr[i:i + subset_size] for i in range(0, len(self.input_paths), subset_size)]
+        print(f"Indexing solution found with {ncpu:02} cpus for {len(self.input_paths)} folders.")
+        index_subsets = [index_arr[i:i + subset_size] for i in range(0, len(self.input_paths), subset_size)]
 
-            # Handle leftovers
-            if len(index_subsets) > ncpu:
-                arr_ncpu  = index_subsets[ncpu-1]
-                arr_ncpu1 = index_subsets[ncpu]
+        # Handle leftovers
+        if len(index_subsets) > ncpu:
+            arr_ncpu  = index_subsets[ncpu-1]
+            arr_ncpu1 = index_subsets[ncpu]
 
-                index_subsets[ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
-                index_subsets.pop(-1)
+            index_subsets[ncpu-1] = np.concatenate((arr_ncpu,arr_ncpu1), axis=0)
+            index_subsets.pop(-1)
 
-            # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
-            semaphore = multiprocessing.Semaphore(1)
+        # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
+        semaphore = multiprocessing.Semaphore(1)
 
-            # Create a barrier for synchronization
-            barrier = multiprocessing.Barrier(args.ncpu)
+        # Create a barrier for synchronization
+        barrier = multiprocessing.Barrier(args.ncpu)
 
-            # Setup an output object
-            manager     = multiprocessing.Manager()
-            return_dict = manager.dict()
+        # Setup an output object
+        manager     = multiprocessing.Manager()
+        return_dict = manager.dict()
 
-            # Check for the right operating system logic
-            if os.lower() == 'unix':
+        # Check for the right operating system logic
+        if os.lower() == 'unix':
 
-                processes = []
-                for worker_id,data_chunk in enumerate(index_subsets):
-                    indata = (self.input_paths[data_chunk],self.output_names[data_chunk],worker_id)
-                    process = multiprocessing.Process(target=self.perform_audit_linux, args=(indata,semaphore,barrier,return_dict))
-                    processes.append(process)
-                    process.start()
+            processes = []
+            for worker_id,data_chunk in enumerate(index_subsets):
+                indata = (self.input_paths[data_chunk],self.output_names[data_chunk],worker_id)
+                process = multiprocessing.Process(target=self.perform_audit_linux, args=(indata,semaphore,barrier,return_dict))
+                processes.append(process)
+                process.start()
 
-                # Wait for all processes to complete
-                for process in processes:
-                    process.join()
-            
-            # Add the results to the audit history and save
-            self.history = PD.read_csv(self.audit_history)
-            for iresult in return_dict.values():
-                results_DF   = PD.DataFrame(iresult,columns=self.history.columns)
-                self.history = PD.concat([self.history,results_DF],ignore_index=True)
-            self.history.to_csv(self.audit_history,index=False)
-
-        else:
-            if os.lower() == 'unix':
-                self.perform_audit_linux((self.input_paths,self.output_names,0))
+            # Wait for all processes to complete
+            for process in processes:
+                process.join()
+        
+        # Add the results to the audit history and save
+        self.history = PD.read_csv(self.audit_history)
+        for iresult in return_dict.values():
+            results_DF   = PD.DataFrame(iresult,columns=self.history.columns)
+            self.history = PD.concat([self.history,results_DF],ignore_index=True)
+        self.history.to_csv(self.audit_history,index=False)
 
     def perform_audit_linux(self,args,semaphore,barrier,return_dict):
         """
