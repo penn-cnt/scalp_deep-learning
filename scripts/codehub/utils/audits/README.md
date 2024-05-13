@@ -13,11 +13,11 @@ Due to the increasing data volume, regular data audits are required to remove du
     > python multiaudit.py --search_root `<directory-to_audit>` --outdir `<directory-to-store-audit-files>` --username `<username>` --system `<systemname>` --merge --ncpu XYZ
 
 where 
-    - `<directory-to_audit>` is the directory you wish to perform the audit on.
-    - `<directory-to-store-audit-files>` is the output directory to store the temporary and final results.
-    - `<username>` your username on the system
-    - `<systemname>` is the name of the system you are on (i.e. leif/bsc/etc.) 
-    - XYZ is the number of cores to use for the audit.
+- `<directory-to_audit>` is the directory you wish to perform the audit on.
+- `<directory-to-store-audit-files>` is the output directory to store the temporary and final results.
+- `<username>` your username on the system
+- `<systemname>` is the name of the system you are on (i.e. leif/bsc/etc.) 
+- XYZ is the number of cores to use for the audit.
 
 *NOTE* Please make sure to use a value for NCPU that makes sense for your system. (We recommend using `top` and `lscpu` to gather information about usage of and the total number of cpus.)
 
@@ -37,17 +37,11 @@ If the code dies halfway through, or you need to restart, it should be able to f
 
 A sample output audit file can be found [here](interface/modules/samples/sample.audit).
 
-## Commands
+## Configuration Files
+
+The configuration file set by default has been tested to work on most CNT systems. If you find that you are getting errors, you can try using the `--cmd_path` command and point to one of the other files in the config folder to see if it resolves. If you still have trouble, please reach out to Brian P. for more help.
+
+## More Commands
 
 For more information about any given input argument, you can always run
 > python multiaudit.py --help
-
-A brief summary of each argument follows:
-- search_root: Top level directory to recursively search down from for data to audit
-    - **NOTE** Due to the sheer volume of data, you might want to avoid pointing to the highest folder available. The code will work, but the initial creation of a file manifest will take a long time. Also, you will be left with a lot of temporary files while it tries to go through everything.
-- outdir: Output directory to store temporary files and the final audit information.
-    - **NOTE** The code will create this folder if needed. So be careful with typos lest you make an odd new directory path on your system.
-- username: A username to be appended to the audit filename. This is so we can track the source of audit files from multiple users at this early stage.
-- merge: Once the audit is complete (i.e. has finished going through the file manifest) merge temporary files into a final audit file and remove temp files.
-- os: unix/windows backend. Will dictate how the code looks for data. Defaults to unix. 
-- cmd_path: A path to the configuration file that tells a system how to find and audit data. This should point to information within 'configs/' in most cases. Defults to the most common architecture for CNT remote systems. (i.e. md5sum hashing)
