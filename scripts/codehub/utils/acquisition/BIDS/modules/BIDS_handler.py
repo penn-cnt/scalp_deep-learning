@@ -53,8 +53,6 @@ class BIDS_handler:
         match = re.search(pattern, self.current_file)
         if self.proposed_ses != -1:
             self.session_number = self.proposed_ses
-            print(f"A: {self.session_number}")
-            exit()
         elif match:
             self.session_number = int(match.group(1))
         else:
