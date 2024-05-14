@@ -189,6 +189,9 @@ class BIDS_handler:
     def save_bids(self):
 
         # Loop over all the raw data, add annotations, save
+        print(raw)
+        print(raw[0])
+        print("====")
         for idx, raw in tqdm(enumerate(self.raws),desc="Saving Clip Data", total=len(self.raws), leave=False, disable=self.args.multithread):
 
             if raw == 'SKIP':
