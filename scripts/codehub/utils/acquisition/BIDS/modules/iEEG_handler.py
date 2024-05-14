@@ -115,7 +115,7 @@ class iEEG_download(BIDS_handler):
                         self.annotations[idx][event_time_shift] = desc
                         self.annotation_flats.append(desc)
 
-    def download_by_cli(self, uid, file, target, start, duration, proposed_sub, file_idx):
+    def download_by_cli(self, uid, file, target, start, duration, proposed_sub, proposed_ses, file_idx):
 
         # Store the ieeg filename
         self.uid          = uid
@@ -123,6 +123,7 @@ class iEEG_download(BIDS_handler):
         self.target       = target
         self.success_flag = False
         self.proposed_sub = proposed_sub
+        self.proposed_ses = proposed_ses
         self.file_idx     = file_idx
 
         # Loop over clips
@@ -142,7 +143,7 @@ class iEEG_download(BIDS_handler):
                 print(f"Save error {e}")
             pass
 
-    def download_by_annotation(self, uid, file, target, proposed_sub):
+    def download_by_annotation(self, uid, file, target, proposed_sub, proposed_ses):
 
         # Store the ieeg filename
         self.uid          = uid
@@ -150,6 +151,7 @@ class iEEG_download(BIDS_handler):
         self.target       = target
         self.success_flag = False
         self.proposed_sub = proposed_sub
+        self.proposed_ses = proposed_ses
 
         # Get the annotation times
         self.get_annotations()
@@ -285,9 +287,6 @@ class ieeg_handler:
         self.proposed_sub = input_data['subject_number'].values
         self.proposed_ses = input_data['session_number'].values
 
-        print(self.proposed_ses)
-        exit()
-
     def single_pull(self):
 
         # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
@@ -337,10 +336,10 @@ class ieeg_handler:
             target = self.input_data['target'].values[file_idx]
 
             if self.args.annotations:
-                IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx])
+                IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx],self.proposed_ses[file_idx])
                 IEEG = iEEG_download(self.args,semaphore)
             else:
-                IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],file_idx)
+                IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],self.proposed_ses[file_idx],file_idx)
 
 
 

@@ -51,8 +51,9 @@ class BIDS_handler:
         # Get the session number by file if possible, otherwise intuit by number of folders
         pattern = r'Day(\d+)'
         match = re.search(pattern, self.current_file)
-        if True:
-            print(subject_uid_df)
+        if self.proposed_ses != -1:
+            self.session_number = self.proposed_ses
+            print(f"A: {self.session_number}")
             exit()
         elif match:
             self.session_number = int(match.group(1))
