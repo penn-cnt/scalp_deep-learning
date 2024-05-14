@@ -21,6 +21,15 @@ where
 
 *NOTE* Please make sure to use a value for NCPU that makes sense for your system. (We recommend using `top` and `lscpu` to gather information about usage of and the total number of cpus.)
 
+## Potential Issues
+
+This code is meant to be a wrapper to bash/powershell scripts to get some basic file information. We have tested it against a few different systems, and a variety of file paths, but its possible you will encounter an error. A few notes if this happens:
+
+- If a single core fails, the other cores will continue working. So the audit will continue to get as much information as it can.
+- If a core crashes, the code will hang upon completion. This means you will likely need to manually kill it. We apologize for the inconvenience, but this way we prevent run conditions on writing the final output.
+- You can restart the code and it will pick up where it left off. So if your code crashes/ends for any reason, your work wont be lost.
+- If you encounter a partically problematic folder, let Brian P. know. It will be helpful to figure out what other use cases we need to prepare for, and I can probably help create a solution to finish your audit.
+
 ## Basic Workflow
 
 At a high level, this code is just a wrapper to various shell commands that find data, calculates the checksum, and saves basic information about the file.
