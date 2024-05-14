@@ -51,7 +51,10 @@ class BIDS_handler:
         # Get the session number by file if possible, otherwise intuit by number of folders
         pattern = r'Day(\d+)'
         match = re.search(pattern, self.current_file)
-        if match:
+        if True:
+            print(subject_uid_df)
+            exit()
+        elif match:
             self.session_number = int(match.group(1))
         else:
             # Get the folder strings
