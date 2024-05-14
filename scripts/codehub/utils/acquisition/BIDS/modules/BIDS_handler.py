@@ -189,9 +189,6 @@ class BIDS_handler:
     def save_bids(self):
 
         # Loop over all the raw data, add annotations, save
-        print(self.raws)
-        print(self.raws[0])
-        print("====")
         for idx, raw in tqdm(enumerate(self.raws),desc="Saving Clip Data", total=len(self.raws), leave=False, disable=self.args.multithread):
 
             if raw == 'SKIP':
@@ -203,6 +200,7 @@ class BIDS_handler:
 
                 # Check for annotations
                 try:
+                    print(idx,self.annotations[idx].keys())
                     if len(self.annotations[idx].keys()):
                         self.annotation_save(idx,raw)
                 except AttributeError:
