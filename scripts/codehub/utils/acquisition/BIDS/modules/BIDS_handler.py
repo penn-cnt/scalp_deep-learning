@@ -200,7 +200,6 @@ class BIDS_handler:
 
                 # Check for annotations
                 try:
-                    print(idx,self.annotations[idx].keys())
                     if len(self.annotations[idx].keys()):
                         self.annotation_save(idx,raw)
                 except AttributeError:
