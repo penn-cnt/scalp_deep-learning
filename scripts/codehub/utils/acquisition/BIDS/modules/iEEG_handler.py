@@ -283,6 +283,10 @@ class ieeg_handler:
         self.start_times  = input_data['start'].values
         self.durations    = input_data['duration'].values
         self.proposed_sub = input_data['subject_number'].values
+        self.proposed_ses = input_data['session_number'].values
+
+        print(self.proposed_ses)
+        exit()
 
     def single_pull(self):
 
