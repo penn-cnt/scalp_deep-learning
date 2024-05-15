@@ -86,8 +86,12 @@ class cache_search:
         """
         new_index = []
         for idx,ival in enumerate(list(self.dataslice[subcol].values)):
-            if substr in ival.lower():
-                new_index.append(idx)
+            if type(ival) == str:
+                if substr in ival.lower():
+                    new_index.append(idx)
+            else:
+                if int(substr) == int(ival):
+                    new_index.append(idx)
         self.dataslice = self.dataslice.iloc[new_index]
 
     def display(self):
