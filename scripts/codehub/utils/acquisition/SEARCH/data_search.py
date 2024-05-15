@@ -97,7 +97,7 @@ class cache_search:
         table.field_names = self.dataslice.columns.tolist()
 
         # Step through the data and populate the pretty table with the current dataslice
-        for idx, row in enumerate(self.dataslice.itertuples()):
+        for idx, row in enumerate(self.dataslice[:100].itertuples()):
             table.add_row(list(row)[1:])
 
         # Display pretty table
@@ -121,4 +121,4 @@ if __name__ == '__main__':
     cache = SC.read_data_collection()
 
     # Display the data collection
-    CS = cache_search(cache[:150])
+    CS = cache_search(cache)
