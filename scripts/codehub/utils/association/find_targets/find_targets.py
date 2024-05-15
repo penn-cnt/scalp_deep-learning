@@ -64,15 +64,20 @@ if __name__ == '__main__':
     print(DF)
 
     # Ask the user for which keyword to save the filepaths for
-    token = input("Enter the keyword you want the file list for? (Q/q quit). ")
-    if token.lower() == 'q':exit()
-    while token.lower() not in index:
-        token = input("Token not found. Please enter the keyword you want the file list for? (Q/q quit). ")
-        if token.lower() == 'q':exit()
+    tokens = input("Enter the keyword (or comma separated keywords) you want the file list for? (Q/q quit). ")
+    if tokens.lower() == 'q':exit()
+    tokenlist = tokens.split(',')
     
     # Save the files to the output file
-    outfiles = lookup_dict[token]['files']
-    fp       = open(args.outfile,'w')
-    for ifile in outfiles:
-        fp.write(f"{ifile}\n")
-    fp.close()
+    outfiles = []
+    for itoken in tokenlist:
+        if itoken in DF.index:
+            ifiles = lookup_dict[itoken]['files'] 
+            outfiles.extend(ifiles)
+        else:
+            print(f"Could not find your token `{itoken}` in the token list from observed files.")
+
+    # Make a dataframe, drop duplicates (which arise from list of tokens), and save
+    DF = PD.DataFrame(outfiles,columns=['filepath'])
+    DF.drop_duplicates(inplace=True)
+    DF.to_csv(args.outfile,index=False)
