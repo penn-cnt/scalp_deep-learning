@@ -217,7 +217,7 @@ class BIDS_handler:
 
         # Save the subject file info with source metadata
         columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start','duration']
-        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx,self.clip_start_times[idx],self.clip_durations[idx]]],columns=columns)
+        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx+1,self.clip_start_times[idx],self.clip_durations[idx]]],columns=columns)
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()
