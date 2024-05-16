@@ -161,20 +161,23 @@ class iEEG_download(BIDS_handler):
             BIDS_handler.__init__(self)
             for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
 
-                # Check if this combo has already been processed before
-                pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
-                if pinds.any():
+                if istart == 0 and self.args.skipzero:
                     self.raws.append("SKIP")
-                    if self.args.multithread:
-                        print(f"Skipping {self.current_file} annotation at {istart}.")
                 else:
-                    if self.args.multithread:
-                        print(f"Downloading {self.current_file} annotation at {istart}")
-                    self.session_method_handler(istart, self.clip_durations[idx])
-                    if self.success_flag == True:
-                        BIDS_handler.get_channel_type(self)
-                        BIDS_handler.make_info(self)
-                        BIDS_handler.add_raw(self)
+                    # Check if this combo has already been processed before
+                    pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
+                    if pinds.any():
+                        self.raws.append("SKIP")
+                        if self.args.multithread:
+                            print(f"Skipping {self.current_file} annotation at {istart}.")
+                    else:
+                        if self.args.multithread:
+                            print(f"Downloading {self.current_file} annotation at {istart}")
+                        self.session_method_handler(istart, self.clip_durations[idx])
+                        if self.success_flag == True:
+                            BIDS_handler.get_channel_type(self)
+                            BIDS_handler.make_info(self)
+                            BIDS_handler.add_raw(self)
 
         # Save the bids files if we have any data
         try:

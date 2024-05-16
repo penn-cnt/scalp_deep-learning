@@ -49,6 +49,7 @@ if __name__ == '__main__':
     other_group.add_argument("--multithread", action='store_true', default=False, help="Multithreaded download.")
     other_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
     other_group.add_argument("--debug", action='store_true', default=False, help="Print error messages.")
+    other_group.add_argument("--skipzero", action='store_true', default=False, help="Time zero is almost always garbage data. This flag skips it. Good for quickly going back over data to catch missed iEEG calls.")
 
     selection_group = parser.add_mutually_exclusive_group()
     selection_group.add_argument("--cli", action='store_true', default=False, help="Use start and duration from this CLI.")
