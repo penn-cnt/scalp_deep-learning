@@ -25,9 +25,9 @@ if __name__ == '__main__':
         
         # Object columns
         if args.col_config == None:
-            drop_cols = ['file', 't_end']
+            drop_cols = ['file', 't_end','method']
             obj_cols  = ['t_start', 'dt', 'uid']
-            map_cols  = ['method','tag','target','annotation']
+            map_cols  = ['tag','target','annotation']
         else:
             col_info = yaml.safe_load(open(args.col_config,'r'))
             for key, inner_dict in col_info.items():
