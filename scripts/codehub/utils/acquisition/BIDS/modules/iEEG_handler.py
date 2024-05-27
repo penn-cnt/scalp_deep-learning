@@ -293,9 +293,6 @@ class ieeg_handler:
         self.proposed_ses = input_data['session_number'].values
         self.proposed_run = input_data['run_number'].values
 
-        print(self.start_times)
-        print(self.durations)
-
     def single_pull(self):
 
         # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
