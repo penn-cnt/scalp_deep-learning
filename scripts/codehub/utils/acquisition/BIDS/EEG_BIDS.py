@@ -64,9 +64,9 @@ if __name__ == '__main__':
     # Input data array generation
     incols = ['orig_filename','uid','subject_number','session_number','run_number','start','duration','target']
     if args.cli:
-        input_data  = PD.DataFrame([[args.dataset,args.uid,args.subnum,args.session_num,args.run_number,args.start,args.duration,args.target]],columns=incols)
+        input_data  = PD.DataFrame([[args.dataset,args.uid,args.subnum,args.session_num,args.run_num,args.start,args.duration,args.target]],columns=incols)
     elif args.annotations:
-        input_data  = PD.DataFrame([[args.dataset,args.uid,args.subnum,args.session_num,args.run_number,-1,-1,args.target]],columns=incols)
+        input_data  = PD.DataFrame([[args.dataset,args.uid,args.subnum,args.session_num,args.run_num,-1,-1,args.target]],columns=incols)
     
     # Use input file if provided. Cleanup if missing columns
     if args.inputs_file != None:
