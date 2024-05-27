@@ -312,8 +312,8 @@ class ieeg_handler:
 
         # Calculate the size of each subset based on the number of processes
         file_indices = np.array(range(self.input_files.size-1))+1
+        subset_size  = (file_indices.size) // self.args.ncpu
         if subset_size > 0:
-            subset_size  = (file_indices.size) // self.args.ncpu
             list_subsets = [file_indices[i:i + subset_size] for i in range(0, self.args.ncpu*subset_size, subset_size)]
 
             # Handle leftovers
