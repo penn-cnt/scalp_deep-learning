@@ -169,7 +169,7 @@ class BIDS_handler:
         if self.proposed_run == -1:
             run_number = int(self.file_idx)+1
         else:
-            run_number = self.proposed_run
+            run_number = int(self.proposed_run)
         session_str    = "%s%03d" %(self.args.session,self.session_number)
         self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=run_number, task='task')
 
