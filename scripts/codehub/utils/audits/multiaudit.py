@@ -11,6 +11,33 @@ import multiprocessing
 from pathlib import Path
 from datetime import datetime
 
+# API timeout class
+import signal
+class TimeoutException(Exception):
+    pass
+
+class Timeout:
+    def __init__(self, seconds=1, multiflag=False, error_message='Function call timed out'):
+        self.seconds       = seconds
+        self.error_message = error_message
+        self.multiflag     = multiflag
+
+    def handle_timeout(self, signum, frame):
+        raise TimeoutException(self.error_message)
+
+    def __enter__(self):
+        if not self.multiflag:
+            signal.signal(signal.SIGALRM, self.handle_timeout)
+            signal.alarm(self.seconds)
+        else:
+            pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if not self.multiflag:
+            signal.alarm(0)
+        else:
+            pass
+
 class audit:
 
     def __init__(self,search_root,outdir,ostype,cmd_path,audit_history,username,systemname):
@@ -241,7 +268,7 @@ class audit:
         start_time = time.time()
 
         # Loop over the folders to audit
-        for idx,ifolder in tqdm(enumerate(inpaths), desc='Audit: ', total=len(inpaths), position=worker_number, disable=False):
+        for idx,ifolder in tqdm(enumerate(inpaths), desc='Audit: ', total=len(inpaths), position=worker_number, disable=False, leave=False):
 
             # Save the input string to a different name in case of modifications
             instr = ifolder
@@ -254,7 +281,10 @@ class audit:
             cmd = cmd.replace("OUTDIR_SUBSTR",self.outname)
 
             # Run command
-            subprocess.run(cmd, shell=True, check=True)
+            try:
+                subprocess.run(cmd, shell=True, timeout=2*60)
+            except:
+                pass
 
             # Update audit history
             output.append([ifolder,datetime.now().timestamp()])
@@ -264,7 +294,7 @@ class audit:
             dt           = (current_time-start_time)
             stagger_time = 60+5*worker_number 
             
-            if dt > stagger_time:
+            if dt > stagger_time and len(output)>0:
 
                 with semaphore:
 
@@ -281,7 +311,6 @@ class audit:
                     output     = []                        
 
         return_dict[worker_number] = np.array(output)
-        barrier.wait()
 
 if __name__ == '__main__':
     
@@ -308,5 +337,6 @@ if __name__ == '__main__':
     AH.define_inputs()
     AH.audit_handler(args.os,args.ncpu)
     if args.merge:
+        print(f"Merging data. This may take awhile.")
         AH.clean_audit()
     
