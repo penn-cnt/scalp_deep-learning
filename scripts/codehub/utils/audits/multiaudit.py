@@ -11,33 +11,6 @@ import multiprocessing
 from pathlib import Path
 from datetime import datetime
 
-# API timeout class
-import signal
-class TimeoutException(Exception):
-    pass
-
-class Timeout:
-    def __init__(self, seconds=1, multiflag=False, error_message='Function call timed out'):
-        self.seconds       = seconds
-        self.error_message = error_message
-        self.multiflag     = multiflag
-
-    def handle_timeout(self, signum, frame):
-        raise TimeoutException(self.error_message)
-
-    def __enter__(self):
-        if not self.multiflag:
-            signal.signal(signal.SIGALRM, self.handle_timeout)
-            signal.alarm(self.seconds)
-        else:
-            pass
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if not self.multiflag:
-            signal.alarm(0)
-        else:
-            pass
-
 class audit:
 
     def __init__(self,search_root,outdir,ostype,cmd_path,audit_history,username,systemname):
@@ -141,7 +114,8 @@ class audit:
                 self.input_paths.append(str(ifolder))
                 self.output_names.append(f"{raw_output[ii]:09}.audit")
             else:
-                print(f"Skipping {ifolder}.")
+                #print(f"Skipping {ifolder}.")
+                pass
         self.input_paths.append(str(self.rootdir))
         self.output_names.append(f"{len(self.folders):09}.audit")
 
@@ -283,11 +257,11 @@ class audit:
             # Run command
             try:
                 subprocess.run(cmd, shell=True, timeout=2*60)
+
+                # Update audit history
+                output.append([ifolder,datetime.now().timestamp()])
             except:
                 pass
-
-            # Update audit history
-            output.append([ifolder,datetime.now().timestamp()])
 
             # Update the audit history ocassionally to speed up subsequent loads
             current_time = time.time()
