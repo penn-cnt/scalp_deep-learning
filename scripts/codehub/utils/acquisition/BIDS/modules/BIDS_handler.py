@@ -184,7 +184,7 @@ class BIDS_handler:
         except:
             pmin    = int(raw.get_data().min())
             pmax    = int(raw.get_data().max())
-            mne.export.export_raw(str(self.bids_path),raw,physical_range=(pmin,pmax),overwrite=True,verbose=False)
+            mne.export.export_raw(str(self.bids_path)+'.edf',raw,physical_range=(pmin,pmax),overwrite=True,verbose=False,fmt='edf')
         
         # Save the targets with the edf path paired up to filetype
         target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
