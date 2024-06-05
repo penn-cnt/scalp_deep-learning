@@ -31,7 +31,7 @@ class data_handler:
     def __init__(self):
         pass
 
-    def data_prep(self):
+    def data_prep(self, chcln, chmap, montage):
 
         # Create pointers to the relevant classes
         DL    = data_loader()
@@ -47,16 +47,19 @@ class data_handler:
             self.fs    = self.fs[0]
 
         # Get the cleaned channel names
-        clean_channels = CHCLN.direct_inputs(DF.columns)
+        clean_channels = CHCLN.direct_inputs(DF.columns,clean_method=chcln)
         channel_dict   = dict(zip(DF.columns,clean_channels))
         DF.rename(columns=channel_dict,inplace=True)
 
         # Get the channel mapping
-        channel_map = CHMAP.direct_inputs(DF.columns,"HUP1020")
+        channel_map = CHMAP.direct_inputs(DF.columns,chmap)
         DF          = DF[channel_map]
 
         # Get the montage
-        self.DF = CHMON.direct_inputs(DF,"HUP1020")
+        if montage != None:
+            self.DF = CHMON.direct_inputs(DF,montage)
+        else:
+            self.DF = DF
 
         # Read in optional sleep wake power data if provided
         if self.args.sleep_wake_power != None:
@@ -128,7 +131,7 @@ class data_viewer(data_handler):
         self.drawn_a = []
 
         # Prepare the data
-        data_handler.data_prep(self)
+        data_handler.data_prep(self, args.chcln, args.chmap, args.montage)
 
         # Get the duration
         self.t_max = self.DF.shape[0]/self.fs
@@ -648,6 +651,11 @@ if __name__ == '__main__':
     output_group.add_argument("--outfile", type=str, help="Output filepath if predicting sleep/spikes/etc.")
     output_group.add_argument("--username", type=str, help="Username to tag any outputs with.")
 
+    process_group = parser.add_argument_group('Processing options')
+    process_group.add_argument("--chcln", type=str, default="hup", help="Channel cleaning option")
+    process_group.add_argument("--chmap", type=str, default="hup1020", help="Channel mapping option")
+    process_group.add_argument("--montage", type=str, default="hup1020", help="Channel montage option")
+
     prep_group = parser.add_argument_group('Data preparation options')
     prep_group.add_argument("--channel_list", choices=list(allowed_channel_args.keys()), default="HUP1020", help=f"R|Choose an option:\n{allowed_channel_help}")
 
@@ -669,6 +677,9 @@ if __name__ == '__main__':
     misc_group.add_argument("--pickle_load", action='store_true', default=False, help="Load from pickled tuple of dataframe,fs.")
     misc_group.add_argument("--flagging", action='store_true', default=False, help="Let user flag EEG for important properties.")
     args = parser.parse_args()
+
+    # Clean up some argument types
+    args.montage = None if args.montage == 'None' else args.montage
 
     # Get username and output path if needed
     if args.flagging:
@@ -710,6 +721,12 @@ if __name__ == '__main__':
         # Check if this user has already reviewed this data
         iDF = ref_DF.loc[(ref_DF.username==args.username)&(ref_DF.filename==ifile)]
         if iDF.shape[0] == 0:
+
+            DV                = data_viewer(ifile,args,tight_layout_dict,filetype)
+            tight_layout_dict = DV.montage_plot()
+            PLT.close("all")
+
+            """
             try:
                 DV                = data_viewer(ifile,args,tight_layout_dict,filetype)
                 tight_layout_dict = DV.montage_plot()
@@ -718,4 +735,4 @@ if __name__ == '__main__':
                 print("Unable to load data. This is likely due to formatting issues in an EDF header.")
                 print(f"A detail error is as follows: {e}")
                 PLT.close("all")
-
+            """
