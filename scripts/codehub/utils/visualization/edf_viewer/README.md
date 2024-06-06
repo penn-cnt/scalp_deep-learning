@@ -22,11 +22,19 @@ To use this toolkit, we highly recommend you create a python environment. This p
 5. Finally, all you need to do is add your new code repository to your anaconda path. Run the following command in the terminal or powershell
     -  conda develop \<path-to-repository-root\>/scripts/codehub
   
-## Sample Command
+## Sample Commands
+### Random start time via seed (default behavior) with for all wildcard data matches
+```
+python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --username bjprager --flagging
+```
+
 ### Random start time via seed (default behavior) with flagging for all wildcard data matches
 ```
 python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --username bjprager --flagging
 ```
+flagging enables an interactive mode where the user can denote if certain events occur within the observed time window and save the results to a csv file.
+
+By default the code outputs to `./edf_viewer_flags.csv` but can be changed using the `--outfile` option at runtime.
 
 ### Random start time via seed (default behavior) with flagging for all wildcard data matches with start time t=0
 ```
