@@ -25,6 +25,8 @@ To use this toolkit, we highly recommend you create a python environment. This p
 ## Sample Commands
 Please consult the `--help` flag for more detailed information on different inputs to the viewer. We provide a few common uses below.
 
+(**Note:** We also provide the available keyboard shortcuts for a number of useful viewing situations at the top of the plot.)
+
 ### Random start time via seed (default behavior) with for all wildcard data matches
 ```
 python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --username bjprager --flagging
