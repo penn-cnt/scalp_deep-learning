@@ -6,6 +6,8 @@ We provide a light-weight means of visualizing EDF data in a Python environment.
 
 A few sample instantiations are provided below. Please consult the `--help` flag for more detailed information on different inputs to the viewer as these are just a few common uses.
 
+(**Note:** We also provide the available keyboard shortcuts for a number of useful viewing situations at the top of the plot.)
+
 ### Random start time via seed (default behavior) with for all wildcard data matches
 ```
 python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_deep-learning/user_data/BIDS/BIDS/sub-0008/ses-preimplant01/eeg/sub-0008_ses-preimplant01_task-task_run-*_eeg.edf" --username bjprager --flagging
@@ -38,22 +40,3 @@ python utils/visualization/edf_viewer/edf_viewer.py --wildcard "../../../scalp_d
 ```
 python utils/visualization/edf_viewer/edf_viewer.py --cli ../../user_data/EDF/sub-00149_ses-preimplant002_task-task_run-06_eeg.edf 
 ```
-
-### Example Views
-The default view for an EDF file following channel name cleanup and montaging might look like the following:
-![default_setting](images/edf_viewer_00.png)
-
-In this next example, by using the `t` button, we can highlight timepoints that might be of interest. In this case, we have data of interest in a sleep/wake study.
-![first_target](images/edf_viewer_01.png)
-
-If we press t again, we can go to another series of timepoints of interest. We can also have multiple categories of interesting points, which results in different highlighting colors.
-![second_target](images/edf_viewer_02.png)
-
-If we wish to zoom in on the data, we can left click to define an area of interest:
-![zoom_window](images/edf_viewer_03.png)
-
-And by pressing `z` we can zoom in on that region (and reset the zoom by pressing `r`):
-![zoom](images/edf_viewer_04.png)
-
-Finally, if we wish to look at just one channel closely, we can hover over the timeseries and press `e` to get a full plot zoom in:
-![single_view](images/edf_viewer_05.png)
