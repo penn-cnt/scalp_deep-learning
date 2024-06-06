@@ -640,7 +640,7 @@ if __name__ == '__main__':
     input_group.add_argument("--file", type=str, help="Filepath to txt or csv of input files.")
 
     output_group = parser.add_argument_group('Output options')
-    output_group.add_argument("--outfile", type=str, help="Output filepath if predicting sleep/spikes/etc.")
+    output_group.add_argument("--outfile", default='./edf_viewer_flags.csv', type=str, help="Output filepath if predicting sleep/spikes/etc.")
     output_group.add_argument("--username", type=str, help="Username to tag any outputs with.")
 
     prep_group = parser.add_argument_group('Data preparation options')
