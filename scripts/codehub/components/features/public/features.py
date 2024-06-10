@@ -276,11 +276,15 @@ class features:
     """
     This class invokes the various features that can be calculated. This should not be altered without good reason.
 
-    New feature extraction tasks should go into other classes in this script.
+    New feature extraction tasks should go into other classes in this script. Each feature should return either the scalar feature value, 
+    or a tuple with the scalar and some optional tagging for additional group distinctions. (i.e. A welch bandpower feature would return the 
+    bandpower, plus an optional tag denoting what the frequency boundaries were.)
 
-    Each feature should return either the scalar feature value, or a tuple with the scalar and some optional tagging for additional group distinctions.
+    If you need vector returned, or need to avoid repeated calculations across different features, you can use the persistance_dict object
+    and return the required elements across different feture calls.The FOOOF class has examples of how to use this object.
 
-    If you need vector returned, you can create an instance level variable and return the required elements as scalars so the resulting dataframe properly sorts values.
+    As of 06/10/24, the default behavior is to pass a class a vector with the channel data and the sampling frequency. This behavior can be altered
+    at the `CLASS INITIALIZATION` code block. 
     """
 
     def __init__(self):
@@ -341,6 +345,10 @@ class features:
 
                             # Perform preprocessing step
                             try:
+                                
+                                #################################
+                                ###### CLASS INITILIZATION ######
+                                #################################
                                 # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
                                 if cls.__name__ != 'FOOOF_processing':
                                     namespace = cls(dataset[:,ichannel],fs[ichannel])
