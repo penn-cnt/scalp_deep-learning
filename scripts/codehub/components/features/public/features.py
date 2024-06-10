@@ -280,8 +280,8 @@ class features:
     or a tuple with the scalar and some optional tagging for additional group distinctions. (i.e. A welch bandpower feature would return the 
     bandpower, plus an optional tag denoting what the frequency boundaries were.)
 
-    If you need vector returned, or need to avoid repeated calculations across different features, you can use the persistance_dict object
-    and return the required elements across different feture calls.The FOOOF class has examples of how to use this object.
+    If you need a vector returned, or need to avoid repeated calculations across different features, you can use the persistance_dict object
+    and return the required elements across different feature calls.The FOOOF class has examples of how to use this object.
 
     As of 06/10/24, the default behavior is to pass a class a vector with the channel data and the sampling frequency. This behavior can be altered
     at the `CLASS INITIALIZATION` code block. 
