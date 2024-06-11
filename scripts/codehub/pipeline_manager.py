@@ -52,7 +52,7 @@ from configs.makeconfigs import *
 
 class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
 
-    def __init__(self, input_params, args, worker_number, barrier):
+    def __init__(self, input_params, args, timestamp, worker_number, barrier):
         """
         Initialize parent class for data loading.
         Store pathing for different data type loads.
@@ -68,6 +68,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         self.args          = args
         self.unique_id     = uuid.uuid4()
         self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
+        self.timestamp     = timestamp
         self.worker_number = worker_number
         self.barrier       = barrier
 
@@ -86,20 +87,6 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         # Select valid data slices
         data_viability.__init__(self)
-
-        # Consolidate the metadata for failed chunks and successful chunks, and squeeze the successful object to match output list
-        ### There is an ocassional bug in how keys get handled. For now, blocking this code out and recommending people do not use data viability.
-        """
-        metadata_copy = self.metadata.copy()
-        bad_metadata_keys = np.setdiff1d(list(self.metadata.keys()),self.output_meta)
-        if bad_metadata_keys.size > 0:
-            bad_metadata = self.metadata[bad_metadata_keys]
-        else:
-            bad_metadata = {}
-        self.metadata = {}
-        for idx,ikey in enumerate(self.output_meta):
-            self.metadata[idx] = metadata_copy.pop(ikey)
-        """
 
         # Pass to feature selection managers
         self.feature_manager()
@@ -191,12 +178,12 @@ def parse_list(input_str):
     values = input_str.replace(',', ' ').split()
     return [int(value) for value in values]
 
-def start_analysis(data_chunk,args,worker_id,barrier):
+def start_analysis(data_chunk,args,timestamp,worker_id,barrier):
     """
     Helper function to allow for easy multiprocessing initialization.
     """
 
-    DM = data_manager(data_chunk,args,worker_id,barrier)
+    DM = data_manager(data_chunk,args,timestamp,worker_id,barrier)
 
 def argument_handler(argument_dir='./',require_flag=True):
 
@@ -408,7 +395,7 @@ if __name__ == "__main__":
         # Create processes and start workers
         processes = []
         for worker_id, data_chunk in enumerate(list_subsets):
-            process = multiprocessing.Process(target=start_analysis, args=(data_chunk,args,worker_id,barrier))
+            process = multiprocessing.Process(target=start_analysis, args=(data_chunk,args,timestamp,worker_id,barrier))
             processes.append(process)
             process.start()
         
@@ -417,7 +404,7 @@ if __name__ == "__main__":
             process.join()
     else:
         # Run a non parallel version.
-        start_analysis(input_parameters, args, 0, None)
+        start_analysis(input_parameters, args, timestamp, 0, None)
     
     # Final clean up of the terminal
     os.system("clear")
