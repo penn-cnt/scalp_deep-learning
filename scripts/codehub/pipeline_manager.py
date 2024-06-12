@@ -176,7 +176,7 @@ def parse_list(input_str):
 
     # Split the input using either spaces or commas as separators
     values = input_str.replace(',', ' ').split()
-    return [int(value) for value in values]
+    return PD.to_numeric([float(value) for value in values],downcast='integer')
 
 def start_analysis(data_chunk,args,timestamp,worker_id,barrier):
     """
@@ -285,10 +285,10 @@ def argument_handler(argument_dir='./',require_flag=True):
     datamerge_group.add_argument("--ncpu", type=int, default=1, help="Number of CPUs to use if multithread.")
 
     datachunk_group = parser.add_argument_group('Data Chunking Options')
-    datachunk_group.add_argument("--t_start", type=float, default=0, help="Time in seconds to start data collection.")
-    datachunk_group.add_argument("--t_end", type=float, default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
+    datachunk_group.add_argument("--t_start", type=parse_list, default=0, help="Time in seconds to start data collection.")
+    datachunk_group.add_argument("--t_end", type=parse_list, default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
     datachunk_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
-    datachunk_group.add_argument("--t_overlap", type=float, default=0, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
+    datachunk_group.add_argument("--t_overlap", type=parse_list, default=0, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
 
     ssh_group = parser.add_argument_group('SSH Data Loading Options')
     ssh_group.add_argument("--ssh_host", type=str, help="If loading data via ssh tunnel, this is the host ssh connection string.")
@@ -387,14 +387,21 @@ if __name__ == "__main__":
             file_path = args.input_str
 
         # Read in csv file
-        input_csv   = PD.read_csv(file_path)
-        files       = input_csv['filepath'].values
-        start_times = input_csv['start_time'].values
-        end_times   = input_csv['end_time'].values
+        input_csv = PD.read_csv(file_path)
 
-        # Replace NaNs with appropriate times as needed
-        start_times = np.nan_to_num(start_times,nan=args.t_start)
-        end_times   = np.nan_to_num(end_times,nan=args.t_end)
+        # Clean up any missing values using the user provided values
+        input_DF = PD.DataFrame()
+        for idx in range(len(args.t_start)):
+            iDF               = input_csv.copy()
+            iDF['start_time'] = iDF['start_time'].fillna(args.t_start[idx])
+            iDF['end_time']   = iDF['end_time'].fillna(args.t_end[idx])
+            input_DF          = PD.concat((input_DF,iDF))
+        input_DF = input_DF.drop_duplicates().sort_values(by=['filepath'])
+
+        # Grab the distinct arrays 
+        files       = input_DF['filepath'].values
+        start_times = input_DF['start_time'].values
+        end_times   = input_DF['end_time'].values
     elif args.input == 'GLOB':
 
         if args.input_str == None:
@@ -426,6 +433,9 @@ if __name__ == "__main__":
     files       = np.array(files)
     start_times = np.array(start_times)
     end_times   = np.array(end_times)
+
+    print(start_times)
+    exit()
 
     # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
     DC                            = data_curation(args,files,start_times,end_times)
