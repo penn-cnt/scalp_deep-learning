@@ -233,6 +233,20 @@ class signal_processing:
 
         # Return a tuple of (peak, left width, right width) to store all of the peak info
         return out,self.optional_tag
+    
+    def line_length(self):
+        """
+        Return the line length along the given channel.
+
+        Returns:
+            LL (float): Line length
+            optional_tag (string): Optional tag
+        """
+
+
+        LL           = np.sum(np.abs(np.ediff1d(self.data)))
+        optional_tag = ''
+        return LL,optional_tag
 
 class basic_statistics:
 
