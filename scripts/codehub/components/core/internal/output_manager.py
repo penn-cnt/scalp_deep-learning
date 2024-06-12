@@ -58,6 +58,3 @@ class output_manager:
             #timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             pickle.dump(self.output_list,open("%s/%s_%s_data.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
             pickle.dump(self.metadata,open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
-
-    def merge_outputs(self):
-        pass
