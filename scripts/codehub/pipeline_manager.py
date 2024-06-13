@@ -176,7 +176,7 @@ def parse_list(input_str):
 
     # Split the input using either spaces or commas as separators
     values = input_str.replace(',', ' ').split()
-    return PD.to_numeric([float(value) for value in values],downcast='integer')
+    return list(PD.to_numeric([float(value) for value in values],downcast='integer'))
 
 def start_analysis(data_chunk,args,timestamp,worker_id,barrier):
     """
@@ -285,10 +285,10 @@ def argument_handler(argument_dir='./',require_flag=True):
     datamerge_group.add_argument("--ncpu", type=int, default=1, help="Number of CPUs to use if multithread.")
 
     datachunk_group = parser.add_argument_group('Data Chunking Options')
-    datachunk_group.add_argument("--t_start", type=parse_list, default=0, help="Time in seconds to start data collection.")
-    datachunk_group.add_argument("--t_end", type=parse_list, default=-1, help="Time in seconds to end data collection. (-1 represents the end of the file.)")
-    datachunk_group.add_argument("--t_window", type=parse_list, help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
-    datachunk_group.add_argument("--t_overlap", type=parse_list, default=0, help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
+    datachunk_group.add_argument("--t_start", type=parse_list, default=[0], help="Time in seconds to start data collection.")
+    datachunk_group.add_argument("--t_end", type=parse_list, default=[-1], help="Time in seconds to end data collection. (-1 represents the end of the file.)")
+    datachunk_group.add_argument("--t_window", type=parse_list, default=[-1], help="List of window sizes, effectively setting multiple t_start and t_end for a single file.")
+    datachunk_group.add_argument("--t_overlap", type=parse_list, default=[0], help="If you want overlapping time windows, this is the fraction of t_window overlapping.")
 
     ssh_group = parser.add_argument_group('SSH Data Loading Options')
     ssh_group.add_argument("--ssh_host", type=str, help="If loading data via ssh tunnel, this is the host ssh connection string.")
@@ -342,6 +342,16 @@ def argument_handler(argument_dir='./',require_flag=True):
     if require_flag:
         if args.outdir[-1] != '/':
             args.outdir += '/'
+
+    # Make sure the times are properly defined
+    if (np.array(args.t_start)).any() < 0: raise ValueError("t_start must be greater than 0.")
+    if ((np.array(args.t_end)<=0)*(np.array(args.t_end)!=-1)).any(): raise ValueError("t_end must be greater than 0 or -1 (denoting end of file).")
+    if ((np.array(args.t_window)<=0)*(np.array(args.t_window)!=-1)).any(): raise ValueError("t_window must be greater than 0 or -1 (denoting end of file).")
+    if (np.array(args.t_overlap)<0).any() or (np.array(args.t_overlap)>1).any(): raise ValueError("t_overlap must be between 0 and 1.")
+
+    # Make sure if the user passed a list entry for time, all the time entries are lists
+    itr = iter([args.t_start,args.t_end,args.t_window,args.t_overlap])
+    if not all(len(l) == len(next(itr)) for l in itr): raise IndexError("Please provide equal number of entries for t_start, t_end, t_window, and t_overlap")
 
     # Help info if needed to be passed back as an object and not string
     help_info    = {}
@@ -410,15 +420,21 @@ if __name__ == "__main__":
             file_path = prompt("Please enter (wildcard enabled) path to input files: ", completer=completer)
         else:
             file_path = args.input_str
-        files     = glob.glob(file_path)
+        files = glob.glob(file_path)
 
         # Make sure we were handed a good filepath
         if len(files) == 0:
             raise IndexError("No data found with that search. Cannot iterate over a null file list.")
 
         # Create start and end times array
-        start_times = args.t_start*np.ones(len(files))
-        end_times   = args.t_end*np.ones(len(files))
+        start_times = np.array([])
+        end_times   = np.array([])
+        for idx,ival in enumerate(args.t_start):
+            istart      = ival*np.ones(len(files))
+            iend        = args.t_end[idx]*np.ones(len(files))
+            start_times = np.concatenate((start_times,istart))
+            end_times   = np.concatenate((end_times,iend))
+        files = np.tile(files,len(args.t_start))
     else:
         # Tab completion enabled input
         completer = PathCompleter()
@@ -426,16 +442,19 @@ if __name__ == "__main__":
         files     = [file_path]
 
         # Create start and end times array
-        start_times = args.t_start*np.ones(len(files))
-        end_times   = args.t_end*np.ones(len(files))
+        start_times = np.array([])
+        end_times   = np.array([])
+        for idx,ival in enumerate(args.t_start):
+            istart      = ival*np.ones(len(files))
+            iend        = args.t_end[idx]*np.ones(len(files))
+            start_times = np.concatenate((start_times,istart))
+            end_times   = np.concatenate((end_times,iend))
+        files = np.tile(files,len(args.t_start))
 
     # Cast the inputs as arrays
     files       = np.array(files)
     start_times = np.array(start_times)
     end_times   = np.array(end_times)
-
-    print(start_times)
-    exit()
 
     # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
     DC                            = data_curation(args,files,start_times,end_times)
@@ -491,6 +510,3 @@ if __name__ == "__main__":
     # Perform merge if requested
     if not args.nomerge:
         merge_outputs(args,timestamp)
-
-    # Final clean up of the terminal
-    #os.system("clear")

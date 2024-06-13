@@ -134,21 +134,25 @@ class data_curation:
             for ifile in self.files:
 
                 # Read in just the header to get duration
-                if self.args.t_end == -1:
-                    t_end = read_edf_header(ifile)['Duration']
-                else:
-                    t_end = self.args.t_end
+                t_end = self.args.t_end
+                for idx,ival in enumerate(t_end):
+                    if ival == -1:
+                        t_end[idx] = read_edf_header(ifile)['Duration']
 
                 # Get the start time for the windows
-                if self.args.t_start == None:
-                    t_start = 0
-                else:
-                    t_start = self.args.t_start
+                t_start = self.args.t_start
 
-                for iwindow in self.args.t_window:
+                # Calculate the correct step if using -1 flags to denote rest of file
+                t_window = self.args.t_window
+                for idx,ival in enumerate(t_window):
+                    if ival == -1:
+                        t_window[idx] = t_end[idx]-t_start[idx]
+
+                # Step through the different window sizes to get the new file list, using overlaps
+                for ii,iwindow in enumerate(t_window):
                     
                     # Get the list of windows start and end times
-                    windowed_start, windowed_end = self.overlapping_start_times(t_start,t_end,iwindow,self.args.t_overlap)
+                    windowed_start, windowed_end = self.overlapping_start_times(t_start[ii],t_end[ii],iwindow,self.args.t_overlap[ii])
 
                     # Loop over the new entries and tile the input lists as needed
                     for idx,istart in enumerate(windowed_start):
