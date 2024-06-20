@@ -264,7 +264,7 @@ class iEEG_download(BIDS_handler):
                 if len(self.data) > 1:
                     self.data = np.concatenate(self.data)
                 else:
-                    self.data = self.data[0]
+                    self.data = 1e-6*self.data[0]
                 
                 # Get the samping frequencies
                 self.fs = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
