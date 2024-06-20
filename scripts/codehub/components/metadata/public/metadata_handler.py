@@ -28,8 +28,8 @@ class metadata_handler:
         self.metadata[self.file_cntr]['t_end']   = self.t_end
         self.metadata[self.file_cntr]['history'] = self.args
 
-    def set_duration(self):
-        self.metadata[self.file_cntr]['dt'] = self.duration
+    def set_ref_window(self):
+        self.metadata[self.file_cntr]['t_window'] = self.t_window
 
     def set_channels(self,inputs):
 

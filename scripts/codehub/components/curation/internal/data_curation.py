@@ -128,9 +128,10 @@ class data_curation:
 
         # If using a sliding time window, duplicate inputs with the correct inputs
         if self.args.t_window != None:
-            new_files = []
-            new_start = []
-            new_end   = []
+            new_files  = []
+            new_start  = []
+            new_end    = []
+            new_refwin = []
             for ifile in self.files:
 
                 # Read in just the header to get duration
@@ -143,7 +144,7 @@ class data_curation:
                 t_start = self.args.t_start
 
                 # Calculate the correct step if using -1 flags to denote rest of file
-                t_window = self.args.t_window
+                t_window = self.args.t_window.copy()
                 for idx,ival in enumerate(t_window):
                     if ival == -1:
                         t_window[idx] = t_end[idx]-t_start[idx]
@@ -159,9 +160,11 @@ class data_curation:
                         new_files.append(ifile)
                         new_start.append(istart)
                         new_end.append(windowed_end[idx])
+                        new_refwin.append(self.args.t_window[ii])
             self.files       = new_files
             self.start_times = new_start
-            self.end_times   = new_end 
+            self.end_times   = new_end
+            self.ref_win     = new_refwin 
 
     def limit_data_volume(self):
         """
@@ -201,7 +204,7 @@ class data_curation:
         self.test_input_data()
         self.limit_data_volume()
         self.create_time_windows()
-        return self.files,self.start_times,self.end_times
+        return self.files,self.start_times,self.end_times,self.ref_win
 
     ########################################################
     ##### Functions for different stratification types. ####

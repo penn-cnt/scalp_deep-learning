@@ -134,7 +134,6 @@ class FOOOF_processing:
             intg = None
         return intg,self.optional_tag
 
-
 class signal_processing:
     """
     Class devoted to basic signal processing tasks. (Band-power/peak-finder/etc.)
@@ -243,7 +242,6 @@ class signal_processing:
             optional_tag (string): Optional tag
         """
 
-
         LL           = np.sum(np.abs(np.ediff1d(self.data)))
         optional_tag = ''
         return LL,optional_tag
@@ -253,6 +251,16 @@ class basic_statistics:
     def __init__(self, data, fs):
         self.data = data
         self.fs   = fs
+
+    def mean(self):
+        """
+        Returns the mean value in a channel.
+
+        Returns:
+            float: Mean channel intensity.
+        """
+
+        return np.mean(self.data),'mean'
 
     def median(self):
         """
@@ -285,6 +293,14 @@ class basic_statistics:
 
         optional_tag = f"quantile_{q:.2f}"
         return np.quantile(self.data,q=q,method=method),optional_tag
+    
+    def rms(self):
+        """
+        Returns the mean root mean square of the channel.
+        """
+
+        val = np.sum(self.data**2)/self.data.size
+        return np.sqrt(val),'rms'
 
 class features:
     """
@@ -310,7 +326,7 @@ class features:
         # Initialize some variables
         dummy_key       = list(self.metadata.keys())[0]
         channels        = self.metadata[dummy_key]['montage_channels']
-        outcols         = ['file','t_start','t_end','dt','method','tag']+channels
+        outcols         = ['file','t_start','t_end','t_window','method','tag']+channels
         
         # Read in the feature configuration
         YL = config_loader(self.args.feature_file)
@@ -337,7 +353,6 @@ class features:
 
             for cls in classes:
                 if hasattr(cls,method_name):
-
                     # Loop over the datasets and the channels in each
                     for idx,dataset in enumerate(self.output_list):
                         
@@ -404,7 +419,7 @@ class features:
                                     error_flag = True
 
                         # Use metadata to allow proper feature grouping
-                        meta_arr = [imeta['file'],imeta['t_start'],imeta['t_end'],imeta['dt'],method_name,result_b]
+                        meta_arr = [imeta['file'],imeta['t_start'],imeta['t_end'],imeta['t_window'],method_name,result_b]
                         df_values.append(np.concatenate((meta_arr,output),axis=0))
 
                         # Stagger condition for pandas concat

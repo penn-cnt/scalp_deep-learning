@@ -70,7 +70,7 @@ class data_loader:
             self.raw_dataslice(sample_frequency,majoraxis=self.args.orientation)
 
             # Set the clip duration referenced to the whole file
-            metadata_handler.set_duration(self)
+            metadata_handler.set_ref_window(self)
 
             return True
         else:

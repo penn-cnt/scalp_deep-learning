@@ -65,6 +65,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         self.infiles       = input_params[:,0]
         self.start_times   = input_params[:,1].astype('float')
         self.end_times     = input_params[:,2].astype('float')
+        self.ref_windows   = input_params[:,3]
         self.args          = args
         self.unique_id     = uuid.uuid4()
         self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
@@ -457,8 +458,8 @@ if __name__ == "__main__":
     end_times   = np.array(end_times)
 
     # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
-    DC                            = data_curation(args,files,start_times,end_times)
-    files, start_times, end_times = DC.get_dataload()
+    DC = data_curation(args,files,start_times,end_times)
+    files, start_times, end_times,ref_windows = DC.get_dataload()
 
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
@@ -478,7 +479,7 @@ if __name__ == "__main__":
         config_handler.create_config()
 
     # Multithread options
-    input_parameters = np.column_stack((files, start_times, end_times))
+    input_parameters = np.column_stack((files, start_times, end_times,ref_windows))
     if args.multithread:
 
         # Calculate the size of each subset based on the number of processes
