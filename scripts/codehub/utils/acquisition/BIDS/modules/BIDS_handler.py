@@ -176,7 +176,7 @@ class BIDS_handler:
         # Update the data to remove NaNs
         data = raw.get_data()
         data[np.isnan(data)] = 0
-        raw._data = 1e-6*data
+        raw._data = data
 
         # Ensure we have an output directory to write to
         rootdir = '/'.join(str(self.bids_path).split('/')[:-1])
