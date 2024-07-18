@@ -141,8 +141,8 @@ class signal_processing:
     """
     
     def __init__(self, data, fs):
-        self.data  = data
-        self.fs    = fs
+        self.data = data
+        self.fs   = fs
     
     def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
         """
