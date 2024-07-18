@@ -141,8 +141,8 @@ class signal_processing:
     """
     
     def __init__(self, data, fs):
-        self.data = data
-        self.fs   = fs
+        self.data  = data
+        self.fs    = fs
     
     def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
         """
@@ -176,7 +176,10 @@ class signal_processing:
         mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
         spectral_energy = np.trapz(psd[mask], frequencies[mask])
 
-        return spectral_energy,self.optional_tag
+        if not self.trace:
+            return spectral_energy,self.optional_tag,None
+        else:
+            return spectral_energy,self.optional_tag,(frequencies,psd)
     
     def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
         """
@@ -386,15 +389,20 @@ class features:
                                     namespace = cls(dataset[:,ichannel],fs[ichannel],[0.5,128], imeta['file'], ichannel)
 
                                 # Get the method name and return results from the method
-                                method_call         = getattr(namespace,method_name)
-                                result_a, result_b  = method_call(**method_args)
+                                method_call                 = getattr(namespace,method_name)
+                                result_a, result_b,result_c = method_call(**method_args)
 
                                 # Check if we have a multivalue output
                                 if type(result_a) == list:
                                     metadata_handler.add_metadata(self,idx,method_name,result_a)
                                     result_a = result_a[0]
 
+                                # Add the results to the output object
                                 output.append(result_a)
+
+                                # If the user wants to trace some values (see the results as they are processed), they can return result_c
+                                if result_c != None:
+                                    metadata_handler.add_metadata(self,idx,f"{method_name}_trace",result_c)
                             except Exception as e:
 
                                 # Add the ability to see the error if debugging
