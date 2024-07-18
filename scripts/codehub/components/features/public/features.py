@@ -149,6 +149,11 @@ class signal_processing:
     def __init__(self, data, fs):
         self.data = data
         self.fs   = fs
+
+        # Create the trace variable as needed for direct invocation
+        if 'trace' not in globals():
+            global trace
+            trace = False
     
     def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
         """
