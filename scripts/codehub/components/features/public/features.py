@@ -24,15 +24,16 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 class FOOOF_processing:
 
-    def __init__(self, data, fs, freq_range, file, ichannel):
+    def __init__(self, data, fs, freq_range, file, ichannel, trace=False):
         self.data       = data
         self.fs         = fs
         self.freq_range = freq_range
         self.file       = file
         self.ichannel   = ichannel
+        self.trace      = trace
 
     def create_initial_power_spectra(self):
-        self.freqs, initial_power_spectrum = compute_spectrum_welch(self.data, self.fs)
+        self.freqs, initial_power_spectrum = compute_spectrum_welch(self.data, self.fs,nperseg=self.nperseg, noverlap=self.noverlap)
         inds                               = (self.freqs>0)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
         freqs                              = self.freqs[inds]
         initial_power_spectrum             = initial_power_spectrum[inds]
@@ -67,7 +68,7 @@ class FOOOF_processing:
             self.create_initial_power_spectra()
             self.fit_fooof()
 
-    def fooof_aperiodic_b0(self):
+    def fooof_aperiodic_b0(self, win_size=2., win_stride=1.):
         """
         Return the constant offset for the aperiodic fit.
 
@@ -77,6 +78,10 @@ class FOOOF_processing:
 
         # Make the optional tag to identify the dataslice
         self.optional_tag = ''
+
+        # Get the number of samples in each window for welch average and the overlap
+        self.nperseg  = int(float(win_size) * self.fs)
+        self.noverlap = int(float(win_stride) * self.fs)
 
         # Check for fooof model
         self.check_persistance()
@@ -90,7 +95,7 @@ class FOOOF_processing:
 
         return b0,self.optional_tag
     
-    def fooof_aperiodic_b1(self):
+    def fooof_aperiodic_b1(self, win_size=2., win_stride=1.):
         """
         Return the powerlaw exponent for the aperiodic fit.
 
@@ -100,6 +105,10 @@ class FOOOF_processing:
 
         # Make the optional tag to identify the dataslice
         self.optional_tag = ''
+
+        # Get the number of samples in each window for welch average and the overlap
+        self.nperseg  = int(float(win_size) * self.fs)
+        self.noverlap = int(float(win_stride) * self.fs)
 
         # Check for fooof model
         self.check_persistance()
@@ -113,7 +122,7 @@ class FOOOF_processing:
 
         return b1,self.optional_tag
 
-    def fooof_bandpower(self,lo_freq,hi_freq):
+    def fooof_bandpower(self,lo_freq,hi_freq, win_size=2., win_stride=1.):
         """
         Return the bandpower with the aperiodic component removed.
 
@@ -125,6 +134,10 @@ class FOOOF_processing:
         low_freq_str      = f"{lo_freq:.2f}"
         hi_freq_str       = f"{hi_freq:.2f}"
         self.optional_tag = '['+low_freq_str+','+hi_freq_str+']'
+
+        # Get the number of samples in each window for welch average and the overlap
+        self.nperseg  = int(float(win_size) * self.fs)
+        self.noverlap = int(float(win_stride) * self.fs)
 
         # Check for fooof model
         self.check_persistance()
@@ -139,7 +152,11 @@ class FOOOF_processing:
             intg = simpson(y=y[inds],x=x[inds])
         else:
             intg = None
-        return intg,self.optional_tag
+
+        if not self.trace:
+            return intg,self.optional_tag
+        else:
+            return intg,self.optional_tag,(x,y)
 
 class signal_processing:
     """
@@ -337,8 +354,7 @@ class features:
         """
 
         # Initialize some variables
-        dummy_key = list(self.metadata.keys())[0]
-        channels  = self.metadata[dummy_key]['montage_channels']
+        channels  = self.montage_channels.copy()
         outcols   = ['file','t_start','t_end','t_window','method','tag']+channels
 
         # Read in the feature configuration
@@ -387,15 +403,20 @@ class features:
 
                             # Perform preprocessing step
                             try:
+
+                                # Grab the data and give it a first pass check for all zeros
+                                idata = dataset[:,ichannel]
+                                if not np.any(idata):
+                                    raise ValueError(f"Channel {channels[ichannel]} contains all zeros for file {imeta['file']}.")
                                 
                                 #################################
                                 ###### CLASS INITILIZATION ######
                                 #################################
                                 # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
                                 if cls.__name__ != 'FOOOF_processing':
-                                    namespace = cls(dataset[:,ichannel],fs[ichannel],self.args.trace)
+                                    namespace = cls(idata,fs[ichannel],self.args.trace)
                                 else:
-                                    namespace = cls(dataset[:,ichannel],fs[ichannel],[0.5,128], imeta['file'], ichannel)
+                                    namespace = cls(idata,fs[ichannel],[0.5,128], imeta['file'], ichannel, self.args.trace)
 
                                 # Get the method name and return results from the method
                                 method_call = getattr(namespace,method_name)
@@ -435,7 +456,7 @@ class features:
                                         os.system(f"mkdir -p {error_dir}")
 
                                     fp = open(f"{error_dir}{self.worker_number}_features.error","a")
-                                    fp.write(f"Error {e} in {method_name}\n")
+                                    fp.write(f"Step {istep:02}/{method_name}: Error {e}\n")
                                     fp.close()
                                     error_flag = True
 
