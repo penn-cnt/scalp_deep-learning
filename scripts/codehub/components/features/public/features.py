@@ -24,17 +24,19 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 class FOOOF_processing:
 
-    def __init__(self, data, fs, freq_range, file, ichannel, trace=False):
+    def __init__(self, data, fs, freq_range, file, fidx, ichannel, trace=False):
         self.data       = data
         self.fs         = fs
         self.freq_range = freq_range
         self.file       = file
+        self.fidx       = fidx
         self.ichannel   = ichannel
         self.trace      = trace
 
     def create_initial_power_spectra(self):
-        self.freqs, initial_power_spectrum = compute_spectrum_welch(self.data, self.fs,nperseg=self.nperseg, noverlap=self.noverlap)
-        inds                               = (self.freqs>0)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
+        self.freqs, initial_power_spectrum = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=self.nperseg, noverlap=self.noverlap, axis=0)
+        initial_power_spectrum             = initial_power_spectrum.flatten()
+        inds                               = (self.freqs>=0.5)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
         freqs                              = self.freqs[inds]
         initial_power_spectrum             = initial_power_spectrum[inds]
         self.initial_power_spectrum        = np.interp(self.freqs,freqs,initial_power_spectrum)
@@ -58,12 +60,13 @@ class FOOOF_processing:
             periodic_comp = self.initial_power_spectrum-one_over_f
 
             # Store the results for persistant fitting
-            persistance_dict[self.fooof_key] = (fg,self.freqs,periodic_comp)
+            persistance_dict[self.fooof_key] = (fg,self.freqs,periodic_comp,self.initial_power_spectrum)
         else:
             persistance_dict[self.fooof_key] = (None,None,None)
 
     def check_persistance(self):
-        self.fooof_key = f"fooof_{self.file}_{self.ichannel}"
+        
+        self.fooof_key = f"fooof_{self.file}_{self.fidx}_{self.ichannel}"
         if self.fooof_key not in persistance_dict.keys():
             self.create_initial_power_spectra()
             self.fit_fooof()
@@ -143,8 +146,9 @@ class FOOOF_processing:
         self.check_persistance()
 
         # Get the needed object, then retrieve data
-        x = persistance_dict[self.fooof_key][1]
-        y = persistance_dict[self.fooof_key][2]
+        x    = persistance_dict[self.fooof_key][1]
+        y    = persistance_dict[self.fooof_key][2]
+        rawy = persistance_dict[self.fooof_key][3]
 
         # Get the correct array slice to return the simpson integration
         if isinstance(x, np.ndarray):
@@ -156,7 +160,7 @@ class FOOOF_processing:
         if not self.trace:
             return intg,self.optional_tag
         else:
-            return intg,self.optional_tag,(x,y)
+            return intg,self.optional_tag,(x.astype('float16'),y.astype('float32'),rawy.astype('float32'))
 
 class signal_processing:
     """
@@ -194,8 +198,12 @@ class signal_processing:
         noverlap = int(float(win_stride) * self.fs)
 
         # Calculate the welch periodogram
-        frequencies, psd = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
-        psd              = psd.flatten()
+        frequencies, initial_power_spectrum = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
+        initial_power_spectrum              = initial_power_spectrum.flatten()
+        inds                                = (frequencies>=0.5)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
+        freqs                               = frequencies[inds]
+        initial_power_spectrum              = initial_power_spectrum[inds]
+        psd                                 = np.interp(frequencies,freqs,initial_power_spectrum)
 
         # Calculate the spectral energy
         mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
@@ -204,7 +212,7 @@ class signal_processing:
         if not self.trace:
             return spectral_energy,self.optional_tag
         else:
-            return spectral_energy,self.optional_tag,(frequencies,psd)
+            return spectral_energy,self.optional_tag,(frequencies.astype('float16'),psd.astype('float32'))
     
     def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
         """
@@ -408,7 +416,7 @@ class features:
                                 idata = dataset[:,ichannel]
                                 if not np.any(idata):
                                     raise ValueError(f"Channel {channels[ichannel]} contains all zeros for file {imeta['file']}.")
-                                
+
                                 #################################
                                 ###### CLASS INITILIZATION ######
                                 #################################
@@ -416,7 +424,7 @@ class features:
                                 if cls.__name__ != 'FOOOF_processing':
                                     namespace = cls(idata,fs[ichannel],self.args.trace)
                                 else:
-                                    namespace = cls(idata,fs[ichannel],[0.5,128], imeta['file'], ichannel, self.args.trace)
+                                    namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
 
                                 # Get the method name and return results from the method
                                 method_call = getattr(namespace,method_name)
