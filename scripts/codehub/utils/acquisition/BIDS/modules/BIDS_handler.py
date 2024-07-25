@@ -76,7 +76,6 @@ class BIDS_handler:
         channel_expressions = [regex.match(ichannel) for ichannel in self.channels]
 
         # Make the channel types
-        print(self.channels)
         self.channel_types = []
         for (i, iexpression), channel in zip(enumerate(channel_expressions), self.channels):
             if iexpression == None:

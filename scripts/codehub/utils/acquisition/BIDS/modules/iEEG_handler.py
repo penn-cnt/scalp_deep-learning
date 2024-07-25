@@ -290,6 +290,7 @@ class iEEG_download(BIDS_handler):
                 # Get the channel names and integer representations for data call
                 self.channels = dataset.ch_labels
                 channel_cntr  = list(range(len(self.channels)))
+                print(self.channels)
 
                 # If duration is greater than 10 min, break up the call. Make array of start,duration with max 10 min each chunk
                 time_cutoff = int(10*60*1e6)
