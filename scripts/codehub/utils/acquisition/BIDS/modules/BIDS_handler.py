@@ -132,6 +132,11 @@ class BIDS_handler:
         self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs, verbose=False)
 
     def add_raw(self):
+
+        print(self.data)
+        print(self.channels)
+        exit()
+
         self.raws.append(mne.io.RawArray(1e-6*self.data.T, self.data_info, verbose=False))
 
     def event_mapper(self):

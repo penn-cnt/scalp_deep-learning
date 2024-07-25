@@ -312,10 +312,6 @@ class iEEG_download(BIDS_handler):
                 else:
                     self.data = self.data[0]
 
-                print(self.channels)
-                print(self.data)
-                exit()
-
                 # Get the samping frequencies
                 self.fs = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
 
