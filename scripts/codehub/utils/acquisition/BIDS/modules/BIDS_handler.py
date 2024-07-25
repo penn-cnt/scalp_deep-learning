@@ -235,7 +235,7 @@ class BIDS_handler:
             else:
                 
                 # Set the channel types
-                print(raw)
+                print(self.channel_types)
 
                 raw.set_channel_types(self.channel_types.type)
 
