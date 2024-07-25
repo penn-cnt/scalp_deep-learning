@@ -231,9 +231,9 @@ class iEEG_download(BIDS_handler):
         try:
             if len(self.raws) > 0:
 
-                cind = 4
-                print(self.raws[1].get_data()[cind])
-                print(self.channels[cind])
+                for ir,iraw in enumerate(self.raws[1:]):
+                    for cind,ichan in enumerate(self.channels):
+                        print(f"{ir}|{ichan}|{np.median(iraw.get_data()[cind])}")
                 exit()
 
                 BIDS_handler.event_mapper(self)
