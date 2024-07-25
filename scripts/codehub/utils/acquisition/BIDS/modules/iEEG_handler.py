@@ -311,7 +311,10 @@ class iEEG_download(BIDS_handler):
                     self.data = np.concatenate(self.data)
                 else:
                     self.data = self.data[0]
-                
+
+                print(self.data)
+                exit()
+
                 # Get the samping frequencies
                 self.fs = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
 
@@ -326,9 +329,6 @@ class iEEG_download(BIDS_handler):
                 self.start_time      = dataset.start_time
                 self.end_time        = dataset.end_time
             session.close()
-
-            print(self.data)
-            exit()
 
 class ieeg_handler:
 
