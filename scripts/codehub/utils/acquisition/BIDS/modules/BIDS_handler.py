@@ -160,9 +160,6 @@ class BIDS_handler:
                 alldesc.append(desc)
             events = np.array(events)
 
-            print(raw[:])
-            exit()
-
             # Make the bids path
             session_str    = "%s%03d" %(self.args.session,self.session_number)
             self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')

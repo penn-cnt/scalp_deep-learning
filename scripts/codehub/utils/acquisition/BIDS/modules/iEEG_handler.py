@@ -230,12 +230,6 @@ class iEEG_download(BIDS_handler):
         # Save the bids files if we have any data
         try:
             if len(self.raws) > 0:
-
-                #for ir,iraw in enumerate(self.raws[1:]):
-                #    for cind,ichan in enumerate(self.channels):
-                #        print(f"{ir}|{ichan}|{np.median(iraw.get_data()[cind])}")
-                #exit()
-
                 BIDS_handler.event_mapper(self)
                 BIDS_handler.save_bids(self)
         except AttributeError as e:
