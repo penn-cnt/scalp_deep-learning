@@ -312,6 +312,7 @@ class iEEG_download(BIDS_handler):
                 else:
                     self.data = self.data[0]
 
+                print(self.channels)
                 print(self.data)
                 exit()
 
