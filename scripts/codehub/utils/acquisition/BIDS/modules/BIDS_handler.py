@@ -160,7 +160,7 @@ class BIDS_handler:
                 alldesc.append(desc)
             events = np.array(events)
 
-            print(raw.get_data())
+            print(raw[:])
             exit()
 
             # Make the bids path
