@@ -231,7 +231,8 @@ class iEEG_download(BIDS_handler):
         try:
             if len(self.raws) > 0:
 
-                print(self.raws)
+                print(self.raws[1].get_data())
+                print(self.channels)
                 exit()
 
                 BIDS_handler.event_mapper(self)
