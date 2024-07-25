@@ -230,6 +230,10 @@ class iEEG_download(BIDS_handler):
         # Save the bids files if we have any data
         try:
             if len(self.raws) > 0:
+
+                print(self.raws)
+                exit()
+
                 BIDS_handler.event_mapper(self)
                 BIDS_handler.save_bids(self)
         except AttributeError as e:
