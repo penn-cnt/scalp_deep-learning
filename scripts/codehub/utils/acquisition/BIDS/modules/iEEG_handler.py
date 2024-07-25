@@ -327,6 +327,9 @@ class iEEG_download(BIDS_handler):
                 self.end_time        = dataset.end_time
             session.close()
 
+            print(self.data)
+            exit()
+
 class ieeg_handler:
 
     def __init__(self,args,input_data):
