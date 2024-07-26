@@ -131,6 +131,8 @@ class BIDS_handler:
         self.channels = list(np.array(self.channels)[mask])
 
     def make_info(self):
+        print(self.channels)
+        exit()
         self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs, verbose=False)
 
     def add_raw(self):
