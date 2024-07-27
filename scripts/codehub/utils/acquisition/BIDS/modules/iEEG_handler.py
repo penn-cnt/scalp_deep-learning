@@ -74,9 +74,9 @@ class iEEG_download(BIDS_handler):
         if path.exists(self.subject_path):
             # Read in the subject information
             with self.semaphore:
-                self.subject_cache      = PD.read_csv(self.subject_path)
+                self.subject_cache   = PD.read_csv(self.subject_path)
             self.processed_files    = self.subject_cache['orig_filename'].values
-            self.processed_start    = self.subject_cache['start'].values
+            self.processed_start    = self.subject_cache['start_sec'].values
         else:
             self.processed_files    = []
             self.processed_start    = []
@@ -208,7 +208,7 @@ class iEEG_download(BIDS_handler):
             BIDS_handler.__init__(self)
             for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
 
-                if istart == 0 and self.args.skipzero:
+                if istart == 0:
                     self.raws.append("SKIP")
                 else:
                     # Check if this combo has already been processed before
@@ -290,6 +290,7 @@ class iEEG_download(BIDS_handler):
                 # Get the channel names and integer representations for data call
                 self.channels = dataset.ch_labels
                 channel_cntr  = list(range(len(self.channels)))
+                volt_factors  = [dataset.get_time_series_details(ichan).voltage_conversion_factor for ichan in self.channels]
 
                 # If duration is greater than 10 min, break up the call. Make array of start,duration with max 10 min each chunk
                 time_cutoff = int(10*60*1e6)
@@ -311,7 +312,11 @@ class iEEG_download(BIDS_handler):
                     self.data = np.concatenate(self.data)
                 else:
                     self.data = self.data[0]
-                
+
+                # Apply the voltage factors
+                for idx,ifactor in enumerate(volt_factors):
+                    self.data[:,idx] = ifactor*self.data[:,idx]
+
                 # Get the samping frequencies
                 self.fs = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
 
