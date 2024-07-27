@@ -75,8 +75,6 @@ class BIDS_handler:
         # Get the outputs of each channel
         channel_expressions = [regex.match(ichannel) for ichannel in self.channels]
 
-        print(channel_expressions)
-
         # Make the channel types
         self.channel_types = []
         for (i, iexpression), channel in zip(enumerate(channel_expressions), self.channels):
@@ -131,12 +129,12 @@ class BIDS_handler:
         self.channels = list(np.array(self.channels)[mask])
 
     def make_info(self):
-        print(self.channels)
-        exit()
         self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs, verbose=False)
 
     def add_raw(self):
-        self.raws.append(mne.io.RawArray(1e-6*self.data.T, self.data_info, verbose=False))
+        # Put the data into an MNE raw array
+        iraw = mne.io.RawArray(self.data.T, self.data_info, verbose=False)
+        self.raws.append(iraw)
 
     def event_mapper(self):
 
@@ -172,13 +170,14 @@ class BIDS_handler:
             write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
             # Overwrite the edf file only with set physical maxima/minima
-            pmax = int(self.data.max())
-            pmin = -pmax
-            mne.export.export_raw(str(self.bids_path),raw,physical_range=(pmin,pmax),overwrite=True,verbose=False)
+            #pmax = int(self.data.max())
+            #pmin = -pmax
+            #mne.export.export_raw(str(self.bids_path),raw,physical_range=(pmin,pmax),overwrite=True,verbose=False)
 
             # Save the targets with the edf path paired up to filetype
             target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
-            target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc)}
+            target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc),
+                           'ieeg_file':self.current_file,'ieeg_start_sec':1e-6*self.clip_start_times[idx],'ieeg_duration_sec':1e-6*self.clip_durations[idx]}
             pickle.dump(target_dict,open(target_path,"wb"))
 
             # Update lookup table
@@ -259,8 +258,8 @@ class BIDS_handler:
         times   = f"{self.args.start}_{self.args.duration}"
 
         # Save the subject file info with source metadata
-        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start','duration']
-        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx+1,self.clip_start_times[idx],self.clip_durations[idx]]],columns=columns)
+        columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec']
+        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx+1,1e-6*self.clip_start_times[idx],1e-6*self.clip_durations[idx]]],columns=columns)
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()
