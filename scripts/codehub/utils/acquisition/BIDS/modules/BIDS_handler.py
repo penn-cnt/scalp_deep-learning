@@ -243,6 +243,7 @@ class BIDS_handler:
                     else:
                         self.direct_save(idx,raw)
                 except:
+                    print("Error saving file. Skipping.")
                     pass
 
     def create_lookup(self,idx):
