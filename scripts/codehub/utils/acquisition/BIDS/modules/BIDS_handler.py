@@ -233,7 +233,11 @@ class BIDS_handler:
             else:
                 
                 # Set the channel types
-                raw.set_channel_types(self.channel_types.type)
+                try:
+                    raw.set_channel_types(self.channel_types.type)
+                except:
+                    print(self.channel_types)
+                    exit()
 
                 # Check for annotations
                 try:
