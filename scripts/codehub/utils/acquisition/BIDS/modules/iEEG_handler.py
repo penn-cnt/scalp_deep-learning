@@ -212,7 +212,7 @@ class iEEG_download(BIDS_handler):
                     self.raws.append("SKIP")
                 else:
                     # Check if this combo has already been processed before
-                    pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
+                    pinds = (self.processed_files==self.current_file)&(self.processed_start==1e-6*istart)
                     if pinds.any():
                         self.raws.append("SKIP")
                         if self.args.multithread and not self.args.silent:
