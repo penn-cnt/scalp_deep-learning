@@ -235,16 +235,15 @@ class BIDS_handler:
                 # Set the channel types
                 try:
                     raw.set_channel_types(self.channel_types.type)
-                except:
-                    print(self.channel_types)
-                    exit()
 
-                # Check for annotations
-                try:
-                    if len(self.annotations[idx].keys()):
-                        self.annotation_save(idx,raw)
-                except AttributeError:
-                    self.direct_save(idx,raw)
+                    # Check for annotations
+                    if self.args.annotations:
+                        if len(self.annotations[idx].keys()):
+                            self.annotation_save(idx,raw)
+                    else:
+                        self.direct_save(idx,raw)
+                except:
+                    pass
 
     def create_lookup(self,idx):
 
