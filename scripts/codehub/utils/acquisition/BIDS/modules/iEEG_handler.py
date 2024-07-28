@@ -215,10 +215,10 @@ class iEEG_download(BIDS_handler):
                     pinds = (self.processed_files==self.current_file)&(self.processed_start==istart)
                     if pinds.any():
                         self.raws.append("SKIP")
-                        if self.args.multithread:
+                        if self.args.multithread and not self.args.silent:
                             print(f"Skipping {self.current_file} annotation at {istart}.")
                     else:
-                        if self.args.multithread:
+                        if self.args.multithread and not self.args.silent:
                             print(f"Downloading {self.current_file} annotation at {istart}")
                         self.session_method_handler(istart, self.clip_durations[idx])
                         if self.success_flag == True:
