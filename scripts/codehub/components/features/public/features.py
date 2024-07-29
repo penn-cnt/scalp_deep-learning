@@ -160,7 +160,7 @@ class FOOOF_processing:
         if not self.trace:
             return intg,self.optional_tag
         else:
-            return intg,self.optional_tag,(x.astype('float16'),y.astype('float32'),rawy.astype('float32'))
+            return intg,self.optional_tag,(['freqs','psd_foof','psd_welch'],x.astype('float16'),y.astype('float32'),rawy.astype('float32'))
 
 class signal_processing:
     """
@@ -212,7 +212,7 @@ class signal_processing:
         if not self.trace:
             return spectral_energy,self.optional_tag
         else:
-            return spectral_energy,self.optional_tag,(frequencies.astype('float16'),psd.astype('float32'))
+            return spectral_energy,self.optional_tag,(['freqs','psd_welch'],frequencies.astype('float16'),psd.astype('float32'))
     
     def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
         """
@@ -434,8 +434,15 @@ class features:
 
                                 # If the user wants to trace some values (see the results as they are processed), they can return result_c
                                 if len(results) == 3:
-                                    newkeys = (method_name,'trace',ichannel)
-                                    metadata_handler.add_nested_metadata(self,idx,newkeys,results[2])
+
+                                    # Get the lower level column labels
+                                    cols = results[2][0]
+                                    vals = results[2][1:]
+
+                                    # Added the nested output of the trace
+                                    for tidx,tcol in enumerate(cols):
+                                        newkeys = (method_name,'trace',ichannel,tcol)
+                                        metadata_handler.add_nested_metadata(self,idx,newkeys,vals[tidx])
 
                                 # Check if we have a multivalue output
                                 if type(result_a) == list:
