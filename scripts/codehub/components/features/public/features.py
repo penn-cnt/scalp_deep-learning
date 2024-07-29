@@ -454,7 +454,7 @@ class features:
                                 # Add the results to the output object
                                 output.append(result_a)
 
-                            except ValueError: #Exception as e:
+                            except Exception as e:
 
                                 # Add the ability to see the error if debugging
                                 if self.args.debug and not self.args.silent:
