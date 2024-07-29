@@ -54,7 +54,7 @@ class metadata_handler:
 
         self.metadata[file_cntr][key] = values
 
-    def add_neted_metadata(self,file_cntr,keys,values):
+    def add_nested_metadata(self,file_cntr,keys,values):
 
         def create_or_update_nested_dict(base_dict, keys, values):
             idict = base_dict.copy()
