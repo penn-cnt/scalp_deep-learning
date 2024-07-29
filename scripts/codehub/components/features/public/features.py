@@ -441,10 +441,10 @@ class features:
 
                                     # Make the dictionary to nest into metadata
                                     inner_dict = dict(zip(cols,vals))
-                                    imeta      = {ichannel:inner_dict}
+                                    tracemeta  = {ichannel:inner_dict}
 
                                     # Add the trace to the metadata
-                                    metadata_handler.add_metadata(self,idx,method_name,imeta)
+                                    metadata_handler.add_metadata(self,idx,method_name,tracemeta)
 
                                 # Check if we have a multivalue output
                                 if type(result_a) == list:
