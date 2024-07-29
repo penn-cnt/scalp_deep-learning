@@ -441,7 +441,7 @@ class features:
 
                                     # Make the dictionary to nest into metadata
                                     inner_dict = dict(zip(cols,vals))
-                                    imeta      = {channel:inner_dict}
+                                    imeta      = {ichannel:inner_dict}
 
                                     # Add the trace to the metadata
                                     metadata_handler.add_metadata(self,idx,method_name,imeta)
