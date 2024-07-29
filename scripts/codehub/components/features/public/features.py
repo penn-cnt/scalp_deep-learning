@@ -434,7 +434,8 @@ class features:
 
                                 # If the user wants to trace some values (see the results as they are processed), they can return result_c
                                 if len(results) == 3:
-                                    metadata_handler.add_metadata(self,idx,f"{method_name}_trace_{channels[ichannel]}",results[2])
+                                    newkeys = (method_name,'trace',ichannel)
+                                    metadata_handler.add_nested_metadata(self,idx,newkeys,results[2])
 
                                 # Check if we have a multivalue output
                                 if type(result_a) == list:
