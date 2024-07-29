@@ -52,18 +52,8 @@ class metadata_handler:
         Add to the metadata dictionary for a non-specific keyword. (i.e. Adding extra info for a users personal preprocessing/featute logic.)
         """
 
+        if key in self.metadata[file_cntr].keys():
+            if type(values) == dict and type(self.metadata[file_cntr][key]) == dict:
+                olddict = self.metadata[file_cntr][key]
+                values  = {**olddict,**values}
         self.metadata[file_cntr][key] = values
-
-    def add_nested_metadata(self,file_cntr,keys,values):
-
-        def create_or_update_nested_dict(base_dict, keys, ivalue):
-            idict = base_dict.copy()
-            for key in keys[:-1]:
-                if key not in idict:
-                    idict[key] = {}
-                idict = idict[key]
-            idict[keys[-1]] = ivalue
-            return idict
-
-        
-        self.metadata[file_cntr][keys[0]] = create_or_update_nested_dict(self.metadata[file_cntr], keys[1:], values)

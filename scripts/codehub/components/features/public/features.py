@@ -439,10 +439,12 @@ class features:
                                     cols = results[2][0]
                                     vals = results[2][1:]
 
-                                    # Added the nested output of the trace
-                                    for tidx,tcol in enumerate(cols):
-                                        newkeys = (method_name,'trace',ichannel,tcol)
-                                        metadata_handler.add_nested_metadata(self,idx,newkeys,vals[tidx])
+                                    # Make the dictionary to nest into metadata
+                                    inner_dict = dict(zip(cols,vals))
+                                    imeta      = {channel:inner_dict}
+
+                                    # Add the trace to the metadata
+                                    metadata_handler.add_metadata(self,idx,method_name,imeta)
 
                                 # Check if we have a multivalue output
                                 if type(result_a) == list:
