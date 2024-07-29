@@ -65,4 +65,4 @@ class metadata_handler:
             idict[keys[-1]] = ivalue
             return idict
 
-        self.metadata[file_cntr] = create_or_update_nested_dict(self.metadata[file_cntr], keys, values)
+        self.metadata[file_cntr][keys[0]] = create_or_update_nested_dict(self.metadata[file_cntr], keys[1:], values)
