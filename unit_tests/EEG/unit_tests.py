@@ -130,6 +130,7 @@ if __name__ == '__main__':
     parser.add_argument("--infile", type=str, help='Input EDF Filepath')
     parser.add_argument("--sampfreq", type=int, default=256, help='Expected sampling frequency')
     parser.add_argument("--channel_file", type=str, default='configs/hup_standard.csv', help='CSV file containing the expected channels')
+    parser.add_argument("--silent", action='store_true', default=False, help="Silence exceptions.")
     args = parser.parse_args()
 
     # Run machine level tests
