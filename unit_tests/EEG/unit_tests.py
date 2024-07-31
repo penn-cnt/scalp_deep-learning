@@ -11,7 +11,12 @@ class machine_level:
 
     def __init__(self,args):
 
+        # Save user inputs to instance variable
         self.args = args
+
+        # Define the required keywords in the header
+        self.required_dataset_headers = ['duration']
+        self.required_channel_headers = ['label', 'dimension', 'sample_rate', 'sample_frequency', 'physical_max', 'physical_min', 'digital_max', 'digital_min']
 
     def run_tests(self):
         
@@ -32,7 +37,36 @@ class machine_level:
         raise Exception()
 
     def test_header(self):
+        
+        # Read in the header
         self.header = read_edf_header(args.infile)
+
+        # Ensure casing of the keywords
+        header_keys = list(self.header.keys())
+        for ikey in header_keys:
+            self.header[ikey.lower()] = self.header.pop(ikey)
+        self.header_keys = list(self.header.keys())
+
+        # Check the dataset level required header info
+        for ikey in self.required_dataset_headers:
+            if ikey.lower() not in self.header_keys():
+                raise Exception(f"Header missing the {ikey} information.")
+            if self.header[ikey] == None or self.header[ikey] == '':
+                raise Exception(f"Header missing the {ikey} information.")
+
+        # Check that the channel headers are all present and contain data
+        channel_header_mask       = []
+        channel_header_entry_mask = []
+        for ival in self.header['SignalHeaders']:
+            ikeys = list(ival.keys())
+            channel_header_mask.append(all(tmp in ikeys for tmp in self.required_channel_headers))
+            channel_header_entry_mask.extend([ival[tmp]==None for tmp in self.required_channel_headers])
+        
+        # Raise exceptions if poorly defined header is found
+        if any(channel_header_mask) == False:
+            raise Exception("Header contains missing information.")
+        if any(channel_header_entry_mask) == True:
+            raise Exception("Header contains missing information.")
 
     def test_sampfreq(self):
 
@@ -50,7 +84,7 @@ class machine_level:
         self.ref_channels = PD.read_csv(args.channel_file,names=['channels']).values
 
         # Obtain raw channel names
-        raw_channels = [ival['label'] for ival in self.header['SignalHeaders']]
+        raw_channels = self.header['channels']
 
         # Clean up the channel names
         CC            = channel_clean()
