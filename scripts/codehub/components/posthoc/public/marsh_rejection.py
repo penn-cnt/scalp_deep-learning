@@ -122,9 +122,7 @@ if __name__ == '__main__':
     # Store the input and output paths
     infile  = argv[1]
     outfile = infile.replace('features.pickle','features_marsh.pickle')
-    print(outfile)
 
-    """
     # Read in the data
     DF = PD.read_pickle(argv[1])
 
@@ -134,4 +132,3 @@ if __name__ == '__main__':
     MR.get_mean_stats()
     newDF = MR.return_df()
     newDF.to_pickle(outfile)
-    """
