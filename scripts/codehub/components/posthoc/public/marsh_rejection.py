@@ -101,17 +101,18 @@ class marsh_rejection:
             mask_arr = np.array(segment_rms_mask)*np.array(segment_ll_mask)
 
             # Reshape indices of subslice to we can iterate over time segments in the full file
-            for ii in range(DF_rms_slice.shape[0]):
-                
-                # Get the references to find the right rows in the bigger dataframe
-                irow     = DF_rms_slice.iloc[ii]
-                t_start  = irow.t_start
-                t_end    = irow.t_end
-                t_window = irow.t_window
-                mask     = mask_arr[ii]
+            if DF_rms_slice.ndim == 2:
+                for ii in range(DF_rms_slice.shape[0]):
+                    
+                    # Get the references to find the right rows in the bigger dataframe
+                    irow     = DF_rms_slice.iloc[ii]
+                    t_start  = irow.t_start
+                    t_end    = irow.t_end
+                    t_window = irow.t_window
+                    mask     = mask_arr[ii]
 
-                # Set the mask value
-                self.DF.loc[(self.DF.file==ifile)&(self.DF.t_start==t_start)&(self.DF.t_end==t_end)&(self.DF.t_window==t_window),['marsh_rejection']] = mask                
+                    # Set the mask value
+                    self.DF.loc[(self.DF.file==ifile)&(self.DF.t_start==t_start)&(self.DF.t_end==t_end)&(self.DF.t_window==t_window),['marsh_rejection']] = mask                
 
     def return_df(self):
         return self.DF
@@ -123,6 +124,7 @@ if __name__ == '__main__':
     outfile = infile.replace('features.pickle','features_marsh.pickle')
     print(outfile)
 
+    """
     # Read in the data
     DF = PD.read_pickle(argv[1])
 
@@ -132,3 +134,4 @@ if __name__ == '__main__':
     MR.get_mean_stats()
     newDF = MR.return_df()
     newDF.to_pickle(outfile)
+    """
