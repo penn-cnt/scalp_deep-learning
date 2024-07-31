@@ -17,7 +17,8 @@ class marsh_rejection:
         self.DF = DF
 
         # Find the channel labels
-        ref_labels        = ['file', 't_start', 't_end', 't_window', 'method', 'tag', 'uid', 'target', 'annotation']
+        ref_labels        = ['file', 't_start', 't_end', 't_window', 'method', 'tag', 'uid', 'target', 'annotation',
+                             'ieeg_duration_sec', 'ieeg_file', 'ieeg_start_sec']
         self.channels     = np.setdiff1d(self.DF.columns, ref_labels)
         self.ref_cols     = np.setdiff1d(self.DF.columns, self.channels)
         self.merge_labels = np.concatenate((['file', 'method', 'tag'],self.channels))
