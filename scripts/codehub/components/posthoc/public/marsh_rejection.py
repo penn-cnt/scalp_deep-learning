@@ -118,13 +118,17 @@ class marsh_rejection:
 
 if __name__ == '__main__':
 
+    # Store the input and output paths
+    infile  = argv[1]
+    outfile = infile.replace('features.pickle','features_marsh.pickle')
+    print(outfile)
+
     # Read in the data
     DF = PD.read_pickle(argv[1])
-    DF.drop(['FZ-CZ'],axis=1,inplace=True)
 
     # Get the reformatted dataframe
-    MR    = marsh_rejection(DF)
+    MR = marsh_rejection(DF)
     MR.drop_file()
     MR.get_mean_stats()
     newDF = MR.return_df()
-    newDF.to_pickle(argv[2])
+    newDF.to_pickle(outfile)
