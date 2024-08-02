@@ -252,6 +252,11 @@ class BIDS_handler:
                     # Make the bids path
                     session_str    = "%s%03d" %(self.args.session,self.session_number)
                     self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
+                    self.bids_dir  = '/'.join(str(self.bids_path.copy()).split('/')[:-1])
+
+                    # Make sure the directory exists
+                    if not os.path.exists(self.bids_dir):
+                        os.system(f"mkdir -p {self.bids_dir}")
 
                     # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
                     error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
