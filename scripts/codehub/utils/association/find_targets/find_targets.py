@@ -74,11 +74,12 @@ if __name__ == '__main__':
     counts        = np.array([lookup_dict[ikey]['count'] for ikey in lookup_dict.keys()]).reshape((-1,1))
     DF            = PD.DataFrame(counts,columns=['count'])
     DF['keyword'] = index
-    DF            = DF.sort_values(by=['count'],ascending=False)
+    DF            = DF.sort_values(by=['keyword'],ascending=True)
     DF.set_index('keyword',drop=True,inplace=True)
     
     # Print the results
-    print(DF)
+    with PD.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(DF)
 
     # Ask the user for which keyword to save the filepaths for
     tokens = input("Enter the keyword (or comma separated keywords) you want the file list for? (Q/q quit). ")
@@ -99,3 +100,6 @@ if __name__ == '__main__':
     DF = PD.DataFrame(outfiles,columns=['filepath'])
     DF.drop_duplicates(inplace=True)
     DF.to_csv(args.outfile,index=False)
+    fp = open(args.outfile+'.keys','w')
+    fp.write(tokens)
+    fp.close()
