@@ -169,6 +169,11 @@ class BIDS_handler:
             # Save the bids data
             write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
+            # Overwrite the edf file only with set physical maxima/minima
+            pmax = int(self.data.max())
+            pmin = -pmax
+            mne.export.export_raw(str(self.bids_path),raw,physical_range=(pmin,pmax),overwrite=True,verbose=False)
+
             # Save the targets with the edf path paired up to filetype
             target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
             target_dict = {'uid':self.uid,'target':self.target,'annotation':'||'.join(alldesc),
@@ -243,8 +248,15 @@ class BIDS_handler:
                     else:
                         self.direct_save(idx,raw)
                 except:
-                    print("Error saving file. Skipping.")
-                    pass
+                    print("Error saving file via mne. Saving pickle.")
+                    # Make the bids path
+                    session_str    = "%s%03d" %(self.args.session,self.session_number)
+                    self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
+
+                    # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
+                    error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
+                    pickle.dump(raw,open(error_path,"wb"))
+                    self.create_lookup(idx)
 
     def create_lookup(self,idx):
 
