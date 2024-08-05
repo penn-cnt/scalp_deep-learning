@@ -242,23 +242,27 @@ class BIDS_handler:
         If the data fails to save correctly for any reason, we just save a pickle object of the MNE object
         """
 
-        # Make the bids path
-        session_str    = "%s%03d" %(self.args.session,self.session_number)
-        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
-        self.bids_dir  = '/'.join(str(self.bids_path.copy()).split('/')[:-1])
+        try:
+            # Make the bids path
+            session_str    = "%s%03d" %(self.args.session,self.session_number)
+            self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
+            self.bids_dir  = '/'.join(str(self.bids_path.copy()).split('/')[:-1])
 
-        # Make sure the directory exists
-        if not os.path.exists(self.bids_dir):
-            os.system(f"mkdir -p {self.bids_dir}")
+            # Make sure the directory exists
+            if not os.path.exists(self.bids_dir):
+                os.system(f"mkdir -p {self.bids_dir}")
 
-        # Make the output object
-        channels = raw.ch_names
-        mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping}
+            # Make the output object
+            channels = raw.ch_names
+            mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping}
 
-        # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
-        error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
-        pickle.dump(mne_obj,open(error_path,"wb"))
-        self.create_lookup(idx)
+            # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
+            error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
+            pickle.dump(mne_obj,open(error_path,"wb"))
+            self.create_lookup(idx)
+        except:
+            print("Unable to save data. Skipping.")
+            pass
 
     def create_lookup(self,idx):
 
