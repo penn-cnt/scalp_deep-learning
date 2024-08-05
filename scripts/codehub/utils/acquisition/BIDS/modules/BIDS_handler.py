@@ -252,7 +252,8 @@ class BIDS_handler:
             os.system(f"mkdir -p {self.bids_dir}")
 
         # Make the output object
-        mne_obj = {'data':PD.DataFrame(raw.get_data().T,columns=self.channels),'events':events,'event_mapping':event_mapping}
+        channels = raw.ch_names
+        mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping}
 
         # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
         error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
