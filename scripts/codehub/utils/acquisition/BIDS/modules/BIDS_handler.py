@@ -259,7 +259,8 @@ class BIDS_handler:
             mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping,'samp_freq':self.fs}
 
             # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
-            error_path = str(self.bids_path.copy()).rstrip('.edf')+'_eeg.pickle'
+            #error_path = str(self.bids_path.copy()).rstrip('.edf')+'_eeg.pickle'
+            error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
             pickle.dump(mne_obj,open(error_path,"wb"))
             self.create_lookup(idx)
         except:
