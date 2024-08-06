@@ -1,6 +1,7 @@
 # General libraries
 import random
 import string
+import pickle
 import numpy as np
 import pandas as PD
 from sys import exit
@@ -194,7 +195,27 @@ class data_loader:
         else:
             self.channels = [ival for ival in self.channel_metadata]
             return True
-        
+
+    def load_pickle_cnt_cache(self):
+
+        if self.infile != self.oldfile:
+            try:
+                # Read in the data via mne backend
+                raw           = pickle.load(open(self.infile),'rb')
+                self.indata   = raw['data'].values
+                self.channels = raw['data'].columns
+                self.sfreq    = raw['freq']
+
+                # Keep a static copy of the channels so we can just reference this when using the same input data
+                self.channel_metadata = self.channels.copy()
+                return True
+            except OSError:
+                return False
+        else:
+            self.channels = [ival for ival in self.channel_metadata]
+            return True
+
+
     def load_ssh(self,filetype):
 
         if filetype.lower() == 'ssh_edf':
