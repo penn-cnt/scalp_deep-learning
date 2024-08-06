@@ -183,7 +183,9 @@ class BIDS_handler:
             self.create_lookup(idx)
         except OSError:
             #os.system(f"rm {str(self.bids_path)}")   # Remove once we have a system for sorting inputs
-            self.pickle_save(idx,raw,events,self.event_mapping)
+            #self.pickle_save(idx,raw,events,self.event_mapping)
+            pass
+        self.pickle_save(idx,raw,events,self.event_mapping)
 
     def direct_save(self,idx,raw):
         """
