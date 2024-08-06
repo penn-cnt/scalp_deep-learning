@@ -234,8 +234,7 @@ class data_viewer(data_handler):
             idata,ymin,ymax = self.get_stats(ichan)
 
             # Plot the data
-            nstride = 8
-            self.ax_dict[ichan].plot(self.xvals[::nstride],idata[::nstride],color='k')
+            self.ax_dict[ichan].plot(self.xvals[::self.args.nstride],idata[::self.args.nstride],color='k')
             self.ax_dict[ichan].set_ylim([ymin,ymax])
             self.lim_dict[ichan] = [ymin,ymax]
 
@@ -662,6 +661,7 @@ if __name__ == '__main__':
     ssh_group.add_argument("--ssh_username", type=str, help="When loading data via ssh tunnel, this is the host ssh username to log in as.")
 
     misc_group = parser.add_argument_group('Misc options')
+    misc_group.add_argument("--nstride", type=int, default=8, help="Stride factor for plotting.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. Save no outputs.")
     misc_group.add_argument("--sleep_wake_power", type=str, help="Optional file with identified groups in alpha/delta for sleep/wake patients")
     misc_group.add_argument("--pickle_load", action='store_true', default=False, help="Load from pickled tuple of dataframe,fs.")
