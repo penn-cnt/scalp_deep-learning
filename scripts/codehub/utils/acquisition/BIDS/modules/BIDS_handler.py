@@ -177,12 +177,12 @@ class BIDS_handler:
 
         # Make sure that the data is EDF compliant
         try:
-            read_edf_header(self.bids_path)
+            read_edf_header(str(self.bids_path))
 
             # Update lookup table
             self.create_lookup(idx)
         except OSError:
-            os.system(f"rm {self.bids_path}")
+            os.system(f"rm {str(self.bids_path)}")
             self.pickle_save(idx,raw,events,self.event_mapping)
 
     def direct_save(self,idx,raw):
@@ -234,7 +234,7 @@ class BIDS_handler:
                             self.annotation_save(idx,raw)
                     else:
                         self.direct_save(idx,raw)
-                except:
+                except Exception as e:
                     self.pickle_save(idx,raw,None,None)
 
     def pickle_save(self,idx,raw,events,event_mapping):
@@ -254,10 +254,10 @@ class BIDS_handler:
 
             # Make the output object
             channels = raw.ch_names
-            mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping}
+            mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping,'samp_freq':self.fs}
 
             # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
-            error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
+            error_path = str(self.bids_path.copy()).rstrip('.edf')+'_eeg.pickle'
             pickle.dump(mne_obj,open(error_path,"wb"))
             self.create_lookup(idx)
         except:
