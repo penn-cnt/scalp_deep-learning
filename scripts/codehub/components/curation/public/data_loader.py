@@ -16,13 +16,35 @@ from ieeg.auth import Session
 from components.metadata.public.metadata_handler import *
 
 class data_loader_test:
+    """
+    Class devoted to testing whether data can be loaded and used for analysis.
+
+    New functions should return (True,) if it succeeds, or (False,e) if it raises an exception.
+
+    test_logic handles the logic gates for different datatypes and should match the allowed_arguments.yaml options.
+    """
 
     def __init__(self):
         pass
 
+    def test_logic(self,ftype):
+        if ftype.lower() == 'edf':
+            return self.edf_test(ifile)
+        elif ftype.lower() == 'pickle':
+            return self.pickle_test(ifile)
+
     def edf_test(self,infile):
         try:
             read_edf_header(infile)
+            return (True,)
+        except Exception as e:
+            return (False,e)
+        
+    def pickle_test(self,infile):
+        try:
+            idict = pickle.load(open(infile,'rb'))
+            if 'data' not in idict.keys() or 'samp_freq' not in idict.keys():
+                raise KeyError("Data or Sampling frequency not found in pickle file.")
             return (True,)
         except Exception as e:
             return (False,e)
