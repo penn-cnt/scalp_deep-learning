@@ -36,29 +36,31 @@ class Shark(Animal):
    def move(self):
       return f"{self.name} Swims"
 
-# Dog stuff
-print("Our dog friend:")
-dog = Dog("Buddy")
-print(dog.name)      
-print(dog.speak())
-print(dog.move())
-print(dog.perform_trick())
-print(dog.sleep())
+if __name__ == '__main__':
 
-# Cat stuff
-print("Our cat friend:")
-cat = Cat("Mittens")
-print(cat.name)      
-print(cat.speak())
-print(cat.move())
-print(cat.perform_trick())
-print(cat.sleep())
+   # Dog stuff
+   print("\nOur dog friend:")
+   dog = Dog("Buddy")
+   print(dog.name)      
+   print(dog.speak())
+   print(dog.move())
+   print(dog.perform_trick())
+   print(dog.sleep())
 
-# Shark stuff
-print("Our shark friend:")
-shark = Shark("Larry")
-print(shark.name)      
-print(shark.speak())
-print(shark.move())
-print(shark.perform_trick())
-print(shark.sleep())
+   # Cat stuff
+   print("\nOur cat friend:")
+   cat = Cat("Mittens")
+   print(cat.name)      
+   print(cat.speak())
+   print(cat.move())
+   print(cat.perform_trick())
+   print(cat.sleep())
+
+   # Shark stuff
+   print("\nOur shark friend:")
+   shark = Shark("Larry")
+   print(shark.name)      
+   print(shark.speak())
+   print(shark.move())
+   print(shark.perform_trick())
+   print(shark.sleep())
