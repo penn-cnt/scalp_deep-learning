@@ -43,3 +43,55 @@ def test_input_data(args,files,start_times,end_times):
         for idx,ikey in enumerate(self.output_meta):
             self.metadata[idx] = metadata_copy.pop(ikey)
         """
+    
+
+
+
+        def load_ssh(self,filetype):
+
+        if filetype.lower() == 'ssh_edf':
+            # Make a name for the temporary file
+            file_path = ''.join(random.choices(string.ascii_letters + string.digits, k=8))+".edf"
+
+            # Make a temporary file to be deleted at the end of this process
+            data_stream.ssh_copy(self,self.infile,file_path,self.ssh_host,self.ssh_username)
+
+            success_flag = True
+            try:
+                # Test the header
+                read_edf_header(file_path)
+
+                # If successful read the actual data
+                raw = read_raw_edf(file_path,verbose=False)
+            except:
+                success_flag = False
+
+            if success_flag:
+                # Munge the data into the final objects
+                self.indata   = raw.get_data().T
+                self.channels = raw.ch_names
+                self.sfreq    = raw.info.get('sfreq')
+
+                # Keep a static copy of the channels so we can just reference this when using the same input data
+                self.channel_metadata = self.channels.copy()                
+
+            os.remove(file_path)
+            return success_flag
+
+    def load_iEEG(self,username,password,dataset_name):
+
+        # Load current data into memory
+        if self.infile != self.oldfile:
+            with Session(username,password) as session:
+                dataset     = session.open_dataset(dataset_name)
+                channels    = dataset.ch_labels
+                self.indata = dataset.get_data(0,np.inf,range(len(channels)))
+            session.close_dataset(dataset_name)
+        
+        # Save the channel names to metadata
+        self.channels = channels
+        metadata_handler.set_channels(self,self.chanels)
+        
+        # Calculate the sample frequencies
+        sample_frequency = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
+        metadata_handler.set_sampling_frequency(self,sample_frequency)
