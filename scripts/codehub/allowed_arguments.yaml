@@ -5,6 +5,8 @@ allowed_project_args:
     NEUROVISTA_BASIC: Basic Neurovista progessing pipeline.
 allowed_datatypes:
     EDF: Read in EDF data.
+    PICKLE: Read in pickle dictionary with a 'data' key (dataframe) and a 'samp_freq' key
+    MIX: Infer data from a mixed sample and read in the data based on the extension type.
 allowed_clean_args:
     HUP: Clean according to HUPs lead and channel format.
     TEMPLE: Clean according to Temple's TUEG dataset.
