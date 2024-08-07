@@ -28,8 +28,6 @@ class data_loader_test:
         pass
 
     def test_logic(self,ifile,ftype):
-        print(ifile,ftype)
-        print("\n\n\n")
         if ftype.lower() == 'edf':
             return self.edf_test(ifile)
         elif ftype.lower() == 'pickle':

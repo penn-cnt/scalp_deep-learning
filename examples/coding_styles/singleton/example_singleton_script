@@ -4,7 +4,7 @@ class SingletonClass(object):
       cls.instance = super(SingletonClass, cls).__new__(cls)
     return cls.instance
    
-singleton = SingletonClass()
+singleton     = SingletonClass()
 new_singleton = SingletonClass()
  
 print(singleton is new_singleton)
