@@ -16,13 +16,37 @@ from ieeg.auth import Session
 from components.metadata.public.metadata_handler import *
 
 class data_loader_test:
+    """
+    Class devoted to testing whether data can be loaded and used for analysis.
+
+    New functions should return (True,) if it succeeds, or (False,e) if it raises an exception.
+
+    test_logic handles the logic gates for different datatypes and should match the allowed_arguments.yaml options.
+    """
 
     def __init__(self):
         pass
 
+    def test_logic(self,ifile,ftype):
+        print(ifile,ftype)
+        print("\n\n\n")
+        if ftype.lower() == 'edf':
+            return self.edf_test(ifile)
+        elif ftype.lower() == 'pickle':
+            return self.pickle_test(ifile)
+
     def edf_test(self,infile):
         try:
             read_edf_header(infile)
+            return (True,)
+        except Exception as e:
+            return (False,e)
+        
+    def pickle_test(self,infile):
+        try:
+            idict = pickle.load(open(infile,'rb'))
+            if 'data' not in idict.keys() or 'samp_freq' not in idict.keys():
+                raise KeyError("Data or Sampling frequency not found in pickle file.")
             return (True,)
         except Exception as e:
             return (False,e)
@@ -166,11 +190,15 @@ class data_loader:
         Returns:
             bool: Flag if data loaded correctly
         """
-        
+
+        # Handle mix typing
+        if filetype.lower() == 'mix':
+            filetype = self.infile.split('.')[-1]
+
         if filetype.lower() == 'edf':
             flag = self.load_edf()
-        if filetype.lower() == 'ssh_edf':
-            flag = self.load_ssh(filetype)
+        elif filetype.lower() == 'pickle':
+            flag = self.load_pickle()
         return flag
 
     def load_edf(self):
@@ -193,18 +221,26 @@ class data_loader:
             except OSError:
                 return False
         else:
+            # Duplicate the channels from the last data load, since we are working with the same datafile
             self.channels = [ival for ival in self.channel_metadata]
             return True
 
-    def load_pickle_cnt_cache(self):
+    def load_pickle(self):
+        """
+        Load pickle data directly into the pipeline.
+
+        The pickle data should be formatted as a dictionary. It looks for the following keys:
+        data: A pandas dictionary with shape [samples,channels] and columns labeled by the raw channel label
+        samp_freq: A float value of the sampling frequency
+        """
 
         if self.infile != self.oldfile:
             try:
                 # Read in the data via mne backend
-                raw           = pickle.load(open(self.infile),'rb')
+                raw           = pickle.load(open(self.infile,'rb'))
                 self.indata   = raw['data'].values
                 self.channels = raw['data'].columns
-                self.sfreq    = raw['freq']
+                self.sfreq    = raw['samp_freq']
 
                 # Keep a static copy of the channels so we can just reference this when using the same input data
                 self.channel_metadata = self.channels.copy()
@@ -212,58 +248,6 @@ class data_loader:
             except OSError:
                 return False
         else:
+            # Duplicate the channels from the last data load, since we are working with the same datafile
             self.channels = [ival for ival in self.channel_metadata]
             return True
-
-
-    def load_ssh(self,filetype):
-
-        if filetype.lower() == 'ssh_edf':
-            # Make a name for the temporary file
-            file_path = ''.join(random.choices(string.ascii_letters + string.digits, k=8))+".edf"
-
-            # Make a temporary file to be deleted at the end of this process
-            data_stream.ssh_copy(self,self.infile,file_path,self.ssh_host,self.ssh_username)
-
-            success_flag = True
-            try:
-                # Test the header
-                read_edf_header(file_path)
-
-                # If successful read the actual data
-                raw = read_raw_edf(file_path,verbose=False)
-            except:
-                success_flag = False
-
-            if success_flag:
-                # Munge the data into the final objects
-                self.indata   = raw.get_data().T
-                self.channels = raw.ch_names
-                self.sfreq    = raw.info.get('sfreq')
-
-                # Keep a static copy of the channels so we can just reference this when using the same input data
-                self.channel_metadata = self.channels.copy()                
-
-            os.remove(file_path)
-            return success_flag
-
-    def load_iEEG(self,username,password,dataset_name):
-
-        # Load current data into memory
-        if self.infile != self.oldfile:
-            with Session(username,password) as session:
-                dataset     = session.open_dataset(dataset_name)
-                channels    = dataset.ch_labels
-                self.indata = dataset.get_data(0,np.inf,range(len(channels)))
-            session.close_dataset(dataset_name)
-        
-        # Save the channel names to metadata
-        self.channels = channels
-        metadata_handler.set_channels(self,self.chanels)
-        
-        # Calculate the sample frequencies
-        sample_frequency = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
-        metadata_handler.set_sampling_frequency(self,sample_frequency)
-
-
-

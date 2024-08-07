@@ -8,6 +8,7 @@ from sys import exit
 from tqdm import tqdm
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
+from pyedflib.highlevel import read_edf_header
 
 nltk.download('stopwords')
 
@@ -44,8 +45,23 @@ def make_tokendict(args):
                 lookup_dict[itoken]          = {}
                 lookup_dict[itoken]['count'] = 0
                 lookup_dict[itoken]['files'] = []
+
+            # Find the proposed datafile path
+            datafile = ifile.replace('_targets.pickle','.edf')
+
+            # If we want to try the pickle backup, apply logic to figure out if edf or pickle
+            if args.pickle_backup:
+                if not os.path.exists(datafile):
+                    datafile = ifile.replace('_targets.pickle','.pickle')
+                else:
+                    try:
+                        read_edf_header(datafile)
+                    except OSError:
+                        datafile = ifile.replace('_targets.pickle','.pickle')
+
+            # Store the results to the lookup dictionary
             lookup_dict[itoken]['count'] += 1
-            lookup_dict[itoken]['files'].append(ifile.replace('_targets.pickle','.edf'))
+            lookup_dict[itoken]['files'].append(datafile)
     return lookup_dict
 
 if __name__ == '__main__':
@@ -55,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument("--rootdir", type=str, required=True, help="Root directory to search within for target data.")
     parser.add_argument("--outfile", type=str, required=True, help="Path to save results to")
     parser.add_argument("--tokendict", type=str, default=None, help="Optional. Path to the token dictionary if already generated. Makes subsequent searches against large databases faster.")
+    parser.add_argument("--pickle_backup", action='store_true', default=False, help="Check if edf data file can be read in. If not, try to use a pickle file.")
     args = parser.parse_args()
 
     # If token dict provided, load that. Otherwise, make dict.

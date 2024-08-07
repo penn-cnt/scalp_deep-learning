@@ -48,12 +48,23 @@ class data_curation:
             # Confirm that data can be read in properly
             excluded_files = []
             for idx,ifile in enumerate(self.files):
+
+                # Get the load type
+                ftype = self.args.datatype
+                if ftype.lower() == 'mix':
+                    ftype = ifile.split('.')[-1]
+
+                # Use the load type and perform a load test
                 DLT  = data_loader_test()
-                flag = DLT.edf_test(ifile)
+                flag = DLT.test_logic(ifile,ftype)
+
+                # Store the files that pass and fail, including error if it fails
                 if flag[0]:
                     good_index.append(idx)
                 else:
                     excluded_files.append([ifile,flag[1]])
+
+            # Create the output failure dataframe for future use with error for the user to look at, then save.
             excluded_df = PD.DataFrame(excluded_files,columns=['file','error'])
             if not self.args.debug:
                 excluded_df.to_csv(exclude_path,index=False)
@@ -138,7 +149,17 @@ class data_curation:
                 t_end = self.args.t_end
                 for idx,ival in enumerate(t_end):
                     if ival == -1:
-                        t_end[idx] = read_edf_header(ifile)['Duration']
+
+                        # Determine how we are going to grab the duration
+                        dtype = self.args.datatype.lower()
+                        if dtype == 'mix':
+                            dtype = ifile.split('.')[-1].lower()
+                        
+                        if dtype == 'edf':
+                            t_end[idx] = read_edf_header(ifile)['Duration']
+                        elif dtype == 'pickle':
+                            idict      = pickle.load(open(ifile,'rb'))
+                            t_end[idx] = idict['data'].shape[0]/idict['samp_freq']
 
                 # Get the start time for the windows
                 t_start = self.args.t_start
