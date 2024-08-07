@@ -52,11 +52,11 @@ class data_curation:
                 # Get the load type
                 ftype = self.args.datatype
                 if ftype.lower() == 'mix':
-                    ftype == ifile.split('.')[-1]
+                    ftype = ifile.split('.')[-1]
 
                 # Use the load type and perform a load test
                 DLT  = data_loader_test()
-                flag = DLT.test_logic(ftype)
+                flag = DLT.test_logic(ifile,ftype)
 
                 # Store the files that pass and fail, including error if it fails
                 if flag[0]:
@@ -149,7 +149,17 @@ class data_curation:
                 t_end = self.args.t_end
                 for idx,ival in enumerate(t_end):
                     if ival == -1:
-                        t_end[idx] = read_edf_header(ifile)['Duration']
+
+                        # Determine how we are going to grab the duration
+                        dtype = self.args.datatype.lower()
+                        if dtype == 'mix':
+                            dtype = ifile.split('.')[-1].lower()
+                        
+                        if dtype == 'edf':
+                            t_end[idx] = read_edf_header(ifile)['Duration']
+                        elif dtype == 'pickle':
+                            idict      = pickle.load(open(ifile,'rb'))
+                            t_end[idx] = idict['data'].shape[0]/idict['samp_freq']
 
                 # Get the start time for the windows
                 t_start = self.args.t_start

@@ -27,7 +27,9 @@ class data_loader_test:
     def __init__(self):
         pass
 
-    def test_logic(self,ftype):
+    def test_logic(self,ifile,ftype):
+        print(ifile,ftype)
+        print("\n\n\n")
         if ftype.lower() == 'edf':
             return self.edf_test(ifile)
         elif ftype.lower() == 'pickle':
@@ -188,10 +190,14 @@ class data_loader:
         Returns:
             bool: Flag if data loaded correctly
         """
-        
+
+        # Handle mix typing
+        if filetype.lower() == 'mix':
+            filetype = self.infile.split('.')[-1]
+
         if filetype.lower() == 'edf':
             flag = self.load_edf()
-        if filetype.lower() == 'pickle':
+        elif filetype.lower() == 'pickle':
             flag = self.load_pickle()
         return flag
 
@@ -231,7 +237,7 @@ class data_loader:
         if self.infile != self.oldfile:
             try:
                 # Read in the data via mne backend
-                raw           = pickle.load(open(self.infile),'rb')
+                raw           = pickle.load(open(self.infile,'rb'))
                 self.indata   = raw['data'].values
                 self.channels = raw['data'].columns
                 self.sfreq    = raw['samp_freq']
@@ -245,14 +251,3 @@ class data_loader:
             # Duplicate the channels from the last data load, since we are working with the same datafile
             self.channels = [ival for ival in self.channel_metadata]
             return True
-        
-    def load_mix(self):
-        
-        # Infer the datatype
-        datatype = self.infile.split('.')[-1]
-
-        # Call the required data loader as needed
-        if datatype.lower() == 'edf':
-            self.load_edf()
-        elif datatype.lower() == 'pickle':
-            self.load_pickle()
