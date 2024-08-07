@@ -6,8 +6,29 @@ from mne.io import read_raw_edf
 from pyedflib.highlevel import read_edf,read_edf_header
 from components.workflows.public.channel_clean import channel_clean
 
+class model_level:
 
-class machine_level:
+    def __init__(self):
+        pass
+
+    def compare_to_standard(self,standard_file,direct_input=None,tol=1e-8):
+
+        # Open the standard file
+        data_standard = read_raw_edf(standard_file).get_data()
+
+        # Read in the file to compare with if needed
+        if direct_input == None:
+            data_new = self.mne_data.copy()
+        else:
+            data_new = read_raw_edf(direct_input).get_data()
+
+        # Find the difference to the standard
+        diffs=data_standard-data_new
+        if (diffs>tol).any():
+            print("Fail")
+            exit(1)
+
+class machine_level(model_level):
 
     def __init__(self,args):
 
