@@ -181,10 +181,11 @@ class data_curation:
 
                     # Loop over the new entries and tile the input lists as needed
                     for idx,istart in enumerate(windowed_start):
-                        new_files.append(ifile)
-                        new_start.append(istart)
-                        new_end.append(windowed_end[idx])
-                        new_refwin.append(self.args.t_window[ii])
+                        if (windowed_end[idx]-istart)==iwindow:
+                            new_files.append(ifile)
+                            new_start.append(istart)
+                            new_end.append(windowed_end[idx])
+                            new_refwin.append(self.args.t_window[ii])
             self.files       = new_files
             self.start_times = new_start
             self.end_times   = new_end
