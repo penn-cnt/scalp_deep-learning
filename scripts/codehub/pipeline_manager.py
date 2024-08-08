@@ -334,6 +334,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     output_group.add_argument("--clean_save", action='store_true', default=False, help="Save cleaned up raw data. Mostly useful if you need time series and not just features.")
 
     misc_group = parser.add_argument_group('Misc Options')
+    misc_group.add_argument("--nfreq_window", type=int, default=8, help="Optional. Minimum number of samples required to send to preprocessing and feature extraction.")
     misc_group.add_argument("--input_str", type=str, help="Optional. If glob input, wildcard path. If csv/manual, filepath to input csv/raw data.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
