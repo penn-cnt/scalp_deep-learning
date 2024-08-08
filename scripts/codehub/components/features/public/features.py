@@ -458,7 +458,7 @@ class features:
 
                                 # Add the ability to see the error if debugging
                                 if self.args.debug and not self.args.silent:
-                                    print(f"Error {e} in step {istep}.")
+                                    print(f"Error {e} in step {istep} in {imeta['file']}.")
 
                                 # We need a flexible solution to errors, so just populating a nan value
                                 output.append(None)
