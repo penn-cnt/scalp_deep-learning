@@ -318,7 +318,7 @@ class preprocessing_utils:
 
         # Downcast the results to a smaller size
         for icol in self.dataset.columns:
-            self.dataset[icol] = self.dataset[icol].astype('float16')
+            self.dataset[icol] = self.dataset[icol].astype('float64')
  
         # Debug flag
         if not self.debug:
