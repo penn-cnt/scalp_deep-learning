@@ -160,7 +160,7 @@ class FOOOF_processing:
         if not self.trace:
             return intg,self.optional_tag
         else:
-            return intg,self.optional_tag,(['freqs','psd_foof','psd_welch'],x.astype('float16'),y.astype('float32'),rawy.astype('float32'))
+            return intg,self.optional_tag,(['freqs','psd_fooof','psd_welch'],x.astype('float16'),y.astype('float32'),rawy.astype('float32'))
 
 class signal_processing:
     """
