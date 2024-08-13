@@ -177,7 +177,7 @@ def parse_list(input_str):
 
     # Split the input using either spaces or commas as separators
     values = input_str.replace(',', ' ').split()
-    return list(PD.to_numeric([float(value) for value in values],downcast='integer'))
+    return [float(value) for value in values]
 
 def start_analysis(data_chunk,args,timestamp,worker_id,barrier):
     """
