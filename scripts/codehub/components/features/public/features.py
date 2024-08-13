@@ -26,7 +26,7 @@ class FOOOF_processing:
 
     def __init__(self, data, fs, freq_range, file, fidx, ichannel, trace=False):
         """
-        Initalize the MNE ICA removal code. If directly invoking, you can set file, fidx, and ichannel to any dummy values.
+        Initalize the FoooF code. If directly invoking, you can set file, fidx, and ichannel to any dummy values.
 
         Args:
             data (_type_): _description_
