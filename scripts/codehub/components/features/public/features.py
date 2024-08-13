@@ -25,6 +25,19 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 class FOOOF_processing:
 
     def __init__(self, data, fs, freq_range, file, fidx, ichannel, trace=False):
+        """
+        Initalize the MNE ICA removal code. If directly invoking, you can set file, fidx, and ichannel to any dummy values.
+
+        Args:
+            data (_type_): _description_
+            fs (_type_): _description_
+            freq_range (_type_): _description_
+            file (_type_): _description_
+            fidx (_type_): _description_
+            ichannel (_type_): _description_
+            trace (bool, optional): Return the traced vectors from the bandpower measurement. Defaults to False.
+        """
+
         self.data       = data
         self.fs         = fs
         self.freq_range = freq_range
@@ -32,6 +45,14 @@ class FOOOF_processing:
         self.fidx       = fidx
         self.ichannel   = ichannel
         self.trace      = trace
+
+    def direct_invocation(self,lo_freq,hi_freq,win_size=2,win_stride=1):
+        self.create_initial_power_spectra()
+        self.fit_fooof()
+        b0,_      = self.aperiodic_b0(win_size,win_stride)
+        b1,_      = self.aperiodic_b1(win_size,win_stride)
+        fooof_psd = self.fooof_bandpower(lo_freq,hi_freq, win_size, win_stride)
+        return b0,b1,fooof_psd
 
     def create_initial_power_spectra(self):
         self.freqs, initial_power_spectrum = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=self.nperseg, noverlap=self.noverlap, axis=0)
