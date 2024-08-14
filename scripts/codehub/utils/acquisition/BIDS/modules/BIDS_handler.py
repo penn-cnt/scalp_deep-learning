@@ -186,10 +186,8 @@ class BIDS_handler:
             # Update lookup table
             self.create_lookup(idx)
         except OSError:
-            #os.system(f"rm {str(self.bids_path)}")   # Remove once we have a system for sorting inputs
-            #self.pickle_save(idx,raw,events,self.event_mapping)
-            pass
-        self.pickle_save(idx,raw,events,self.event_mapping)
+            os.system(f"rm {str(self.bids_path)}")   # Remove once we have a system for sorting inputs
+            self.pickle_save(idx,raw,events,self.event_mapping)
 
     def direct_save(self,idx,raw):
         """
