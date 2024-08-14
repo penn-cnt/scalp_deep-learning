@@ -315,7 +315,8 @@ class iEEG_download(BIDS_handler):
 
                 # Apply the voltage factors
                 for idx,ifactor in enumerate(volt_factors):
-                    self.data[:,idx] = ifactor*self.data[:,idx]
+                    #self.data[:,idx] = ifactor*self.data[:,idx]
+                    self.data[:,idx] = 1e-6*self.data[:,idx]
 
                 # Get the samping frequencies
                 self.fs = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]

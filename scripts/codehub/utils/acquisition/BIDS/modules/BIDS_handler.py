@@ -79,8 +79,12 @@ class BIDS_handler:
         # Make the channel types
         self.channel_types = []
         for (i, iexpression), channel in zip(enumerate(channel_expressions), self.channels):
+
             if iexpression == None:
-                self.channel_types.append('misc')
+                if channel.lower() in ['fz','cz']:
+                    self.channel_types.append('eeg')
+                else:
+                    self.channel_types.append('misc')
             else:
                 lead = iexpression.group(1)
                 contact = int(iexpression.group(2))
@@ -263,7 +267,7 @@ class BIDS_handler:
             error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
             pickle.dump(mne_obj,open(error_path,"wb"))
             self.create_lookup(idx)
-        except:
+        except Exception as e:
             print("Unable to save data. Skipping.")
             pass
 
