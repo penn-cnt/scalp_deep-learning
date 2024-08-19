@@ -500,7 +500,7 @@ class features:
                                     error_flag = True
 
                         # Use metadata to allow proper feature grouping
-                        meta_arr = [imeta['file'],imeta['t_start'],imeta['t_end'],imeta['t_window'],method_name,result_b]
+                        meta_arr = [imeta['file'].split('/')[-1],imeta['t_start'],imeta['t_end'],imeta['t_window'],method_name,result_b]
                         df_values.append(np.concatenate((meta_arr,output),axis=0))
 
                         # Stagger condition for pandas concat
