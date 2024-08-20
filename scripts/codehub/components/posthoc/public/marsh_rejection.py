@@ -46,10 +46,12 @@ class marsh_rejection:
         DF_ll = self.DF.loc[self.DF.method=='line_length']
 
         # Get the group level values
-        DF_rms_mean  = DF_rms.groupby(['file'])[self.channels].mean()
-        DF_rms_stdev = DF_rms.groupby(['file'])[self.channels].std()
-        DF_ll_mean   = DF_ll.groupby(['file'])[self.channels].mean()
-        DF_ll_stdev  = DF_ll.groupby(['file'])[self.channels].std()
+        rms_obj      = DF_rms.groupby(['file'])[self.channels]
+        ll_obj       = DF_ll.groupby(['file'])[self.channels]
+        DF_rms_mean  = rms_obj.mean()
+        DF_rms_stdev = rms_obj.std()
+        DF_ll_mean   = ll_obj.mean()
+        DF_ll_stdev  = ll_obj.std()
 
         # Make an output column
         self.DF.loc[:,['marsh_rejection']] = True
@@ -86,6 +88,7 @@ class marsh_rejection:
 
             # Reshape indices of subslice to we can iterate over time segments in the full file
             if DF_rms_slice.ndim == 2:
+                outer_obj = (self.DF.file==ifile)
                 for ii in range(DF_rms_slice.shape[0]):
                     
                     # Get the references to find the right rows in the bigger dataframe
@@ -96,7 +99,7 @@ class marsh_rejection:
                     mask     = mask_arr[ii]
 
                     # Set the mask value
-                    self.DF.loc[(self.DF.file==ifile)&(self.DF.t_start==t_start)&(self.DF.t_end==t_end)&(self.DF.t_window==t_window),['marsh_rejection']] = mask                
+                    self.DF.loc[outer_obj&(self.DF.t_start==t_start)&(self.DF.t_end==t_end)&(self.DF.t_window==t_window),['marsh_rejection']] = mask             
 
     def return_df(self):
         return self.DF
