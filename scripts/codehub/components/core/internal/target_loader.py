@@ -118,7 +118,8 @@ class target_loader:
                     self.feature_df[tkey] = None
 
         # Assign target values to the correct data files
-        inds    = (self.feature_df.file.values==current_edf)
+        current_edf_filename = current_edf.split('/')[-1]
+        inds = (self.feature_df.file.values==current_edf_filename)
         for tkey in raw_targets.keys():
             newvals               = self.feature_df[tkey].values
             newvals[inds]         = raw_targets[tkey]
