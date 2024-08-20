@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as PD
+from tqdm import tqdm
 from sys import argv,exit
 
 import warnings
@@ -61,7 +62,7 @@ class marsh_rejection:
         DF_ll.set_index(['file'],inplace=True)
         DF_rms = DF_rms.sort_values(by=['t_start','t_end','t_window'])
         DF_ll  = DF_ll.sort_values(by=['t_start','t_end','t_window'])
-        for ifile in DF_rms_mean.index:
+        for ifile in tqdm(DF_rms_mean.index,desc='Applying filter',total=len(DF_rms_mean.index)):
             
             # Get the reference values
             ref_rms_mean  = DF_rms_mean.loc[ifile]
