@@ -22,6 +22,16 @@ persistance_dict = {}
 # Ignore FutureWarnings. Pandas is giving a warning for concat. But the data is not zero. Might be due to a single channel of all NaNs.
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+class YASA_processing:
+    
+    def __init__ (self,data,channels):
+        self.data     = data
+        self.channels = channels
+
+    def get_sleep_stage(self):
+
+        raw = mne.io(self.data,self.channels) # Fix this
+ 
 class FOOOF_processing:
 
     def __init__(self, data, fs, freq_range, file, fidx, ichannel, trace=False):
@@ -442,10 +452,12 @@ class features:
                                 ###### CLASS INITILIZATION ######
                                 #################################
                                 # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
-                                if cls.__name__ != 'FOOOF_processing':
-                                    namespace = cls(idata,fs[ichannel],self.args.trace)
-                                else:
+                                if cls.__name__ == 'FOOOF_processing':
                                     namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
+                                elif cls.__name__ == 'YASA_processing':
+                                    namespace = cls(dataset,channels)
+                                else:
+                                    namespace = cls(idata,fs[ichannel],self.args.trace)
 
                                 # Get the method name and return results from the method
                                 method_call = getattr(namespace,method_name)
