@@ -356,15 +356,15 @@ class callback_handler:
             t_start   = dpg.get_value(self.t_start_widget)
             t_end     = dpg.get_value(self.t_end_widget)
             t_window  = dpg.get_value(self.t_window_widget)
-            t_overlap = np.round(dpg.get_value(self.t_overlap_widget),2)
-            if t_start not in excl and t_start > 0:
-                base_cmd = f"{base_cmd} --t_start {t_start}"
+            t_overlap = dpg.get_value(self.t_overlap_widget)
+            if t_start not in excl:
+                base_cmd = f"{base_cmd} --t_start=\"{t_start}\""
             if t_end not in excl and t_end != -1:
-                base_cmd = f"{base_cmd} --t_start {t_end}"
+                base_cmd = f"{base_cmd} --t_start=\"{t_end}\""
             if t_window not in excl:
-                base_cmd = f"{base_cmd} --t_window {t_window}"
-            if t_overlap not in excl and t_overlap > 0:
-                base_cmd = f"{base_cmd} --t_overlap {t_overlap}"
+                base_cmd = f"{base_cmd} --t_window=\"{t_window}\""
+            if t_overlap not in excl:
+                base_cmd = f"{base_cmd} --t_overlap=\"{t_overlap}\""
 
             # Channel options
             channel_clean   = dpg.get_value(self.channel_clean_widget)
