@@ -62,6 +62,7 @@ if __name__ == '__main__':
     parser.add_argument("--outpath", type=str, help='Path to output summary stats.')
     args = parser.parse_args()
 
+    # Assign filepathing
     if args.wildcard == False:
         laypaths = [args.laypath]
     else:
