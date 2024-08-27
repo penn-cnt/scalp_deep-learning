@@ -107,34 +107,34 @@ class configuration_handler:
                 # Start time
                 with dpg.group(horizontal=True):
                     arg_var = 't_start'
-                    default = self.defaults[arg_var]
-                    dpg.add_text(f"{'File start times (s)':40}")
-                    self.t_start_widget = dpg.add_input_int(default_value=default,step_fast=25,width=int(0.5*child_window_width))
+                    default = self.defaults[arg_var][0]
+                    dpg.add_text(f"{'Start times (comma list,secs)':40}")
+                    self.t_start_widget = dpg.add_input_text(default_value=default,width=int(0.5*child_window_width))
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
                 # End Time
                 with dpg.group(horizontal=True):
                     arg_var = 't_end'
-                    default = self.defaults[arg_var]
-                    dpg.add_text(f"{'File end times (s)':40}")
-                    self.t_end_widget = dpg.add_input_int(default_value=default,step_fast=25,width=int(0.5*child_window_width))
+                    default = self.defaults[arg_var][0]
+                    dpg.add_text(f"{'End times (comma list,secs,"-1"=all)':40}")
+                    self.t_end_widget = dpg.add_input_text(default_value=default,width=int(0.5*child_window_width))
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
                 # Time Window
                 with dpg.group(horizontal=True):
                     arg_var = 't_window'
-                    default = self.defaults[arg_var]
+                    default = self.defaults[arg_var][0]
                     if default == None: default = ''
-                    dpg.add_text(f"{'Time windows (comma list,secs,""=all)':40}")
+                    dpg.add_text(f"{'Time windows (comma list,secs,"-1"=all)':40}")
                     self.t_window_widget = dpg.add_input_text(default_value=default,width=int(0.5*child_window_width))
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
                 # Time Overlap
                 with dpg.group(horizontal=True):
                     arg_var = 't_overlap'
-                    default = self.defaults[arg_var]
+                    default = self.defaults[arg_var][0]
                     dpg.add_text(f"{'Time window overlap (fractional)':40}")
-                    self.t_overlap_widget = dpg.add_input_float(default_value=default,step_fast=5,max_value=1.0,min_value=0.0,width=int(0.5*child_window_width))
+                    self.t_overlap_widget = dpg.add_input_text(default_value=default,width=int(0.5*child_window_width))
                     dpg.add_button(label="Help", callback=lambda sender, app_data: self.update_help(self.configuration_help, sender, app_data), tag=arg_var)
 
                 ########################### 
