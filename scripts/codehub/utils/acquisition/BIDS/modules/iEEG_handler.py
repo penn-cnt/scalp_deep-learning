@@ -150,7 +150,7 @@ class iEEG_download(BIDS_handler):
             file_idx (_type_): _description_
         """
 
-        # Store the ieeg filename
+        # Store the ieeg filename and the BIDS keywords
         self.uid          = uid
         self.current_file = file
         self.target       = target
@@ -159,6 +159,10 @@ class iEEG_download(BIDS_handler):
         self.proposed_ses = proposed_ses
         self.proposed_run = proposed_run
         self.file_idx     = file_idx
+
+        # Store the start time and duration to namespaces we can use for backup saving options and for the lookup table
+        self.currentstart = start
+        self.currentdur   = duration
 
         # Loop over clips
         BIDS_handler.__init__(self)

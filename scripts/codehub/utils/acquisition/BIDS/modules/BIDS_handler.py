@@ -102,13 +102,22 @@ class BIDS_handler:
         lead_sum = 0
         for ival in self.channel_types:
             if isinstance(ival,int):lead_sum+=1
-        if lead_sum > threshold:
-            remaining_leads = 'ecog'
+        if self.args.ch_type == None:
+            if lead_sum > threshold:
+                remaining_leads = 'ecog'
+            else:
+                remaining_leads = 'seeg'
         else:
-            remaining_leads = 'seeg'
+            remaining_leads = self.args.ch_type
         for idx,ival in enumerate(self.channel_types):
             if isinstance(ival,int):self.channel_types[idx] = remaining_leads
         self.channel_types = np.array(self.channel_types)
+
+        # Define the datatype for the bids handler
+        if 'eeg' in self.channel_types:
+            self.datatype = 'eeg'
+        elif 'seeg' in self.channel_types:
+            self.datatype = 'ieeg'
 
         # Make the dictionary for mne
         self.channel_types = PD.DataFrame(self.channel_types.reshape((-1,1)),index=self.channels,columns=["type"])
@@ -168,7 +177,7 @@ class BIDS_handler:
 
         # Make the bids path
         session_str    = "%s%03d" %(self.args.session,self.session_number)
-        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
+        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
 
         # Save the bids data
         write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
@@ -184,10 +193,10 @@ class BIDS_handler:
             read_edf_header(str(self.bids_path))
 
             # Update lookup table
-            self.create_lookup(idx)
+            self.create_lookup(idx,self.clip_start_times[idx],self.clip_durations[idx])
         except OSError:
             os.system(f"rm {str(self.bids_path)}")   # Remove once we have a system for sorting inputs
-            self.pickle_save(idx,raw,events,self.event_mapping)
+            self.pickle_save(idx,raw,events,self.event_mapping,self.clip_start_times[idx],self.clip_durations[idx])
 
     def direct_save(self,idx,raw):
         """
@@ -204,7 +213,10 @@ class BIDS_handler:
         else:
             run_number = int(self.proposed_run)
         session_str    = "%s%03d" %(self.args.session,self.session_number)
-        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype='eeg', session=session_str, subject='%05d' %(self.subject_num), run=run_number, task='task')
+        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject='%05d' %(self.subject_num), run=run_number, task='task')
+
+        # Save the bids data
+        write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False)
 
         # Ensure we have an output directory to write to
         rootdir = '/'.join(str(self.bids_path).split('/')[:-1])
@@ -217,7 +229,7 @@ class BIDS_handler:
         pickle.dump(target_dict,open(target_path,"wb"))
 
         # Create the lookup table
-        self.create_lookup(idx)
+        self.create_lookup(idx,self.currentstart,self.currentdur)
 
     def save_bids(self):
 
@@ -227,9 +239,8 @@ class BIDS_handler:
             if raw == 'SKIP':
                 pass
             else:
-                
-                # Set the channel types
                 try:
+                    # Set the channel types
                     raw.set_channel_types(self.channel_types.type)
 
                     # Check for annotations
@@ -239,9 +250,11 @@ class BIDS_handler:
                     else:
                         self.direct_save(idx,raw)
                 except Exception as e:
-                    self.pickle_save(idx,raw,None,None)
+                    self.pickle_save(idx,raw,None,None,self.currentstart,self.currentdur)
+                    if self.args.debug:
+                        print(f"Save Bids Error: {e}")
 
-    def pickle_save(self,idx,raw,events,event_mapping):
+    def pickle_save(self,idx,raw,events,event_mapping,istart,iduration):
         """
         If the data fails to save correctly for any reason, we just save a pickle object of the MNE object
         """
@@ -260,17 +273,18 @@ class BIDS_handler:
             channels = raw.ch_names
             mne_obj  = {'data':PD.DataFrame(raw.get_data().T,columns=channels),'events':events,'event_mapping':event_mapping,'samp_freq':self.fs}
 
-            # If the data fails to write in anyway, save the raw as a pickle so we can fix later without redownloading it
-            #error_path = str(self.bids_path.copy()).rstrip('.edf')+'_eeg.pickle'
+            # Define the path for the error file and save it
             error_path = str(self.bids_path.copy()).rstrip('.edf')+'.pickle'
             pickle.dump(mne_obj,open(error_path,"wb"))
-            self.create_lookup(idx)
+
+            # Make the lookup file
+            self.create_lookup(idx,istart,iduration)
         except Exception as e:
             print("Unable to save data. Skipping.")
             if self.args.debug:
-                print(f"Error: {e}")
+                print(f"Pickle Save Error: {e}")
 
-    def create_lookup(self,idx):
+    def create_lookup(self,idx,istart,iduration):
 
         # Prepare some metadata for download
         source  = np.array(['ieeg.org','edf'])
@@ -278,11 +292,10 @@ class BIDS_handler:
         source  = source[inds][0]
         user    = getpass.getuser()
         gendate = date.today().strftime("%d-%m-%y")
-        times   = f"{self.args.start}_{self.args.duration}"
 
         # Save the subject file info with source metadata
         columns = ['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec']
-        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx+1,1e-6*self.clip_start_times[idx],1e-6*self.clip_durations[idx]]],columns=columns)
+        iDF     = PD.DataFrame([[self.current_file,source,user,gendate,self.uid,self.subject_num,self.session_number,idx+1,1e-6*istart,1e-6*iduration]],columns=columns)
 
         if not path.exists(self.subject_path):
             subject_DF = iDF.copy()

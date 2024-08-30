@@ -47,6 +47,7 @@ if __name__ == '__main__':
     other_group.add_argument("--uid", default=0, type=int, help="Unique patient identifier for single ieeg calls. This is to map patients across different admissions. See sample subject_map.csv file for an example.")
     other_group.add_argument("--subnum", default=0, type=int, help="Subject number to use for the bids folders.")
     other_group.add_argument("--target", default=None, type=str, help="Target value to associate with single subject inputs. (i.e. epilepsy vs. pnes)")
+    other_group.add_argument("--ch_type", default=None, type=str, help="Manual set of channel type if not matched by known patterns. (i.e. 'seeg' for intracranial data)")
     other_group.add_argument("--multithread", action='store_true', default=False, help="Multithreaded download.")
     other_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
     other_group.add_argument("--debug", action='store_true', default=False, help="Print error messages.")
