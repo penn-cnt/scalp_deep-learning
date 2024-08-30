@@ -267,7 +267,8 @@ class BIDS_handler:
             self.create_lookup(idx)
         except Exception as e:
             print("Unable to save data. Skipping.")
-            pass
+            if self.args.debug:
+                print(f"Error: {e}")
 
     def create_lookup(self,idx):
 
