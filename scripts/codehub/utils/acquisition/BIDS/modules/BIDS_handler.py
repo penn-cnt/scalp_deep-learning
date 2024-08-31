@@ -47,6 +47,12 @@ class BIDS_handler:
         else:
             self.subject_num = int(subject_uid_df['subject_number'].values[np.where(uids==self.uid)[0][0]])
 
+        # Prepend any needed strings for more complex subject folder names
+        if self.args.subject_prefix != None:
+            self.subject_num = f"{self.args.subject_prefix}{self.subject_num:05d}"
+        else:
+            self.subject_num = f"{self.subject_num:05d}"
+
     def get_session_number(self):
 
         # Get the session number by file if possible, otherwise intuit by number of folders
@@ -177,7 +183,7 @@ class BIDS_handler:
 
         # Make the bids path
         session_str    = "%s%03d" %(self.args.session,self.session_number)
-        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject='%05d' %(self.subject_num), run=idx+1, task='task')
+        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject=f"{self.subject_num}", run=idx+1, task='task')
 
         # Save the bids data
         write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)

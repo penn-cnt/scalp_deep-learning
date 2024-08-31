@@ -40,6 +40,7 @@ if __name__ == '__main__':
     bids_group.add_argument("--session", type=str, required=True, help="Base string session keyword for BIDS. (i.e. 'preimplant')")
     bids_group.add_argument("--session_num", type=int, default=-1, help="Session number for this file.")
     bids_group.add_argument("--run_num", type=int, default=-1, help="Run number for this file.")
+    bids_group.add_argument("--subject_prefix", type=str, help="Prefix to add to a subject number i.e. 'HUP'->sub-HUP00001")
 
     other_group = parser.add_argument_group('Other options')
     other_group.add_argument("--inputs_file", type=str, help="Optional file of input datasets to (download and) turn into BIDS.")
