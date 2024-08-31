@@ -48,7 +48,6 @@ class BIDS_handler:
             self.subject_num = int(subject_uid_df['subject_number'].values[np.where(uids==self.uid)[0][0]])
 
         # Prepend any needed strings for more complex subject folder names
-        print(self.subject_num)
         if self.args.subject_prefix != None:
             self.subject_num = f"{self.args.subject_prefix}{int(self.subject_num):04d}"
         else:
