@@ -183,7 +183,7 @@ class BIDS_handler:
 
         # Make the bids path
         session_str    = "%s%03d" %(self.args.session,self.session_number)
-        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject=f"{self.subject_num}", run=idx+1, task='task')
+        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject=f"{self.subject_num}", run=idx+1, task='rest')
 
         # Save the bids data
         write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
@@ -219,7 +219,7 @@ class BIDS_handler:
         else:
             run_number = int(self.proposed_run)
         session_str    = "%s%03d" %(self.args.session,self.session_number)
-        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject='%05d' %(self.subject_num), run=run_number, task='task')
+        self.bids_path = mne_bids.BIDSPath(root=self.args.bidsroot, datatype=self.datatype, session=session_str, subject=f"{self.subject_num}", run=run_number, task='task')
 
         # Save the bids data
         write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False)
