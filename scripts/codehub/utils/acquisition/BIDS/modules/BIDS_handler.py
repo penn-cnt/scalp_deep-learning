@@ -50,9 +50,9 @@ class BIDS_handler:
         # Prepend any needed strings for more complex subject folder names
         print(self.subject_num)
         if self.args.subject_prefix != None:
-            self.subject_num = f"{self.args.subject_prefix}{self.subject_num:04d}"
+            self.subject_num = f"{self.args.subject_prefix}{int(self.subject_num):04d}"
         else:
-            self.subject_num = f"{self.subject_num:04d}"
+            self.subject_num = f"{int(self.subject_num):04d}"
 
     def get_session_number(self):
 
