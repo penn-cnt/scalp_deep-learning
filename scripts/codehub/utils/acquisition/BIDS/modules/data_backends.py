@@ -1,0 +1,99 @@
+import re
+import mne
+import numpy as np
+import pandas as PD
+
+# Local Imports
+from modules.observer_handler import *
+
+def return_backend(user_request='MNE'):
+    if user_request == 'MNE':
+        return MNE_handler()
+
+class backend_observer(Observer):
+
+    def listen_data(self):
+        idata = self.backend.workflow(self.args,self.data,self.channels,self.fs)
+        self.data_list.append(idata)
+
+class MNE_handler:
+
+    def __init__(self):
+        pass
+
+    def workflow(self,args,data,channels,fs):
+
+        # Save the inputs to class instance
+        self.args     = args
+        self.indata   = data
+        self.channels = channels
+        self.fs       = fs
+
+        # Prepare the data according to the backend
+        self.get_channel_type()
+        self.make_info()
+        self.make_raw()
+        
+        # Return raw to the list of raws being tracked by the Subject class
+        return self.iraw
+
+    def make_raw(self):
+        self.iraw = mne.io.RawArray(self.indata.T, self.data_info, verbose=False)
+        self.iraw.set_channel_types(self.channel_types.type)
+    
+    def make_info(self):
+        self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs, verbose=False)
+
+    def get_channel_type(self, threshold=15):
+
+        # Define the expression that gets lead info
+        regex = re.compile(r"(\D+)(\d+)")
+
+        # Get the outputs of each channel
+        channel_expressions = [regex.match(ichannel) for ichannel in self.channels]
+
+        # Make the channel types
+        self.channel_types = []
+        for (i, iexpression), channel in zip(enumerate(channel_expressions), self.channels):
+
+            if iexpression == None:
+                if channel.lower() in ['fz','cz']:
+                    self.channel_types.append('eeg')
+                else:
+                    self.channel_types.append('misc')
+            else:
+                lead = iexpression.group(1)
+                contact = int(iexpression.group(2))
+                if lead.lower() in ["ecg", "ekg"]:
+                    self.channel_types.append('ecg')
+                elif lead.lower() in ['c', 'cz', 'cz', 'f', 'fp', 'fp', 'fz', 'fz', 'o', 'p', 'pz', 'pz', 't']:
+                    self.channel_types.append('eeg')
+                elif "NVC" in iexpression.group(0):  # NeuroVista data 
+                    self.channel_types.append('eeg')
+                    self.channels[i] = f"{channel[-2:]}"
+                else:
+                    self.channel_types.append(1)
+
+        # Do some final clean ups based on number of leads
+        lead_sum = 0
+        for ival in self.channel_types:
+            if isinstance(ival,int):lead_sum+=1
+        if self.args.ch_type == None:
+            if lead_sum > threshold:
+                remaining_leads = 'ecog'
+            else:
+                remaining_leads = 'seeg'
+        else:
+            remaining_leads = self.args.ch_type
+        for idx,ival in enumerate(self.channel_types):
+            if isinstance(ival,int):self.channel_types[idx] = remaining_leads
+        self.channel_types = np.array(self.channel_types)
+
+        # Define the datatype for the bids handler
+        if 'eeg' in self.channel_types:
+            self.datatype = 'eeg'
+        elif 'seeg' in self.channel_types:
+            self.datatype = 'ieeg'
+
+        # Make the dictionary for mne
+        self.channel_types = PD.DataFrame(self.channel_types.reshape((-1,1)),index=self.channels,columns=["type"])

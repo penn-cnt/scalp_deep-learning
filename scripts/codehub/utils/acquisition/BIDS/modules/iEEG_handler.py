@@ -1,276 +1,317 @@
+import re
+import os
+import time
+import getpass
 import numpy as np
-import pandas as PD
-from sys import exit
-from tqdm import tqdm
 from time import sleep
-from os import path,system
-from ieeg.auth import Session
-
-# Multicore support
-import multiprocessing
-
-# Local imports
-from modules.BIDS_handler import BIDS_handler
-
-# Allows us to catch ieeg api errors
+from typing import List
 import ieeg.ieeg_api as IIA
+from ieeg.auth import Session
+from pyfakefs.fake_filesystem_unittest import Patcher
 from requests.exceptions import ReadTimeout as RTIMEOUT
-from pandas.errors import EmptyDataError
 
-# API timeout class
-import signal
-class TimeoutException(Exception):
-    pass
+# Local import
+from modules.BIDS_handler import *
+from modules.observer_handler import *
+from modules.exception_handler import *
+from utils.acquisition.BIDS.modules.data_backends import *
 
-class Timeout:
-    """
-    Manage timeouts to the iEEG.org API call. It can go stale, and sit for long periods of time otherwise.
-    """
+class ieeg_handler(Subject):
 
-    def __init__(self, seconds=1, multiflag=False, error_message='Function call timed out'):
-        self.seconds       = seconds
-        self.error_message = error_message
-        self.multiflag     = multiflag
+    # Create the observer objects
+    _meta_observers = []
+    _data_observers = []
 
-    def handle_timeout(self, signum, frame):
-        raise TimeoutException(self.error_message)
+    def __init__(self,args):
 
-    def __enter__(self):
-        if not self.multiflag:
-            signal.signal(signal.SIGALRM, self.handle_timeout)
-            signal.alarm(self.seconds)
-        else:
-            pass
+        # Save the input objects
+        self.args             = args
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        if not self.multiflag:
-            signal.alarm(0)
-        else:
-            pass
+        # Create the object pointers
+        self.BH      = BIDS_handler()
+        self.backend = return_backend(args.backend)
 
-class iEEG_download(BIDS_handler):
-    """
-    Manages the actual downloads from iEEG.org. It then calls the BIDS handler to save the data.
-    If using the annotation method, it will loop over each clip layer in this class.
+        # Get the data record
+        self.get_data_record()
 
-    Args:
-        BIDS_handler (_type_): _description_
-    """
+        # Create objects that interact with observers
+        self.data_list     = []
+        self.BIDS_keywords = {'root':self.args.bids_root,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
-    def __init__(self, args, semaphore):
+        # Test values
+        """
+        self.ieeg_files   = ['EMU0562_Day01_1']
+        self.start_times  = [4000000000.0]
+        self.durations    = [15000000.0]
+        self.uid_list     = [1]
+        self.subject_list = ['HUP001']
+        self.session_list = ['implant001']
+        self.run_list     = [1]
+        self.annotation_flats = []
+        """
+
+    def workflow(self):
+        """
+        Run a workflow that downloads data from iEEG.org, creates the correct objects in memory, and saves it to BIDS format.
+        """
         
-        # Store variables based on input params
-        self.args           = args
-        self.subject_path   = args.bidsroot+args.subject_file
-        self.semaphore      = semaphore
+        # Attach observers
+        self.add_meta_observer(BIDS_observer)
+        self.add_data_observer(backend_observer)
+        
+        # Determine what files to download and to where
+        self.get_inputs()
 
-        # Hard coded variables based on ieeg api
-        self.n_retry        = 3
-        self.global_timeout = 60
-        self.clip_layer     = 'EEG clip times'
-        self.natus_layer    = 'Imported Natus ENT annotations'
+        # Begin downloading the data
+        self.download_data_manager(self.args.annotations)
 
-        # Get list of files to skip that already exist locally
-        if path.exists(self.subject_path):
-            # Read in the subject information
-            with self.semaphore:
-                self.subject_cache   = PD.read_csv(self.subject_path)
-            self.processed_files    = self.subject_cache['orig_filename'].values
-            self.processed_start    = self.subject_cache['start_sec'].values
+        # Save the data
+        self.save_data()
+
+    def get_data_record(self):
+        
+        # Get the proposed data record
+        data_record_path = self.args.bids_root+self.args.data_record
+
+        # Check if the file exists
+        if os.path.exists(data_record_path):
+            self.data_record = PD.read_csv(data_record_path)
         else:
-            self.processed_files    = []
-            self.processed_start    = []
+            self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
-    def reset_variables(self):
+    def get_inputs(self):
+        
+        # Check for an input csv to manually set entries
+        if self.args.input_csv != None:
+            
+            # Read in the data
+            input_args = PD.read_csv(self.args.input_csv)
+
+            # Raise some exceptions if we find data we can't work with
+            if 'orig_filename' not in input_args.columns:
+                raise Exception("Please provide 'orig_filename' in the input csv file.")
+            elif 'orig_filename' in input_args.columns:
+                if 'start' not in input_args.columns and not self.args.annotations:
+                    raise Exception("A 'start' column is required in the input csv if not using the --annotations flag.")
+                elif 'duration' not in input_args.columns and not self.args.annotations:
+                    raise Exception("A 'duration' column is required in the input csv if not using the --annotations flag.")
+            
+            # Handle situations where the user requested annotations but provided times
+            if self.args.annotations:
+                if 'start' in input_args.columns or 'duration' in input_args.columns:
+                    userinput = ''
+                    while userinput.lower() not in ['y','n']:
+                        userinput = input("--annotations flag set to True, but start times and durations were provided in the input. Override these times with annotations clips? (Yy/Nn)")
+                    if userinput.lower() == 'n':
+                        print("Ignoring --annotation flag. Using user provided times.")
+                        self.args.annotations = False
+                    if userinput.lower() == 'y':
+                        print("Ignoring user provided times in favor of annotation layer times.")
+                        if 'start' in input_args.columns: input_args.drop(['start'],axis=1,inplace=True)
+                        if 'duration' in input_args.columns: input_args.drop(['duration'],axis=1,inplace=True)
+
+            # Pull out the relevant data pointers
+            self.ieeg_files = input_args['orig_filename'].values
+            if not self.args.annotations:
+                self.start_times = input_args['start'].values
+                self.durations   = input_args['duration'].values
+
+                # Check for remaining columns
+                self.ieegfile_to_keys()
+                if 'uid' in input_args.columns: self.uid_list=input_args['uid'].values
+                if 'subject_number' in input_args.columns: self.subject_list=input_args['subject_number'].values
+                if 'session_number' in input_args.columns: self.session_list=input_args['session_number'].values
+                if 'run_number' in input_args.columns: self.run_list=input_args['run_number'].values
+                if 'task' in input_args.columns:self.task_list=input_args['task'].values
+            else:
+                self.annot_files      = []
+                self.start_times      = []
+                self.durations        = []
+                self.uid_list         = []
+                self.subject_list     = []
+                self.session_list     = []
+                self.run_list         = []
+                self.task_list        = []
+                self.annotation_flats = []
+        else:
+            self.start_times      = [self.args.start]
+            self.durations        = [self.args.duration]
+            self.uid_list         = [self.args.uid_number]
+            self.subject_list     = [self.args.subject_number]
+            self.session_list     = [self.args.session]
+            self.run_list         = [self.args.run]
+            self.task_list        = [self.args.task]
+
+    def annotation_cleanup(self,ifile,iuid,isub,ises):
         """
-        Sometimes MNE bids needs to be reset. Use with caution.
-        """            
-
-        # Delete all variables in the object's namespace
-        for var_name in list(self.__dict__.keys()):
-            delattr(self, var_name)
-
-    def get_annotations(self):
-        """
-        Query the annotation layer from iEEG.org and get the formatted start times and durations.
-        The most important outputs are self.clip_start_times and self.clip_durations.
-        """
-
-        # Get the clip times
-        self.session_method_handler(0,1e6,annotation_flag=True)
-
-        if self.success_flag:
-            # Remove start clip time if it is just the machine starting up
-            if self.clips[0].type.lower() == 'clip end' and self.clips[0].end_time_offset_usec == 2000:
-                self.clips = self.clips[1:]
-
-            # Manage edge cases
-            if self.clips[0].type.lower() == 'clip end':
-                self.clips = list(np.concatenate(([0],self.clips), axis=0))
-            if self.clips[-1].type.lower() == 'clip start':
-                self.clips = list(np.concatenate((self.clips,[self.end_time-self.start_time]), axis=0))
-
-            clip_vals = []
-            for iclip in self.clips:
-                try:
-                    clip_vals.append(iclip.start_time_offset_usec)
-                except AttributeError:
-                    clip_vals.append(iclip)
-
-            # Turn the clip times into start and end arrays
-            self.clip_start_times = np.array([iclip for iclip in clip_vals[::2]])
-            self.clip_end_times   = np.array([iclip for iclip in clip_vals[1::2]])
-            self.clip_durations   = self.clip_end_times-self.clip_start_times
-
-            # Match the annotations to the clips
-            self.annotations      = {ival:{} for ival in range(self.clip_start_times.size)}
-            self.annotation_flats = []
-            for annot in self.raw_annotations:
-                time = annot.start_time_offset_usec
-                desc = annot.description
-                for idx, istart in enumerate(self.clip_start_times):
-                    if (time >= istart) and (time <= self.clip_end_times[idx]):
-                        event_time_shift = (time-istart)
-                        self.annotations[idx][event_time_shift] = desc
-                        self.annotation_flats.append(desc)
-
-    def download_by_cli(self, uid, file, target, start, duration, proposed_sub, proposed_ses, proposed_run, file_idx):
-        """
-        Download a single chunk of data from iEEG.org
-
-        Args:
-            uid (_type_): _description_
-            file (_type_): _description_
-            target (_type_): _description_
-            start (_type_): _description_
-            duration (_type_): _description_
-            proposed_sub (_type_): _description_
-            proposed_ses (_type_): _description_
-            proposed_run (_type_): _description_
-            file_idx (_type_): _description_
+        Restructure annotation information to be used as new inputs.
         """
 
-        # Store the ieeg filename and the BIDS keywords
-        self.uid          = uid
-        self.current_file = file
-        self.target       = target
-        self.success_flag = False
-        self.proposed_sub = proposed_sub
-        self.proposed_ses = proposed_ses
-        self.proposed_run = proposed_run
-        self.file_idx     = file_idx
+        # Remove start clip time if it is just the machine starting up
+        if self.clips[0].type.lower() == 'clip end' and self.clips[0].end_time_offset_usec == 2000:
+            self.clips = self.clips[1:]
 
-        # Store the start time and duration to namespaces we can use for backup saving options and for the lookup table
-        self.currentstart = start
-        self.currentdur   = duration
+        # Manage edge cases
+        if self.clips[0].type.lower() == 'clip end':
+            self.clips = list(np.concatenate(([0],self.clips), axis=0))
+        if self.clips[-1].type.lower() == 'clip start':
+            self.clips = list(np.concatenate((self.clips,[self.ieeg_end_time-self.ieeg_start_time]), axis=0))
 
-        # Loop over clips
-        BIDS_handler.__init__(self)
-        self.session_method_handler(start,duration)
-        if self.success_flag == True:
-            BIDS_handler.channel_cleanup(self)
-            BIDS_handler.get_channel_type(self)
-            BIDS_handler.make_info(self)
-            BIDS_handler.add_raw(self)
+        clip_vals = []
+        for iclip in self.clips:
+            try:
+                clip_vals.append(iclip.start_time_offset_usec)
+            except AttributeError:
+                clip_vals.append(iclip)
 
-        # Save the bids files if we have any data
-        try:
-            if len(self.raws) > 0:
-                BIDS_handler.save_bids(self)
-        except AttributeError as e:
-            if self.args.debug:
-                print(f"Save error {e}")
-            pass
+        # Turn the clip times into start and end arrays
+        clip_start_times = np.array([iclip for iclip in clip_vals[::2]])
+        clip_end_times   = np.array([iclip for iclip in clip_vals[1::2]])
+        clip_durations   = clip_end_times-clip_start_times
 
-    def download_by_annotation(self, uid, file, target, proposed_sub, proposed_ses, proposed_run):
+        # Match the annotations to the clips
+        annotations      = {ival:{} for ival in range(self.clip_start_times.size)}
+        annotation_flats = []
+        for annot in self.raw_annotations:
+            time = annot.start_time_offset_usec
+            desc = annot.description
+            for idx, istart in enumerate(clip_start_times):
+                if (time >= istart) and (time <= clip_end_times[idx]):
+                    event_time_shift = (time-istart)
+                    annotations[idx][event_time_shift] = desc
+                    annotation_flats.append(desc)
+        
+        # Update the instance wide values
+        self.ieeg_files.extend([ifile for idx in range(clip_start_times)])
+        self.uid_list.extend([iuid for idx in range(clip_start_times)])
+        self.subject_list.extend([isub for idx in range(clip_start_times)])
+        self.session_list.extend([ises for idx in range(clip_start_times)])
+        self.start_times.extend(clip_start_times)
+        self.durations.extend(clip_durations)
+        self.run_list.extend(np.arange(len(clip_start_times))+1)
+        self.annotation_flats.extend(annotation_flats)
+
+    def ieegfile_to_keys(self):
         """
-        Download each annotation layer within a given file on iEEG.org.
-
-        Args:
-            uid (_type_): _description_
-            file (_type_): _description_
-            target (_type_): _description_
-            proposed_sub (_type_): _description_
-            proposed_ses (_type_): _description_
-            proposed_run (_type_): _description_
-        """
-
-        # Store the ieeg filename
-        self.uid          = uid
-        self.current_file = file
-        self.target       = target
-        self.success_flag = False
-        self.proposed_sub = proposed_sub
-        self.proposed_ses = proposed_ses
-        self.proposed_run = proposed_run
-
-        # Get the annotation times
-        self.get_annotations()
-
-        # Loop over clips
-        if self.success_flag == True:
-            BIDS_handler.__init__(self)
-            for idx,istart in tqdm(enumerate(self.clip_start_times), desc="Downloading Clip Data", total=len(self.clip_start_times), leave=False, disable=self.args.multithread):
-
-                if istart == 0:
-                    self.raws.append("SKIP")
-                else:
-                    # Check if this combo has already been processed before
-                    pinds = (self.processed_files==self.current_file)&(self.processed_start==1e-6*istart)
-                    if pinds.any():
-                        self.raws.append("SKIP")
-                        if self.args.multithread and not self.args.silent:
-                            print(f"Skipping {self.current_file} annotation at {istart}.")
-                    else:
-                        if self.args.multithread and not self.args.silent:
-                            print(f"Downloading {self.current_file} annotation at {istart}")
-                        self.session_method_handler(istart, self.clip_durations[idx])
-                        if self.success_flag == True:
-                            BIDS_handler.channel_cleanup(self)
-                            BIDS_handler.get_channel_type(self)
-                            BIDS_handler.make_info(self)
-                            BIDS_handler.add_raw(self)
-
-        # Save the bids files if we have any data
-        try:
-            if len(self.raws) > 0:
-                BIDS_handler.event_mapper(self)
-                BIDS_handler.save_bids(self)
-        except AttributeError as e:
-            if self.args.debug:
-                print(f"Download error {e}")
-
-    def session_method_handler(self,start,duration,annotation_flag=False):
-        """
-        Wrapper to call ieeg. Due to ieeg errors, we want to make sure we can try to call it a few times before giving up.
-
-        Args:
-            start (float): Start time (referenced to data start) in microseconds to request data from
-            duration (float): Duration in microseconds of data to request
-            annotation_flag (bool, optional): Flag whether we just want annotation data or not. Defaults to False.
+        Use the iEEG.org filename to determine keywords.
         """
 
-        n_attempts = 0
+        # Extract possible keywords from the ieeg filename
+        self.uid_list     = []
+        self.subject_list = []
+        self.session_list = []
+        for ifile in self.ieeg_files:
+
+            # Create a match object to search for relevant subject and session data
+            match = re.search(r'\D+(\d+)_\D+(\d+)', ifile)
+
+            # Get numerical portions of filename that correspond to subject and session
+            if match:
+                candidate_uid = int(match.group(1))
+                candidate_sub = int(match.group(1))
+                candidate_ses = int(match.group(2))
+            else:
+                candidate_uid = None
+                candidate_sub = None
+                candidate_ses = None
+
+            # Look for this informaion in the records
+            iDF = self.data_record.loc[self.data_record.orig_filename==ifile]
+
+            # If the data already exists, get its previous information
+            if iDF.shape[0] > 0:
+
+                # Get the existing information
+                candidate_uid = iDF.iloc[0].uid
+                candidate_sub = iDF.iloc[0].subject_number
+                candidate_ses = iDF.iloc[0].session_number
+
+            # Create the subject and session lists
+            self.uid_list.append(candidate_uid)
+            self.subject_list.append(candidate_sub)
+            self.session_list.append(candidate_ses)
+
+    def download_data_manager(self,annotation_flag):
+
+        # Loop over the requested data
+
+        for idx in range(len(self.ieeg_files)):
+
+            # Download the data
+            if annotation_flag:
+                self.download_data(self.ieeg_files[idx],0,0,annotation_flag)
+                self.annotation_cleanup(self.ieeg_files[idx],self.subject_list[idx],self.session_list[idx])
+            else:
+                self.data_pointers = {'files':self.ieeg_files}
+                self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],annotation_flag)
+                self.notify_data_observers()
+
+        # If downloading by annotations, now loop over the clip level info and save
+        if annotation_flag:
+            for idx in range(len(self.annot_files)):
+
+                # Download the data
+                self.file_pointer = self.annot_files
+                self.download_data(self.annot_files[idx],self.start_times[idx],self.durations[idx],annotation_flag)
+                self.notify_data_observers()
+
+    def save_data(self):
+        
+        # Loop over the data, assign keys, and save
+        for idx,iraw in enumerate(self.data_list):
+
+            # Update keywords
+            self.keywords = {'datatype':'eeg','session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],'task':'rest'}
+            self.notify_metadata_observers()
+
+            # Save the data
+            if not self.args.debug:
+                self.BH.save_data_wo_events(iraw)
+            else:
+                with Patcher():
+                    self.BH.save_data_wo_events(iraw)
+
+            # Make the proposed data record row
+            self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
+            self.current_record['source']         = 'ieeg.org'
+            self.current_record['creator']        = getpass.getuser()
+            self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
+            self.current_record['uid']            = self.uid_list[idx]
+            self.current_record['subject_number'] = self.subject_list[idx]
+            self.current_record['session_number'] = self.session_list[idx]
+            self.current_record['run_number']     = self.run_list[idx]
+            self.current_record['start_sec']      = self.start_times[idx]
+            self.current_record['duration_sec']   = self.durations[idx]
+
+            # Add the datarow to the records
+            self.data_record = PD.concat((self.data_record,self.current_record))
+            if not self.args.debug:
+                self.data_record.to_csv(self.data_record_path,index=False)
+
+    ###############################################
+    ###### IEEG Connection related functions ######
+    ###############################################
+
+    def download_data(self,ieegfile,start,duration,annotation_flag,n_retry=5):
+
+        # Attempt connection to iEEG.org up to the retry limit
+        self.global_timeout = 60
+        n_attempts          = 0
+        self.success_flag   = False
         while True:
-            with Timeout(self.global_timeout,self.args.multithread):
+            with Timeout(self.global_timeout,False):
                 try:
-                    self.session_method(start,duration,annotation_flag)
-                    self.success_flag = True
+                    self.ieeg_session(ieegfile,start,duration,annotation_flag)
                     break
                 except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
-                    if n_attempts<self.n_retry:
+                    if n_attempts<n_retry:
                         sleep(5)
                         n_attempts += 1
                     else:
-                        if self.args.debug:
-                            print(f"Connection Error: {e}")
-                        self.success_flag = False
-                        fp = open(self.args.bidsroot+self.args.failure_file,"a")
-                        fp.write(f"{self.uid},{self.current_file},{start},{duration},{self.target},'{e}'\n")
-                        fp.close()
+                        print(f"Connection Error: {e}")
                         break
 
-    def session_method(self,start,duration,annotation_flag):
+    def ieeg_session(self,ieegfile,start,duration,annotation_flag):
         """
         Call ieeg.org for data and return data or annotations.
 
@@ -286,7 +327,7 @@ class iEEG_download(BIDS_handler):
         with Session(self.args.username,self.args.password) as session:
             
             # Open dataset session
-            dataset = session.open_dataset(self.current_file)
+            dataset = session.open_dataset(ieegfile)
             
             # Logic gate for annotation call (faster, no time data needed) or get actual data
             if not annotation_flag:
@@ -294,10 +335,10 @@ class iEEG_download(BIDS_handler):
                 # Get the channel names and integer representations for data call
                 self.channels = dataset.ch_labels
                 channel_cntr  = list(range(len(self.channels)))
-                volt_factors  = [dataset.get_time_series_details(ichan).voltage_conversion_factor for ichan in self.channels]
 
                 # If duration is greater than 10 min, break up the call. Make array of start,duration with max 10 min each chunk
-                time_cutoff = int(10*60*1e6)
+                twin_min    = 10
+                time_cutoff = int(twin_min*60*1e6)
                 end_time    = start+duration
                 ival        = start
                 chunks      = []
@@ -318,9 +359,10 @@ class iEEG_download(BIDS_handler):
                     self.data = self.data[0]
 
                 # Apply the voltage factors
-                for idx,ifactor in enumerate(volt_factors):
-                    #self.data[:,idx] = ifactor*self.data[:,idx]
-                    self.data[:,idx] = 1e-6*self.data[:,idx]
+                self.data = 1e-6*self.data
+
+                # Get the channel labels
+                self.channels = dataset.ch_labels
 
                 # Get the samping frequencies
                 self.fs = [dataset.get_time_series_details(ichannel).sample_rate for ichannel in self.channels]
@@ -329,84 +371,11 @@ class iEEG_download(BIDS_handler):
                 if np.unique(self.fs).size == 1:
                     self.fs = self.fs[0]
                 else:
-                    raise IndexError("Too many unique values for sampling frequency.")
+                    raise Exception("Too many unique values for sampling frequency.")
             else:
-                self.clips           = dataset.get_annotations(self.clip_layer)
-                self.raw_annotations = dataset.get_annotations(self.natus_layer)
-                self.start_time      = dataset.start_time
-                self.end_time        = dataset.end_time
+                self.clips           = dataset.get_annotations(self.args.time_layer)
+                self.raw_annotations = dataset.get_annotations(self.args.annot_layer)
+                self.ieeg_start_time = dataset.start_time
+                self.ieeg_end_time   = dataset.end_time
             session.close()
-
-class ieeg_handler:
-
-    def __init__(self,args,input_data):
-        self.args         = args
-        self.input_data   = input_data
-        self.input_files  = input_data['orig_filename'].values
-        self.start_times  = input_data['start'].values
-        self.durations    = input_data['duration'].values
-        self.proposed_sub = input_data['subject_number'].values
-        self.proposed_ses = input_data['session_number'].values
-        self.proposed_run = input_data['run_number'].values
-
-    def single_pull(self):
-
-        # Add a sempahore to allow orderly file access (to mimic multiprocesing for ease of argument definition)
-        semaphore = multiprocessing.Semaphore(1)
-
-        # Grab all the file indices to pass to the data pulling manager
-        file_indices = np.array(range(self.input_files.size))
-        self.pull_data(file_indices,semaphore)
-
-    def multicore_pull(self):
-
-        # Add a sempahore to allow orderly file access
-        semaphore = multiprocessing.Semaphore(1)
-
-        # Make the BIDS root data structure with a single core to avoid top-level directory issues
-        self.pull_data(np.array([0]),semaphore)
-
-        # Calculate the size of each subset based on the number of processes
-        file_indices = np.array(range(self.input_files.size-1))+1
-        subset_size  = (file_indices.size) // self.args.ncpu
-        if subset_size > 0:
-            list_subsets = [file_indices[i:i + subset_size] for i in range(0, self.args.ncpu*subset_size, subset_size)]
-
-            # Handle leftovers
-            remainder = file_indices[self.args.ncpu*subset_size:]
-            for idx,ival in enumerate(remainder):
-                list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
-        else:
-            list_subsets = [file_indices[:]]
-
-        processes = []
-        for data_chunk in list_subsets:
-            process = multiprocessing.Process(target=self.pull_data, args=(np.array([data_chunk]).flatten(),semaphore))
-            processes.append(process)
-            process.start()
-        
-        # Wait for all processes to complete
-        for process in processes:
-            process.join()
-
-    def pull_data(self,file_indices,semaphore):
-
-        # Loop over files
-        IEEG = iEEG_download(self.args,semaphore)
-        for file_idx in file_indices:
-
-            # Get the current file
-            ifile  = self.input_files[file_idx]
-            iid    = self.input_data['uid'].values[file_idx]
-            target = self.input_data['target'].values[file_idx]
-
-            if self.args.annotations:
-                IEEG.download_by_annotation(iid,ifile,target,self.proposed_sub[file_idx],self.proposed_ses[file_idx],self.proposed_run[file_idx])
-                IEEG = iEEG_download(self.args,semaphore)
-            else:
-                print(f"Working on {ifile}.")
-                IEEG.download_by_cli(iid,ifile,target,self.start_times[file_idx],self.durations[file_idx],self.proposed_sub[file_idx],self.proposed_ses[file_idx],self.proposed_run[file_idx],file_idx)
-
-
-
 
