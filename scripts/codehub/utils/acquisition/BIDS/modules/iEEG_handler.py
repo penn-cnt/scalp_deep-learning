@@ -7,7 +7,6 @@ from time import sleep
 from typing import List
 import ieeg.ieeg_api as IIA
 from ieeg.auth import Session
-from pyfakefs.fake_filesystem_unittest import Patcher
 from requests.exceptions import ReadTimeout as RTIMEOUT
 
 # Local import
@@ -38,18 +37,6 @@ class ieeg_handler(Subject):
         self.data_list     = []
         self.BIDS_keywords = {'root':self.args.bids_root,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
-        # Test values
-        """
-        self.ieeg_files   = ['EMU0562_Day01_1']
-        self.start_times  = [4000000000.0]
-        self.durations    = [15000000.0]
-        self.uid_list     = [1]
-        self.subject_list = ['HUP001']
-        self.session_list = ['implant001']
-        self.run_list     = [1]
-        self.annotation_flats = []
-        """
-
     def workflow(self):
         """
         Run a workflow that downloads data from iEEG.org, creates the correct objects in memory, and saves it to BIDS format.
@@ -59,6 +46,9 @@ class ieeg_handler(Subject):
         self.add_meta_observer(BIDS_observer)
         self.add_data_observer(backend_observer)
         
+        # Get the iEEG password
+        self.get_password()
+
         # Determine what files to download and to where
         self.get_inputs()
 
@@ -68,19 +58,37 @@ class ieeg_handler(Subject):
         # Save the data
         self.save_data()
 
+    def get_password(self):
+
+        # Determine the method to get passwords. Not all systems can use a keyring easily.
+        try:
+            import keyring
+            method = 'keyring'
+        except ModuleNotFoundError:
+            method = 'getpass'
+
+        # Get the password from the user or the keyring. If needed, add to keyring.
+        if method == 'keyring':
+            self.password = keyring.get_password("eeg_bids_ieeg_pass", self.args.username)
+            if self.password == None:
+                self.password = getpass.getpass("Enter your password. (This will be stored to your keyring): ")                            
+                keyring.set_password("eeg_bids_ieeg_pass", self.args.username, self.password)
+        elif method == 'getpass':
+            self.password = getpass.getpass("Enter your password: ")
+
     def get_data_record(self):
         
         # Get the proposed data record
-        data_record_path = self.args.bids_root+self.args.data_record
+        self.data_record_path = self.args.bids_root+self.args.data_record
 
         # Check if the file exists
-        if os.path.exists(data_record_path):
-            self.data_record = PD.read_csv(data_record_path)
+        if os.path.exists(self.data_record_path):
+            self.data_record = PD.read_csv(self.data_record_path)
         else:
             self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
     def get_inputs(self):
-        
+
         # Check for an input csv to manually set entries
         if self.args.input_csv != None:
             
@@ -96,7 +104,7 @@ class ieeg_handler(Subject):
                 elif 'duration' not in input_args.columns and not self.args.annotations:
                     raise Exception("A 'duration' column is required in the input csv if not using the --annotations flag.")
             
-            # Handle situations where the user requested annotations but provided times
+            # Handle situations where the user requested annotations but also provided times
             if self.args.annotations:
                 if 'start' in input_args.columns or 'duration' in input_args.columns:
                     userinput = ''
@@ -110,38 +118,68 @@ class ieeg_handler(Subject):
                         if 'start' in input_args.columns: input_args.drop(['start'],axis=1,inplace=True)
                         if 'duration' in input_args.columns: input_args.drop(['duration'],axis=1,inplace=True)
 
-            # Pull out the relevant data pointers
-            self.ieeg_files = input_args['orig_filename'].values
-            if not self.args.annotations:
-                self.start_times = input_args['start'].values
-                self.durations   = input_args['duration'].values
+            # Pull out the relevant data pointers. This is a required input column, no check necessary.
+            self.ieeg_files = list(input_args['orig_filename'].values)
 
-                # Check for remaining columns
-                self.ieegfile_to_keys()
-                if 'uid' in input_args.columns: self.uid_list=input_args['uid'].values
-                if 'subject_number' in input_args.columns: self.subject_list=input_args['subject_number'].values
-                if 'session_number' in input_args.columns: self.session_list=input_args['session_number'].values
-                if 'run_number' in input_args.columns: self.run_list=input_args['run_number'].values
-                if 'task' in input_args.columns:self.task_list=input_args['task'].values
-            else:
-                self.annot_files      = []
-                self.start_times      = []
-                self.durations        = []
-                self.uid_list         = []
-                self.subject_list     = []
-                self.session_list     = []
-                self.run_list         = []
-                self.task_list        = []
-                self.annotation_flats = []
+            # Get candidate keywords for missing columns
+            self.ieegfile_to_keys()
+
+            # Get the unique identifier if provided
+            if 'uid' in input_args.columns:
+                self.uid_list=list(input_args['uid'].values)
+            
+            # Get the subejct number if provided
+            if 'subject_number' in input_args.columns:
+                self.subject_list=list(input_args['subject_number'].values)
+
+            # Get the session number if provided
+            if 'session_number' in input_args.columns:
+                self.session_list=list(input_args['session_number'].values)
+
+            # Get the run number if provided
+            if 'run_number' in input_args.columns:
+                self.run_list=list(input_args['run_number'].values)
+
+            # Get the task if provided
+            if 'task' in input_args.columns:
+                self.task_list=list(input_args['task'].values)
+
         else:
-            self.start_times      = [self.args.start]
-            self.durations        = [self.args.duration]
-            self.uid_list         = [self.args.uid_number]
-            self.subject_list     = [self.args.subject_number]
-            self.session_list     = [self.args.session]
-            self.run_list         = [self.args.run]
-            self.task_list        = [self.args.task]
+            # Get the required information if we don't have an input csv
+            self.ieeg_files  = [self.args.dataset]
+            self.start_times = [self.args.start]
+            self.durations   = [self.args.duration]
 
+            # Infer input information from filename
+            self.ieegfile_to_keys()
+
+            # Get the information that can be inferred
+            if self.args.uid_number != None:
+                self.uid_list = [self.args.uid_number]
+            
+            if self.args.subject_number != None:
+                self.subject_list = [self.args.subject_number]
+            
+            if self.args.session != None:
+                self.session_list = [self.args.session]
+            
+            if self.args.run != None:
+                self.run_list = [self.args.run]
+            
+            if self.args.task != None:
+                self.task_list = [self.args.task]
+        
+        # Add an object to store information via annotation downloads
+        if self.args.annotations:
+            self.annot_files      = []
+            self.start_times      = []
+            self.durations        = []
+            self.annotation_uid   = []
+            self.annotation_sub   = []
+            self.annotation_ses   = []
+            self.run_list         = []
+            self.annotation_flats = []
+            
     def annotation_cleanup(self,ifile,iuid,isub,ises):
         """
         Restructure annotation information to be used as new inputs.
@@ -170,7 +208,7 @@ class ieeg_handler(Subject):
         clip_durations   = clip_end_times-clip_start_times
 
         # Match the annotations to the clips
-        annotations      = {ival:{} for ival in range(self.clip_start_times.size)}
+        annotations      = {ival:{} for ival in range(clip_start_times.size)}
         annotation_flats = []
         for annot in self.raw_annotations:
             time = annot.start_time_offset_usec
@@ -182,10 +220,10 @@ class ieeg_handler(Subject):
                     annotation_flats.append(desc)
         
         # Update the instance wide values
-        self.ieeg_files.extend([ifile for idx in range(clip_start_times)])
-        self.uid_list.extend([iuid for idx in range(clip_start_times)])
-        self.subject_list.extend([isub for idx in range(clip_start_times)])
-        self.session_list.extend([ises for idx in range(clip_start_times)])
+        self.annot_files.extend([ifile for idx in range(len(clip_start_times))])
+        self.annotation_uid.extend([iuid for idx in range(len(clip_start_times))])
+        self.annotation_sub.extend([isub for idx in range(len(clip_start_times))])
+        self.annotation_ses.extend([ises for idx in range(len(clip_start_times))])
         self.start_times.extend(clip_start_times)
         self.durations.extend(clip_durations)
         self.run_list.extend(np.arange(len(clip_start_times))+1)
@@ -200,6 +238,7 @@ class ieeg_handler(Subject):
         self.uid_list     = []
         self.subject_list = []
         self.session_list = []
+        self.run_list     = []
         for ifile in self.ieeg_files:
 
             # Create a match object to search for relevant subject and session data
@@ -208,8 +247,8 @@ class ieeg_handler(Subject):
             # Get numerical portions of filename that correspond to subject and session
             if match:
                 candidate_uid = int(match.group(1))
-                candidate_sub = int(match.group(1))
-                candidate_ses = int(match.group(2))
+                candidate_sub = match.group(1)
+                candidate_ses = match.group(2)
             else:
                 candidate_uid = None
                 candidate_sub = None
@@ -223,13 +262,14 @@ class ieeg_handler(Subject):
 
                 # Get the existing information
                 candidate_uid = iDF.iloc[0].uid
-                candidate_sub = iDF.iloc[0].subject_number
-                candidate_ses = iDF.iloc[0].session_number
+                candidate_sub = str(iDF.iloc[0].subject_number)
+                candidate_ses = str(iDF.iloc[0].session_number)
 
             # Create the subject and session lists
             self.uid_list.append(candidate_uid)
             self.subject_list.append(candidate_sub)
             self.session_list.append(candidate_ses)
+            self.run_list.append(1)
 
     def download_data_manager(self,annotation_flag):
 
@@ -240,53 +280,64 @@ class ieeg_handler(Subject):
             # Download the data
             if annotation_flag:
                 self.download_data(self.ieeg_files[idx],0,0,annotation_flag)
-                self.annotation_cleanup(self.ieeg_files[idx],self.subject_list[idx],self.session_list[idx])
+                self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx])
             else:
-                self.data_pointers = {'files':self.ieeg_files}
                 self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],annotation_flag)
-                self.notify_data_observers()
+                if self.success_flag:
+                    self.notify_data_observers()
+                else:
+                    self.data_list.append(None)
 
         # If downloading by annotations, now loop over the clip level info and save
         if annotation_flag:
-            for idx in range(len(self.annot_files)):
+            # Update the object pointers for subject, session, etc. info
+            self.ieeg_files   = self.annot_files
+            self.uid_list     = self.annotation_uid
+            self.subject_list = self.annotation_sub
+            self.session_list = self.annotation_ses
+
+            # Loop over the file list that is expanded by all the annotations
+            for idx in range(len(self.ieeg_files)):
 
                 # Download the data
-                self.file_pointer = self.annot_files
-                self.download_data(self.annot_files[idx],self.start_times[idx],self.durations[idx],annotation_flag)
-                self.notify_data_observers()
+                self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
+                if self.success_flag:
+                    self.notify_data_observers()
+                else:
+                    self.data_list.append(None)
 
     def save_data(self):
         
         # Loop over the data, assign keys, and save
         for idx,iraw in enumerate(self.data_list):
+            if iraw != None:
 
-            # Update keywords
-            self.keywords = {'datatype':'eeg','session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],'task':'rest'}
-            self.notify_metadata_observers()
+                # Update keywords
+                self.keywords = {'root':self.args.bids_root,'datatype':'eeg','session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],'task':'rest'}
+                self.notify_metadata_observers()
 
-            # Save the data
-            if not self.args.debug:
-                self.BH.save_data_wo_events(iraw)
-            else:
-                with Patcher():
-                    self.BH.save_data_wo_events(iraw)
+                # Save the data
+                self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
-            # Make the proposed data record row
-            self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
-            self.current_record['source']         = 'ieeg.org'
-            self.current_record['creator']        = getpass.getuser()
-            self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
-            self.current_record['uid']            = self.uid_list[idx]
-            self.current_record['subject_number'] = self.subject_list[idx]
-            self.current_record['session_number'] = self.session_list[idx]
-            self.current_record['run_number']     = self.run_list[idx]
-            self.current_record['start_sec']      = self.start_times[idx]
-            self.current_record['duration_sec']   = self.durations[idx]
+                # Make the proposed data record row
+                self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
+                self.current_record['source']         = 'ieeg.org'
+                self.current_record['creator']        = getpass.getuser()
+                self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
+                self.current_record['uid']            = self.uid_list[idx]
+                self.current_record['subject_number'] = self.subject_list[idx]
+                self.current_record['session_number'] = self.session_list[idx]
+                self.current_record['run_number']     = self.run_list[idx]
+                self.current_record['start_sec']      = self.start_times[idx]
+                self.current_record['duration_sec']   = self.durations[idx]
 
-            # Add the datarow to the records
-            self.data_record = PD.concat((self.data_record,self.current_record))
-            if not self.args.debug:
+                # Add the datarow to the records
+                self.data_record = PD.concat((self.data_record,self.current_record))
                 self.data_record.to_csv(self.data_record_path,index=False)
+                
+                # Remove if debugging
+                if self.args.debug:
+                    os.system(f"rm -r {self.args.bids_root}*")
 
     ###############################################
     ###### IEEG Connection related functions ######
@@ -302,6 +353,7 @@ class ieeg_handler(Subject):
             with Timeout(self.global_timeout,False):
                 try:
                     self.ieeg_session(ieegfile,start,duration,annotation_flag)
+                    self.success_flag = True
                     break
                 except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
                     if n_attempts<n_retry:
@@ -324,13 +376,16 @@ class ieeg_handler(Subject):
             IndexError: If there are multiple sampling frequencies, bids does not readily support this. Alerts user and stops.
         """
 
-        with Session(self.args.username,self.args.password) as session:
+        with Session(self.args.username,self.password) as session:
             
             # Open dataset session
             dataset = session.open_dataset(ieegfile)
             
             # Logic gate for annotation call (faster, no time data needed) or get actual data
             if not annotation_flag:
+
+                # Status
+                print(f"Downloading {ieegfile} starting at {1e-6*start:011.2f} seconds for {1e-6*duration:08.2f} seconds.")
 
                 # Get the channel names and integer representations for data call
                 self.channels = dataset.ch_labels

@@ -13,9 +13,8 @@ class BIDS_observer(Observer):
         # Populate the bids dictionary with the new values
         for ikey,ivalue in self.keywords.items():
             if ikey in BIDS_keys:
-                print(f"Updating {ikey} keyword...")
                 self.BIDS_keywords[ikey]=ivalue
-        
+
         # If all keywords are set, send the new pathing to the BIDS handler.
         if all(self.BIDS_keywords.values()):
             self.BH.update_path(self.BIDS_keywords)
@@ -30,12 +29,13 @@ class BIDS_handler:
         Update the bidspath.
         """
 
-        self.bids_path = BIDSPath(root=keywords['root'], 
-                                  datatype=keywords['datatype'], 
-                                  session=keywords['session'], 
-                                  subject=keywords['subject'],
-                                  run=keywords['run'], 
-                                  task=keywords['task'])
+        self.current_keywords = keywords
+        self.bids_path = BIDSPath(root=str(keywords['root']), 
+                                  datatype=str(keywords['datatype']), 
+                                  session=str(keywords['session']), 
+                                  subject=str(keywords['subject']),
+                                  run=int(keywords['run']), 
+                                  task=str(keywords['task']))
         
     def create_events(self):
 
@@ -49,12 +49,16 @@ class BIDS_handler:
             alldesc.append(desc)
         events = np.array(events)
 
-    def save_data_w_events(self, raw, events, event_mapping):
+    def save_data_w_events(self, raw, events, event_mapping, debug=False):
 
         # Save the bids data
         write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=event_mapping, allow_preload=True, format='EDF',verbose=False)
 
-    def save_data_wo_events(self, raw):
+    def save_data_wo_events(self, raw, debug=False):
 
         # Save the bids data
-        write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False)
+        try:
+            write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False)
+        except Exception as e:
+            if debug:
+                print(f"Write error: {e}")

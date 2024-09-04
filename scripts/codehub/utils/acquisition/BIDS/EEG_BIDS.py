@@ -55,11 +55,10 @@ if __name__ == '__main__':
 
     ieeg_group = parser.add_argument_group('iEEG connection options')
     ieeg_group.add_argument("--username", type=str, help="Username for iEEG.org.")
-    ieeg_group.add_argument("--password", type=str, help="Password for iEEG.org.")
     ieeg_group.add_argument("--input_csv", type=str, help="CSV file with the relevant filenames, start times, durations, and keywords. For an example, use the --example_input flag.")
     ieeg_group.add_argument("--dataset", type=str, help="iEEG.org Dataset name. Useful if downloading just one dataset,")
-    ieeg_group.add_argument("--start", type=float, help="Start time of clip. Useful if downloading just one dataset,")
-    ieeg_group.add_argument("--duration", type=float, help="Duration of clip. Useful if downloading just one dataset,")
+    ieeg_group.add_argument("--start", type=float, help="Start time of clip in usec. Useful if downloading just one dataset,")
+    ieeg_group.add_argument("--duration", type=float, help="Duration of clip in usec. Useful if downloading just one dataset,")
     ieeg_group.add_argument("--failure_file", default='./failed_ieeg_calls.csv', type=str, help="CSV containing failed iEEG calls.")    
     ieeg_group.add_argument("--annotations", action='store_true', default=False, help="Download by annotation layers.")
     ieeg_group.add_argument("--time_layer", type=str, default='EEG clip times', help="Annotation layer name for clip times.")
@@ -76,7 +75,7 @@ if __name__ == '__main__':
     misc_group.add_argument("--example_input", action='store_true', default=False, help="Show example input file structure.")
     misc_group.add_argument("--backend", type=str, default='MNE', help="Backend data handler.")
     misc_group.add_argument("--ch_type", default=None, type=str, help="Manual set of channel type if not matched by known patterns. (i.e. 'seeg' for intracranial data)")
-    misc_group.add_argument("--debug", action='store_true', default=False, help="Do not save anything. Useful for debugging.")
+    misc_group.add_argument("--debug", action='store_true', default=False, help="Debug tools. Mainly removes files after generation.")
     args = parser.parse_args()
 
     # If the user wants an example input file, print it then close application

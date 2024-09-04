@@ -2,6 +2,7 @@ import re
 import mne
 import numpy as np
 import pandas as PD
+from mne.io.constants import FIFF
 
 # Local Imports
 from modules.observer_handler import *
@@ -43,6 +44,9 @@ class MNE_handler:
     
     def make_info(self):
         self.data_info = mne.create_info(ch_names=list(self.channels), sfreq=self.fs, verbose=False)
+        for idx,ichannel in enumerate(self.channels):
+            if self.channel_types.loc[ichannel]['type'] in ['seeg','eeg']:
+                self.data_info['chs'][idx]['unit'] = FIFF.FIFF_UNIT_V
 
     def get_channel_type(self, threshold=15):
 
