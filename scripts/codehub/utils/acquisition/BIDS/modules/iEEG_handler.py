@@ -87,6 +87,25 @@ class ieeg_handler(Subject):
         else:
             self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
+    def check_data_record(self,ifile,istart,iduration):
+
+        # Update file mask as needed
+        if ifile != self.record_ifile:
+            self.record_ifile     = ifile
+            self.record_file_mask = (self.data_record['orig_filename'].values==ifile)
+        if istart != self.record_start:
+            self.record_start      = istart
+            self.record_start_mask = (self.data_record['start_sec'].values==istart)
+        if iduration != self.record_duration:
+            self.record_duration      = iduration
+            self.record_duration_mask = (self.data_record['duration_sec'].values==iduration)
+
+        # Get the combined mask
+        mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
+
+        # Check for any existing records
+        return not(any(mask))
+
     def get_inputs(self):
 
         # Check for an input csv to manually set entries
@@ -273,8 +292,12 @@ class ieeg_handler(Subject):
 
     def download_data_manager(self,annotation_flag):
 
-        # Loop over the requested data
+        # Set the reference variables we can use to avoid frequent checks of the data record
+        self.record_ifile    = ''
+        self.record_start    = 0
+        self.record_duration = 0
 
+        # Loop over the requested data
         for idx in range(len(self.ieeg_files)):
 
             # Download the data
@@ -282,10 +305,19 @@ class ieeg_handler(Subject):
                 self.download_data(self.ieeg_files[idx],0,0,annotation_flag)
                 self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx])
             else:
-                self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],annotation_flag)
-                if self.success_flag:
-                    self.notify_data_observers()
+                # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
+                if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
+                    
+                    # Download the data
+                    self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],annotation_flag)
+                    
+                    # If successful, notify data observer. Else, add a skip
+                    if self.success_flag:
+                        self.notify_data_observers()
+                    else:
+                        self.data_list.append(None)
                 else:
+                    print(f"Skipping {self.ieeg_files[idx]} starting at {1e-6*self.start_times[idx]:011.2f} seconds for {1e-6*self.durations[idx]:08.2f} seconds.")
                     self.data_list.append(None)
 
         # If downloading by annotations, now loop over the clip level info and save
@@ -299,11 +331,19 @@ class ieeg_handler(Subject):
             # Loop over the file list that is expanded by all the annotations
             for idx in range(len(self.ieeg_files)):
 
-                # Download the data
-                self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
-                if self.success_flag:
-                    self.notify_data_observers()
+                # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
+                if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
+
+                    # Download the data
+                    self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
+                    
+                    # If successful, notify data observer. Else, add a skip
+                    if self.success_flag:
+                        self.notify_data_observers()
+                    else:
+                        self.data_list.append(None)
                 else:
+                    print(f"Skipping {self.ieeg_files[idx]} starting at {1e-6*self.start_times[idx]:011.2f} seconds for {1e-6*self.durations[idx]:08.2f} seconds.")
                     self.data_list.append(None)
 
     def save_data(self):

@@ -1,11 +1,11 @@
 # Single download without inputs. Should create subject 562, session 1, run 1
-python EEG_BIDS.py --username BJPrager --bids_root TEST --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000 --password
+python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root TEST --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000
 
 # Single download without inputs. Should create  subject 001, session HUP001, run 1
-python EEG_BIDS.py --username BJPrager --bids_root TEST --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000 --session HUP001 --subject 001 --run 1 --password
+python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root TEST --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000 --session HUP001 --subject 001 --run 1
 
 # Single download without inputs. Should create subject 001, session HUP001, run 1. Prevents all output
-python EEG_BIDS.py --username BJPrager --bids_root TEST --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000 --session HUP001 --subject 001 --run 1 --debug --password
+python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root TEST --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000 --session HUP001 --subject 001 --run 1 --debug
 
 # Download with inputs, annotations
-python EEG_BIDS.py --username BJPrager --bids_root TEST --input_csv samples/sample_annot.csv --annotations --password 
+python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root TEST --input_csv utils/acquisition/BIDS/samples/sample_annot.csv --annotations
