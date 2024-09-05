@@ -24,7 +24,7 @@ class ieeg_handler(Subject):
     def __init__(self,args):
 
         # Save the input objects
-        self.args             = args
+        self.args = args
 
         # Create the object pointers
         self.BH      = BIDS_handler()
@@ -35,6 +35,7 @@ class ieeg_handler(Subject):
 
         # Create objects that interact with observers
         self.data_list     = []
+        self.type_list     = []
         self.BIDS_keywords = {'root':self.args.bids_root,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
     def workflow(self):
@@ -57,6 +58,10 @@ class ieeg_handler(Subject):
 
         # Save the data
         self.save_data()
+
+    ##############################
+    ####### iEEG functions #######
+    ##############################
 
     def get_password(self):
 
@@ -87,18 +92,18 @@ class ieeg_handler(Subject):
         else:
             self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
-    def check_data_record(self,ifile,istart,iduration):
+    def check_data_record(self,checkfile,checkstart,checkduration):
 
         # Update file mask as needed
-        if ifile != self.record_ifile:
-            self.record_ifile     = ifile
-            self.record_file_mask = (self.data_record['orig_filename'].values==ifile)
-        if istart != self.record_start:
-            self.record_start      = istart
-            self.record_start_mask = (self.data_record['start_sec'].values==istart)
-        if iduration != self.record_duration:
-            self.record_duration      = iduration
-            self.record_duration_mask = (self.data_record['duration_sec'].values==iduration)
+        if checkfile != self.record_checkfile:
+            self.record_checkfile = checkfile
+            self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
+        if checkstart != self.record_start:
+            self.record_start      = checkstart
+            self.record_start_mask = (self.data_record['start_sec'].values==checkstart)
+        if checkduration != self.record_duration:
+            self.record_duration      = checkduration
+            self.record_duration_mask = (self.data_record['duration_sec'].values==checkduration)
 
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
@@ -128,7 +133,7 @@ class ieeg_handler(Subject):
                 if 'start' in input_args.columns or 'duration' in input_args.columns:
                     userinput = ''
                     while userinput.lower() not in ['y','n']:
-                        userinput = input("--annotations flag set to True, but start times and durations were provided in the input. Override these times with annotations clips? (Yy/Nn)")
+                        userinput = input("--annotations flag set to True, but start times and durations were provided in the input. Override these times with annotations clips (Yy/Nn)? ")
                     if userinput.lower() == 'n':
                         print("Ignoring --annotation flag. Using user provided times.")
                         self.args.annotations = False
@@ -137,8 +142,10 @@ class ieeg_handler(Subject):
                         if 'start' in input_args.columns: input_args.drop(['start'],axis=1,inplace=True)
                         if 'duration' in input_args.columns: input_args.drop(['duration'],axis=1,inplace=True)
 
-            # Pull out the relevant data pointers. This is a required input column, no check necessary.
-            self.ieeg_files = list(input_args['orig_filename'].values)
+            # Pull out the relevant data pointers for required columns.
+            self.ieeg_files  = list(input_args['orig_filename'].values)
+            self.start_times = list(input_args['start'].values)
+            self.durations   = list(input_args['duration'].values)
 
             # Get candidate keywords for missing columns
             self.ieegfile_to_keys()
@@ -163,6 +170,7 @@ class ieeg_handler(Subject):
             if 'task' in input_args.columns:
                 self.task_list=list(input_args['task'].values)
 
+        # Conditions for no input csv file
         else:
             # Get the required information if we don't have an input csv
             self.ieeg_files  = [self.args.dataset]
@@ -293,9 +301,9 @@ class ieeg_handler(Subject):
     def download_data_manager(self,annotation_flag):
 
         # Set the reference variables we can use to avoid frequent checks of the data record
-        self.record_ifile    = ''
-        self.record_start    = 0
-        self.record_duration = 0
+        self.record_checkfile    = ''
+        self.record_start    = -1
+        self.record_duration = -1
 
         # Loop over the requested data
         for idx in range(len(self.ieeg_files)):
@@ -353,27 +361,29 @@ class ieeg_handler(Subject):
             if iraw != None:
 
                 # Update keywords
-                self.keywords = {'root':self.args.bids_root,'datatype':'eeg','session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],'task':'rest'}
+                self.keywords = {'root':self.args.bids_root,'datatype':self.type_list[idx],'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],'task':'rest'}
                 self.notify_metadata_observers()
 
                 # Save the data
-                self.BH.save_data_wo_events(iraw, debug=self.args.debug)
+                success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
-                # Make the proposed data record row
-                self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
-                self.current_record['source']         = 'ieeg.org'
-                self.current_record['creator']        = getpass.getuser()
-                self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
-                self.current_record['uid']            = self.uid_list[idx]
-                self.current_record['subject_number'] = self.subject_list[idx]
-                self.current_record['session_number'] = self.session_list[idx]
-                self.current_record['run_number']     = self.run_list[idx]
-                self.current_record['start_sec']      = self.start_times[idx]
-                self.current_record['duration_sec']   = self.durations[idx]
+                # If the data wrote out correctly, update the data record
+                if success_flag:
+                    # Make the proposed data record row
+                    self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
+                    self.current_record['source']         = 'ieeg.org'
+                    self.current_record['creator']        = getpass.getuser()
+                    self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
+                    self.current_record['uid']            = self.uid_list[idx]
+                    self.current_record['subject_number'] = self.subject_list[idx]
+                    self.current_record['session_number'] = self.session_list[idx]
+                    self.current_record['run_number']     = self.run_list[idx]
+                    self.current_record['start_sec']      = self.start_times[idx]
+                    self.current_record['duration_sec']   = self.durations[idx]
 
-                # Add the datarow to the records
-                self.data_record = PD.concat((self.data_record,self.current_record))
-                self.data_record.to_csv(self.data_record_path,index=False)
+                    # Add the datarow to the records
+                    self.data_record = PD.concat((self.data_record,self.current_record))
+                    self.data_record.to_csv(self.data_record_path,index=False)
                 
                 # Remove if debugging
                 if self.args.debug:

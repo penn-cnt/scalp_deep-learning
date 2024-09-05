@@ -1,3 +1,4 @@
+import numpy as np
 from mne_bids import BIDSPath,write_raw_bids
 
 # Local Imports
@@ -7,13 +8,39 @@ class BIDS_observer(Observer):
 
     def listen_metadata(self):
 
+        def clean_value(value):
+            
+            # Track the typing
+            dtype = 'str'
+
+            # Try a float conversion first
+            try:
+                newval = float(value)
+                dtype  = 'float'
+            except ValueError:
+                newval = value
+
+            # Try an integer conversion
+            if dtype == 'float':
+                if newval % 1 == 0:
+                    newval = int(newval)
+                    dtype  = 'int'
+            
+            # Clean up the value as much as possible
+            if dtype == 'float':
+                newval = f"{newval:06.1f}"
+            elif dtype == 'int':
+                newval = f"{newval:04d}"
+
+            return newval
+
         # Define the required BIDS keywords
         BIDS_keys = ['root','datatype','session','subject','run','task']
 
         # Populate the bids dictionary with the new values
         for ikey,ivalue in self.keywords.items():
             if ikey in BIDS_keys:
-                self.BIDS_keywords[ikey]=ivalue
+                self.BIDS_keywords[ikey]=clean_value(ivalue)
 
         # If all keywords are set, send the new pathing to the BIDS handler.
         if all(self.BIDS_keywords.values()):
@@ -30,12 +57,12 @@ class BIDS_handler:
         """
 
         self.current_keywords = keywords
-        self.bids_path = BIDSPath(root=str(keywords['root']), 
-                                  datatype=str(keywords['datatype']), 
-                                  session=str(keywords['session']), 
-                                  subject=str(keywords['subject']),
-                                  run=int(keywords['run']), 
-                                  task=str(keywords['task']))
+        self.bids_path = BIDSPath(root=keywords['root'], 
+                                  datatype=keywords['datatype'], 
+                                  session=keywords['session'], 
+                                  subject=keywords['subject'],
+                                  run=keywords['run'], 
+                                  task=keywords['task'])
         
     def create_events(self):
 
@@ -59,6 +86,8 @@ class BIDS_handler:
         # Save the bids data
         try:
             write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False)
+            return True
         except Exception as e:
             if debug:
                 print(f"Write error: {e}")
+            return False

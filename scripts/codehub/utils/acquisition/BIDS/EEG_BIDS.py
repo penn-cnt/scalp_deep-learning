@@ -8,6 +8,11 @@ from prettytable import PrettyTable, ALL
 from modules.iEEG_handler import ieeg_handler
 from modules.BIDS_handler import *
 
+# MNE is very chatty. Turn off some warnings.
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=RuntimeWarning)
+
 def print_examples():
         
         # Read in the sample time csv

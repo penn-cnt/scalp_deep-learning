@@ -1,7 +1,4 @@
 orig_filename,uid,start,duration,subject_number,session_number,run_number,target
-HUP84_phaseII,0,0.0,7700000000.0,84,0.0,1,target_A
-HUP84_phaseII,0,7700000000.0,7700000000.0,84,0.0,2,target_B
-HUP84_phaseII,0,15400000000.0,7700000000.0,84,0.0,3,target_C
-HUP84_phaseII,0,23100000000.0,7700000000.0,84,0.0,4,target_D
-HUP84_phaseII,0,30800000000.0,7700000000.0,84,0.0,5,target_E
+HUP84_phaseII,0,20000000000.0,30000000.0,HUP084,001,4,target_D
+HUP84_phaseII,0,30000000000.0,30000000.0,HUP084,001,5,target_E
 

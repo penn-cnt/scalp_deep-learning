@@ -14,8 +14,9 @@ def return_backend(user_request='MNE'):
 class backend_observer(Observer):
 
     def listen_data(self):
-        idata = self.backend.workflow(self.args,self.data,self.channels,self.fs)
+        idata,itype = self.backend.workflow(self.args,self.data,self.channels,self.fs)
         self.data_list.append(idata)
+        self.type_list.append(itype)
 
 class MNE_handler:
 
@@ -36,7 +37,7 @@ class MNE_handler:
         self.make_raw()
         
         # Return raw to the list of raws being tracked by the Subject class
-        return self.iraw
+        return self.iraw,self.bids_datatype
 
     def make_raw(self):
         self.iraw = mne.io.RawArray(self.indata.T, self.data_info, verbose=False)
@@ -101,3 +102,17 @@ class MNE_handler:
 
         # Make the dictionary for mne
         self.channel_types = PD.DataFrame(self.channel_types.reshape((-1,1)),index=self.channels,columns=["type"])
+        
+        # Get the best guess datatype to send to bids writer
+        raw_datatype = self.channel_types['type'].mode().values[0]
+        
+        # perform some common mappings to the bids keywords
+        if raw_datatype == 'ecog':
+            datatype = 'ieeg'
+        elif raw_datatype == 'seeg':
+            datatype = 'ieeg'
+        else:
+            raw_datatype = datatype
+
+        # Store the data type to use for write out
+        self.bids_datatype = datatype
