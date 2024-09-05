@@ -144,8 +144,9 @@ class ieeg_handler(Subject):
 
             # Pull out the relevant data pointers for required columns.
             self.ieeg_files  = list(input_args['orig_filename'].values)
-            self.start_times = list(input_args['start'].values)
-            self.durations   = list(input_args['duration'].values)
+            if not self.args.annotations:
+                self.start_times = list(input_args['start'].values)
+                self.durations   = list(input_args['duration'].values)
 
             # Get candidate keywords for missing columns
             self.ieegfile_to_keys()
@@ -206,6 +207,7 @@ class ieeg_handler(Subject):
             self.annotation_ses   = []
             self.run_list         = []
             self.annotation_flats = []
+            self.annotations      = {}
             
     def annotation_cleanup(self,ifile,iuid,isub,ises):
         """
@@ -235,7 +237,7 @@ class ieeg_handler(Subject):
         clip_durations   = clip_end_times-clip_start_times
 
         # Match the annotations to the clips
-        annotations      = {ival:{} for ival in range(clip_start_times.size)}
+        self.annotations[ifile] = {ival:{} for ival in range(clip_start_times.size)}
         annotation_flats = []
         for annot in self.raw_annotations:
             time = annot.start_time_offset_usec
@@ -243,7 +245,7 @@ class ieeg_handler(Subject):
             for idx, istart in enumerate(clip_start_times):
                 if (time >= istart) and (time <= clip_end_times[idx]):
                     event_time_shift = (time-istart)
-                    annotations[idx][event_time_shift] = desc
+                    self.annotations[ifile][idx][event_time_shift] = desc
                     annotation_flats.append(desc)
         
         # Update the instance wide values
@@ -301,9 +303,9 @@ class ieeg_handler(Subject):
     def download_data_manager(self,annotation_flag):
 
         # Set the reference variables we can use to avoid frequent checks of the data record
-        self.record_checkfile    = ''
-        self.record_start    = -1
-        self.record_duration = -1
+        self.record_checkfile = ''
+        self.record_start     = -1
+        self.record_duration  = -1
 
         # Loop over the requested data
         for idx in range(len(self.ieeg_files)):
@@ -361,11 +363,16 @@ class ieeg_handler(Subject):
             if iraw != None:
 
                 # Update keywords
-                self.keywords = {'root':self.args.bids_root,'datatype':self.type_list[idx],'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],'task':'rest'}
+                self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
+                                 'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
+                                 'task':'rest','fs':iraw.info["sfreq"]}
                 self.notify_metadata_observers()
 
                 # Save the data
-                success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
+                if self.args.annotations:
+                    success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
+                else:
+                    success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:

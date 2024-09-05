@@ -102,6 +102,8 @@ class MNE_handler:
 
         # Make the dictionary for mne
         self.channel_types = PD.DataFrame(self.channel_types.reshape((-1,1)),index=self.channels,columns=["type"])
+        print(self.channel_types)
+        exit()
         
         # Get the best guess datatype to send to bids writer
         raw_datatype = self.channel_types['type'].mode().values[0]
@@ -112,7 +114,7 @@ class MNE_handler:
         elif raw_datatype == 'seeg':
             datatype = 'ieeg'
         else:
-            raw_datatype = datatype
+            datatype = raw_datatype
 
         # Store the data type to use for write out
         self.bids_datatype = datatype

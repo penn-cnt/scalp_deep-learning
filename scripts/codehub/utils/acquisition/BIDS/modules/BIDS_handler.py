@@ -42,9 +42,18 @@ class BIDS_observer(Observer):
             if ikey in BIDS_keys:
                 self.BIDS_keywords[ikey]=clean_value(ivalue)
 
-        # If all keywords are set, send the new pathing to the BIDS handler.
+        # If all keywords are set, send information to the BIDS handler.
         if all(self.BIDS_keywords.values()):
+
+            # Update the bids path
             self.BH.update_path(self.BIDS_keywords)
+
+            # Update the events
+            self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
+                                  self.keywords['fs'],self.annotations)
+        else:
+            print(f"Unable to create BIDS keywords for file: {self.keywords['filename']}")
+        
 
 class BIDS_handler:
 
@@ -63,23 +72,31 @@ class BIDS_handler:
                                   subject=keywords['subject'],
                                   run=keywords['run'], 
                                   task=keywords['task'])
-        
-    def create_events(self):
+
+    def create_events(self,ifile,run,fs,annotations):
 
         # Make the events file and save the results
-        events  = []
-        alldesc = []
-        for iannot in self.annotations[idx].keys():
-            desc  = self.annotations[idx][iannot]
-            index = (1e-6*iannot)*self.fs
-            events.append([index,0,self.event_mapping[desc]])
-            alldesc.append(desc)
-        events = np.array(events)
+        events             = []
+        self.alldesc       = []
+        self.event_mapping = {}
+        for ii,iannot in enumerate(annotations[ifile][run].keys()):
+            
+            # Get the raw annotation and the index
+            desc  = annotations[ifile][run][iannot]
+            index = (1e-6*iannot)*fs
 
-    def save_data_w_events(self, raw, events, event_mapping, debug=False):
+            # Make the required mne event mapper
+            self.event_mapping[str(iannot)] = ii
+
+            # Store the results
+            events.append([index,0,ii])
+            self.alldesc.append(desc)
+        self.events  = np.array(events)
+
+    def save_data_w_events(self, raw, debug=False):
 
         # Save the bids data
-        write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=events,event_id=event_mapping, allow_preload=True, format='EDF',verbose=False)
+        write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=self.events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
 
     def save_data_wo_events(self, raw, debug=False):
 
