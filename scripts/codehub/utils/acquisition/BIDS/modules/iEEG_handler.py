@@ -264,6 +264,10 @@ class ieeg_handler(Subject):
             if 'task' in input_args.columns:
                 self.task_list=list(input_args['task'].values)
 
+            # Get the target if provided
+            if 'target' in input_args.columns:
+                self.target_list = list(input_args['target'].values)
+
         # Conditions for no input csv file
         else:
             # Get the required information if we don't have an input csv
@@ -289,6 +293,9 @@ class ieeg_handler(Subject):
             
             if self.args.task != None:
                 self.task_list = [self.args.task]
+
+            if self.args.target != None:
+                self.target_list = [self.args.target]
         
         # Add an object to store information via annotation downloads
         if self.args.annotations:
@@ -302,7 +309,7 @@ class ieeg_handler(Subject):
             self.annotation_flats = []
             self.annotations      = {}
             
-    def annotation_cleanup(self,ifile,iuid,isub,ises):
+    def annotation_cleanup(self,ifile,iuid,isub,ises,itarget):
         """
         Restructure annotation information to be used as new inputs.
         """
@@ -346,6 +353,7 @@ class ieeg_handler(Subject):
         self.annotation_uid.extend([iuid for idx in range(len(clip_start_times))])
         self.annotation_sub.extend([isub for idx in range(len(clip_start_times))])
         self.annotation_ses.extend([ises for idx in range(len(clip_start_times))])
+        self.target_list.extend([itarget for idx in range(len(clip_start_times))])
         self.start_times.extend(clip_start_times)
         self.durations.extend(clip_durations)
         self.run_list.extend(np.arange(len(clip_start_times)))
@@ -409,7 +417,7 @@ class ieeg_handler(Subject):
             # Download the data
             if self.args.annotations:
                 self.download_data(self.ieeg_files[idx],0,0,True)
-                self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx])
+                self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx],self.target_list[idx])
             else:
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
                 if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
@@ -476,6 +484,9 @@ class ieeg_handler(Subject):
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
+                    # Save the target info
+                    self.BH.save_targets(self.target_list[idx])
+
                     # Make the proposed data record row
                     self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
                     self.current_record['source']         = 'ieeg.org'

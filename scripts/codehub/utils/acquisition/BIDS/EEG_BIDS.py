@@ -81,6 +81,7 @@ if __name__ == '__main__':
     multithread_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
 
     misc_group = parser.add_argument_group('Misc options')
+    misc_group.add_argument("--target", type=str, help="Target to associate with the data. (i.e. PNES/EPILEPSY/etc.)")
     misc_group.add_argument("--example_input", action='store_true', default=False, help="Show example input file structure.")
     misc_group.add_argument("--backend", type=str, default='MNE', help="Backend data handler.")
     misc_group.add_argument("--ch_type", default=None, type=str, help="Manual set of channel type if not matched by known patterns. (i.e. 'seeg' for intracranial data)")
