@@ -60,7 +60,6 @@ class MNE_handler:
         # Make the channel types
         self.channel_types = []
         for (i, iexpression), channel in zip(enumerate(channel_expressions), self.channels):
-
             if iexpression == None:
                 if channel.lower() in ['fz','cz']:
                     self.channel_types.append('eeg')
@@ -76,6 +75,8 @@ class MNE_handler:
                 elif "NVC" in iexpression.group(0):  # NeuroVista data 
                     self.channel_types.append('eeg')
                     self.channels[i] = f"{channel[-2:]}"
+                elif lead.lower() in ['a']:
+                    self.channel_types.append('misc')
                 else:
                     self.channel_types.append(1)
 
@@ -94,16 +95,8 @@ class MNE_handler:
             if isinstance(ival,int):self.channel_types[idx] = remaining_leads
         self.channel_types = np.array(self.channel_types)
 
-        # Define the datatype for the bids handler
-        if 'eeg' in self.channel_types:
-            self.datatype = 'eeg'
-        elif 'seeg' in self.channel_types:
-            self.datatype = 'ieeg'
-
         # Make the dictionary for mne
         self.channel_types = PD.DataFrame(self.channel_types.reshape((-1,1)),index=self.channels,columns=["type"])
-        print(self.channel_types)
-        exit()
         
         # Get the best guess datatype to send to bids writer
         raw_datatype = self.channel_types['type'].mode().values[0]

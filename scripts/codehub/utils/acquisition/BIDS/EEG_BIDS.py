@@ -76,6 +76,10 @@ if __name__ == '__main__':
     bids_group.add_argument("--run", type=str, help="Run string to use when not referencing a input_csv file. Only used for single data pulls.")
     bids_group.add_argument("--task", type=str, default='rest', help="Task string to use when not referencing a input_csv file value. Used to populate all entries if not explicitly set.")
 
+    multithread_group = parser.add_argument_group('Multithreading Options')
+    multithread_group.add_argument("--multithread", action='store_true', default=False, help="Multithreaded download.")
+    multithread_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
+
     misc_group = parser.add_argument_group('Misc options')
     misc_group.add_argument("--example_input", action='store_true', default=False, help="Show example input file structure.")
     misc_group.add_argument("--backend", type=str, default='MNE', help="Backend data handler.")

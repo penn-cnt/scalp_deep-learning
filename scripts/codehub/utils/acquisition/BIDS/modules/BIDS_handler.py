@@ -96,8 +96,14 @@ class BIDS_handler:
     def save_data_w_events(self, raw, debug=False):
 
         # Save the bids data
-        write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=self.events,event_id=self.event_mapping, allow_preload=True, format='EDF',verbose=False)
-
+        try:
+            write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=self.events,event_id=self.event_mapping, allow_preload=True, format='EDF', overwrite=True, verbose=False)
+            return True
+        except Exception as e:
+            if debug:
+                print(f"Write error: {e}")
+            return False
+        
     def save_data_wo_events(self, raw, debug=False):
 
         # Save the bids data
