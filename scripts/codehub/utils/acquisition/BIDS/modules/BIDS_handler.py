@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 from mne_bids import BIDSPath,write_raw_bids
 
@@ -72,6 +73,8 @@ class BIDS_handler:
                                   subject=keywords['subject'],
                                   run=keywords['run'], 
                                   task=keywords['task'])
+        
+        self.target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
 
     def create_events(self,ifile,run,fs,annotations):
 
@@ -93,7 +96,23 @@ class BIDS_handler:
             self.alldesc.append(desc)
         self.events  = np.array(events)
 
+    def save_targets(self,target):
+
+        # Store the targets
+        target_dict = {'target':target,'annotation':'||'.join(self.alldesc)}
+        pickle.dump(target_dict,open(self.target_path,"wb"))
+
     def save_data_w_events(self, raw, debug=False):
+        """
+        Save EDF data into a BIDS structure. With events.
+
+        Args:
+            raw (_type_): MNE Raw objext.
+            debug (bool, optional): Debug flag. Acts for verbosity.
+
+        Returns:
+            _type_: _description_
+        """
 
         # Save the bids data
         try:
@@ -105,6 +124,16 @@ class BIDS_handler:
             return False
         
     def save_data_wo_events(self, raw, debug=False):
+        """
+        Save EDF data into a BIDS structure.
+
+        Args:
+            raw (_type_): MNE Raw objext.
+            debug (bool, optional): Debug flag. Acts for verbosity.
+
+        Returns:
+            _type_: _description_
+        """
 
         # Save the bids data
         try:
