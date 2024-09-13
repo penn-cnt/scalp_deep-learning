@@ -16,5 +16,8 @@ python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root /Users
 # Download with inputs, annotations
 python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_annot.csv --annotations
 
+# Download with inputs, annotations, using multithreading
+python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_annot.csv --annotations --multithread --ncpu 2
+
 # Download with inputs, specific times, setting annotation layer to test exception handling
 python utils/acquisition/BIDS/EEG_BIDS.py --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_times.csv --annotations
