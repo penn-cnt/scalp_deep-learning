@@ -37,7 +37,12 @@ Placeholder for usage examples.
 Contributions are welcome! If you have suggestions or find bugs, feel free to open an issue or submit a pull request. We provide information for how to proceed with two of the most common contribiutions below:
 
 ### Epipy 
-If adding new functionality to the lab pipeline, code should be added to the components folder. More information about the different workflow blocks can be found in the components folder, but each block should contain an internal and public component. Internal components are specific actions epipy takes to facilitate the workflow. These should not be changed lightly.
+If adding new functionality to the lab pipeline, code should be added to the **components** folder. More information about the different workflow blocks can be found in the components folder, but each block should contain an internal and public component. Internal components are specific actions epipy takes to facilitate the workflow. These should not be changed lightly.
 
 Public components are where lab code can be saved for everyone to use and for epipy to access. It is formatted to allow for easy importing into interactive shells or python notebooks. New code can be inserted with relative ease as a new python method/function. For more information on how to add code to these libraries, please refer to [our examples folder](https://github.com/penn-cnt/CNT-codehub/tree/main/examples).
 
+### Utility Scripts
+The utility scripts are not built into the epipy framework, and do not require specific formatting. To add a utility script, simply identify or create a new folder that generally defines the task being done (data acquisition/data validation/etc.) and add your code to the existing folder for that task type, or create a new folder defining the task and add it there.
+
+### Pull Requests
+Submit a pull request to share your changes with the lab as a whole. The data team will review the request before merging it, or sending it back to you for more clarity or bug fixes.
