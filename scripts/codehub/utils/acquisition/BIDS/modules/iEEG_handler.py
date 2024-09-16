@@ -123,7 +123,15 @@ class ieeg_handler(Subject):
         for process in processes:
             process.join()
 
-    def multipull(self,multiind,semaphore):
+    def multipull(self,multiind,semaphore,writeout_freq=10):
+        """
+        Handles a multithread data pull.
+
+        Args:
+            multiind (_type_): _description_
+            semaphore (_type_): _description_
+            writeout_freq (int, optional): How many ieeg calls to make before saving out to disk. Defaults to 10.
+        """
 
         # Make a unique id for this core
         self.unique_id = uuid.uuid4()
@@ -131,21 +139,28 @@ class ieeg_handler(Subject):
         # Attach observers
         self.attach_objects()
 
-        # Determine what files to download and to where
-        self.get_inputs(multiflag=True,multiinds=multiind)
+        # Loop over the writeout frequency
+        niter = np.ceil(multiind.size/writeout_freq).astype('int')
+        for iwrite in range(niter):
+            
+            # Get the current indice slice
+            index_slice = multiind[iwrite*writeout_freq:(iwrite+1)*writeout_freq]
 
-        # Begin downloading the data
-        self.download_data_manager()
+            # Determine what files to download and to where
+            self.get_inputs(multiflag=True,multiinds=index_slice)
 
-        # Save the data
-        self.save_data()
+            # Begin downloading the data
+            self.download_data_manager()
 
-        with semaphore:
-            self.get_data_record()
-            self.new_data_record = PD.concat((self.data_record,self.new_data_record))
-            self.new_data_record = self.new_data_record.drop_duplicates()
-            self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
-            self.new_data_record.to_csv(self.data_record_path,index=False)
+            # Save the data
+            self.save_data()
+
+            with semaphore:
+                self.get_data_record()
+                self.new_data_record = PD.concat((self.data_record,self.new_data_record))
+                self.new_data_record = self.new_data_record.drop_duplicates()
+                self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
+                self.new_data_record.to_csv(self.data_record_path,index=False)
 
     ##############################
     ####### iEEG functions #######
@@ -307,7 +322,9 @@ class ieeg_handler(Subject):
             self.annotation_ses   = []
             self.run_list         = []
             self.annotation_flats = []
-            self.annotations      = {}
+        
+        # Make the annotation object 
+        self.annotations = {}
             
     def annotation_cleanup(self,ifile,iuid,isub,ises,itarget):
         """
@@ -358,6 +375,28 @@ class ieeg_handler(Subject):
         self.durations.extend(clip_durations)
         self.run_list.extend(np.arange(len(clip_start_times)))
         self.annotation_flats.extend(annotation_flats)
+
+    def annotation_cleanup_set_time(self,idx):
+        
+        # Get just the current annotation block from ieeg
+        self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],True)
+        
+        # Make the annotation object
+        self.annotations[self.ieeg_files[idx]] = {}
+        self.annotations[self.ieeg_files[idx]][self.run_list[idx]] = {}
+
+        for annot in self.raw_annotations:
+
+            # get the information out of the annotation layer
+            time = annot.start_time_offset_usec
+            desc = annot.description
+
+            # figure out its time relative to the download start
+            event_time_shift = (time-self.start_times[idx])
+
+            # Store the results
+            self.annotations[self.ieeg_files[idx]][self.run_list[idx]][event_time_shift] = desc
+
 
     def ieegfile_to_keys(self):
         """
@@ -421,7 +460,10 @@ class ieeg_handler(Subject):
             else:
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
                 if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
-                    
+
+                    # Get the annotations for just this download                    
+                    self.annotation_cleanup_set_time(idx)
+
                     # Download the data
                     self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
                     
