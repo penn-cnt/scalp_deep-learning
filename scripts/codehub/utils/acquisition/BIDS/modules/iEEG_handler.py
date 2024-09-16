@@ -561,7 +561,7 @@ class ieeg_handler(Subject):
                     self.ieeg_session(ieegfile,start,duration,annotation_flag)
                     self.success_flag = True
                     break
-                except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
+                except ValueError: #(IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
                     if n_attempts<n_retry:
                         sleep(5)
                         n_attempts += 1
