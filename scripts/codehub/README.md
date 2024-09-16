@@ -10,8 +10,8 @@ This file lists all allowed options and provides help strings for inputs to the 
 ### `code_diagram.py`
 A utility script that generates a diagram of all the code in the codehub repository. It also prints documentation for each component, making it easier to visualize and understand the overall structure.
 
-### `pipeline_manager.py`
-The main script of the repository. It kicks off the workflows and is the front-end of EPIPY/codehub.
+### `epipy.py`
+The main script of the repository. It kicks off the workflows and is the front-end for lab workflows.
 
 ## Folders
 
@@ -34,4 +34,10 @@ Placeholder for usage examples.
 
 ## Contributing
 
-Placeholder for contributing guidelines.
+Contributions are welcome! If you have suggestions or find bugs, feel free to open an issue or submit a pull request. We provide information for how to proceed with two of the most common contribiutions below:
+
+### Epipy 
+If adding new functionality to the lab pipeline, code should be added to the components folder. More information about the different workflow blocks can be found in the components folder, but each block should contain an internal and public component. Internal components are specific actions epipy takes to facilitate the workflow. These should not be changed lightly.
+
+Public components are where lab code can be saved for everyone to use and for epipy to access. It is formatted to allow for easy importing into interactive shells or python notebooks. New code can be inserted with relative ease as a new python method/function. For more information on how to add code to these libraries, please refer to (our examples folder)[https://github.com/penn-cnt/CNT-codehub/tree/main/examples].
+
