@@ -461,9 +461,10 @@ class ieeg_handler(Subject):
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
                 if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
 
-                    # Get the annotations for just this download                    
-                    self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],True)
-                    self.annotation_cleanup_set_time(idx)
+                    # Get the annotations for just this download if requested
+                    if not self.args.no_annotations:
+                        self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],True)
+                        self.annotation_cleanup_set_time(idx)
 
                     # Download the data
                     self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
@@ -520,7 +521,7 @@ class ieeg_handler(Subject):
                 self.notify_metadata_observers()
 
                 # Save the data
-                if self.args.annotations:
+                if not self.args.no_annotations:
                     success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
                 else:
                     success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)

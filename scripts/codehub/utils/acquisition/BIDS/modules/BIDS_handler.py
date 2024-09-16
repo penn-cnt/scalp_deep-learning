@@ -49,9 +49,10 @@ class BIDS_observer(Observer):
             # Update the bids path
             self.BH.update_path(self.BIDS_keywords)
 
-            # Update the events
-            self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
-                                  self.keywords['fs'],self.annotations)
+            if not self.args.no_annotations:
+                # Update the events
+                self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
+                                    self.keywords['fs'],self.annotations)
         else:
             print(f"Unable to create BIDS keywords for file: {self.keywords['filename']}")
         
