@@ -529,7 +529,10 @@ class ieeg_handler(Subject):
                 # If the data wrote out correctly, update the data record
                 if success_flag:
                     # Save the target info
-                    self.BH.save_targets(self.target_list[idx])
+                    try:
+                        self.BH.save_targets(self.target_list[idx])
+                    except:
+                        pass
 
                     # Make the proposed data record row
                     self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
