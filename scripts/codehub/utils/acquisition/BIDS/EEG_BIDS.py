@@ -4,8 +4,9 @@ import pandas as PD
 from sys import exit
 
 # Locale import
-from modules.iEEG_handler import ieeg_handler
 from modules.BIDS_handler import *
+from modules.edf_handler import edf_handler
+from modules.iEEG_handler import ieeg_handler
 
 # MNE is very chatty. Turn off some warnings.
 import warnings
@@ -48,10 +49,18 @@ def ieeg(args):
     IH = ieeg_handler(args)
     IH.workflow()
 
+def raw_edf(args):
+    EH = edf_handler(args)
+    EH.workflow()
+
 if __name__ == '__main__':
 
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="Make an EEG BIDS dataset from various sources. Also manages helper scripts for the CNT.")
+
+    source_group = parser.add_mutually_exclusive_group()
+    source_group.add_argument("--ieeg", action='store_true', default=False, help="iEEG data pull.")
+    source_group.add_argument("--edf", action='store_true', default=False, help="Raw edf data pull.")
 
     data_group = parser.add_argument_group('Data configuration options')
     data_group.add_argument("--bids_root", type=str, required=True, default=None, help="Output directory to store BIDS data.")
