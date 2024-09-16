@@ -2,7 +2,6 @@ import os
 import argparse
 import pandas as PD
 from sys import exit
-from prettytable import PrettyTable, ALL
 
 # Locale import
 from modules.iEEG_handler import ieeg_handler
