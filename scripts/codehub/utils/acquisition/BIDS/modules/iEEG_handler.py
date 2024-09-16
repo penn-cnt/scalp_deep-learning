@@ -462,6 +462,7 @@ class ieeg_handler(Subject):
                 if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
 
                     # Get the annotations for just this download                    
+                    self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],True)
                     self.annotation_cleanup_set_time(idx)
 
                     # Download the data
