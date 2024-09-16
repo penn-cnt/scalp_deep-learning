@@ -49,7 +49,7 @@ class BIDS_observer(Observer):
             # Update the bids path
             self.BH.update_path(self.BIDS_keywords)
 
-            if not self.args.no_annotations:
+            if self.args.include_annotation or self.args.annotations:
                 # Update the events
                 self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
                                     self.keywords['fs'],self.annotations)

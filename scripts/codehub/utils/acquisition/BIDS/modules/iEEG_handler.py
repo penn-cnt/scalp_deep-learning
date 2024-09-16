@@ -382,7 +382,8 @@ class ieeg_handler(Subject):
         self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],True)
         
         # Make the annotation object
-        self.annotations[self.ieeg_files[idx]] = {}
+        if self.ieeg_files[idx] not in self.annotations.keys():
+            self.annotations[self.ieeg_files[idx]] = {}
         self.annotations[self.ieeg_files[idx]][self.run_list[idx]] = {}
 
         for annot in self.raw_annotations:
@@ -462,8 +463,7 @@ class ieeg_handler(Subject):
                 if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
 
                     # Get the annotations for just this download if requested
-                    if not self.args.no_annotations:
-                        self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],True)
+                    if self.args.include_annotation:
                         self.annotation_cleanup_set_time(idx)
 
                     # Download the data
@@ -521,7 +521,7 @@ class ieeg_handler(Subject):
                 self.notify_metadata_observers()
 
                 # Save the data
-                if not self.args.no_annotations:
+                if self.args.include_annotation or self.args.annotations:
                     success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
                 else:
                     success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
