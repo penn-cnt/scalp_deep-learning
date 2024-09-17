@@ -38,5 +38,8 @@ EEG_BIDS uses a number of specific packages, and it can be time consuming to bui
 For a few example use cases, see [here](https://github.com/penn-cnt/CNT-codehub/blob/main/scripts/codehub/utils/acquisition/BIDS/samples/sample_cmds.txt)
 
 ## Contributing
+(In Progress)
 
-Placeholder for contributing guidelines.
+If adding support for new data inputs, you can make a new object in components.public that reads in your raw data and generates the proper bids keywords. 
+
+Once you have read in your data and generated keywords, you just need to alert the observers to generate the actual backend data. You can do this by
