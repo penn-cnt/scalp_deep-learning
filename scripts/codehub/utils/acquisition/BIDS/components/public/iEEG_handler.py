@@ -12,10 +12,10 @@ from ieeg.auth import Session
 from requests.exceptions import ReadTimeout as RTIMEOUT
 
 # Local import
-from modules.BIDS_handler import *
-from modules.observer_handler import *
-from modules.exception_handler import *
-from utils.acquisition.BIDS.modules.data_backends import *
+from components.internal.BIDS_handler import *
+from components.internal.observer_handler import *
+from components.internal.exception_handler import *
+from components.internal.data_backends import *
 
 class ieeg_handler(Subject):
 

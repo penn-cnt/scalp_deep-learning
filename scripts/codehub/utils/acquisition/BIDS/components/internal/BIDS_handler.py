@@ -3,7 +3,7 @@ import numpy as np
 from mne_bids import BIDSPath,write_raw_bids
 
 # Local Imports
-from modules.observer_handler import *
+from components.internal.observer_handler import *
 
 class BIDS_observer(Observer):
 

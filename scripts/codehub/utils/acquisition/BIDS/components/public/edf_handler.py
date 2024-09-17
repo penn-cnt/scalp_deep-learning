@@ -4,17 +4,17 @@ import getpass
 from mne.io import read_raw_edf
 
 # Local import
-from modules.BIDS_handler import *
-from modules.observer_handler import *
-from modules.exception_handler import *
-from utils.acquisition.BIDS.modules.data_backends import *
+from components.internal.BIDS_handler import *
+from components.internal.observer_handler import *
+from components.internal.exception_handler import *
+from components.internal.data_backends import *
 
 class edf_handler(Subject):
 
     def __init__(self,args):
 
         # Save the input objects
-        self.args = args
+        self.args = self.input_exceptions(args)
 
         # Create the object pointers
         self.BH      = BIDS_handler()
@@ -71,6 +71,9 @@ class edf_handler(Subject):
         Create the input objects that track what files and times to download, and any relevant keywords for the BIDS process.
         For single core pulls, has more flexibility to set parameters. For multicore, we restrict it to a pre-built input_args.
         """
+
+        # Make sure we have some required inputs
+
 
         # Check for an input csv to manually set entries
         if self.args.input_csv != None:
@@ -149,6 +152,20 @@ class edf_handler(Subject):
             if self.args.target != None:
                 self.target_list = [self.args.target]
 
+    def get_data_record(self):
+        """
+        Get the data record. This is typically 'subject_map.csv' and is used to locate data and prevent duplicate downloads.
+        """
+        
+        # Get the proposed data record
+        self.data_record_path = self.args.bids_root+self.args.data_record
+
+        # Check if the file exists
+        if os.path.exists(self.data_record_path):
+            self.data_record = PD.read_csv(self.data_record_path)
+        else:
+            self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
+
     def load_data_manager(self):
         """
         Loop over the ieeg file list and download data. If annotations, does a first pass to get annotation layers and times, then downloads.
@@ -171,10 +188,14 @@ class edf_handler(Subject):
                 self.data_list.append(None)
 
     def load_data(self,infile):
-        raw           = read_raw_edf(infile,verbose=False)
-        self.data     = raw.get_data().T
-        self.channels = raw.ch_names
-        self.fs       = raw.info.get('sfreq')
+        try:
+            raw               = read_raw_edf(infile,verbose=False)
+            self.data         = raw.get_data().T
+            self.channels     = raw.ch_names
+            self.fs           = raw.info.get('sfreq')
+            self.success_flag = True
+        except:
+            self.success_flag = False
 
     def save_data(self):
         """
@@ -193,6 +214,7 @@ class edf_handler(Subject):
                 self.notify_metadata_observers()
 
                 # Save the data without events until a future release
+                print(f"Converting {self.edf_files[idx]} to BIDS...")
                 success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
@@ -204,7 +226,7 @@ class edf_handler(Subject):
                         pass
 
                     # Make the proposed data record row
-                    self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
+                    self.current_record = PD.DataFrame([self.edf_files[idx]],columns=['orig_filename'])
                     self.current_record['source']         = 'edf_file'
                     self.current_record['creator']        = getpass.getuser()
                     self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
@@ -212,8 +234,39 @@ class edf_handler(Subject):
                     self.current_record['subject_number'] = self.subject_list[idx]
                     self.current_record['session_number'] = self.session_list[idx]
                     self.current_record['run_number']     = self.run_list[idx]
-                    self.current_record['start_sec']      = 1e-6*self.start_times[idx]
-                    self.current_record['duration_sec']   = 1e-6*self.durations[idx]
+                    try:
+                        self.current_record['start_sec']      = 1e-6*self.start_times[idx]
+                        self.current_record['duration_sec']   = 1e-6*self.durations[idx]
+                    except TypeError:
+                        self.current_record['start_sec']      = None
+                        self.current_record['duration_sec']   = None
 
                     # Add the datarow to the records
                     self.new_data_record = PD.concat((self.new_data_record,self.current_record))
+
+    ###############################
+    ###### Custom exceptions ######
+    ###############################
+
+    def input_exceptions(self,args):
+
+        # Input csv exceptions
+        if args.input_csv:
+            input_cols = PD.read_csv(args.input_csv, index_col=0, nrows=0).columns.tolist()
+            if 'subject_number' not in input_cols:
+                raise Exception("Please provide a --subject_number to the input csv.")
+            if 'session_number' not in input_cols:
+                raise Exception("Please provide a --session_number to the input csv.")
+            if 'run_number' not in input_cols:
+                raise Exception("Please provide a --run_number to the input csv.")
+            if 'uid_number' not in input_cols:
+                raise Exception("Please provide a --uid_number to the input csv.")
+        else:
+            if args.subject_number == None:
+                raise Exception("Please provide a --subject_number input to the command line.")
+            if args.uid_number == None:
+                raise Exception("Please provide a --uid_number input to the command line.")
+        if args.session == None: args.session=1
+        if args.run == None: args.run=1
+
+        return args

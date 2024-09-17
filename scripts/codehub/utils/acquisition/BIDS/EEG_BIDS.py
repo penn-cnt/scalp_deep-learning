@@ -2,11 +2,12 @@ import os
 import argparse
 import pandas as PD
 from sys import exit
+from prettytable import PrettyTable,ALL
 
 # Locale import
-from modules.BIDS_handler import *
-from modules.edf_handler import edf_handler
-from modules.iEEG_handler import ieeg_handler
+from components.internal.BIDS_handler import *
+from components.public.edf_handler import edf_handler
+from components.public.iEEG_handler import ieeg_handler
 
 # MNE is very chatty. Turn off some warnings.
 import warnings
@@ -106,4 +107,9 @@ if __name__ == '__main__':
     if args.bids_root[-1] != '/': args.bids_root+='/'
 
     # Main Logic
-    ieeg(args)
+    if args.ieeg:
+        ieeg(args)
+    elif args.edf:
+        raw_edf(args)
+    else:
+        print("Please select at least one source from the source group. (--help for all options.)")

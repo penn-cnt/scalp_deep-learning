@@ -5,7 +5,7 @@ import pandas as PD
 from mne.io.constants import FIFF
 
 # Local Imports
-from modules.observer_handler import *
+from components.internal.observer_handler import *
 
 def return_backend(user_request='MNE'):
     if user_request == 'MNE':
