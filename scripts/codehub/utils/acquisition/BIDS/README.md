@@ -31,7 +31,7 @@ Includes sample CLI calls and input files to help you get started using the pack
 
 ## Installation
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum. Sed ac felis nec odio convallis aliquet.
+EEG_BIDS uses a number of specific packages, and it can be time consuming to build an environment just for the purposes of this script. We recommend starting with the directions for installing the cnt-codehub python environment found [here](https://github.com/penn-cnt/CNT-codehub/blob/main/README.md). You can then modify the cnt_codehub.yaml file as needed to match your needs.
 
 ## Usage Examples
 
