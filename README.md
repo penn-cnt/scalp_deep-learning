@@ -43,6 +43,8 @@ You will likely need to add this package to your python path to ensure full func
 
 > conda develop <path-to-git-head>/scripts/codehub/
 
+For a virtual environment, an easy way to add `<path-to-git-head>/scripts/codehub/` to your path would be to add a text file with a .pth extention (any filename is fine) to the site-packages subfolder in your virtual environment folder. Within the text file you can just copy and paste the absolute path as the only contents.
+
 ## Installation using venv
 
 To be added soon.
