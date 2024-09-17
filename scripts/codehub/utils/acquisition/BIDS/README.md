@@ -24,7 +24,7 @@ python EEG_BIDS.py --help
 ## Folders
 
 ### `modules`
-This folder contains the backend code that powers EEG Bids, providing functionality to convert and handle timeseries data.
+This folder contains the backend code that makes up EEG BIDS, providing functionality to convert and handle timeseries data.
 
 ### `samples`
 Includes sample CLI calls and input files to help you get started using the package.
