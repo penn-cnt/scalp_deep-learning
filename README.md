@@ -39,6 +39,8 @@ The environment is then activated by running:
 
 More information about creating conda environments can be found [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
+## Adding the codehub to your python paths
+
 You will likely need to add this package to your python path to ensure full functionality of utility scripts and the main pipeline. To do so using anaconda, you can run:
 
 > conda develop <path-to-git-head>/scripts/codehub/
