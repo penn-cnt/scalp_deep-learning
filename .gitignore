@@ -1,5 +1,6 @@
 # Specific files and folders to ignore
 /user_data/**
+/scripts/codehub/utils/private/**
 /core_libraries/build/**
 **.DS_Store**
 scripts/codehub/utils/etc/*
@@ -18,3 +19,4 @@ scripts/codehub/utils/etc/*
 
 # Exceptions
 !/user_data/README.md
+!/scripts/codehub/utils/private/README.md
