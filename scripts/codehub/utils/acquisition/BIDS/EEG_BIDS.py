@@ -8,6 +8,7 @@ from prettytable import PrettyTable,ALL
 from components.internal.BIDS_handler import *
 from components.public.edf_handler import edf_handler
 from components.public.iEEG_handler import ieeg_handler
+from components.public.jar_handler import jar_handler
 
 # MNE is very chatty. Turn off some warnings.
 import warnings
@@ -54,6 +55,10 @@ def raw_edf(args):
     EH = edf_handler(args)
     EH.workflow()
 
+def read_jar(args):
+    JH = jar_handler(args)
+    JH.workflow()
+
 if __name__ == '__main__':
 
     # Command line options needed to obtain data.
@@ -62,6 +67,7 @@ if __name__ == '__main__':
     source_group = parser.add_mutually_exclusive_group()
     source_group.add_argument("--ieeg", action='store_true', default=False, help="iEEG data pull.")
     source_group.add_argument("--edf", action='store_true', default=False, help="Raw edf data pull.")
+    source_group.add_argument("--jar", action='store_true', default=False, help="Convert jar file to EDF Bids.")
 
     data_group = parser.add_argument_group('Data configuration options')
     data_group.add_argument("--bids_root", type=str, required=True, default=None, help="Output directory to store BIDS data.")
@@ -111,5 +117,7 @@ if __name__ == '__main__':
         ieeg(args)
     elif args.edf:
         raw_edf(args)
+    elif args.jar:
+        read_jar(args)
     else:
         print("Please select at least one source from the source group. (--help for all options.)")
