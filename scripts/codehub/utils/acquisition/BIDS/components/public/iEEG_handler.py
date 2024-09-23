@@ -201,36 +201,6 @@ class ieeg_handler(Subject):
         else:
             self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
-    def check_data_record(self,checkfile,checkstart,checkduration):
-        """
-        Check the data record for data that matched the current query.
-
-        Args:
-            checkfile (_type_): Current ieeg.org filename.
-            checkstart (_type_): Current iEEG.org start time.
-            checkduration (_type_): Current iEEG.org duration.
-
-        Returns:
-            bool: True if no data found in record. False is found.
-        """
-
-        # Update file mask as needed
-        if checkfile != self.record_checkfile:
-            self.record_checkfile = checkfile
-            self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
-        if checkstart != self.record_start:
-            self.record_start      = checkstart
-            self.record_start_mask = (self.data_record['start_sec'].values==checkstart)
-        if checkduration != self.record_duration:
-            self.record_duration      = checkduration
-            self.record_duration_mask = (self.data_record['duration_sec'].values==checkduration)
-
-        # Get the combined mask
-        mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
-
-        # Check for any existing records
-        return not(any(mask))
-
     def get_inputs(self, multiflag=False, multiinds=None):
         """
         Create the input objects that track what files and times to download, and any relevant keywords for the BIDS process.
@@ -446,10 +416,8 @@ class ieeg_handler(Subject):
         Loop over the ieeg file list and download data. If annotations, does a first pass to get annotation layers and times, then downloads.
         """
 
-        # Set the reference variables we can use to avoid frequent checks of the data record
-        self.record_checkfile = ''
-        self.record_start     = -1
-        self.record_duration  = -1
+        # Load the data exists exception handler so we can avoid already downloaded data.
+        DE = DataExists(self.data_record)
 
         # Loop over the requested data
         for idx in range(len(self.ieeg_files)):
@@ -460,7 +428,7 @@ class ieeg_handler(Subject):
                 self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx],self.target_list[idx])
             else:
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
-                if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
+                if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
 
                     # Get the annotations for just this download if requested
                     if self.args.include_annotation:
@@ -490,7 +458,7 @@ class ieeg_handler(Subject):
             for idx in range(len(self.ieeg_files)):
 
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
-                if self.check_data_record(self.ieeg_files[idx],self.start_times[idx],self.durations[idx]):
+                if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
 
                     # Download the data
                     self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
@@ -514,10 +482,15 @@ class ieeg_handler(Subject):
         for idx,iraw in enumerate(self.data_list):
             if iraw != None:
 
+                # Define start time and duration. Can differ for different filetypes
+                # iEEG.org uses microseconds. So we convert here to seconds for output.
+                istart    = 1e-6*self.start_times[idx]
+                iduration = 1e-6*self.durations[idx]
+
                 # Update keywords
                 self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
                                  'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
-                                 'task':'rest','fs':iraw.info["sfreq"]}
+                                 'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
                 self.notify_metadata_observers()
 
                 # Save the data
@@ -534,19 +507,8 @@ class ieeg_handler(Subject):
                     except:
                         pass
 
-                    # Make the proposed data record row
-                    self.current_record = PD.DataFrame([self.ieeg_files[idx]],columns=['orig_filename'])
-                    self.current_record['source']         = 'ieeg.org'
-                    self.current_record['creator']        = getpass.getuser()
-                    self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
-                    self.current_record['uid']            = self.uid_list[idx]
-                    self.current_record['subject_number'] = self.subject_list[idx]
-                    self.current_record['session_number'] = self.session_list[idx]
-                    self.current_record['run_number']     = self.run_list[idx]
-                    self.current_record['start_sec']      = 1e-6*self.start_times[idx]
-                    self.current_record['duration_sec']   = 1e-6*self.durations[idx]
-
                     # Add the datarow to the records
+                    self.current_record  = self.BH.make_records('ieeg.org')
                     self.new_data_record = PD.concat((self.new_data_record,self.current_record))
 
     ###############################################

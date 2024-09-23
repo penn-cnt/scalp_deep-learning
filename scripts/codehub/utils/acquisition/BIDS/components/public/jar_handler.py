@@ -1,7 +1,6 @@
 import os 
 import time
 import getpass
-from mne.io import read_raw_edf
 
 # Local import
 from components.internal.BIDS_handler import *
@@ -9,12 +8,12 @@ from components.internal.observer_handler import *
 from components.internal.exception_handler import *
 from components.internal.data_backends import *
 
-class edf_handler(Subject):
+class jar_handler(Subject):
 
     def __init__(self,args):
 
         # Save the input objects
-        self.args = self.input_exceptions(args)
+        self.args = args
 
         # Create the object pointers
         self.BH      = BIDS_handler()
@@ -32,15 +31,15 @@ class edf_handler(Subject):
         """
         Run a workflow that downloads data from iEEG.org, creates the correct objects in memory, and saves it to BIDS format.
         """
-        
+
         # Attach observers
         self.attach_objects()
 
-        # Determine how to save the data
+        # Determine what files to download and to where
         self.get_inputs()
 
         # Begin downloading the data
-        self.load_data_manager()
+        self.convert_data_manager()
 
         # Save the data
         self.save_data()
@@ -66,14 +65,25 @@ class edf_handler(Subject):
         self.add_meta_observer(BIDS_observer)
         self.add_data_observer(backend_observer)
 
+    def get_data_record(self):
+        """
+        Get the data record. This is typically 'subject_map.csv' and is used to locate data and prevent duplicate downloads.
+        """
+        
+        # Get the proposed data record
+        self.data_record_path = self.args.bids_root+self.args.data_record
+
+        # Check if the file exists
+        if os.path.exists(self.data_record_path):
+            self.data_record = PD.read_csv(self.data_record_path)
+        else:
+            self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
+
     def get_inputs(self, multiflag=False, multiinds=None):
         """
         Create the input objects that track what files and times to download, and any relevant keywords for the BIDS process.
         For single core pulls, has more flexibility to set parameters. For multicore, we restrict it to a pre-built input_args.
         """
-
-        # Make sure we have some required inputs
-
 
         # Check for an input csv to manually set entries
         if self.args.input_csv != None:
@@ -82,7 +92,7 @@ class edf_handler(Subject):
             input_args = PD.read_csv(self.args.input_csv)
 
             # Pull out the relevant data pointers for required columns.
-            self.edf_files = list(input_args['orig_filename'].values)
+            self.jar_files = list(input_args['orig_filename'].values)
 
             # Get the unique identifier if provided
             if 'start' in input_args.columns:
@@ -129,7 +139,7 @@ class edf_handler(Subject):
                 self.target_list = list(input_args['target'].values)
         else:
             # Get the required information if we don't have an input csv
-            self.edf_files   = [self.args.dataset]
+            self.jar_files   = [self.args.dataset]
             self.start_times = [self.args.start]
             self.durations   = [self.args.duration]
 
@@ -152,41 +162,16 @@ class edf_handler(Subject):
             if self.args.target != None:
                 self.target_list = [self.args.target]
 
-    def get_data_record(self):
-        """
-        Get the data record. This is typically 'subject_map.csv' and is used to locate data and prevent duplicate downloads.
-        """
-        
-        # Get the proposed data record
-        self.data_record_path = self.args.bids_root+self.args.data_record
-
-        # Check if the file exists
-        if os.path.exists(self.data_record_path):
-            self.data_record = PD.read_csv(self.data_record_path)
-        else:
-            self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
-
-    def load_data_manager(self):
-        """
-        Loop over the ieeg file list and download data. If annotations, does a first pass to get annotation layers and times, then downloads.
-        """
+    def convert_data_manager(self):
 
         # Load the data exists exception handler so we can avoid already downloaded data.
         DE = DataExists(self.data_record)
 
         # Loop over the requested data
-        for idx in range(len(self.edf_files)):
+        for idx in range(len(self.jar_files)):
 
-            # Check if we have a specific set of times for this file
-            try:
-                istart    = self.start_times[idx]
-                iduration = self.durations[idx]
-            except TypeError:
-                istart    = None
-                iduration = None
-
-            if DE.check_default_records(self.edf_files[idx],istart,iduration):
-                self.load_data(self.edf_files[idx])
+            if DE.check_default_records(self.jar_files[idx]):
+                self.read_jar_data(self.jar_files[idx])
                         
                 # If successful, notify data observer. Else, add a skip
                 if self.success_flag:
@@ -194,15 +179,16 @@ class edf_handler(Subject):
                 else:
                     self.data_list.append(None)
             else:
-                print(f"Skipping {self.edf_files[idx]}.")
+                print(f"Skipping {self.jar_files[idx]}.")
                 self.data_list.append(None)
 
-    def load_data(self,infile):
+    def read_jar_data(self):
+
         try:
-            raw               = read_raw_edf(infile,verbose=False)
-            self.data         = raw.get_data().T
-            self.channels     = raw.ch_names
-            self.fs           = raw.info.get('sfreq')
+            ### Placeholder logic for reading in jar file
+            #self.data     = jar_logic(....)['data']
+            #self.channels = jar_logic(....)['channels']
+            #self.fs       = jar_logic(....)['fs']
             self.success_flag = True
         except:
             self.success_flag = False
@@ -218,7 +204,7 @@ class edf_handler(Subject):
             if iraw != None:
 
                 # Define start time and duration. Can differ for different filetypes
-                # May not exist for a raw edf transfer, so add a None outcome.
+                # May not exist for a raw file transfer, so add a None outcome.
                 try:
                     istart    = self.start_times[idx]
                     iduration = self.durations[idx]
@@ -227,13 +213,13 @@ class edf_handler(Subject):
                     iduration = None
 
                 # Update keywords
-                self.keywords = {'filename':self.edf_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
+                self.keywords = {'filename':self.jar_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
                                  'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
                                  'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
                 self.notify_metadata_observers()
 
                 # Save the data without events until a future release
-                print(f"Converting {self.edf_files[idx]} to BIDS...")
+                print(f"Converting {self.jar_files[idx]} to BIDS...")
                 success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
@@ -243,34 +229,7 @@ class edf_handler(Subject):
                         self.BH.save_targets(self.target_list[idx])
                     except:
                         pass
-                    
+
                     # Add the datarow to the records
-                    self.current_record  = self.BH.make_records('edf_file')
+                    self.current_record  = self.BH.make_records('jar_file')
                     self.new_data_record = PD.concat((self.new_data_record,self.current_record))
-
-    ###############################
-    ###### Custom exceptions ######
-    ###############################
-
-    def input_exceptions(self,args):
-
-        # Input csv exceptions
-        if args.input_csv:
-            input_cols = PD.read_csv(args.input_csv, index_col=0, nrows=0).columns.tolist()
-            if 'subject_number' not in input_cols:
-                raise Exception("Please provide a --subject_number to the input csv.")
-            if 'session_number' not in input_cols:
-                raise Exception("Please provide a --session_number to the input csv.")
-            if 'run_number' not in input_cols:
-                raise Exception("Please provide a --run_number to the input csv.")
-            if 'uid_number' not in input_cols:
-                raise Exception("Please provide a --uid_number to the input csv.")
-        else:
-            if args.subject_number == None:
-                raise Exception("Please provide a --subject_number input to the command line.")
-            if args.uid_number == None:
-                raise Exception("Please provide a --uid_number input to the command line.")
-        if args.session == None: args.session=1
-        if args.run == None: args.run=1
-
-        return args

@@ -1,5 +1,8 @@
+import time
+import getpass
 import pickle
 import numpy as np
+import pandas as PD
 from mne_bids import BIDSPath,write_raw_bids
 
 # Local Imports
@@ -9,7 +12,7 @@ class BIDS_observer(Observer):
 
     def listen_metadata(self):
 
-        def clean_value(value):
+        def clean_value(key,value):
             
             # Track the typing
             dtype = 'str'
@@ -18,7 +21,7 @@ class BIDS_observer(Observer):
             try:
                 newval = float(value)
                 dtype  = 'float'
-            except ValueError:
+            except:
                 newval = value
 
             # Try an integer conversion
@@ -32,16 +35,19 @@ class BIDS_observer(Observer):
                 newval = f"{newval:06.1f}"
             elif dtype == 'int':
                 newval = f"{newval:04d}"
-
+            else:
+                if key in ['start','duration']:
+                    if value == None:
+                        newval = "None"
             return newval
 
         # Define the required BIDS keywords
-        BIDS_keys = ['root','datatype','session','subject','run','task']
+        BIDS_keys = ['root','datatype','session','subject','run','task','filename','start','duration','uid']
 
         # Populate the bids dictionary with the new values
         for ikey,ivalue in self.keywords.items():
             if ikey in BIDS_keys:
-                self.BIDS_keywords[ikey]=clean_value(ivalue)
+                self.BIDS_keywords[ikey]=clean_value(ikey,ivalue)
 
         # If all keywords are set, send information to the BIDS handler.
         if all(self.BIDS_keywords.values()):
@@ -144,3 +150,17 @@ class BIDS_handler:
             if debug:
                 print(f"Write error: {e}")
             return False
+
+    def make_records(self,source):
+
+        self.current_record = PD.DataFrame([self.current_keywords['filename']],columns=['orig_filename'])
+        self.current_record['source']         = source
+        self.current_record['creator']        = getpass.getuser()
+        self.current_record['gendate']        = time.strftime('%d-%m-%y', time.localtime())
+        self.current_record['uid']            = self.current_keywords['uid']
+        self.current_record['subject_number'] = self.current_keywords['subject']
+        self.current_record['session_number'] = self.current_keywords['session']
+        self.current_record['run_number']     = self.current_keywords['run']
+        self.current_record['start_sec']      = self.current_keywords['start']
+        self.current_record['duration_sec']   = self.current_keywords['duration']
+        return self.current_record
