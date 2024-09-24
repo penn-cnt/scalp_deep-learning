@@ -15,6 +15,8 @@ In order to use this repository, you must have access to Python 3+. You must als
 
 # Installation
 
+## Using Conda
+
 An environment file with all the needed packages to run this suite of code can be found at the following location:
 
 > [CNT Codehub YAML](core_libraries/python/cnt_codehub/envs/cnt_codehub.yml)
@@ -39,17 +41,28 @@ The environment is then activated by running:
 
 More information about creating conda environments can be found [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
-## Adding the codehub to your python paths
+### Adding the codehub to your conda environment paths
 
 You will likely need to add this package to your python path to ensure full functionality of utility scripts and the main pipeline. To do so using anaconda, you can run:
 
 > conda develop <path-to-git-head>/scripts/codehub/
 
+## Using venv and pip
+
+A requirements.txt file with all the needed packages to run this suite of code can be found at the following location:
+
+> [CNT Codehub YAML](core_libraries/python/cnt_codehub/envs/requirements.txt)
+
+This file can be installed using the following call to conda from the envs subdirectory:
+
+> pip install -r requirements.txt
+
+which will install everything to your current virual environment. 
+
+**Note**: Torch is not included in the requirements.txt and may cause some dependencies issues. We recommend installing this package according to their web page [here](https://pytorch.org/get-started/locally/).
+
+### Adding the codehub to your virtual environment path
 For a virtual environment, an easy way to add `<path-to-git-head>/scripts/codehub/` to your path would be to add a text file with a .pth extention (any filename is fine) to the site-packages subfolder in your virtual environment folder. Within the text file you can just copy and paste the absolute path as the only contents.
-
-## Installation using venv
-
-To be added soon.
 
 # Documentation
 
