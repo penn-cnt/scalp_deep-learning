@@ -27,3 +27,6 @@ python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root
 
 # Single raw edf file conversion without inputs. Should create subject HUP001, session 1, run 1
 python utils/acquisition/BIDS/EEG_BIDS.py --edf --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --dataset /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/BIDS/sub-00001/ses-preimplant001/eeg/sub-00001_ses-preimplant001_task-task_run-01_eeg.edf --subject HUP001 --uid_number 1
+
+# Sample Tereza/Nishant
+python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username okalova_tereza --bids_root /mnt/leif/littlab/users/okalova/<bidsroot directory>  --input_csv utils/acquisition/BIDS/samples/sample_tereza.csv

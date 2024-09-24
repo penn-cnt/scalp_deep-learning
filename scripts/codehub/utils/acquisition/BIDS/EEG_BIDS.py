@@ -4,7 +4,7 @@ import pandas as PD
 from sys import exit
 from prettytable import PrettyTable,ALL
 
-# Locale import
+# Local import
 from components.internal.BIDS_handler import *
 from components.public.edf_handler import edf_handler
 from components.public.iEEG_handler import ieeg_handler
