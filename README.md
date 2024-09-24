@@ -10,6 +10,7 @@ This code is meant to be researcher driven, allowing new code libraries to be ad
 
 We also provide a number of additional scripts to help with common/important tasks. A few of particular note are:
 - [Data Acquisition/BIDS Generation](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/acquisition/BIDS)
+- [Time Series Viewer/Annnotator](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/visualization/edf_viewer)
 
 For more information on how to use our code, please see the examples folder for specific use-cases and common practices.
 
