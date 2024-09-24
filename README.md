@@ -15,6 +15,8 @@ In order to use this repository, you must have access to Python 3+. You must als
 
 # Installation
 
+## Using Conda
+
 An environment file with all the needed packages to run this suite of code can be found at the following location:
 
 > [CNT Codehub YAML](core_libraries/python/cnt_codehub/envs/cnt_codehub.yml)
