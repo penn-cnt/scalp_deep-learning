@@ -5,7 +5,6 @@ requests
 deprecation
 tqdm
 ipython
-pytorch
 scikit-learn
 paramiko
 nltk
