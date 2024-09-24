@@ -59,10 +59,10 @@ This file can be installed using the following call to conda from the envs subdi
 
 which will install everything to your current virual environment. 
 
-**Note**: Torch is not included in the requirements.txt and may cause some dependencies issues. We recommend installing this package according to their web page [here](https://pytorch.org/get-started/locally/).
-
 ### Adding the codehub to your virtual environment path
 For a virtual environment, an easy way to add `<path-to-git-head>/scripts/codehub/` to your path would be to add a text file with a .pth extention (any filename is fine) to the site-packages subfolder in your virtual environment folder. Within the text file you can just copy and paste the absolute path as the only contents.
+
+Typically, the path your your site-packages can be found at: `<path-to-environment-folder>/lib/python<version-number>/site-packages`.
 
 # Documentation
 
