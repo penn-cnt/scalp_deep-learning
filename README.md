@@ -49,7 +49,17 @@ You will likely need to add this package to your python path to ensure full func
 
 ## Using venv and pip
 
-A requirements.txt file with all the needed packages to run this suite of code can be found at the following location:
+To create a virtual environment, you need to create a location for the environment to install to. For this example, we will specify `/demonstration/environment/cnt_codehub` as our environment location. Using the python version of your choice, in this example we will select 3.10, run the following command:
+
+> python3.10 -m venv /demonstration/environment/cnt_codehub
+
+to create a new virtual environment. To enter the envrionment, simply run:
+
+> source /demonstration/environment/cnt_codehub/bin/activate
+
+**NOTE:** To streamling the process, we recommend making an alias command to avoid having to navigate the the activate file everytime.
+
+Once in the environment, a requirements.txt file with all the needed packages to run this suite of code can be found at the following location:
 
 > [CNT Codehub YAML](core_libraries/python/cnt_codehub/envs/requirements.txt)
 
