@@ -1,0 +1,30 @@
+sleep_state:
+    type: radio
+    options:
+        - sleep
+        - wake
+        - unknown
+spikes:
+    type: radio
+    options:
+        - 'yes'
+        - 'no'
+        - unknown
+seizures:
+    type: radio
+    options:
+        - 'yes'
+        - 'no'
+        - unknown
+slowing:
+    type: radio
+    options:
+        - 'yes'
+        - 'no'
+        - unknown
+artifact:
+    type: radio
+    options:
+        - 'yes'
+        - 'no'
+        - unknown
