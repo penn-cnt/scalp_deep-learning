@@ -105,5 +105,5 @@ if __name__ == '__main__':
     tight_layout_dict = None
     for ifile in files:
         DV                = data_viewer(ifile,args,tight_layout_dict)
-        tight_layout_dict = DV.montage_plot()
-        PLT.close("all")
+        tight_layout_dict = DV.workflow()
+        PLT.show()

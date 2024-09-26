@@ -40,8 +40,8 @@ class annotation_handler:
         self.user_input_entry.delete(0, tk.END)
 
     def submit_action(self):
-        self.selections = {label: var.get() for label, var in self.selection_vars.items()}
-        self.user_text = self.user_input_entry.get()
+        self.selections         = {label: var.get() for label, var in self.selection_vars.items()}
+        self.selections['user'] = self.user_input_entry.get()
         self.root.destroy()
         self.submitted = True
 
@@ -82,14 +82,15 @@ class annotation_handler:
         reset_button = tk.Button(buttons_frame, text="Reset", command=self.reset_action)
         reset_button.pack(side=tk.LEFT, padx=10)
 
-def annot_main():
+def annot_main(return_dict):
 
-    root = tk.Toplevel()
-    input_window = annotation_handler(root)
-    input_window.workflow()
-    root.mainloop()
+    #root = tk.Toplevel()
+    #input_window = annotation_handler(root)
+    #input_window.workflow()
+    #root.mainloop()
 
-    print(input_window.selections)
+    #return_dict = input_window.selections
+    pass
 
 # Main function just for testing
 if __name__ == '__main__':

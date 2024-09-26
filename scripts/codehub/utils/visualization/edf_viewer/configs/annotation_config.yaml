@@ -1,29 +1,29 @@
 sleep_state:
-    type: radio
+    key: w
     options:
-        - sleep
-        - wake
+        - 'awake'
+        - 'sleep'
         - unknown
 spikes:
-    type: radio
+    key: s
     options:
         - 'yes'
         - 'no'
         - unknown
 seizures:
-    type: radio
+    key: e
     options:
         - 'yes'
         - 'no'
         - unknown
 slowing:
-    type: radio
+    key: f
     options:
         - 'yes'
         - 'no'
         - unknown
 artifact:
-    type: radio
+    key: a
     options:
         - 'yes'
         - 'no'

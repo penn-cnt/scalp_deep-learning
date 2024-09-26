@@ -1,6 +1,6 @@
 # User interface imports
+import pyautogui
 import numpy as np
-import tkinter as tk
 
 # Matplotlib import and settings
 import matplotlib.pyplot as PLT
@@ -22,20 +22,10 @@ class data_viewer(Subject,event_handler):
         self.tight_layout_dict = tight_layout_dict
 
         # Get the approx screen dimensions and set some plot variables
-        root         = tk.Tk()
-        self.height  = 0.9*root.winfo_screenheight()/100
-        self.width   = 0.9*root.winfo_screenwidth()/100
-        root.destroy()
+        self.height  = 0.9*pyautogui.size().height/100
+        self.width   = 0.9*pyautogui.size().width/100
         self.supsize = self.fontsize_scaler(16,14,self.width)
         self.supsize = np.min([self.supsize,16])
-
-        # Save event driven variables
-        self.xlim                  = []
-        self.drawn_y               = []
-        self.drawn_a               = []
-        self.event_data            = {}
-        self.event_data['counter'] = 0
-        self.event_data['locs']    = []
 
         # Prepare the data
         DH            = data_handler(args,infile)
@@ -45,6 +35,17 @@ class data_viewer(Subject,event_handler):
         self.t_max    = rawobj[2]
         self.duration = rawobj[3]
         self.t0       = rawobj[4]
+
+    def workflow(self):
+
+        # Attach the observers
+        self.attach_objects()
+
+        # Make the initial plot info
+        self.create_plot_info()
+
+        # Draw the plot for the first time
+        self.draw_plots()
 
     def attach_objects(self):
         """
@@ -57,65 +58,65 @@ class data_viewer(Subject,event_handler):
         # Attach observers
         self.add_event_observer(event_observer)
 
-    def montage_plot(self):
+    def create_plot_info(self):
 
-        # Attach the observers
-        self.attach_objects()
+        # Store some valuable information about the plot to reference for events and modifications
+        self.plot_info              = {}
+        self.plot_info['axes']      = {}
+        self.plot_info['ylim']      = {}
+        self.plot_info['shade']     = {}
+        self.plot_info['xlim_orig'] = [self.t0,self.t0+self.duration]
+        self.plot_info['xvals']     = np.arange(self.DF.shape[0])/self.fs
 
-        # Get the number of channels to plot
-        nchan = self.DF.columns.size
+    def draw_plots(self):
 
         # Set the label shift. 72 points equals ~1 inch in pyplot
         width_frac = (0.025*self.width)
         npnt       = int(72*width_frac)
         
         # Create the plotting environment
+        nrows           = len(self.DF.columns)
         self.fig        = PLT.figure(dpi=100,figsize=(self.width,self.height))
-        gs              = self.fig.add_gridspec(nchan, 1, hspace=0)
-        self.ax_dict    = {}
-        self.lim_dict   = {}
-        self.shade_dict = {}
-        self.xlim_orig  = [self.t0,self.t0+self.duration]
-        self.xvals      = np.arange(self.DF.shape[0])/self.fs
+        gs              = self.fig.add_gridspec(nrows, 1, hspace=0)
         for idx,ichan in enumerate(self.DF.columns):
             # Define the axes
             if idx == 0:
-                self.ax_dict[ichan] = self.fig.add_subplot(gs[idx, 0])
-                self.refkey         = ichan
+                self.plot_info['axes'][ichan] = self.fig.add_subplot(gs[idx, 0])
+                self.first_chan               = ichan
             else:
-                self.ax_dict[ichan] = self.fig.add_subplot(gs[idx, 0],sharex=self.ax_dict[self.refkey])
+                self.plot_info['axes'][ichan] = self.fig.add_subplot(gs[idx, 0],sharex=self.plot_info['axes'][self.first_chan])
 
             # Get the data stats 
             idata,ymin,ymax = self.get_stats(ichan)
 
             # Plot the data
-            self.ax_dict[ichan].plot(self.xvals[::self.args.nstride],idata[::self.args.nstride],color='k')
-            self.ax_dict[ichan].set_ylim([ymin,ymax])
-            self.lim_dict[ichan] = [ymin,ymax]
+            self.plot_info['axes'][ichan].plot(self.plot_info['xvals'][::self.args.nstride],idata[::self.args.nstride],color='k')
+            self.plot_info['axes'][ichan].set_ylim([ymin,ymax])
+            self.plot_info['ylim'][ichan] = [ymin,ymax]
 
             # Add in shading for the original axes limits
-            self.shade_dict[ichan] = self.ax_dict[ichan].axvspan(self.xlim_orig[0], self.xlim_orig[1], facecolor='orange',alpha=0.2)
+            self.plot_info['shade'][ichan] = self.plot_info['axes'][ichan].axvspan(self.plot_info['xlim_orig'][0], self.plot_info['xlim_orig'][1], facecolor='orange',alpha=0.2)
 
             # Clean up the plot
-            for label in self.ax_dict[ichan].get_xticklabels():
+            for label in self.plot_info['axes'][ichan].get_xticklabels():
                 label.set_alpha(0)
-            self.ax_dict[ichan].set_yticklabels([])
-            self.ax_dict[ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
-            self.ax_dict[ichan].xaxis.grid(True)
+            self.plot_info['axes'][ichan].set_yticklabels([])
+            self.plot_info['axes'][ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
+            self.plot_info['axes'][ichan].xaxis.grid(True)
         
         # X-axis cleanup
-        self.refkey2 = ichan
-        self.ax_dict[ichan].set_xlim(self.xlim_orig)
+        self.last_chan = ichan
+        self.plot_info['axes'][ichan].set_xlim(self.plot_info['xlim_orig'])
 
         # Add an xlabel to the final object
-        self.ax_dict[self.refkey2].xaxis.set_major_locator(MultipleLocator(1))
-        self.ax_dict[self.refkey2].set_xlabel("Time (s)",fontsize=14)
-        for label in self.ax_dict[self.refkey2].get_xticklabels():
+        self.plot_info['axes'][self.last_chan].xaxis.set_major_locator(MultipleLocator(1))
+        self.plot_info['axes'][self.last_chan].set_xlabel("Time (s)",fontsize=14)
+        for label in self.plot_info['axes'][self.last_chan].get_xticklabels():
             label.set_alpha(1)
 
         # Set the axes title object
         self.generate_title_str()
-        self.ax_dict[self.refkey].set_title(self.title_str,fontsize=10)
+        self.plot_info['axes'][self.first_chan].set_title(self.title_str,fontsize=10)
         
         # Set the figure title object
         self.generate_suptitle_str()
@@ -146,7 +147,7 @@ class data_viewer(Subject,event_handler):
         xvals           = np.arange(idata.size)/self.fs
 
         # Get the current limits of the main viewer
-        xlims = self.ax_dict[self.refkey].get_xlim()
+        xlims = self.ax_dict[self.first_chan].get_xlim()
         ylims = [ymin,ymax]
 
         # Plot the enlarged view
@@ -254,7 +255,7 @@ class data_viewer(Subject,event_handler):
     def save_flag_state(self):
 
         # Create output column list
-        xlims   = self.ax_dict[self.refkey2].get_xlim()
+        xlims   = self.ax_dict[self.last_chan].get_xlim()
         outcols = ['filename','username','assigned_t0','assigned_t1','evaluated_t0','evaluated_t1','sleep_state','spike_state','seizure_state','focal_slowing','general_slowing','artifacts']
         outvals = [self.infile,self.args.username,self.xlim_orig[0],self.xlim_orig[1],xlims[0],xlims[1]]
         outvals = outvals+self.flagged_out
@@ -375,7 +376,7 @@ class data_viewer(Subject,event_handler):
                 if len(self.drawn_a) == 0:
                     for ikey in self.ax_dict.keys():
                         self.drawn_a.append(self.ax_dict[ikey].axvline(annot_xval, color='blue', linestyle='--',lw=2))
-                    self.annot_obj = self.ax_dict[self.refkey2].text(annot_xval, 0, annot_text,bbox=dict(boxstyle='round', facecolor='lightgray', 
+                    self.annot_obj = self.ax_dict[self.last_chan].text(annot_xval, 0, annot_text,bbox=dict(boxstyle='round', facecolor='lightgray', 
                                                                     edgecolor='none', alpha=1.0),verticalalignment='center', horizontalalignment='left', fontsize=12)
 
                 else:
@@ -410,7 +411,7 @@ class data_viewer(Subject,event_handler):
             sys.exit()
 
         # Make sure the axes colorscheme is updated
-        newlim = self.ax_dict[self.refkey2].get_xlim()
+        newlim = self.ax_dict[self.last_chan].get_xlim()
         if (newlim[0] == self.xlim_orig[0]) and (newlim[1] == self.xlim_orig[1]):
             ialpha = 0.2
         else:

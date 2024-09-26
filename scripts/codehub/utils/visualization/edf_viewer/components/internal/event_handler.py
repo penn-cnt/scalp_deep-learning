@@ -1,7 +1,6 @@
 import pylab as PLT
 from sys import exit
-from multiprocessing import Process,Queue
-import threading
+from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
 
 # Local Imports
 from components.internal.observer_handler import *
@@ -24,8 +23,9 @@ class event_observer(Observer):
                 event_handler.enlarge(self,event)
             # Annotation options
             elif event.key == 'a':
+                
+                # Use terminal based annotation
                 event_handler.annotate(self,event)
-
 
 class event_handler:
 
@@ -53,5 +53,17 @@ class event_handler:
 
     def annotate(self,event):
 
-        # Spawn a new process to avoid conflicts with two tkinter windows
-        annot_main()
+        # Read in the selection variables
+        script_dir        = '/'.join(os.path.abspath(__file__).split('/')[:-3])
+        self.annot_config = yaml.safe_load(open(f"{script_dir}/configs/annotation_config.yaml","r"))
+        for ikey in self.annot_config.keys():self.annot_config[ikey] = dict(self.annot_config[ikey])
+
+        # Provide the user annotation options
+        print("Entering annotation mode. Q/q to quit.")
+        for ikey in self.annot_config.keys():
+            print(f"Enter {self.annot_config[ikey]['key']} to toggle through {ikey} annotations.")
+        print("Enter all other annotations as comma separated strings.")
+
+        # Enter in interactive mode
+        #while True:
+            
