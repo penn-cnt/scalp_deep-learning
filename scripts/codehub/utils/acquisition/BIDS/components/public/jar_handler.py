@@ -170,7 +170,15 @@ class jar_handler(Subject):
         # Loop over the requested data
         for idx in range(len(self.jar_files)):
 
-            if DE.check_default_records(self.jar_files[idx]):
+            # Check if we have a specific set of times for this file
+            try:
+                istart    = self.start_times[idx]
+                iduration = self.durations[idx]
+            except TypeError:
+                istart    = None
+                iduration = None
+
+            if DE.check_default_records(self.jar_files[idx],istart,iduration):
                 self.read_jar_data(self.jar_files[idx])
                         
                 # If successful, notify data observer. Else, add a skip
@@ -182,14 +190,16 @@ class jar_handler(Subject):
                 print(f"Skipping {self.jar_files[idx]}.")
                 self.data_list.append(None)
 
-    def read_jar_data(self):
+    def read_jar_data(self,data_file):
 
         try:
-            header_filer = data_file.split('_data')[0]+"_header.csv"
-            ### Placeholder logic for reading in jar file
-            #self.data     = PD.read_csv(<data_file>)
-            #self.channels = PD.read_csv(<header_file>)['channels']
-            #self.fs       = PD.read_csv(<header_file>)['fs']
+
+            header_file   = data_file.split('values_data')[0]+"header_info.csv"
+            self.data     = PD.read_csv(data_file).values
+            #self.channels = PD.read_csv(header_file)['Channel Name'].values
+            #self.fs       = PD.read_csv(header_file)['Sampling Frequency'].values
+            self.channels  = ['Sin 10Hz']
+            self.fs        = 800
             self.success_flag = True
         except:
             self.success_flag = False
