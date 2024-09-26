@@ -185,10 +185,11 @@ class jar_handler(Subject):
     def read_jar_data(self):
 
         try:
+            header_filer = data_file.split('_data')[0]+"_header.csv"
             ### Placeholder logic for reading in jar file
-            #self.data     = jar_logic(....)['data']
-            #self.channels = jar_logic(....)['channels']
-            #self.fs       = jar_logic(....)['fs']
+            #self.data     = PD.read_csv(<data_file>)
+            #self.channels = PD.read_csv(<header_file>)['channels']
+            #self.fs       = PD.read_csv(<header_file>)['fs']
             self.success_flag = True
         except:
             self.success_flag = False
