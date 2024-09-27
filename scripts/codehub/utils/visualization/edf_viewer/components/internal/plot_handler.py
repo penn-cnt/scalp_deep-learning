@@ -45,7 +45,11 @@ class data_viewer(Subject,event_handler):
         self.create_plot_info()
 
         # Draw the plot for the first time
+<<<<<<< Updated upstream
         self.draw_plots()
+=======
+        self.draw_base_plots()
+>>>>>>> Stashed changes
 
     def attach_objects(self):
         """
@@ -61,6 +65,7 @@ class data_viewer(Subject,event_handler):
     def create_plot_info(self):
 
         # Store some valuable information about the plot to reference for events and modifications
+<<<<<<< Updated upstream
         self.plot_info              = {}
         self.plot_info['axes']      = {}
         self.plot_info['ylim']      = {}
@@ -69,6 +74,23 @@ class data_viewer(Subject,event_handler):
         self.plot_info['xvals']     = np.arange(self.DF.shape[0])/self.fs
 
     def draw_plots(self):
+=======
+        self.plot_info                = {}
+        self.plot_info['axes']        = {}
+        self.plot_info['ylim']        = {}
+        self.plot_info['shade']       = {}
+        self.plot_info['xlim_orig']   = [self.t0,self.t0+self.duration]
+        self.plot_info['xvals']       = np.arange(self.DF.shape[0])/self.fs
+        self.plot_info['zoom_lines']  = []
+        self.plot_info['annot_lines'] = []
+        self.plot_info['annot_value'] = []
+
+    ############################
+    #### Plotting functions ####
+    ############################    
+
+    def draw_base_plots(self):
+>>>>>>> Stashed changes
 
         # Set the label shift. 72 points equals ~1 inch in pyplot
         width_frac = (0.025*self.width)
@@ -140,6 +162,19 @@ class data_viewer(Subject,event_handler):
             self.tight_layout_dict = {par : getattr(self.fig.subplotpars, par) for par in ["left", "right", "bottom", "top", "wspace", "hspace"]}
         return self.tight_layout_dict
 
+<<<<<<< Updated upstream
+=======
+    def draw_annotations(self,xpos,annotation,ichannel):
+
+        for ikey in self.plot_info['axes'].keys():
+            self.plot_info['annot_lines'].append(self.plot_info['axes'][ikey].axvline(xpos, color='g', linestyle='--'))
+
+        # Add the annotation
+        ymin,ymax = self.plot_info['axes'][ichannel].get_ylim()
+        ypos      = 0.5*(ymin+ymax)
+        self.plot_info['axes'][ichannel].annotate(text=annotation, xy =(xpos,ypos),bbox=dict(boxstyle="round", facecolor="gray", alpha=0.7))
+
+>>>>>>> Stashed changes
     def enlarged_plot(self,channel):
         
         # Get the data view
@@ -226,6 +261,7 @@ class data_viewer(Subject,event_handler):
                 self.suptitle += f" {ival} |"
             self.suptitle = self.suptitle[:-1]
 
+<<<<<<< Updated upstream
     def flag_toggle(self,label_name,counter_name,str_pos):
         
         # Get the labels
@@ -275,10 +311,13 @@ class data_viewer(Subject,event_handler):
             out_DF = out_DF.drop_duplicates()
             out_DF.to_csv(self.args.outfile,index=False)
 
+=======
+>>>>>>> Stashed changes
     ################################
     #### Event driven functions ####
     ################################
 
+<<<<<<< Updated upstream
     def on_click(self,event):
         """
         Click driven events for the plot object.
@@ -299,6 +338,8 @@ class data_viewer(Subject,event_handler):
             # Update the event driven zoom object
             self.xlim.append(event.xdata)
 
+=======
+>>>>>>> Stashed changes
     def update_plot(self,event):
         """
         Key driven events for the plot object.
