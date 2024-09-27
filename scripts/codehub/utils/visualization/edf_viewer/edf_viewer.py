@@ -70,6 +70,7 @@ if __name__ == '__main__':
     duration_group.add_argument("--dur_frac", action='store_true', default=False, help="Flag. Duration is interpreted as a fraction of total data.")
 
     misc_group = parser.add_argument_group('Misc options')
+    misc_group.add_argument("--winfrac", type=float, default=0.9, help="Fraction of the window for the plot.")
     misc_group.add_argument("--nstride", type=int, default=8, help="Stride factor for plotting.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. Save no outputs.")
     misc_group.add_argument("--annotations", action='store_true', default=False, help="Let user create annotations.")

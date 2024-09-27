@@ -22,8 +22,8 @@ class data_viewer(Subject,event_handler):
         self.tight_layout_dict = tight_layout_dict
 
         # Get the approx screen dimensions and set some plot variables
-        self.height  = 0.9*pyautogui.size().height/100
-        self.width   = 0.9*pyautogui.size().width/100
+        self.height  = args.winfrac*pyautogui.size().height/100
+        self.width   = args.winfrac*pyautogui.size().width/100
         self.supsize = self.fontsize_scaler(16,14,self.width)
         self.supsize = np.min([self.supsize,16])
 
@@ -67,9 +67,11 @@ class data_viewer(Subject,event_handler):
         self.plot_info['shade']       = {}
         self.plot_info['xlim_orig']   = [self.t0,self.t0+self.duration]
         self.plot_info['xvals']       = np.arange(self.DF.shape[0])/self.fs
-        self.plot_info['zoom_lines']  = []
-        self.plot_info['annot_lines'] = []
-        self.plot_info['annot_value'] = []
+        self.plot_info['zoom_cntr']   = 0
+        self.plot_info['zoom_lines']  = [0,0]
+        self.plot_info['zlim']        = [0,0]
+        self.plot_info['annots']      = {}
+
 
     ############################
     #### Plotting functions ####
@@ -149,13 +151,22 @@ class data_viewer(Subject,event_handler):
 
     def draw_annotations(self,xpos,annotation,ichannel):
 
-        for ikey in self.plot_info['axes'].keys():
-            self.plot_info['annot_lines'].append(self.plot_info['axes'][ikey].axvline(xpos, color='g', linestyle='--'))
-
         # Add the annotation
         ymin,ymax = self.plot_info['axes'][ichannel].get_ylim()
         ypos      = 0.5*(ymin+ymax)
-        self.plot_info['axes'][ichannel].annotate(text=annotation, xy =(xpos,ypos),bbox=dict(boxstyle="round", facecolor="gray", alpha=0.7))
+        pltobj    = self.plot_info['axes'][ichannel].annotate(text=annotation, xy =(xpos,ypos),bbox=dict(boxstyle="round", facecolor="white", alpha=0.8))
+        self.plot_info['annots'][xpos] = (ichannel,annotation,pltobj,[])
+
+        # Draw the line for the user to see
+        for ikey in self.plot_info['axes'].keys():
+            self.plot_info['annots'][xpos][3].append(self.plot_info['axes'][ikey].axvline(xpos, color='g', linestyle='--'))
+
+    def draw_zoom(self,xpos):
+
+        zoom_lines = []
+        for ikey in self.plot_info['axes'].keys():
+            zoom_lines.append(self.plot_info['axes'][ikey].axvline(xpos, color='r', linestyle='--'))
+        return zoom_lines
 
     def enlarged_plot(self,channel):
         
@@ -199,8 +210,8 @@ class data_viewer(Subject,event_handler):
     def yscaling(self,ikey,dy):
 
         # Get the limits of the current plot for rescaling and recreating
-        xlim      = self.ax_dict[ikey].get_xlim()
-        ylim      = self.ax_dict[ikey].get_ylim()
+        xlim      = self.plot_info['axes'][ikey].get_xlim()
+        ylim      = self.plot_info['axes'][ikey].get_ylim()
 
         # Get the approximate new scale
         scale     = ylim[1]-ylim[0]
@@ -217,7 +228,7 @@ class data_viewer(Subject,event_handler):
         ymax     -= offset
 
         # Generate new limits
-        self.ax_dict[ikey].set_ylim([ymin,ymax])
+        self.plot_info['axes'][ikey].set_ylim([ymin,ymax])
 
     def generate_title_str(self):
         upa        = u'\u2191'  # Up arrow
@@ -242,129 +253,3 @@ class data_viewer(Subject,event_handler):
             for ival in self.flagged_out:
                 self.suptitle += f" {ival} |"
             self.suptitle = self.suptitle[:-1]
-
-    ################################
-    #### Event driven functions ####
-    ################################
-
-    def update_plot(self,event):
-        """
-        Key driven events for the plot object.
-
-        Args:
-            Matplotlib event.
-        """
-
-        # Zoom on 'z' press and when there are two bounds
-        if event.key == 'z' and len(self.xlim) == 2:
-            
-            # Set the xlimits
-            self.ax_dict[self.refkey].set_xlim(self.xlim)
-            self.xlim = []
-
-            # Remove the vertical lines on the plot
-            for iobj in self.drawn_y:
-                iobj.remove()
-            self.draw_y = []
-        # Reset the -axes of the plot
-        elif event.key == 'r':
-            self.ax_dict[self.refkey].set_xlim(self.xlim_orig)
-            self.xlim = []
-        # Increase gain
-        elif event.key == 'up':
-            for ikey in self.ax_dict.keys():
-                self.yscaling(ikey,0.1)
-        # Decrease gain
-        elif event.key == 'down':
-            for ikey in self.ax_dict.keys():
-                self.yscaling(ikey,-0.1)
-        # Shift back in time
-        elif event.key == 'left':
-            current_xlim = self.ax_dict[self.refkey].get_xlim()
-            current_xlim = [ival-self.duration for ival in current_xlim]
-            for ikey in self.ax_dict.keys():
-                self.ax_dict[ikey].set_xlim(current_xlim)
-        # Shift forward in time
-        elif event.key == 'right':
-            current_xlim = self.ax_dict[self.refkey].get_xlim()
-            current_xlim = [ival+self.duration for ival in current_xlim]
-            for ikey in self.ax_dict.keys():
-                self.ax_dict[ikey].set_xlim(current_xlim)
-        # Shift back in time
-        elif event.key == '<':
-            current_xlim = self.ax_dict[self.refkey].get_xlim()
-            current_xlim = [ival-self.duration/2. for ival in current_xlim]
-            for ikey in self.ax_dict.keys():
-                self.ax_dict[ikey].set_xlim(current_xlim)
-        # Shift forward in time
-        elif event.key == '>':
-            current_xlim = self.ax_dict[self.refkey].get_xlim()
-            current_xlim = [ival+self.duration/2. for ival in current_xlim]
-            for ikey in self.ax_dict.keys():
-                self.ax_dict[ikey].set_xlim(current_xlim)
-        # Show the entire x-axis
-        elif event.key == 'x':
-            for ikey in self.ax_dict.keys():
-                self.ax_dict[ikey].set_xlim([0,self.t_max])
-        # Reset gain
-        elif event.key == '0':
-            for ikey in self.ax_dict.keys():
-                self.ax_dict[ikey].set_ylim(self.lim_dict[ikey])
-        # Enlarge a singular plot
-        elif event.key == 'e':
-            for ikey in self.ax_dict.keys():
-                if event.inaxes == self.ax_dict[ikey]:
-                    self.enlarged_plot(ikey)
-        # Show annotations
-        elif event.key == 'A':
-            if 'trial_type' in self.events_df.columns:
-                annot_xval = self.events_df['onset'][0]
-                annot_text = self.events_df['trial_type'][0]
-                
-                if len(self.drawn_a) == 0:
-                    for ikey in self.ax_dict.keys():
-                        self.drawn_a.append(self.ax_dict[ikey].axvline(annot_xval, color='blue', linestyle='--',lw=2))
-                    self.annot_obj = self.ax_dict[self.last_chan].text(annot_xval, 0, annot_text,bbox=dict(boxstyle='round', facecolor='lightgray', 
-                                                                    edgecolor='none', alpha=1.0),verticalalignment='center', horizontalalignment='left', fontsize=12)
-
-                else:
-                    # Remove the vertical lines on the plot
-                    for iobj in self.drawn_a:
-                        iobj.remove()
-                    self.annot_obj.remove()
-                    self.draw_a = []
-        # Iterate over target dictionary if available to show mapped colors
-        elif event.key == 't' and hasattr(self,'color_dict'):
-            for icnt in range(len(self.t_colors)):
-                ikey    = self.color_keys[icnt]
-                objects = self.t_obj[ikey]
-                for iobj in objects:
-                    if icnt == self.color_cnt:
-                        # Change visibility
-                        iobj.set_visible(True)
-
-                        # Update title
-                        PLT.suptitle(self.fname+" | "+str(ikey),fontsize=self.supsize)
-                    else:
-                        iobj.set_visible(False)
-
-            if self.color_cnt < self.ncolor:
-                self.color_cnt += 1
-            else:
-                self.color_cnt = 0
-                PLT.suptitle(self.fname,fontsize=self.supsize)
-        # Quit functionality
-        elif event.key == 'Q':
-            PLT.close("all")
-            sys.exit()
-
-        # Make sure the axes colorscheme is updated
-        newlim = self.ax_dict[self.last_chan].get_xlim()
-        if (newlim[0] == self.xlim_orig[0]) and (newlim[1] == self.xlim_orig[1]):
-            ialpha = 0.2
-        else:
-            ialpha = 0
-        for ichan in self.DF.columns:
-            self.shade_dict[ichan].set_alpha(ialpha)
-
-        PLT.draw()
