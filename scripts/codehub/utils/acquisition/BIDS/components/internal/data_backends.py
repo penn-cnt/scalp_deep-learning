@@ -32,23 +32,17 @@ class MNE_handler:
         self.fs       = fs
 
         # Prepare the data according to the backend
-<<<<<<< Updated upstream
-        passflag = self.get_channel_type()
-        if passflag:
-            self.make_info()
-            self.make_raw()
-        else:
-            self.irow = None
-            self.bids_datatype = None
-=======
         try:
-            self.get_channel_type()
-            self.make_info()
-            self.make_raw()
+            passflag = self.get_channel_type()
+            if passflag:
+                self.make_info()
+                self.make_raw()
+            else:
+                self.irow = None
+                self.bids_datatype = None
         except Exception as e:
             if self.args.debug:
                 print(f"Load error {e}")
->>>>>>> Stashed changes
         
         # Return raw to the list of raws being tracked by the Subject class
         return self.iraw,self.bids_datatype
