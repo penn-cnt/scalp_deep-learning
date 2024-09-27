@@ -1,11 +1,7 @@
 import pylab as PLT
 from sys import exit
-<<<<<<< Updated upstream
-from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
-=======
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
->>>>>>> Stashed changes
 
 # Local Imports
 from components.internal.observer_handler import *
@@ -37,12 +33,7 @@ class event_handler:
     def __init__(self):
         pass
 
-<<<<<<< Updated upstream
-    def button_response(self,event):
-=======
     def button_response(self,event,line_container=None,line_color='r'):
-
->>>>>>> Stashed changes
 
         if event.button == 1:
             pass
@@ -57,13 +48,8 @@ class event_handler:
 
     def enlarge(self,event):
 
-<<<<<<< Updated upstream
-        for ikey in self.ax_dict.keys():
-            if event.inaxes == self.ax_dict[ikey]:
-=======
         for ikey in self.plot_info['axes'].keys():
             if event.inaxes == self.plot_info['axes'][ikey]:
->>>>>>> Stashed changes
                 self.enlarged_plot(ikey)
 
     def annotate(self,event):
@@ -71,18 +57,6 @@ class event_handler:
         # Read in the selection variables
         script_dir        = '/'.join(os.path.abspath(__file__).split('/')[:-3])
         self.annot_config = yaml.safe_load(open(f"{script_dir}/configs/annotation_config.yaml","r"))
-<<<<<<< Updated upstream
-        for ikey in self.annot_config.keys():self.annot_config[ikey] = dict(self.annot_config[ikey])
-
-        # Provide the user annotation options
-        print("Entering annotation mode. Q/q to quit.")
-        for ikey in self.annot_config.keys():
-            print(f"Enter {self.annot_config[ikey]['key']} to toggle through {ikey} annotations.")
-        print("Enter all other annotations as comma separated strings.")
-
-        # Enter in interactive mode
-        #while True:
-=======
 
         # Do some cleanup on the input options
         for ikey in self.annot_config.keys():self.annot_config[ikey] = dict(self.annot_config[ikey])
@@ -130,5 +104,4 @@ class event_handler:
         # Redraw the plot to update the display
         PLT.draw()
 
->>>>>>> Stashed changes
             

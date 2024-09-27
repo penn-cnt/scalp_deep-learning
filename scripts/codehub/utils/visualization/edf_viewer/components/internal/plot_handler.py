@@ -45,11 +45,7 @@ class data_viewer(Subject,event_handler):
         self.create_plot_info()
 
         # Draw the plot for the first time
-<<<<<<< Updated upstream
-        self.draw_plots()
-=======
         self.draw_base_plots()
->>>>>>> Stashed changes
 
     def attach_objects(self):
         """
@@ -65,16 +61,6 @@ class data_viewer(Subject,event_handler):
     def create_plot_info(self):
 
         # Store some valuable information about the plot to reference for events and modifications
-<<<<<<< Updated upstream
-        self.plot_info              = {}
-        self.plot_info['axes']      = {}
-        self.plot_info['ylim']      = {}
-        self.plot_info['shade']     = {}
-        self.plot_info['xlim_orig'] = [self.t0,self.t0+self.duration]
-        self.plot_info['xvals']     = np.arange(self.DF.shape[0])/self.fs
-
-    def draw_plots(self):
-=======
         self.plot_info                = {}
         self.plot_info['axes']        = {}
         self.plot_info['ylim']        = {}
@@ -90,7 +76,6 @@ class data_viewer(Subject,event_handler):
     ############################    
 
     def draw_base_plots(self):
->>>>>>> Stashed changes
 
         # Set the label shift. 72 points equals ~1 inch in pyplot
         width_frac = (0.025*self.width)
@@ -162,8 +147,6 @@ class data_viewer(Subject,event_handler):
             self.tight_layout_dict = {par : getattr(self.fig.subplotpars, par) for par in ["left", "right", "bottom", "top", "wspace", "hspace"]}
         return self.tight_layout_dict
 
-<<<<<<< Updated upstream
-=======
     def draw_annotations(self,xpos,annotation,ichannel):
 
         for ikey in self.plot_info['axes'].keys():
@@ -174,7 +157,6 @@ class data_viewer(Subject,event_handler):
         ypos      = 0.5*(ymin+ymax)
         self.plot_info['axes'][ichannel].annotate(text=annotation, xy =(xpos,ypos),bbox=dict(boxstyle="round", facecolor="gray", alpha=0.7))
 
->>>>>>> Stashed changes
     def enlarged_plot(self,channel):
         
         # Get the data view
@@ -261,85 +243,10 @@ class data_viewer(Subject,event_handler):
                 self.suptitle += f" {ival} |"
             self.suptitle = self.suptitle[:-1]
 
-<<<<<<< Updated upstream
-    def flag_toggle(self,label_name,counter_name,str_pos):
-        
-        # Get the labels
-        labels  = getattr(self,label_name)
-        counter = getattr(self,counter_name)
-
-        # Handle the counter logic
-        counter+=1
-        if counter == 4 and counter_name != 'artifact_counter':
-            counter = 0
-        elif counter == 2 and counter_name == 'artifact_counter':
-            counter = 0
-
-        # Update the substring
-        newval  = labels[counter]
-        self.flagged_out[str_pos] = newval
-
-        # Generate the new suptilte
-        self.generate_suptitle_str()
-
-        # Set the new title
-        PLT.suptitle(f"{self.suptitle}",fontsize=self.supsize)
-
-        # Set the new counter values
-        setattr(self,counter_name,counter)
-
-    def save_flag_state(self):
-
-        # Create output column list
-        xlims   = self.ax_dict[self.last_chan].get_xlim()
-        outcols = ['filename','username','assigned_t0','assigned_t1','evaluated_t0','evaluated_t1','sleep_state','spike_state','seizure_state','focal_slowing','general_slowing','artifacts']
-        outvals = [self.infile,self.args.username,self.xlim_orig[0],self.xlim_orig[1],xlims[0],xlims[1]]
-        outvals = outvals+self.flagged_out
-
-        # Make the temporary dataframe to concat to outputs
-        iDF = PD.DataFrame([outvals],columns=outcols)
-
-        # Check for file
-        if path.exists(self.args.outfile):
-            out_DF = PD.read_csv(self.args.outfile)
-            out_DF = PD.concat((out_DF,iDF),ignore_index=True)
-        else:
-            out_DF = iDF
-
-        # Save the results
-        if not self.args.debug:
-            out_DF = out_DF.drop_duplicates()
-            out_DF.to_csv(self.args.outfile,index=False)
-
-=======
->>>>>>> Stashed changes
     ################################
     #### Event driven functions ####
     ################################
 
-<<<<<<< Updated upstream
-    def on_click(self,event):
-        """
-        Click driven events for the plot object.
-
-        Args:
-            Matplotlib event.
-        """
-
-        # Left click defines the zoom ranges
-        if event.button == 1:
-            # Loop over the axes and draw the zoom ranges
-            for ikey in self.ax_dict.keys():
-                self.drawn_y.append(self.ax_dict[ikey].axvline(event.xdata, color='red', linestyle='--'))
-            
-            # Redraw the plot to update the display
-            PLT.draw()
-
-            # Update the event driven zoom object
-            self.xlim.append(event.xdata)
-
-=======
->>>>>>> Stashed changes
     def update_plot(self,event):
         """
         Key driven events for the plot object.

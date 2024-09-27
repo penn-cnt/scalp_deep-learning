@@ -1,44 +1,24 @@
 sleep_state:
-<<<<<<< Updated upstream
-    key: w
-=======
->>>>>>> Stashed changes
     options:
         - 'awake'
         - 'sleep'
         - unknown
 spikes:
-<<<<<<< Updated upstream
-    key: s
-=======
->>>>>>> Stashed changes
     options:
         - 'yes'
         - 'no'
         - unknown
 seizures:
-<<<<<<< Updated upstream
-    key: e
-=======
->>>>>>> Stashed changes
     options:
         - 'yes'
         - 'no'
         - unknown
 slowing:
-<<<<<<< Updated upstream
-    key: f
-=======
->>>>>>> Stashed changes
     options:
         - 'yes'
         - 'no'
         - unknown
 artifact:
-<<<<<<< Updated upstream
-    key: a
-=======
->>>>>>> Stashed changes
     options:
         - 'yes'
         - 'no'
