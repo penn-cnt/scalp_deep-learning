@@ -201,8 +201,10 @@ class jar_handler(Subject):
             self.channels  = ['Sin 10Hz']
             self.fs        = 800
             self.success_flag = True
-        except:
+        except Exception as e:
             self.success_flag = False
+            if self.args.debug:
+                print(f"Load error {e}")
 
     def save_data(self):
         """

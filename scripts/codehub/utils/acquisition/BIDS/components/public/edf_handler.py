@@ -204,8 +204,10 @@ class edf_handler(Subject):
             self.channels     = raw.ch_names
             self.fs           = raw.info.get('sfreq')
             self.success_flag = True
-        except:
+        except Exception as e:
             self.success_flag = False
+            if self.args.debug:
+                print(f"Load error {e}")
 
     def save_data(self):
         """
