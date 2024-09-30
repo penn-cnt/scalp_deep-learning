@@ -15,6 +15,16 @@ from components.internal.observer_handler import *
 class data_viewer(Subject,event_handler):
 
     def __init__(self, infile, args, tight_layout_dict):
+        """
+        Initialize the data viewer class.
+
+        Args:
+            infile (string): Filepath to an edf or pickle file.
+            args (object): UI arguments
+            tight_layout_dict (object): If `None` the code will calculate the best tight layout.
+                                        Otherwise, a dictionary with layout arguments will be used for plotting.
+                                        Saves time on loading multiple datasets.
+        """
         
         # Save the input info
         self.infile            = infile
@@ -38,6 +48,9 @@ class data_viewer(Subject,event_handler):
         self.t0       = rawobj[4]
 
     def workflow(self):
+        """
+        Workflow for plotting data and managing flow of information.
+        """
 
         # Attach the observers
         self.attach_objects()
@@ -55,6 +68,8 @@ class data_viewer(Subject,event_handler):
     def attach_objects(self):
         """
         Attach observers here so we can have each multiprocessor see the pointers correctly.
+
+        event_observer: Manages what happens when a button or key is pressed. This also sends info to other scripts as needed.
         """
 
         # Create the observer objects
