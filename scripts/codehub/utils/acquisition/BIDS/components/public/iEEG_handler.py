@@ -174,17 +174,13 @@ class ieeg_handler(Subject):
         # Determine the method to get passwords. Not all systems can use a keyring easily.
         try:
             import keyring
-            method = 'keyring'
-        except ModuleNotFoundError:
-            method = 'getpass'
 
-        # Get the password from the user or the keyring. If needed, add to keyring.
-        if method == 'keyring':
+            # Get the password from the user or the keyring. If needed, add to keyring.
             self.password = keyring.get_password("eeg_bids_ieeg_pass", self.args.username)
             if self.password == None:
                 self.password = getpass.getpass("Enter your password. (This will be stored to your keyring): ")                            
                 keyring.set_password("eeg_bids_ieeg_pass", self.args.username, self.password)
-        elif method == 'getpass':
+        except:
             self.password = getpass.getpass("Enter your password: ")
 
     def get_data_record(self):

@@ -179,6 +179,18 @@ class jar_handler(Subject):
                 iduration = None
 
             if DE.check_default_records(self.jar_files[idx],istart,iduration):
+
+                # Run the java script here
+                # Reference the orig_filename to the mef folder
+                # java.run()
+
+                # Look for data quality flags from java
+                #java.pass_fail()
+                # if pass then continue
+                # if fail: self.success_flag=False
+
+                # Loop over channel files
+
                 self.read_jar_data(self.jar_files[idx])
                         
                 # If successful, notify data observer. Else, add a skip
