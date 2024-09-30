@@ -58,6 +58,12 @@ class event_observer(Observer):
             # Zoom in on the user requested portion
             elif event.key == 'z':
                 event_handler.zoom_lines(self)
+            
+            #########################################
+            #### Send results to other observers ####
+            #########################################
+            elif event.key == 'q':
+                event_handler.quit_action(self)
 
 class event_handler:
 
@@ -202,7 +208,6 @@ class event_handler:
                 self.plot_info['axes'][ikey].set_xlim(new_range)
             PLT.draw()
 
-
     def change_gain(self,frac_change):
         for ikey in self.plot_info['axes'].keys():
             self.yscaling(ikey,frac_change)
@@ -212,3 +217,6 @@ class event_handler:
         for ikey in self.plot_info['axes'].keys():
             self.plot_info['axes'][ikey].set_ylim(self.plot_info['ylim'][ikey])
         PLT.draw()
+
+    def quit_action(self):
+        print("Foo")
