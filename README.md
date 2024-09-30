@@ -10,7 +10,11 @@ This code is meant to be researcher driven, allowing new code libraries to be ad
 
 We also provide a number of additional scripts to help with common/important tasks. A few of particular note are:
 - [Data Acquisition/BIDS Generation](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/acquisition/BIDS)
+    - Creates local BIDS datasets from iEEG.org or converts local timeseries files to a BIDS format.
+- [Search Data Cache](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/acquisition/SEARCH)
+    - Searches CNT data cache (across different servers) to find user requested data. Meant to reduce duplicate downloads.
 - [Time Series Viewer/Annnotator](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/visualization/edf_viewer)
+    - View and annotate timeseries files locally.
 
 For more information on how to use our code, please see the examples folder for specific use-cases and common practices.
 
