@@ -514,7 +514,7 @@ class ieeg_handler(Subject):
     def download_data(self,ieegfile,start,duration,annotation_flag,n_retry=5):
 
         # Attempt connection to iEEG.org up to the retry limit
-        self.global_timeout = 60
+        self.global_timeout = self.args.timeout
         n_attempts          = 0
         self.success_flag   = False
         while True:

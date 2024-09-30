@@ -60,7 +60,8 @@ class BIDS_observer(Observer):
                 self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
                                     self.keywords['fs'],self.annotations)
         else:
-            print(f"Unable to create BIDS keywords for file: {self.keywords['filename']}")
+            print(f"Unable to create BIDS keywords for file: {self.keywords['filename']}.")
+            print(f"{self.BIDS_keywords}")
         
 
 class BIDS_handler:
