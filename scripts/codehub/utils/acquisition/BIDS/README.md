@@ -28,7 +28,7 @@ At present we support:
     - Dataset id
     - Start time
     - Duration
-2. '--edf': This option will take a local .edf file and create/place it into a BIDS structure for you. This option requires you to provide at minimum:
+2. `--edf`: This option will take a local .edf file and create/place it into a BIDS structure for you. This option requires you to provide at minimum:
     - Dataset path
 
 ### Creating a list of files to pull
