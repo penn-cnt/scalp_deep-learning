@@ -6,28 +6,63 @@ EEG Bids is a package designed to convert timeseries data into BIDS-compliant da
 
 Currently, the package supports:
 
-- Pulling data from iEEG.org
-- Converting raw EDF files to BIDS format
+- Pulling data from iEEG.org (using the `--ieeg` flag)
+- Converting raw EDF files to BIDS format (using the `--edf` flag)
+- Converting csv files to BIDS format (using the `--jar` flag.
+    - **Note**: This is an experimental feature for Pennsieve and is not widely supported.
 
 We aim to make it easy to add new data pull methods by using an observer coding style, allowing new code to integrate with just a few lines. For more details, refer to the contribution section.
 
 Additionally, the package generates various sidecar files used by other components of the CNT codehub for a range of tasks.
 
-## Files
+## Usage
 
-### `EEG_BIDS.py`
+At present, EEG BIDS is designed to download and/or convert data to the preferred data format for epilepsy data, BIDS. Within the CNT, iEEG.org is a common data source, but the python API, data standards, and specifics of BIDS present a number of hurdles for conversion. This script aims to resolve these issues and streamline the process. We explain a few key concepts for usage here.
+
+### Selecting a data source
+You can select a data source from the `data source options`, which can be found by using the `--help` option.
+
+At present we support:
+1. `--ieeg`: This options tells the script to pull from iEEG.org. This option requires you to provide at minimum:
+    - iEEG.org Username
+    - Dataset id
+    - Start time
+    - Duration
+2. '--edf': This option will take a local .edf file and create/place it into a BIDS structure for you. This option requires you to provide at minimum:
+    - Dataset path
+
+### Creating a list of files to pull
+You can download/convert multiple files at once using the `--input_csv` flag. You can find examples of various input files [here](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/acquisition/BIDS/samples).
+
+### Exploring my data after conversion
+In order to find specific files, and to avoid duplicate downloads, the code creates a manifest document that stores the original filename and resulting BIDS keywords for every file. By default this file is called `subject_map.csv` and is located in the bids root directory.
+
+The output name for this file can be changed using the `--data_record` keyword.
+
+### Assigning a `--uid` 
+This is an additional flag used by the CNT to create a unique identifier for each patient that may not map to the BIDS subject keyword. Each dataset may have slightly different naming conventions, but this identifier is meant to let us map data back a redcap ID or MRN when viewed behind a clinical firewall. 
+
+If making a dataset for your own use, you can ignore this value. If you wish to make a lab dataset, please reach out to the data team for help with determining the correct uid to assign.
+
+## Repository Breakdown
+
+We provide a quick overview of the different parts of the repository here.
+
+### Files
+
+#### `EEG_BIDS.py`
 This is the user-interface portion of the code. You can access detailed usage instructions by running:
 ```bash
 python EEG_BIDS.py --help
 ```
 
-## Folders
+### Folders
 
-### `modules`
+#### `modules`
 This folder contains the backend code that makes up EEG BIDS, providing functionality to convert and handle timeseries data.
 
-### `samples`
-Includes sample CLI calls and input files to help you get started using the package.
+#### `samples`
+Includes numerous sample CLI calls and input files to help you get started using the package.
 
 ## Installation
 
