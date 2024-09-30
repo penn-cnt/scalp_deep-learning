@@ -53,8 +53,7 @@ if __name__ == '__main__':
     dtype_group.add_argument("--fs", type=float, help="Sampling frequency.")
 
     output_group = parser.add_argument_group('Output options')
-    output_group.add_argument("--outfile", default='./edf_viewer_flags.csv', type=str, help="Output filepath if predicting sleep/spikes/etc.")
-    output_group.add_argument("--username", type=str, help="Username to tag any outputs with.")
+    output_group.add_argument("--outfile", default='./edf_viewer_annotations.csv', type=str, help="Output filepath if predicting sleep/spikes/etc.")
 
     prep_group = parser.add_argument_group('Data preparation options')
     prep_group.add_argument("--chcln", type=str, default="hup", help="Channel cleaning option")
@@ -73,22 +72,11 @@ if __name__ == '__main__':
     misc_group.add_argument("--winfrac", type=float, default=0.9, help="Fraction of the window for the plot.")
     misc_group.add_argument("--nstride", type=int, default=8, help="Stride factor for plotting.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. Save no outputs.")
-    misc_group.add_argument("--annotations", action='store_true', default=False, help="Let user create annotations.")
-    misc_group.add_argument("--review_mode", action='store_true', default=False, help="Allows us to prevent reviewers from seeing data they have already reviewed.")
     args = parser.parse_args()
 
     # Clean up some argument types
     args.chmap = None if args.chmap == 'None' else args.chmap
     args.montage = None if args.montage == 'None' else args.montage
-
-    # Get username and output path if needed
-    if args.annotations:
-        if args.username == None:
-            args.username = input("Please enter a username for tagging data: ")
-        if args.outfile == None:
-            args.outfile = './edf_annotations.csv'
-    else:
-        args.outfile = ''
 
     # Create the file list to read in
     if args.infile != None:

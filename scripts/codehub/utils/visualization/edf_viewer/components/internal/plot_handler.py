@@ -1,4 +1,5 @@
 # User interface imports
+import getpass
 import pyautogui
 import numpy as np
 
@@ -47,6 +48,10 @@ class data_viewer(Subject,event_handler):
         # Draw the plot for the first time
         self.draw_base_plots()
 
+        # Save the annotations, if any
+        if self.plot_info['annots'].keys():
+            self.save_annotations()
+
     def attach_objects(self):
         """
         Attach observers here so we can have each multiprocessor see the pointers correctly.
@@ -72,6 +77,29 @@ class data_viewer(Subject,event_handler):
         self.plot_info['zlim']        = [0,0]
         self.plot_info['annots']      = {}
 
+    def save_annotations(self):
+        """
+        Save any user annotations to an output CSV.
+
+        Looks for the self.plot_info['annots'] object and iterates over the keys.
+        """
+
+        # Loop over the annotations and make the output array object
+        output = []
+        for ikey in self.plot_info['annots'].keys():
+            ival = self.plot_info['annots'][ikey]
+            output.append([getpass.getuser(),ival[0],ikey,ival[1]])
+        
+        # Make the output dataframe
+        outDF = PD.DataFrame(output,columns=['user','channel','time','annotation'])
+        
+        # Append as needed to existing records
+        if os.path.exists(self.args.outfile):
+            annot_DF = PD.read_csv(self.args.outfile)
+            outDF    = PD.concat((annot_DF,outDF))
+        
+        # Write out the results
+        outDF.to_csv(self.args.outfile,index=False)
 
     ############################
     #### Plotting functions ####
@@ -238,18 +266,8 @@ class data_viewer(Subject,event_handler):
         self.title_str  = r"z=Zoom between mouse clicks; 'r'=reset x-scale; 'x'=Show entire x-axis; '0'=reset y-scale; 't'=Toggle targets; 'q'=quit current plot; 'Q'=quit the program entirely"
         self.title_str += '\n'
         self.title_str += r"'%s'=Increase Gain; '%s'=Decrease Gain; '%s'=Shift Left; '%s'=Shift Right; '<'=Minor Shift Left; '>'=Minor Shift Right; 'e'=Zoom-in plot of axis the mouse is on;" %(upa, downa, lefta, righta)
-        if self.args.annotations:
-            self.title_str += '\n'
-            self.title_str += r"1=Sleep State; 2=Spike Presence; 3=Seizure; 4=Focal Slowing; 5=Generalized Slowing; 6=Artifact Heavy"
 
     def generate_suptitle_str(self):
 
         # Base string
         self.suptitle = self.fname
-        
-        # If using flagging, create new string
-        if self.args.annotations:
-            self.suptitle += '\n'
-            for ival in self.flagged_out:
-                self.suptitle += f" {ival} |"
-            self.suptitle = self.suptitle[:-1]
