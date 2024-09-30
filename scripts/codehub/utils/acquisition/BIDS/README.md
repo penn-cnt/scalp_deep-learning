@@ -44,6 +44,11 @@ This is an additional flag used by the CNT to create a unique identifier for eac
 
 If making a dataset for your own use, you can ignore this value. If you wish to make a lab dataset, please reach out to the data team for help with determining the correct uid to assign.
 
+### Large data pulls
+`EEG BIDS` currently provides a multithreading option to download larger collections of data quickly.
+
+**Note** If planning to download lots of data to one of the lab servers, please reach out to the data team to discuss the best strategy. 
+
 ## Repository Breakdown
 
 We provide a quick overview of the different parts of the repository here.
