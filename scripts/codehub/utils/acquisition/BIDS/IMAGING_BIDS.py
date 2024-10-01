@@ -40,7 +40,7 @@ class prepare_imaging(Subject):
             if flag.lower() == 'y':
                 newpath = input("Provide a new filename: ")
             outlake = {'HUP':self.datalake}
-            pickle.dump(self.datalake,open(newpath,'wb'))
+            pickle.dump(outlake,open(newpath,'wb'))
 
     def attach_objects(self):
         """
