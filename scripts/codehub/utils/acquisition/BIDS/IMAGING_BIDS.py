@@ -80,7 +80,11 @@ class prepare_imaging(Subject):
         # If we are missing information, ask the user
         keys_to_request = ['scan_type','data_type', 'modality', 'task', 'acq', 'ce']
         if not output.keys():
+            
+            # Alert code that we updated the datalake
             self.newflag = True
+
+            # Get new inputs
             print(f"Please provide information for {series}")
             for ikey in keys_to_request:
                 if ikey == 'data_type':
@@ -99,14 +103,12 @@ class prepare_imaging(Subject):
             self.keys = np.array(list(self.datalake.keys()))
 
         return output
-        
-        
 
     def save_data(self,ifile,bidskeys):
         # Update keywords
         self.keywords = {'filename':ifile,'root':self.args.bidsroot,'datatype':bidskeys['data_type'],
                             'session':self.args.session,'subject':self.args.subject,'run':self.args.run,
-                            'task':bidskeys['task'],'fs':None,'start':None,'duration':None,'uid':None}
+                            'task':bidskeys['task'],'fs':None,'start':0,'duration':0,'uid':0}
         self.notify_metadata_observers()
 
 if __name__ == '__main__':
