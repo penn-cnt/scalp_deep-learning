@@ -72,9 +72,6 @@ class edf_handler(Subject):
         For single core pulls, has more flexibility to set parameters. For multicore, we restrict it to a pre-built input_args.
         """
 
-        # Make sure we have some required inputs
-
-
         # Check for an input csv to manually set entries
         if self.args.input_csv != None:
             

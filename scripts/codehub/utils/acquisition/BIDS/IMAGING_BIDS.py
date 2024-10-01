@@ -4,15 +4,24 @@ import pickle
 import argparse
 import numpy as np
 
-class prepare_imaging:
+# Local import
+from components.internal.BIDS_handler import *
+from components.internal.observer_handler import *
+
+class prepare_imaging(Subject):
 
     def __init__(self,args):
-        self.args = args
+        self.args          = args
+        self.newflag       = False
+        self.BIDS_keywords = {'root':self.args.bids_root,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
     def workflow(self):
         """
         Workflow to turn a flat folder of imaging data to BIDS
         """
+
+        # Attach observers
+        self.attach_objects()
 
         # get json paths
         self.get_filepaths()
@@ -22,7 +31,26 @@ class prepare_imaging:
 
         # Loop over the files
         for ifile in self.json_files:
-            self.get_protocol(ifile)
+            bidskeys = self.get_protocol(ifile)
+            #self.save_data(ifile,bidskeys)
+
+        # Ask if the user wants to save the updated datalake
+        if self.newflag:
+            flag = input("Save the new datalake entires (Yy/Nn)? ")
+            if flag.lower() == 'y':
+                newpath = input("Provide a new filename: ")
+            pickle.dump(self.datalake,open(newpath,'wb'))
+
+    def attach_objects(self):
+        """
+        Attach observers here so we can have each multiprocessor see the pointers correctly.
+        """
+
+        # Create the observer objects
+        self._meta_observers = []
+
+        # Attach observers
+        self.add_meta_observer(BIDS_observer)
 
     def get_filepaths(self):
         self.json_files = glob.glob(f"{self.args.dataset}*json")
@@ -51,6 +79,7 @@ class prepare_imaging:
         # If we are missing information, ask the user
         keys_to_request = ['scan_type','data_type', 'modality', 'task', 'acq', 'ce']
         if not output.keys():
+            self.newflag = True
             print(f"Please provide information for {series}")
             for ikey in keys_to_request:
                 if ikey == 'data_type':
@@ -72,6 +101,12 @@ class prepare_imaging:
         print(series,output)
         
 
+    def save_data(self,ifile,bidskeys):
+        # Update keywords
+        self.keywords = {'filename':ifile,'root':self.args.bidsroot,'datatype':bidskeys['data_type'],
+                            'session':self.args.session,'subject':self.args.subject,'run':self.args.run,
+                            'task':self.bidskeys['task'],'fs':None,'start':None,'duration':None,'uid':None}
+        self.notify_metadata_observers()
 
 if __name__ == '__main__':
 
