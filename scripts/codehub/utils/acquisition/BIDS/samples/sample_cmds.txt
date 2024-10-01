@@ -14,7 +14,8 @@ python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root
 python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_times.csv
 
 # Download with inputs, specific times, include an annotation/events file
-python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_times.csv --include_annotation
+### Do not use. Under development
+### python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_times.csv --include_annotation
 
 # Download with inputs, annotations
 python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_annot.csv --annotations
