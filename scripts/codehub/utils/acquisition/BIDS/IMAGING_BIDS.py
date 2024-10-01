@@ -32,7 +32,7 @@ class prepare_imaging(Subject):
         # Loop over the files
         for ifile in self.json_files:
             bidskeys = self.get_protocol(ifile)
-            #self.save_data(ifile,bidskeys)
+            self.save_data(ifile,bidskeys)
 
         # Ask if the user wants to save the updated datalake
         if self.newflag:
