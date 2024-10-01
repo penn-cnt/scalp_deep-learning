@@ -116,6 +116,9 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', help='Input path to the folder containing niftii files.')
     parser.add_argument('--bidsroot', required=True, help='Output path to the BIDS root directory.')
     parser.add_argument('--datalake', help='Output path to the bids datalake for image naming.',default="./datalakes/HUP_BIDS_DATALAKE.pickle")
+    parser.add_argument('--subject', required=True, help='Subject label.')
+    parser.add_argument('--session', required=True, help='Session label.')
+    parser.add_argument('--run', required=True, help='Run label.')
     args = parser.parse_args()
 
     # Minor cleanuo
