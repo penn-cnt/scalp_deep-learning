@@ -106,7 +106,7 @@ class prepare_imaging(Subject):
         # Update keywords
         self.keywords = {'filename':ifile,'root':self.args.bidsroot,'datatype':bidskeys['data_type'],
                             'session':self.args.session,'subject':self.args.subject,'run':self.args.run,
-                            'task':self.bidskeys['task'],'fs':None,'start':None,'duration':None,'uid':None}
+                            'task':bidskeys['task'],'fs':None,'start':None,'duration':None,'uid':None}
         self.notify_metadata_observers()
 
 if __name__ == '__main__':
