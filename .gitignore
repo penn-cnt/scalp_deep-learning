@@ -4,6 +4,7 @@
 /core_libraries/build/**
 **.DS_Store**
 scripts/codehub/utils/etc/*
+scripts/codehub/utils/acquisition/IMGBIDS/*
 
 # Filetypes to ignore
 *.edf
