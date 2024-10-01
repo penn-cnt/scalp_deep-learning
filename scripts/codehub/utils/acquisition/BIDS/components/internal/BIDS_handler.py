@@ -55,10 +55,14 @@ class BIDS_observer(Observer):
             # Update the bids path
             self.BH.update_path(self.BIDS_keywords)
 
-            if self.args.include_annotation or self.args.annotations:
-                # Update the events
-                self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
-                                    self.keywords['fs'],self.annotations)
+            # See if there are annotation argument flags
+            try:
+                if self.args.include_annotation or self.args.annotations:
+                    # Update the events
+                    self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
+                                        self.keywords['fs'],self.annotations)
+            except AttributeError:
+                pass
         else:
             print(f"Unable to create BIDS keywords for file: {self.keywords['filename']}.")
             print(f"{self.BIDS_keywords}")
