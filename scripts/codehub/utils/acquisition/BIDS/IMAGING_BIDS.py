@@ -98,8 +98,8 @@ class prepare_imaging(Subject):
             self.datalake[series] = output
             self.keys = np.array(list(self.datalake.keys()))
 
-        # print results for testing
-        print(series,output)
+        return output
+        
         
 
     def save_data(self,ifile,bidskeys):
