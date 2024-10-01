@@ -3,28 +3,19 @@ import json
 import pickle
 import argparse
 import numpy as np
+from bids import BIDSLayout
+from bids.layout.writing import build_path
 
-# Local import
-from components.internal.BIDS_handler import *
-from components.internal.observer_handler import *
-
-class prepare_imaging(Subject):
+class prepare_imaging:
 
     def __init__(self,args):
         self.args          = args
         self.newflag       = False
-        self.BIDS_keywords = {'root':self.args.bidsroot,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
-
-        # Create the object pointers
-        self.BH = BIDS_handler()
 
     def workflow(self):
         """
         Workflow to turn a flat folder of imaging data to BIDS
         """
-
-        # Attach observers
-        self.attach_objects()
 
         # get json paths
         self.get_filepaths()
@@ -42,6 +33,10 @@ class prepare_imaging(Subject):
             print(ifile, bidskeys)
             self.save_data(ifile,bidskeys)
 
+        # Update data lake as needed
+        self.update_datalake()
+
+    def update_datalake(self):
         # Ask if the user wants to save the updated datalake
         if self.newflag:
             flag = input("Save the new datalake entires (Yy/Nn)? ")
@@ -49,17 +44,6 @@ class prepare_imaging(Subject):
                 newpath = input("Provide a new filename: ")
             outlake = {'HUP':self.datalake}
             pickle.dump(outlake,open(newpath,'wb'))
-
-    def attach_objects(self):
-        """
-        Attach observers here so we can have each multiprocessor see the pointers correctly.
-        """
-
-        # Create the observer objects
-        self._meta_observers = []
-
-        # Attach observers
-        self.add_meta_observer(BIDS_observer)
 
     def get_filepaths(self):
         self.json_files = glob.glob(f"{self.args.dataset}*json")
@@ -113,11 +97,24 @@ class prepare_imaging(Subject):
         return output
 
     def save_data(self,ifile,bidskeys):
+
         # Update keywords
-        self.keywords = {'filename':ifile,'root':self.args.bidsroot,'datatype':bidskeys['data_type'],
-                            'session':self.args.session,'subject':self.args.subject,'run':self.args.run,
-                            'task':bidskeys['task'],'fs':None,'start':0,'duration':0,'uid':0}
-        self.notify_metadata_observers()
+        entities  = {}
+        entities['subject']     = self.args.subject
+        entities['session']     = self.args.session
+        entities['run']         = self.args.run
+        entities['modality']    = bidskeys['modality']
+        entities['datatype']    = bidskeys['data_type']
+        entities['task']        = bidskeys['task']
+        entities['acquisition'] = bidskeys['acq']
+        entities['ceagent']     = bidskeys['ce']
+
+        # Define the patterns for pathing    
+        patterns = ['sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_run-{run}][_{modality}].{extension<nii|nii.gz|json|bval|bvec|json>|nii.gz}']
+
+        # Set up the bids pathing
+        bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
+        print(bids_path)
 
 if __name__ == '__main__':
 
