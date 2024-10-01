@@ -13,7 +13,7 @@ class prepare_imaging(Subject):
     def __init__(self,args):
         self.args          = args
         self.newflag       = False
-        self.BIDS_keywords = {'root':self.args.bids_root,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
+        self.BIDS_keywords = {'root':self.args.bidsroot,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
     def workflow(self):
         """
