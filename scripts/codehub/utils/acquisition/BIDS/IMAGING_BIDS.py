@@ -15,6 +15,9 @@ class prepare_imaging(Subject):
         self.newflag       = False
         self.BIDS_keywords = {'root':self.args.bidsroot,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
+        # Create the object pointers
+        self.BH = BIDS_handler()
+
     def workflow(self):
         """
         Workflow to turn a flat folder of imaging data to BIDS
