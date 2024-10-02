@@ -161,11 +161,11 @@ class prepare_imaging:
         Pathlib(rootpath).mkdir(parents=True, exist_ok=True)
         
         # Copy the different data files over
-        root_file = '.'.join(ifile.split('.')[:-1])
-        all_files = glob.glob(f"{root_file}*")
-        print(all_files)
-        exit()
-        shutil.copyfile(ifile, bids_path)
+        root_file     = '.'.join(ifile.split('.')[:-1])
+        current_files = glob.glob(f"{root_file}*")
+        for jfile in current_files:
+            extension = jfile.split('.')[-1]  
+            shutil.copyfile(jfile, f"{bids_path}.{extension}")
 
         # Create a new BIDSLayout object
         layout = BIDSLayout(args.bidsroot)
