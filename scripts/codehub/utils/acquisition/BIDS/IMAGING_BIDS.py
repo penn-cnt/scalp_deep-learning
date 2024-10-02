@@ -4,6 +4,9 @@ import shutil
 import pickle
 import argparse
 import numpy as np
+from pathlib import Path as Pathlib
+
+# Pybids imports
 from bids import BIDSLayout
 from bids.layout.writing import build_path
 
@@ -137,6 +140,8 @@ class prepare_imaging:
         bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
 
         # Save the nifti to its new home
+        rootpath = '/'.join(bids_path.split('/')[:-1])
+        Pathlib(rootpath).mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ifile, bids_path)
 
         # Create a new BIDSLayout object
