@@ -100,28 +100,42 @@ class prepare_imaging:
 
         # Update keywords
         entities  = {}
-        # Required keys
+
+        # Define the required keys
         entities['subject']     = self.args.subject
         entities['session']     = self.args.session
         entities['run']         = self.args.run
         entities['datatype']    = bidskeys['data_type']
 
+        # Begin building the match string
+        match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
+
         # Optional keys
-        if bidskeys['modality'] != None:
-            entities['modality']    = bidskeys['modality']
-        if bidskeys['task'] != None:
-            entities['task']        = bidskeys['task']
         if bidskeys['acq'] != None:
             entities['acquisition'] = bidskeys['acq']
+            match_str += '[_acq-{acquisition}]'
         if bidskeys['ce'] != None:
-            entities['ceagent']     = bidskeys['ce']
+            entities['ceagent'] = bidskeys['ce']
+            match_str += [_ce-{ceagent}]
+
+        # Add in the run number here
+        match_str += '[_run-{run}]'
+
+        # Remaining optional keys
+        if bidskeys['modality'] != None:
+            entities['modality'] = bidskeys['modality']
+            match_str += '[_{modality}]'
+        #if bidskeys['task'] != None:
+        #    entities['task']        = bidskeys['task']
 
         # Define the patterns for pathing    
-        patterns = ['sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_run-{run}][_{modality}].{extension<nii|nii.gz|json|bval|bvec|json>|nii.gz}']
+        #patterns = ['sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_run-{run}][_{modality}].{extension<nii|nii.gz|json|bval|bvec|json>|nii.gz}']
+        patterns = [match_str]
 
         # Set up the bids pathing
         bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
         print(bids_path)
+        print("\n")
 
 if __name__ == '__main__':
 
