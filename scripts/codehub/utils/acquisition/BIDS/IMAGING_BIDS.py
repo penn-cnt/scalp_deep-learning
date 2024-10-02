@@ -116,7 +116,7 @@ class prepare_imaging:
             match_str += '[_acq-{acquisition}]'
         if bidskeys['ce'] != None:
             entities['ceagent'] = bidskeys['ce']
-            match_str += [_ce-{ceagent}]
+            match_str += '[_ce-{ceagent}]'
 
         # Add in the run number here
         match_str += '[_run-{run}]'
