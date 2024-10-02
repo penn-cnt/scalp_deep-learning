@@ -51,17 +51,14 @@ class prepare_imaging:
 
     def infer_sessions(self):
 
+        # Loop over the files and get the unique sessions
+        dates = []
         for ifile in self.json_files:
 
             # Get the relevant substring
-            dateinfo = ifile.split('.')[0].split('_')[-1]
-
-            # Get the year, month, day
-            year  = dateinfo[:4]
-            month = dateinfo[4:6]
-            day   = dateinfo[6:8]
-            print(year,month,day)
-            exit()
+            dates.append(ifile.split('.')[0].split('_')[-1][:8])
+        print(np.unique(dates))
+        exit()
 
     def make_description(self):
 
