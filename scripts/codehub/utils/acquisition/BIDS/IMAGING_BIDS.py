@@ -225,6 +225,7 @@ if __name__ == '__main__':
 
     # Minor cleanuo
     if args.dataset[-1] != '/':args.dataset += '/'
+    if args.bidsroot[-1] != '/':args.bidsroot += '/'
 
     # Prepare data for BIDS work
     PI = prepare_imaging(args)
