@@ -68,8 +68,6 @@ class prepare_imaging:
         self.session_map = {}
         for idx,ifile in enumerate(self.json_files):
             self.session_map[ifile] = np.where(udates==dates[idx])[0][0]
-        print(self.session_map)
-        exit()
 
     def make_description(self):
 
@@ -151,9 +149,14 @@ class prepare_imaging:
 
         # Define the required keys
         entities['subject']     = self.args.subject
-        entities['session']     = self.args.session
         entities['run']         = self.args.run
         entities['datatype']    = bidskeys['data_type']
+
+        # Get the session label
+        if self.args.session != None:
+            entities['session'] = self.args.session
+        else:
+            entities['session'] = f"{self.session_map[ifile]:02d}"
 
         # Begin building the match string
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
