@@ -1,5 +1,6 @@
 import glob
 import json
+import shutil
 import pickle
 import argparse
 import numpy as np
@@ -130,13 +131,27 @@ class prepare_imaging:
             match_str += '[_{modality}]'
 
         # Define the patterns for pathing    
-        #patterns = ['sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_run-{run}][_{modality}].{extension<nii|nii.gz|json|bval|bvec|json>|nii.gz}']
         patterns = [match_str]
 
         # Set up the bids pathing
         bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
-        print(bids_path)
-        print("\n")
+
+        # Save the nifti to its new home
+        shutil.copyfile(ifile, bids_path)
+
+        # Create a new BIDSLayout object
+        layout = BIDSLayout(args.bidsroot)
+
+        # Save the bids layout
+        output_path = os.path.join(args.bidsroot, 'dataset_description.json')
+        with open(output_path, 'r') as f:
+            existing_data = json.load(f)
+        json_output = layout.to_df().to_dict()
+        merged_data = {**existing_data, **json_output}
+    
+        # Save the updated data back to the JSON file
+        with open(output_path, 'w') as f:
+            json.dump(merged_data, f, indent=4)
 
 if __name__ == '__main__':
 
