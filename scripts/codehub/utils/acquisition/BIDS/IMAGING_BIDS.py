@@ -133,7 +133,7 @@ class prepare_imaging:
                 else:
                     newval = input(f"{ikey} (''=None): ")
                 if newval == '':
-                    newval = None
+                    newval = np.nan
                 output[ikey] = newval
         
             # Update the datalake
