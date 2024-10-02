@@ -111,6 +111,9 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
+        if type(bidskeys['task']) == str or not np.isnan(bidskeys['task']):
+            entities['task']        = bidskeys['task']
+            match_str += '[_task-{task}]'
         if type(bidskeys['acq']) == str or not np.isnan(bidskeys['acq']):
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
@@ -125,8 +128,6 @@ class prepare_imaging:
         if type(bidskeys['modality']) == str or not np.isnan(bidskeys['modality']):
             entities['modality'] = bidskeys['modality']
             match_str += '[_{modality}]'
-        #if bidskeys['task'] != np.nan:
-        #    entities['task']        = bidskeys['task']
 
         # Define the patterns for pathing    
         #patterns = ['sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_run-{run}][_{modality}].{extension<nii|nii.gz|json|bval|bvec|json>|nii.gz}']
