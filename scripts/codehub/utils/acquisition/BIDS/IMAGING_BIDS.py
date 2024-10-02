@@ -59,8 +59,16 @@ class prepare_imaging:
             # Get the relevant substring
             match  = re.search(pattern, ifile)
             substr = match.group(1)[:8]
-            dates.append(substr)
-        print(np.unique(dates))
+            dates.append(int(substr))
+        
+        # Get the unique sorted options
+        udates = np.unique(dates)
+        
+        # Get the session mapping
+        self.session_map = {}
+        for idx,ifile in self.json_files:
+            self.session_map[ifile] = np.where(udates==dates[idx])[0][0]
+        print(self.session_map)
         exit()
 
     def make_description(self):
