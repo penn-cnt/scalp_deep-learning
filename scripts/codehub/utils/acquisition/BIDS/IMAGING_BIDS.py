@@ -111,10 +111,10 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
-        if type(bidskeys['acq']) == 'str' or not np.isnan(bidskeys['acq']):
+        if type(bidskeys['acq']) == 'str':
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
-        if type(bidskeys['ce']) == 'str' or not np.isnan(bidskeys['ce']):
+        if type(bidskeys['ce']) == 'str':
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
 
@@ -122,7 +122,7 @@ class prepare_imaging:
         match_str += '[_run-{run}]'
 
         # Remaining optional keys
-        if type(bidskeys['modality']) == 'str' or not np.isnan(bidskeys['modality']):
+        if type(bidskeys['modality']) == 'str':
             entities['modality'] = bidskeys['modality']
             match_str += '[_{modality}]'
         #if bidskeys['task'] != np.nan:
