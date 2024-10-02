@@ -100,14 +100,21 @@ class prepare_imaging:
 
         # Update keywords
         entities  = {}
+        # Required keys
         entities['subject']     = self.args.subject
         entities['session']     = self.args.session
         entities['run']         = self.args.run
-        entities['modality']    = bidskeys['modality']
         entities['datatype']    = bidskeys['data_type']
-        entities['task']        = bidskeys['task']
-        entities['acquisition'] = bidskeys['acq']
-        entities['ceagent']     = bidskeys['ce']
+
+        # Optional keys
+        if bidskeys['modality'] != None:
+            entities['modality']    = bidskeys['modality']
+        if bidskeys['task'] != None:
+            entities['task']        = bidskeys['task']
+        if bidskeys['acq'] != None:
+            entities['acquisition'] = bidskeys['acq']
+        if bidskeys['ceagent'] != None:
+            entities['ceagent']     = bidskeys['ce']
 
         # Define the patterns for pathing    
         patterns = ['sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_run-{run}][_{modality}].{extension<nii|nii.gz|json|bval|bvec|json>|nii.gz}']
