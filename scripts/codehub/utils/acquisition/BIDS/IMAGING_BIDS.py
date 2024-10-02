@@ -55,7 +55,12 @@ class prepare_imaging:
 
             # Get the relevant substring
             dateinfo = ifile.split('.')[0].split('_')[-1]
-            print(dateinfo)
+
+            # Get the year, month, day
+            year  = dateinfo[:4]
+            month = dateinfo[4:6]
+            day   = dateinfo[6:8]
+            print(year,month,day)
             exit()
 
     def make_description(self):
