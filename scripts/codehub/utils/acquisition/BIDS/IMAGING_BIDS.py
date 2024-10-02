@@ -27,6 +27,9 @@ class prepare_imaging:
         # Load the datalake
         self.load_datalake()
 
+        # Make the dataset description
+        self.make_description()
+
         # Loop over the files
         for ifile in self.json_files:
             
@@ -39,6 +42,19 @@ class prepare_imaging:
 
         # Update data lake as needed
         self.update_datalake()
+
+    def make_description(self):
+
+        dataset_description = {
+            'Name': 'Your Dataset Name',
+            'BIDSVersion': '1.6.0',
+            'Description': 'Description of your dataset',
+            'License': 'License information'
+            }
+
+        # Save the dataset description as JSON
+        with open(f"{self.args.bidsroot}dataset_description.json", 'w') as f:
+            json.dump(dataset_description, f, indent=4)
 
     def update_datalake(self):
         # Ask if the user wants to save the updated datalake
