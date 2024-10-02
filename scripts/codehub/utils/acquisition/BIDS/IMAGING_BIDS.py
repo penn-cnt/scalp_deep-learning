@@ -161,8 +161,9 @@ class prepare_imaging:
         Pathlib(rootpath).mkdir(parents=True, exist_ok=True)
         
         # Copy the different data files over
-        print(ifile)
-        print(bids_path)
+        root_file = ifile.split('.')[:-1]
+        all_files = glob.glob(f"{root_file}*")
+        print(all_files)
         exit()
         shutil.copyfile(ifile, bids_path)
 
