@@ -153,7 +153,7 @@ class prepare_imaging:
         
         # Check for undefined data type
         datatype = bidskeys['data_type']
-        if np.isnan(datatype):
+        if type(datatype) != str:
             print(ifile)
             exit()
         entities['datatype'] = bidskeys['data_type']
