@@ -5,6 +5,7 @@ import shutil
 import pickle
 import argparse
 import numpy as np
+from sys import exit
 from tqdm import tqdm
 from pathlib import Path as Pathlib
 
@@ -32,6 +33,10 @@ class prepare_imaging:
         # Make the dataset description
         self.make_description()
 
+        # Infer session labels as needed
+        if self.args.session == None:
+            self.infer_sessions()
+
         # Loop over the files
         for ifile in tqdm(self.json_files, total=len(self.json_files), desc="Making BIDS"):
             
@@ -43,6 +48,15 @@ class prepare_imaging:
 
         # Update data lake as needed
         self.update_datalake()
+
+    def infer_sessions(self):
+
+        for ifile in self.json_files:
+
+            # Get the relevant substring
+            dateinfo = ifile.split('.')[0].split('_')[-1]
+            print(dateinfo)
+            exit()
 
     def make_description(self):
 
@@ -189,7 +203,7 @@ if __name__ == '__main__':
     parser.add_argument('--bidsroot', required=True, help='Output path to the BIDS root directory.')
     parser.add_argument('--datalake', help='Output path to the bids datalake for image naming.',default="./datalakes/HUP_BIDS_DATALAKE.pickle")
     parser.add_argument('--subject', required=True, help='Subject label.')
-    parser.add_argument('--session', required=True, help='Session label.')
+    parser.add_argument('--session', help='Session label. If blank, try to infer from filename.')
     parser.add_argument('--run', required=True, help='Run label.')
     args = parser.parse_args()
 
