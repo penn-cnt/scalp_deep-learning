@@ -88,8 +88,8 @@ class prepare_imaging:
             flag = input("Save the new datalake entires (Yy/Nn)? ")
             if flag.lower() == 'y':
                 newpath = input("Provide a new filename: ")
-            outlake = {'HUP':self.datalake}
-            pickle.dump(outlake,open(newpath,'wb'))
+                outlake = {'HUP':self.datalake}
+                pickle.dump(outlake,open(newpath,'wb'))
 
     def get_filepaths(self):
         self.json_files = glob.glob(f"{self.args.dataset}*json")
