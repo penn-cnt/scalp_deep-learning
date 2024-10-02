@@ -30,7 +30,7 @@ class prepare_imaging:
             bidskeys = self.get_protocol(ifile)
             
             # Save the results
-            #print(ifile, bidskeys)
+            print(ifile, bidskeys)
             self.save_data(ifile,bidskeys)
 
         # Update data lake as needed
@@ -111,11 +111,10 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
-        print(bidskeys['acq'],type(bidskeys['acq']))
-        if type(bidskeys['acq']) == 'str':
+        if type(bidskeys['acq']) == str or not np.isnan(bidskeys['acq']):
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
-        if type(bidskeys['ce']) == 'str':
+        if type(bidskeys['ce']) == str or not np.isnan(bidskeys['ce']):
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
 
@@ -123,7 +122,7 @@ class prepare_imaging:
         match_str += '[_run-{run}]'
 
         # Remaining optional keys
-        if type(bidskeys['modality']) == 'str':
+        if type(bidskeys['modality']) == str or not np.isnan(bidskeys['modality']):
             entities['modality'] = bidskeys['modality']
             match_str += '[_{modality}]'
         #if bidskeys['task'] != np.nan:
@@ -135,7 +134,7 @@ class prepare_imaging:
 
         # Set up the bids pathing
         bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
-        #print(bids_path)
+        print(bids_path)
         print("\n")
 
 if __name__ == '__main__':
