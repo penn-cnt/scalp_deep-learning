@@ -53,12 +53,13 @@ class prepare_imaging:
     def infer_sessions(self):
 
         # Loop over the files and get the unique sessions
-        pattern = r'_(\d{14})_'
+        pattern = r'_(\d{14})(_|\.?)'
         dates   = []
         for ifile in self.json_files:
             # Get the relevant substring
-            match = re.search(pattern, ifile)
-            dates.append(match.group(1))
+            match  = re.search(pattern, ifile)
+            substr = match.group(1)[:8]
+            dates.append(substr)
         print(np.unique(dates))
         exit()
 
