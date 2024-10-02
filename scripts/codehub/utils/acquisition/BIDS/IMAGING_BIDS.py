@@ -1,3 +1,4 @@
+import os
 import glob
 import json
 import shutil
@@ -37,7 +38,6 @@ class prepare_imaging:
             bidskeys = self.get_protocol(ifile)
             
             # Save the results
-            print(ifile, bidskeys)
             self.save_data(ifile,bidskeys)
 
         # Update data lake as needed
