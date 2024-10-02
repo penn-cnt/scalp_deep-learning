@@ -114,6 +114,7 @@ class prepare_imaging:
         if type(bidskeys['acq']) == 'str':
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
+            print(bidskeys['acq'])
         if type(bidskeys['ce']) == 'str':
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
