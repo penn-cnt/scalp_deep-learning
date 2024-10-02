@@ -111,10 +111,10 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
-        if bidskeys['acq'] != None:
+        if bidskeys['acq'] != np.nan:
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
-        if bidskeys['ce'] != None:
+        if bidskeys['ce'] != np.nan:
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
 
@@ -122,10 +122,10 @@ class prepare_imaging:
         match_str += '[_run-{run}]'
 
         # Remaining optional keys
-        if bidskeys['modality'] != None:
+        if bidskeys['modality'] != np.nan:
             entities['modality'] = bidskeys['modality']
             match_str += '[_{modality}]'
-        #if bidskeys['task'] != None:
+        #if bidskeys['task'] != np.nan:
         #    entities['task']        = bidskeys['task']
 
         # Define the patterns for pathing    
