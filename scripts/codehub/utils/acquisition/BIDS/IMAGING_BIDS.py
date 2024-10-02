@@ -66,7 +66,7 @@ class prepare_imaging:
         
         # Get the session mapping
         self.session_map = {}
-        for idx,ifile in self.json_files:
+        for idx,ifile in enumerate(self.json_files):
             self.session_map[ifile] = np.where(udates==dates[idx])[0][0]
         print(self.session_map)
         exit()
