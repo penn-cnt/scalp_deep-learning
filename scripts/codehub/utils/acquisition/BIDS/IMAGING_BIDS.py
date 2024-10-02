@@ -5,6 +5,7 @@ import shutil
 import pickle
 import argparse
 import numpy as np
+from tqdm import tqdm
 from pathlib import Path as Pathlib
 
 # Pybids imports
@@ -32,7 +33,7 @@ class prepare_imaging:
         self.make_description()
 
         # Loop over the files
-        for ifile in self.json_files:
+        for ifile in tqdm(self.json_files, total=len(self.json_files), desc="Making BIDS"):
             
             # Get the bids keys
             bidskeys = self.get_protocol(ifile)
@@ -155,9 +156,14 @@ class prepare_imaging:
         # Set up the bids pathing
         bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
 
-        # Save the nifti to its new home
+        # Make the folder to save to
         rootpath = '/'.join(bids_path.split('/')[:-1])
         Pathlib(rootpath).mkdir(parents=True, exist_ok=True)
+        
+        # Copy the different data files over
+        print(ifile)
+        print(bids_path)
+        exit()
         shutil.copyfile(ifile, bids_path)
 
         # Create a new BIDSLayout object
