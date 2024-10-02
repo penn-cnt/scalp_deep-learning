@@ -150,7 +150,15 @@ class prepare_imaging:
         # Define the required keys
         entities['subject']     = self.args.subject
         entities['run']         = self.args.run
-        entities['datatype']    = bidskeys['data_type']
+        
+        # Check for undefined data type
+        datatype = bidskeys['data_type']
+        if np.isnan(datatype):
+            print(ifile)
+            exit()
+        entities['datatype'] = bidskeys['data_type']
+
+
 
         # Get the session label
         if self.args.session != None:
