@@ -163,7 +163,7 @@ class prepare_imaging:
         # Copy the different data files over
         root_file = ifile.split('.')[:-1]
         all_files = glob.glob(f"{root_file}*")
-        print(all_files)
+        print(root_file)
         exit()
         shutil.copyfile(ifile, bids_path)
 
