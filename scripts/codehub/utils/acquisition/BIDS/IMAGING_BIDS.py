@@ -87,7 +87,7 @@ class prepare_imaging:
                 else:
                     newval = input(f"{ikey} (''=None): ")
                 if newval == '':
-                    newval = np.nan
+                    newval = None
                 output[ikey] = newval
         
             # Update the datalake
@@ -111,10 +111,10 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
-        if bidskeys['acq'] != np.nan:
+        if not np.isnan(bidskeys['acq']):
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
-        if bidskeys['ce'] != np.nan:
+        if not np.isnan(bidskeys['ce']):
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
 
@@ -122,7 +122,7 @@ class prepare_imaging:
         match_str += '[_run-{run}]'
 
         # Remaining optional keys
-        if bidskeys['modality'] != np.nan:
+        if not np.isnan(bidskeys['modality']):
             entities['modality'] = bidskeys['modality']
             match_str += '[_{modality}]'
         #if bidskeys['task'] != np.nan:
