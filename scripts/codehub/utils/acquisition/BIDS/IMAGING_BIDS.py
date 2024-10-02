@@ -30,7 +30,7 @@ class prepare_imaging:
             bidskeys = self.get_protocol(ifile)
             
             # Save the results
-            print(ifile, bidskeys)
+            #print(ifile, bidskeys)
             self.save_data(ifile,bidskeys)
 
         # Update data lake as needed
@@ -111,10 +111,10 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
+        print(bidskeys['acq'],type(bidskeys['acq']))
         if type(bidskeys['acq']) == 'str':
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
-            print(bidskeys['acq'])
         if type(bidskeys['ce']) == 'str':
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
@@ -135,7 +135,7 @@ class prepare_imaging:
 
         # Set up the bids pathing
         bids_path = self.args.bidsroot+build_path(entities=entities, path_patterns=patterns)
-        print(bids_path)
+        #print(bids_path)
         print("\n")
 
 if __name__ == '__main__':
