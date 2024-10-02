@@ -113,7 +113,7 @@ class prepare_imaging:
             entities['task']        = bidskeys['task']
         if bidskeys['acq'] != None:
             entities['acquisition'] = bidskeys['acq']
-        if bidskeys['ceagent'] != None:
+        if bidskeys['ce'] != None:
             entities['ceagent']     = bidskeys['ce']
 
         # Define the patterns for pathing    
