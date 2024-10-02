@@ -156,7 +156,7 @@ class prepare_imaging:
         if self.args.session != None:
             entities['session'] = self.args.session
         else:
-            entities['session'] = f"{self.session_map[ifile]:02d}"
+            entities['session'] = f"preprocessor{self.session_map[ifile]:02d}"
 
         # Begin building the match string
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
