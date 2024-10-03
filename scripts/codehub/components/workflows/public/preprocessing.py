@@ -57,7 +57,7 @@ class mne_processing:
         mapping = yaml.safe_load(open(config_path,'r'))
         persistance_dict['mne_mapping'] = mapping
 
-    @silence_mne_warnings
+    # @silence_mne_warnings
     def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
         """
         Remove eyeblinks from the data.
