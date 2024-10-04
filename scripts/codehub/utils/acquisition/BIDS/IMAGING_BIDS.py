@@ -131,7 +131,7 @@ class prepare_imaging:
         self.datalake[iprotocol] = output
         self.keys = np.array(list(self.datalake.keys()))
 
-    def print_protocol(self,idict):
+    def print_protocol(self,series,idict):
         
         # Make a pretty table to make interpreting results easier
         table = PrettyTable(hrules=ALL)
@@ -172,7 +172,7 @@ class prepare_imaging:
         if not output.keys():
             self.acquire_keys(series)
         else:
-            passflag = self.print_protocol(output)
+            passflag = self.print_protocol(series,output)
             print(passflag)
 
         return output
