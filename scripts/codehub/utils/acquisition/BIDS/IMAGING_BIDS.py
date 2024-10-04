@@ -5,6 +5,7 @@ import json
 import shutil
 import pickle
 import argparse
+import datetime
 import numpy as np
 from sys import exit
 from tqdm import tqdm
@@ -58,19 +59,34 @@ class prepare_imaging:
         # Loop over the files and get the unique sessions
         pattern = r'_(\d{14})(_|\.?)'
         dates   = []
+        dtimes  = []
         for ifile in self.json_files:
             # Get the relevant substring
             match  = re.search(pattern, ifile)
             substr = match.group(1)[:8]
+            year   = int(substr[:4])
+            month  = int(substr[4:6])
+            day    = int(substr[6:])
             dates.append(int(substr))
+            dtimes.append(datetime.date(year,month,day))
         
-        # Get the unique sorted options
-        udates = np.unique(dates)
-        
-        # Get the session mapping
+        # Initialize the session map
         self.session_map = {}
-        for idx,ifile in enumerate(self.json_files):
-            self.session_map[ifile] = np.where(udates==dates[idx])[0][0]
+
+        # Case statements of how to handle date time generation
+        if self.args.dateshift != None:
+            for idx,ifile in enumerate(self.json_files):
+                
+                # For a simple mapping by 
+                newtime = dtimes[idx]-datetime.timedelta(self.args.dateshift)
+                self.session_map[ifile] = newtime.strftime('%Y%m%d')
+        else:
+            # Get the unique sorted options
+            udates = np.sort(np.unique(dates))
+            for idx,ifile in enumerate(self.json_files):
+                
+                # For a simple mapping by 
+                self.session_map[ifile] = np.where(udates==dates[idx])[0][0]
 
     def make_description(self):
 
@@ -276,6 +292,8 @@ if __name__ == '__main__':
     parser.add_argument('--subject', required=True, help='Subject label.')
     parser.add_argument('--session', help='Session label. If blank, try to infer from filename.')
     parser.add_argument('--run', default=1, help='Run label.')
+    parser.add_argument('--dateshift', type=int, help='Optional value to use to date shift files.')
+    parser.add_argument('--device_to_session', type=str, help='Optional file. Maps device type to specific session label. (i.e. MR->preimplant)')
     args = parser.parse_args()
 
     # Minor cleanuo
