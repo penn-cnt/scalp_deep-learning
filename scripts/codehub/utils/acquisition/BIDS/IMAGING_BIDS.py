@@ -143,6 +143,7 @@ class prepare_imaging:
             row.append(idict[ikey])
         table.add_row(row)
         table.align['path'] = 'l'
+        print(table)
 
         # get user input if this is okay
         while True:
