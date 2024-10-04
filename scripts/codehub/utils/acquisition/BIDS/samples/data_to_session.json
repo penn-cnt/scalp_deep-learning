@@ -1,5 +1,5 @@
 {
-  MR: preimplant,
-  CT: implant,
-  RNS: postimplant
+  "MR" : "preimplant",
+  "CT" : "implant",
+  "RNS" : "postimplant"
 }

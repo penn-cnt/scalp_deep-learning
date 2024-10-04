@@ -110,6 +110,7 @@ class prepare_imaging:
             json.dump(dataset_description, f, indent=4)
 
     def update_datalake(self):
+
         # Ask if the user wants to save the updated datalake
         if self.newflag:
             flag = input("Save the new datalake entires (Yy/Nn)? ")
