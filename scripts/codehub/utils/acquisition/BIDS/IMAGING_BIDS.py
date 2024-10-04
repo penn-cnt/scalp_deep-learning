@@ -131,7 +131,7 @@ class prepare_imaging:
         self.datalake[iprotocol] = output
         self.keys = np.array(list(self.datalake.keys()))
 
-    def print_protocol(idict):
+    def print_protocol(self,idict):
         
         # Make a pretty table to make interpreting results easier
         table = PrettyTable(hrules=ALL)
