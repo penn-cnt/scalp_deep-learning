@@ -18,9 +18,10 @@ from bids.layout.writing import build_path
 class prepare_imaging:
 
     def __init__(self,args):
-        self.args     = args
-        self.newflag  = False
-        self.lakekeys = ['data_type', 'scan_type', 'modality', 'task', 'acq', 'ce']
+        self.args       = args
+        self.newflag    = False
+        self.lakekeys   = ['data_type', 'scan_type', 'modality', 'task', 'acq', 'ce']
+        self.white_list = [] 
 
     def workflow(self):
         """
@@ -169,17 +170,22 @@ class prepare_imaging:
         else:
             output = {}
 
-        # Get/confirm information
-        if not output.keys():
-            self.acquire_keys(series)
-        else:
-            while True:
-                passflag = self.print_protocol(series,output)
-                if passflag.lower() == 'y':
-                    break
-                else:
-                    self.acquire_keys(series)
-                output = self.datalake[series]
+        # Check white list for already reviewed protocols
+        if series not in self.white_list:
+            # Get/confirm information
+            if not output.keys():
+                self.acquire_keys(series)
+            else:
+                while True:
+                    passflag = self.print_protocol(series,output)
+                    if passflag.lower() == 'y':
+                        break
+                    else:
+                        self.acquire_keys(series)
+                    output = self.datalake[series]
+
+        # Add this protocol to the whitelist to avoid asking again
+        self.white_list.append(series)
 
         return output
 
