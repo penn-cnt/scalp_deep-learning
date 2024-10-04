@@ -86,7 +86,7 @@ class prepare_imaging:
             for idx,ifile in enumerate(self.json_files):
                 
                 # For a simple mapping by 
-                self.session_map[ifile] = np.where(udates==dates[idx])[0][0]
+                self.session_map[ifile] = f"{np.where(udates==dates[idx])[0][0]:02d}"
 
     def make_description(self):
 
@@ -221,13 +221,11 @@ class prepare_imaging:
             exit()
         entities['datatype'] = bidskeys['data_type']
 
-
-
         # Get the session label
         if self.args.session != None:
             entities['session'] = self.args.session
         else:
-            entities['session'] = f"preprocessor{self.session_map[ifile]:02d}"
+            entities['session'] = f"preprocessor{self.session_map[ifile]}"
 
         # Begin building the match string
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
