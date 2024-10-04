@@ -9,6 +9,7 @@ import numpy as np
 from sys import exit
 from tqdm import tqdm
 from pathlib import Path as Pathlib
+from prettytable import PrettyTable,ALL
 
 # Pybids imports
 from bids import BIDSLayout
@@ -17,8 +18,9 @@ from bids.layout.writing import build_path
 class prepare_imaging:
 
     def __init__(self,args):
-        self.args          = args
-        self.newflag       = False
+        self.args     = args
+        self.newflag  = False
+        self.lakekeys = ['data_type', 'scan_type', 'modality', 'task', 'acq', 'ce']
 
     def workflow(self):
         """
@@ -92,11 +94,62 @@ class prepare_imaging:
                 pickle.dump(outlake,open(newpath,'wb'))
 
     def get_filepaths(self):
+        # Find all the json files in the flat data folder
         self.json_files = glob.glob(f"{self.args.dataset}*json")
 
     def load_datalake(self):
+        # Open the datalake and store the protocol name keys to selkf
         self.datalake = pickle.load(open(self.args.datalake,'rb'))['HUP']
         self.keys     = np.array(list(self.datalake.keys()))
+
+    def acquire_keys(self,iprotocol):
+        """
+        Acquire keys from the user for the current protocol name
+        """
+
+        # Alert code that we updated the datalake
+        self.newflag = True
+
+        # Make the output object and query keys
+        output = {}
+
+        # Get new inputs
+        print(f"Please provide information for {iprotocol}")
+        for ikey in self.lakekeys:
+            if ikey == 'data_type':
+                while True:
+                    newval = input("Data Type (Required): ")
+                    if newval != '':
+                        break
+            else:
+                newval = input(f"{ikey} (''=None): ")
+            if newval == '':
+                newval = np.nan
+            output[ikey] = newval
+    
+        # Update the datalake
+        self.datalake[iprotocol] = output
+        self.keys = np.array(list(self.datalake.keys()))
+
+    def print_protocol(idict):
+        
+        # Make a pretty table to make interpreting results easier
+        table = PrettyTable(hrules=ALL)
+        tcols = [series]
+        tcols.extend(self.lakekeys)
+        table.field_names = tcols
+        row = [series]
+        for ikey in self.lakekeys:
+            row.append(idict[ikey])
+        table.add_row(row)
+        table.align['path'] = 'l'
+
+        # get user input if this is okay
+        while true:
+            user_input = input("Is this okay (Yy/Nn)?")
+            if user_input.lower() in ['y','n']:
+                break
+        return user_input
 
     def get_protocol(self,infile):
 
@@ -114,31 +167,13 @@ class prepare_imaging:
             output = self.datalake[series_alt]
         else:
             output = {}
-        
-        # If we are missing information, ask the user
-        keys_to_request = ['scan_type','data_type', 'modality', 'task', 'acq', 'ce']
-        if not output.keys():
-            
-            # Alert code that we updated the datalake
-            self.newflag = True
 
-            # Get new inputs
-            print(f"Please provide information for {series}")
-            for ikey in keys_to_request:
-                if ikey == 'data_type':
-                    while True:
-                        newval = input("Data Type (Required): ")
-                        if newval != '':
-                            break
-                else:
-                    newval = input(f"{ikey} (''=None): ")
-                if newval == '':
-                    newval = np.nan
-                output[ikey] = newval
-        
-            # Update the datalake
-            self.datalake[series] = output
-            self.keys = np.array(list(self.datalake.keys()))
+        # Get/confirm information
+        if not output.keys():
+            self.acquire_keys(series)
+        else:
+            passflag = self.print_protocol(output)
+            print(passflag)
 
         return output
 
