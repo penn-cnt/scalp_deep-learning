@@ -147,7 +147,7 @@ class prepare_imaging:
 
         # get user input if this is okay
         while True:
-            user_input = input("Is this okay (Yy/Nn)?")
+            user_input = input("Is this okay (Yy/Nn)? ")
             if user_input.lower() in ['y','n']:
                 break
         return user_input
@@ -175,7 +175,7 @@ class prepare_imaging:
         else:
             while True:
                 passflag = self.print_protocol(series,output)
-                if passflag:
+                if passflag.lower() == 'y':
                     break
                 else:
                     self.acquire_keys(series)
