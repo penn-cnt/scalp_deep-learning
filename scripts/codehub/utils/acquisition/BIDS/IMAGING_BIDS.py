@@ -173,8 +173,13 @@ class prepare_imaging:
         if not output.keys():
             self.acquire_keys(series)
         else:
-            passflag = self.print_protocol(series,output)
-            print(passflag)
+            while True:
+                passflag = self.print_protocol(series,output)
+                if passflag:
+                    break
+                else:
+                    self.acquire_keys(series)
+                output = self.datalake[series]
 
         return output
 
