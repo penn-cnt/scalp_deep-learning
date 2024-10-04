@@ -73,14 +73,6 @@ class prepare_imaging:
         # Initialize the session map
         self.session_map = {}
 
-        # Get the prefix
-        if self.args.device_to_session != None:
-            prefix_dict = json.load(open(self.args.device_to_session,'r'))
-            print(prefix_dict)
-            exit()
-        else:
-            prefix = 'preprocessor'
-
         # Case statements of how to handle date time generation
         if self.args.dateshift != None:
             for idx,ifile in enumerate(self.json_files):
@@ -234,7 +226,12 @@ class prepare_imaging:
         if self.args.session != None:
             entities['session'] = self.args.session
         else:
-            entities['session'] = f"{self.session_map[ifile]}"
+            try:
+                prefix_dict = json.load(open(self.args.device_to_session,'r'))
+                prefix      = prefix_dict[bidskeys['scan_type']]
+            except:
+                prefix = 'preprocessor'
+            entities['session'] = f"{prefix}{self.session_map[ifile]}"
 
         # Begin building the match string
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
