@@ -145,7 +145,7 @@ class prepare_imaging:
         table.align['path'] = 'l'
 
         # get user input if this is okay
-        while true:
+        while True:
             user_input = input("Is this okay (Yy/Nn)?")
             if user_input.lower() in ['y','n']:
                 break
