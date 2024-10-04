@@ -135,7 +135,7 @@ class prepare_imaging:
         
         # Make a pretty table to make interpreting results easier
         table = PrettyTable(hrules=ALL)
-        tcols = [series]
+        tcols = ['protocol_name']
         tcols.extend(self.lakekeys)
         table.field_names = tcols
         row = [series]
