@@ -523,7 +523,7 @@ class ieeg_handler(Subject):
                     self.ieeg_session(ieegfile,start,duration,annotation_flag)
                     self.success_flag = True
                     break
-                except IndexError: #(IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
+                except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
                     if n_attempts<n_retry:
                         sleep(5)
                         n_attempts += 1
@@ -602,9 +602,9 @@ class ieeg_handler(Subject):
                 else:
                     raise Exception("Too many unique values for sampling frequency.")
             else:
-                print("FOO")
-                self.clips           = dataset.get_annotations(self.args.time_layer)
                 self.raw_annotations = dataset.get_annotations(self.args.annot_layer)
+                if self.args.annotations:
+                    self.clips = dataset.get_annotations(self.args.time_layer)
                 self.ieeg_start_time = dataset.start_time
                 self.ieeg_end_time   = dataset.end_time
             session.close()
