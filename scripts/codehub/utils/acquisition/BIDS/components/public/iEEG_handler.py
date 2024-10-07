@@ -123,14 +123,13 @@ class ieeg_handler(Subject):
         for process in processes:
             process.join()
 
-    def multipull(self,multiind,semaphore,writeout_freq=10):
+    def multipull(self,multiind,semaphore):
         """
         Handles a multithread data pull.
 
         Args:
             multiind (_type_): _description_
             semaphore (_type_): _description_
-            writeout_freq (int, optional): How many ieeg calls to make before saving out to disk. Defaults to 10.
         """
 
         # Make a unique id for this core
@@ -140,11 +139,11 @@ class ieeg_handler(Subject):
         self.attach_objects()
 
         # Loop over the writeout frequency
-        niter = np.ceil(multiind.size/writeout_freq).astype('int')
+        niter = np.ceil(multiind.size/self.args.writeout_frequency).astype('int')
         for iwrite in range(niter):
             
             # Get the current indice slice
-            index_slice = multiind[iwrite*writeout_freq:(iwrite+1)*writeout_freq]
+            index_slice = multiind[iwrite*self.args.writeout_frequency:(iwrite+1)*self.args.writeout_frequency]
 
             # Determine what files to download and to where
             self.get_inputs(multiflag=True,multiinds=index_slice)

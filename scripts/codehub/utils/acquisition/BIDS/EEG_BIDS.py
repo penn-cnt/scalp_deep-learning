@@ -96,6 +96,7 @@ if __name__ == '__main__':
     multithread_group = parser.add_argument_group('Multithreading Options')
     multithread_group.add_argument("--multithread", action='store_true', default=False, help="Multithreaded download.")
     multithread_group.add_argument("--ncpu", default=1, type=int, help="Number of CPUs to use when downloading.")
+    multithread_group.add_argument("--writeout_frequency", default=10, type=int, help="How many files to download before writing out results and continuing downloads. Too frequent can result in a large slowdown. But for buggy iEEG pulls, frequent saves save progress.")
 
     misc_group = parser.add_argument_group('Misc options')
     misc_group.add_argument("--include_annotation", action='store_true', default=False, help="If downloading by time, include annotations/events file. Defaults to scalp layer names.")
