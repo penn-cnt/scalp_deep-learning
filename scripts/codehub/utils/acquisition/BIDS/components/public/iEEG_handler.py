@@ -493,6 +493,7 @@ class ieeg_handler(Subject):
                     success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
                 else:
                     success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
+                print(success_flag)
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
