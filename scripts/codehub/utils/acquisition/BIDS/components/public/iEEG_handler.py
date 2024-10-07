@@ -523,7 +523,11 @@ class ieeg_handler(Subject):
                     self.ieeg_session(ieegfile,start,duration,annotation_flag)
                     self.success_flag = True
                     break
-                except IndexError: #(IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
+                except (IIA.IeegConnectionError,IIA.IeegServiceError,TimeoutException,RTIMEOUT,TypeError) as e:
+                    # Get more info through debug
+                    if self.args.debug:
+                        print(f"Failed on {self.logfile} at {self.logstart} for {self.logdur}.")
+
                     if n_attempts<n_retry:
                         sleep(5)
                         n_attempts += 1
@@ -573,15 +577,13 @@ class ieeg_handler(Subject):
                     ival += time_cutoff
 
                 # Call data and concatenate calls if greater than 10 min
-                self.data   = []
+                self.data    = []
+                self.logfile = ieegfile
                 for idx,ival in enumerate(chunks):
-
-                    # Track where code dies if in debug mode
-                    if self.args.debug:
-                        print(f"Working on chunk {idx}")
-
-                    # Get the data
+                    self.logstart = ival[0]
+                    self.logdur   = ival[1]
                     self.data.append(dataset.get_data(ival[0],ival[1],channel_cntr))
+
                 if len(self.data) > 1:
                     self.data = np.concatenate(self.data)
                 else:
