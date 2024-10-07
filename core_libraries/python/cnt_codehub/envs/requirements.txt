@@ -21,3 +21,6 @@ pyperclip
 keyring
 torchvision
 edfio
+fooof
+neurodsp
+prettytable

@@ -48,7 +48,8 @@ class MNE_handler:
         return self.iraw,self.bids_datatype
 
     def make_raw(self):
-        self.iraw = mne.io.RawArray(self.indata.T, self.data_info, verbose=False)
+        idata     = np.nan_to_num(self.indata.T, )
+        self.iraw = mne.io.RawArray(idata, self.data_info, verbose=False)
         self.iraw.set_channel_types(self.channel_types.type)
     
     def make_info(self):

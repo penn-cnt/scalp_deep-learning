@@ -27,3 +27,6 @@ dependencies:
     - dearpygui
     - pyperclip
     - keyring
+    - fooof
+    - neurodsp
+    - prettytable
