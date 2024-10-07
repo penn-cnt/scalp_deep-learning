@@ -148,6 +148,7 @@ class BIDS_handler:
         """
 
         print(raw.get_data())
+        print(raw.get_data().shape)
 
         # Save the bids data
         try:
