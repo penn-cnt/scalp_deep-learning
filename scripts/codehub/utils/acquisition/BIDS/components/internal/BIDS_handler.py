@@ -154,7 +154,7 @@ class BIDS_handler:
         try:
             write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False,overwrite=True)
             return True
-        except Exception as e:
+        except OSError: #Exception as e:
             if debug:
                 print(f"Write error: {e}")
             return False
