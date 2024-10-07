@@ -574,7 +574,13 @@ class ieeg_handler(Subject):
 
                 # Call data and concatenate calls if greater than 10 min
                 self.data   = []
-                for ival in chunks:
+                for idx,ival in enumerate(chunks):
+
+                    # Track where code dies if in debug mode
+                    if self.args.debug:
+                        print(f"Working on chunk {idx}")
+
+                    # Get the data
                     self.data.append(dataset.get_data(ival[0],ival[1],channel_cntr))
                 if len(self.data) > 1:
                     self.data = np.concatenate(self.data)
