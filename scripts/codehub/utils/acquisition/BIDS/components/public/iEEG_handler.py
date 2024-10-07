@@ -151,10 +151,12 @@ class ieeg_handler(Subject):
             # Begin downloading the data
             self.download_data_manager()
 
-            # Save the data
-            self.save_data()
-
+            # Hide disk i/o behind the semaphore. EDF writers sometimes access the same reference file for different runs
             with semaphore:
+                # Save the data
+                self.save_data()
+
+                # Update the data records
                 self.get_data_record()
                 self.new_data_record = PD.concat((self.data_record,self.new_data_record))
                 self.new_data_record = self.new_data_record.drop_duplicates()

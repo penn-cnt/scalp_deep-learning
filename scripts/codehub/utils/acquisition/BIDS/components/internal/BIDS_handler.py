@@ -39,6 +39,8 @@ class BIDS_observer(Observer):
                 if key in ['start','duration']:
                     if value == None:
                         newval = "None"
+                elif key in ['run']:
+                    newval = int(value)
             return newval
 
         # Define the required BIDS keywords
