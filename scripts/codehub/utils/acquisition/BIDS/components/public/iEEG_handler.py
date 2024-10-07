@@ -602,6 +602,7 @@ class ieeg_handler(Subject):
                 else:
                     raise Exception("Too many unique values for sampling frequency.")
             else:
+                print("FOO")
                 self.clips           = dataset.get_annotations(self.args.time_layer)
                 self.raw_annotations = dataset.get_annotations(self.args.annot_layer)
                 self.ieeg_start_time = dataset.start_time
