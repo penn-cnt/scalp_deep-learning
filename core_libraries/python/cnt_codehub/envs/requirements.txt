@@ -20,3 +20,4 @@ dearpygui
 pyperclip
 keyring
 torchvision
+edfio
