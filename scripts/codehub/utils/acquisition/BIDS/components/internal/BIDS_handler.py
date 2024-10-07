@@ -147,6 +147,8 @@ class BIDS_handler:
             _type_: _description_
         """
 
+        print(raw.get_data())
+
         # Save the bids data
         try:
             write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False,overwrite=True)
