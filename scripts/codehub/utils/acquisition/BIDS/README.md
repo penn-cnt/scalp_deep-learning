@@ -94,8 +94,6 @@ We provide a few sample commands here. Note, all examples utilize a username and
 #### Single raw edf file conversion without inputs. Should create subject HUP001, session 1, run 1
 `python utils/acquisition/BIDS/EEG_BIDS.py --edf --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --dataset /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/BIDS/sub-00001/ses-preimplant001/eeg/sub-00001_ses-preimplant001_task-task_run-01_eeg.edf --subject HUP001 --uid_number 1`
 
-
-
 ## Assigning a `--uid` 
 This is an additional flag used by the CNT to create a unique identifier for each patient that may not map to the BIDS subject keyword. Each dataset may have slightly different naming conventions, but this identifier is meant to let us map data back a redcap ID or MRN when viewed behind a clinical firewall. 
 
