@@ -66,13 +66,13 @@ to create a new virtual environment. To enter the envrionment, simply run:
 
 > source /demonstration/environment/cnt_codehub/bin/activate
 
-**NOTE:** To streamling the process, we recommend making an alias command to avoid having to navigate the the activate file everytime.
+**NOTE:** To streamline the process, we recommend making an alias command to avoid having to navigate the the activate file everytime.
 
 Once in the environment, a requirements.txt file with all the needed packages to run this suite of code can be found at the following location:
 
 > [CNT Codehub YAML](core_libraries/python/cnt_codehub/envs/requirements.txt)
 
-This file can be installed using the following call to conda from the envs subdirectory:
+This file can be installed using the following call to pip from the envs subdirectory:
 
 > pip install -r requirements.txt
 
