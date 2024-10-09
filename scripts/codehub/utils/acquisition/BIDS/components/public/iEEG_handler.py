@@ -492,18 +492,20 @@ class ieeg_handler(Subject):
                 istart    = 1e-6*self.start_times[idx]
                 iduration = 1e-6*self.durations[idx]
 
-
                 # Update keywords
-                self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
-                                 'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
-                                 'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
-                self.notify_metadata_observers()
+                try:
+                    self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
+                                    'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
+                                    'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
+                    self.notify_metadata_observers()
 
-                # Save the data
-                if self.args.include_annotation or self.args.annotations:
-                    success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
-                else:
-                    success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
+                    # Save the data
+                    if self.args.include_annotation or self.args.annotations:
+                        success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
+                    else:
+                        success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
+                except:
+                    success_flag = False
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
