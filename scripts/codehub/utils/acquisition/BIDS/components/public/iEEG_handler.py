@@ -156,8 +156,9 @@ class ieeg_handler(Subject):
                 # Save the data
                 self.save_data()
 
-                # Reset the data list
+                # Reset the data and type lists
                 self.data_list = []
+                self.type_list = []
 
                 # Update the data records
                 self.get_data_record()
