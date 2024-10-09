@@ -132,6 +132,10 @@ class ieeg_handler(Subject):
             semaphore (_type_): _description_
         """
 
+        # Stagger the start of the multipull due to underlying iEEG concurrency issue
+        tsleep = np.fabs(np.random.normal(loc=10,scale=2))
+        time.sleep(tsleep)
+
         # Make a unique id for this core
         self.unique_id = uuid.uuid4()
 
