@@ -156,6 +156,9 @@ class ieeg_handler(Subject):
                 # Save the data
                 self.save_data()
 
+                # Reset the data list
+                self.data_list = []
+
                 # Update the data records
                 self.get_data_record()
                 self.new_data_record = PD.concat((self.data_record,self.new_data_record))
@@ -483,6 +486,7 @@ class ieeg_handler(Subject):
                 # iEEG.org uses microseconds. So we convert here to seconds for output.
                 istart    = 1e-6*self.start_times[idx]
                 iduration = 1e-6*self.durations[idx]
+
 
                 # Update keywords
                 self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
