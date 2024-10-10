@@ -105,6 +105,7 @@ if __name__ == '__main__':
     misc_group.add_argument("--backend", type=str, default='MNE', help="Backend data handler.")
     misc_group.add_argument("--ch_type", default=None, type=str, help="Manual set of channel type if not matched by known patterns. (i.e. 'seeg' for intracranial data)")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug tools. Mainly removes files after generation.")
+    misc_group.add_argument("--randomize", action='store_true', default=False, help="Randomize load order. Useful if doing a bit multipull and we're left with most of the work on a single core.")
     args = parser.parse_args()
 
     # If the user wants an example input file, print it then close application

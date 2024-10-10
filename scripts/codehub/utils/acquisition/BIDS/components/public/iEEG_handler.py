@@ -109,7 +109,8 @@ class ieeg_handler(Subject):
         semaphore = multiprocessing.Semaphore(1)
 
         # Create a load list for each cpu
-        all_inds = np.arange(input_args.shape[0])
+        all_inds     = np.arange(input_args.shape[0])
+        if self.args.randomize: np.random.shuffle(all_inds)
         split_arrays = np.array_split(all_inds, self.args.ncpu)
 
         # Start the multipull processing
