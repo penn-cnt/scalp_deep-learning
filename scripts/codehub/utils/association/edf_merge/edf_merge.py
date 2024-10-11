@@ -5,6 +5,7 @@ from tqdm import tqdm
 from mne.io import read_raw_edf
 from mne import concatenate_raws
 from mne.export import export_raw
+from sys import exit
 
 if __name__ == '__main__':
 
@@ -49,5 +50,7 @@ if __name__ == '__main__':
         outraw = read_raw_edf(iblock[0])
         for ifile in tqdm(iblock[1:], total=len(iblock)-1, desc=f"Merging Block {idx:02d}"):
             newraw = read_raw_edf(ifile)
+            print(newraw)
+            exit()
             outraw = concatenate_raws([outraw,newraw])
         export_raw(f"{args.outdir}merged_{idx:03d}.edf",outraw,fmt='edf')
