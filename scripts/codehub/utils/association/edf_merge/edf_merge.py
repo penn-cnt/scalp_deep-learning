@@ -49,5 +49,5 @@ if __name__ == '__main__':
         outraw = read_raw_edf(iblock[0])
         for ifile in tqdm(iblock[1:], total=len(iblock)-1, desc=f"Merging Block {idx:02d}"):
             newraw = read_raw_edf(ifile)
-            outraw = concatenate_raws((outraw,newraw))
+            outraw = concatenate_raws([outraw,newraw])
         export_raw(f"{args.outdir}merged_{idx:03d}.edf",outraw,fmt='edf')
