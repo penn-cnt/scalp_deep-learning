@@ -169,7 +169,7 @@ class BIDS_handler:
         """
 
         try:
-            export_raw(self.bids_path,raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
+            export_raw(str(self.bids_path)+'.edf',raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
             return True
         except Exception as e:
             if debug:
