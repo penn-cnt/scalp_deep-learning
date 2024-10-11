@@ -156,7 +156,7 @@ class BIDS_handler:
             return True
         except Exception as e:
             if debug:
-                print(f"Write error: {e}")
+                print(f"Bids write error: {e}")
             return False
 
     def save_raw_edf(self,raw,debug=False):
@@ -170,10 +170,11 @@ class BIDS_handler:
 
         try:
             export_raw(self.bids_path,raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
+            print("Success")
             return True
         except OSError: #Exception as e:
             if debug:
-                print("Write error: {e}")
+                print("Raw write error: {e}")
             return False
 
 
