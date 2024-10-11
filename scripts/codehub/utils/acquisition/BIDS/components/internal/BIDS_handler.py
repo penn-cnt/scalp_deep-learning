@@ -170,9 +170,8 @@ class BIDS_handler:
 
         try:
             export_raw(self.bids_path,raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
-            print("Success")
             return True
-        except OSError: #Exception as e:
+        except Exception as e:
             if debug:
                 print("Raw write error: {e}")
             return False
