@@ -159,7 +159,7 @@ class BIDS_handler:
                 print(f"Bids write error: {e}")
             return False
 
-    def save_raw_edf(self,raw,debug=False):
+    def save_raw_edf(self,raw,itype,debug=False):
         """
         If data is all zero, try to just write out the all zero timeseries data.
 
@@ -169,7 +169,7 @@ class BIDS_handler:
         """
 
         try:
-            export_raw(str(self.bids_path)+'.edf',raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
+            export_raw(str(self.bids_path)+f"_{itype}.edf",raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
             return True
         except Exception as e:
             if debug:
