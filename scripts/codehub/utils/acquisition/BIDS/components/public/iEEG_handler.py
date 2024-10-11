@@ -448,9 +448,11 @@ class ieeg_handler(Subject):
                         self.notify_data_observers()
                     else:
                         self.data_list.append(None)
+                        self.type_list.append(None)
                 else:
                     print(f"Skipping {self.ieeg_files[idx]} starting at {1e-6*self.start_times[idx]:011.2f} seconds for {1e-6*self.durations[idx]:08.2f} seconds.")
                     self.data_list.append(None)
+                    self.type_list.append(None)
 
         # If downloading by annotations, now loop over the clip level info and save
         if self.args.annotations:
@@ -474,9 +476,11 @@ class ieeg_handler(Subject):
                         self.notify_data_observers()
                     else:
                         self.data_list.append(None)
+                        self.type_list.append(None)
                 else:
                     print(f"Skipping {self.ieeg_files[idx]} starting at {1e-6*self.start_times[idx]:011.2f} seconds for {1e-6*self.durations[idx]:08.2f} seconds.")
                     self.data_list.append(None)
+                    self.type_list.append(None)
 
     def save_data(self):
         """
@@ -494,19 +498,16 @@ class ieeg_handler(Subject):
                 iduration = 1e-6*self.durations[idx]
 
                 # Update keywords
-                try:
-                    self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
-                                    'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
-                                    'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
-                    self.notify_metadata_observers()
+                self.keywords = {'filename':self.ieeg_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
+                                'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
+                                'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
+                self.notify_metadata_observers()
 
-                    # Save the data
-                    if self.args.include_annotation or self.args.annotations:
-                        success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
-                    else:
-                        success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
-                except:
-                    success_flag = False
+                # Save the data
+                if self.args.include_annotation or self.args.annotations:
+                    success_flag = self.BH.save_data_w_events(iraw, debug=self.args.debug)
+                else:
+                    success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
