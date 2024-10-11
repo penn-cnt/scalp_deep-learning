@@ -3,6 +3,7 @@ import getpass
 import pickle
 import numpy as np
 import pandas as PD
+from mne.export import export_raw
 from mne_bids import BIDSPath,write_raw_bids
 
 # Local Imports
@@ -157,6 +158,24 @@ class BIDS_handler:
             if debug:
                 print(f"Write error: {e}")
             return False
+
+    def save_raw_edf(self,raw,debug=False):
+        """
+        If data is all zero, try to just write out the all zero timeseries data.
+
+        Args:
+            raw (_type_): _description_
+            debug (bool, optional): _description_. Defaults to False.
+        """
+
+        try:
+            export_raw(self.bids_path,raw=raw,fmt='edf',physical_range=(0,1),overwrite=True,verbose=False)
+            return True
+        except OSError: #Exception as e:
+            if debug:
+                print("Write error: {e}")
+            return False
+
 
     def make_records(self,source):
 

@@ -509,6 +509,11 @@ class ieeg_handler(Subject):
                 else:
                     success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
+                # Check if its all zero data if we failed
+                if not success_flag:
+                    if np.unique(iraw.get_data()).size == 1:
+                        success_flag = self.BH.save_raw_edf(iraw,debug=self.args.debug)
+
                 # If the data wrote out correctly, update the data record
                 if success_flag:
                     # Save the target info
