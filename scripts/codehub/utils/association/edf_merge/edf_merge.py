@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import pandas as PD
+from tqdm import tqdm
 from mne.io import read_raw_edf
 from mne import concatenate_raws
 from mne.export import export_raw
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     # Begin the merging
     for idx,iblock in enumerate(fileblocks):
         outraw = read_raw_edf(iblock[0])
-        for ifile in iblock[1:]:
+        for ifile in tqdm(iblock[1:], total=len(iblock)-1, desc=f"Merging Block {idx:02d}"):
             newraw = read_raw_edf(ifile)
             outraw = concatenate_raws((outraw,newraw))
         export_raw(f"{args.outdir}merged_{idx:03d}.edf",outraw,fmt='edf')
