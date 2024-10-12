@@ -510,9 +510,19 @@ class ieeg_handler(Subject):
                     success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
                 # Check if its all zero data if we failed
-                if not success_flag:
-                    if np.unique(iraw.get_data()).size == 1:
-                        success_flag = self.BH.save_raw_edf(iraw,self.type_list[idx],debug=self.args.debug)
+                if not success_flag and self.args.zero_bad_data:
+                    
+                    # Store the meta data for this raw to copy to the new zeroed out data
+                    newinfo = iraw.info
+                    newchan = dict(map(lambda i,j : (i,j) , iraw.ch_names,iraw.get_channel_types()))
+                    idata   = 0*iraw.get_data()
+                    
+                    # Make a new zero mne object
+                    newraw = mne.io.RawArray(idata,newinfo, verbose=False)
+                    newraw.set_channel_types(newchan)
+
+                    # Try to save the zero data
+                    success_flag = self.BH.save_raw_edf(newraw,self.type_list[idx],debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
