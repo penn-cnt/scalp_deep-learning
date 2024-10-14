@@ -41,24 +41,19 @@ class machine_level(model_level):
 
     def run_tests(self):
         
-        try:
-            self.test_header()
-            self.test_channels()
-            self.test_sampfreq()
-            self.load_data_mne()
-            self.load_data_pyedf()
-            self.compare_libraries()
-            self.check_nan()
-            self.check_running_stats(self.args.sampfreq+1)
-        except Exception as e:
-            print(e)
-            exit(1)
+        self.test_header()
+        self.test_channels()
+        self.test_sampfreq()
+        self.load_data_mne()
+        self.load_data_pyedf()
+        self.compare_libraries()
+        self.check_nan()
+        self.check_running_stats(self.args.sampfreq+1)
 
     def failure(self,istr):
+        print(istr)
         if not args.silent:
-            raise Exception(istr)
-        else:
-            print(istr)
+            exit(1)
 
     def test_header(self):
         
