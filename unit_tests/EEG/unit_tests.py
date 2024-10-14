@@ -72,7 +72,7 @@ class machine_level(model_level):
 
         # Check the dataset level required header info
         for ikey in self.required_dataset_headers:
-            if ikey.lower() not in self.header_keys():
+            if ikey.lower() not in self.header_keys:
                 self.failure(f"Header missing the {ikey} information.")
             if self.header[ikey] == None or self.header[ikey] == '':
                 self.failure(f"Header missing the {ikey} information.")
