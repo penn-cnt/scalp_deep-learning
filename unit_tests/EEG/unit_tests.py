@@ -94,7 +94,7 @@ class machine_level(model_level):
     def test_sampfreq(self):
 
         # Obtain raw channel names
-        samp_freqs = np.array([int(ival['sample_rate']) for ival in self.header['SignalHeaders']])
+        samp_freqs = np.array([int(ival['sample_rate']) for ival in self.header['signalheaders']])
 
         # Check against the expected frequency
         freq_mask = (samp_freqs!=self.args.sampfreq)
