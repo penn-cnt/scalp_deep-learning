@@ -64,7 +64,10 @@ class machine_level(model_level):
         
         # Read in the header
         self.header = read_edf_header(args.infile)
+        
+        print("HEADER:\n===============")
         print(self.header)
+        print("\n===============")
 
         # Ensure casing of the keywords
         header_keys = list(self.header.keys())
