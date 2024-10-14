@@ -39,15 +39,14 @@ class edf_handler(Subject):
         self.get_inputs()
 
         # Loop over the files individually for edf files. This option has to handle large files.
-        for idx in tqdm(range(len(self.edf_files)),total=len(self.edf_files),desc='Converting EDF to BIDS'):
+        for fidx in tqdm(range(len(self.edf_files)),total=len(self.edf_files),desc='Converting EDF to BIDS'):
 
             # Create objects to store info
             self.data_list     = []
             self.type_list     = []
-            print(idx)
 
             # Begin downloading the data
-            #self.load_data_manager(idx)
+            self.load_data_manager(fidx)
 
             # Save the data
             #self.save_data()
@@ -170,7 +169,7 @@ class edf_handler(Subject):
         else:
             self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
-    def load_data_manager(self,idx):
+    def load_data_manager(self,file_cntr):
         """
         Loop over the ieeg file list and download data. If annotations, does a first pass to get annotation layers and times, then downloads.
         """
@@ -180,23 +179,24 @@ class edf_handler(Subject):
 
         # Check if we have a specific set of times for this file
         try:
-            istart    = self.start_times[idx]
-            iduration = self.durations[idx]
+            istart    = self.start_times[file_cntr]
+            iduration = self.durations[file_cntr]
         except TypeError:
             istart    = None
             iduration = None
 
-        if DE.check_default_records(self.edf_files[idx],istart,iduration):
-            self.load_data(self.edf_files[idx])
+        if DE.check_default_records(self.edf_files[file_cntr],istart,iduration):
+            print(self.edf_files[file_cntr])
+            #self.load_data(self.edf_files[idx])
                     
             # If successful, notify data observer. Else, add a skip
-            if self.success_flag:
-                self.notify_data_observers()
-            else:
-                self.data_list.append(None)
-                self.type_list.append(None)
+            #if self.success_flag:
+            #    self.notify_data_observers()
+            #else:
+            #    self.data_list.append(None)
+            #    self.type_list.append(None)
         else:
-            print(f"Skipping {self.edf_files[idx]}.")
+            print(f"Skipping {self.edf_files[file_cntr]}.")
             self.data_list.append(None)
             self.type_list.append(None)
 
