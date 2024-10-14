@@ -39,7 +39,7 @@ class edf_handler(Subject):
         self.get_inputs()
 
         # Loop over the files individually for edf files. This option has to handle large files.
-        for fidx in tqdm(range(len(self.edf_files)),total=len(self.edf_files),desc='Converting EDF to BIDS'):
+        for fidx in range(len(self.edf_files)):
 
             # Create objects to store info
             self.data_list     = []
@@ -52,8 +52,8 @@ class edf_handler(Subject):
             self.save_data(fidx)
 
             # Save the data record
-            #self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
-            #self.new_data_record.to_csv(self.data_record_path,index=False)
+            self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
+            self.new_data_record.to_csv(self.data_record_path,index=False)
 
         # Remove if debugging
         if self.args.debug:
