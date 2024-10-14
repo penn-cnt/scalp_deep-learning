@@ -49,7 +49,7 @@ class edf_handler(Subject):
             self.load_data_manager(fidx)
 
             # Save the data
-            #self.save_data()
+            self.save_data(fidx)
 
             # Save the data record
             #self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
@@ -186,15 +186,14 @@ class edf_handler(Subject):
             iduration = None
 
         if DE.check_default_records(self.edf_files[file_cntr],istart,iduration):
-            print(self.edf_files[file_cntr])
-            #self.load_data(self.edf_files[idx])
+            self.load_data(self.edf_files[file_cntr])
                     
             # If successful, notify data observer. Else, add a skip
-            #if self.success_flag:
-            #    self.notify_data_observers()
-            #else:
-            #    self.data_list.append(None)
-            #    self.type_list.append(None)
+            if self.success_flag:
+                self.notify_data_observers()
+            else:
+                self.data_list.append(None)
+                self.type_list.append(None)
         else:
             print(f"Skipping {self.edf_files[file_cntr]}.")
             self.data_list.append(None)
@@ -212,40 +211,40 @@ class edf_handler(Subject):
             if self.args.debug:
                 print(f"Load error {e}")
 
-    def save_data(self):
+    def save_data(self,fidx):
         """
         Notify the BIDS code about data updates and save the results when possible.
         """
         
         # Loop over the data, assign keys, and save
         self.new_data_record = self.data_record.copy()
-        for idx,iraw in enumerate(self.data_list):
+        for iraw in self.data_list:
             if iraw != None:
 
                 # Define start time and duration. Can differ for different filetypes
                 # May not exist for a raw edf transfer, so add a None outcome.
                 try:
-                    istart    = self.start_times[idx]
-                    iduration = self.durations[idx]
+                    istart    = self.start_times[fidx]
+                    iduration = self.durations[fidx]
                 except TypeError:
                     istart    = None
                     iduration = None
 
                 # Update keywords
-                self.keywords = {'filename':self.edf_files[idx],'root':self.args.bids_root,'datatype':self.type_list[idx],
-                                 'session':self.session_list[idx],'subject':self.subject_list[idx],'run':self.run_list[idx],
-                                 'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[idx]}
+                self.keywords = {'filename':self.edf_files[fidx],'root':self.args.bids_root,'datatype':self.type_list[fidx],
+                                 'session':self.session_list[fidx],'subject':self.subject_list[fidx],'run':self.run_list[fidx],
+                                 'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[fidx]}
                 self.notify_metadata_observers()
 
                 # Save the data without events until a future release
-                print(f"Converting {self.edf_files[idx]} to BIDS...")
+                print(f"Converting {self.edf_files[fidx]} to BIDS...")
                 success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
                     # Save the target info
                     try:
-                        self.BH.save_targets(self.target_list[idx])
+                        self.BH.save_targets(self.target_list[fidx])
                     except:
                         pass
                     
