@@ -122,7 +122,7 @@ class prepare_imaging:
             self.datalake = pickle.load(open(self.args.datalake,'rb'))['HUP']
             self.keys     = np.array(list(self.datalake.keys()))
         else:
-            self.datalake = {'HUP':{}}
+            self.datalake = {}
             self.keys     = np.array([])
 
     def acquire_keys(self,iprotocol):
@@ -197,6 +197,7 @@ class prepare_imaging:
             # Get/confirm information
             if not output.keys():
                 self.acquire_keys(series)
+                output = self.datalake[series]
             else:
                 while True:
                     passflag = self.print_protocol(series,output)
@@ -244,13 +245,13 @@ class prepare_imaging:
         match_str = 'sub-{subject}[/ses-{session}]/{datatype}/sub-{subject}[_ses-{session}]'
 
         # Optional keys
-        if type(bidskeys['task']) == str or not np.isnan(bidskeys['task']):
+        if type(bidskeys['task']) == str or bidskeys['task'] != None:
             entities['task']        = bidskeys['task']
             match_str += '[_task-{task}]'
-        if type(bidskeys['acq']) == str or not np.isnan(bidskeys['acq']):
+        if type(bidskeys['acq']) == str or not bidskeys['acq'] != None:
             entities['acquisition'] = bidskeys['acq']
             match_str += '[_acq-{acquisition}]'
-        if type(bidskeys['ce']) == str or not np.isnan(bidskeys['ce']):
+        if type(bidskeys['ce']) == str or not bidskeys['ce'] != None:
             entities['ceagent'] = bidskeys['ce']
             match_str += '[_ce-{ceagent}]'
 
@@ -258,7 +259,7 @@ class prepare_imaging:
         match_str += '[_run-{run}]'
 
         # Remaining optional keys
-        if type(bidskeys['modality']) == str or not np.isnan(bidskeys['modality']):
+        if type(bidskeys['modality']) == str or not bidskeys['modality'] != None:
             entities['modality'] = bidskeys['modality']
             match_str += '[_{modality}]'
 
