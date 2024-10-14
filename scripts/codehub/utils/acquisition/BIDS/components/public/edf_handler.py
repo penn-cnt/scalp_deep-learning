@@ -1,6 +1,7 @@
 import os 
 import time
 import getpass
+from tqdm import tqdm
 from mne.io import read_raw_edf
 
 # Local import
@@ -172,7 +173,7 @@ class edf_handler(Subject):
         DE = DataExists(self.data_record)
 
         # Loop over the requested data
-        for idx in range(len(self.edf_files)):
+        for idx in tqdm(range(len(self.edf_files)),total=len(self.edf_files),desc='Converting EDF to BIDS'):
 
             # Check if we have a specific set of times for this file
             try:
