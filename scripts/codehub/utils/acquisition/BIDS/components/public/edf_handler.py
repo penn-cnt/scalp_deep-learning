@@ -218,7 +218,7 @@ class edf_handler(Subject):
         
         # Loop over the data, assign keys, and save
         self.new_data_record = self.data_record.copy()
-        for iraw in self.data_list:
+        for idx,iraw in enumerate(self.data_list):
             if iraw != None:
 
                 # Define start time and duration. Can differ for different filetypes
@@ -231,7 +231,7 @@ class edf_handler(Subject):
                     iduration = None
 
                 # Update keywords
-                self.keywords = {'filename':self.edf_files[fidx],'root':self.args.bids_root,'datatype':self.type_list[fidx],
+                self.keywords = {'filename':self.edf_files[fidx],'root':self.args.bids_root,'datatype':self.type_list[idx],
                                  'session':self.session_list[fidx],'subject':self.subject_list[fidx],'run':self.run_list[fidx],
                                  'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[fidx]}
                 self.notify_metadata_observers()
