@@ -116,9 +116,14 @@ class prepare_imaging:
         self.json_files = glob.glob(f"{self.args.dataset}*json")
 
     def load_datalake(self):
-        # Open the datalake and store the protocol name keys to selkf
-        self.datalake = pickle.load(open(self.args.datalake,'rb'))['HUP']
-        self.keys     = np.array(list(self.datalake.keys()))
+
+        if os.path.exists(self.args.datalake):
+            # Open the datalake and store the protocol name keys to selkf
+            self.datalake = pickle.load(open(self.args.datalake,'rb'))['HUP']
+            self.keys     = np.array(list(self.datalake.keys()))
+        else:
+            self.datalake = {'HUP':{}}
+            self.keys     = np.array([])
 
     def acquire_keys(self,iprotocol):
         """
@@ -142,7 +147,7 @@ class prepare_imaging:
             else:
                 newval = input(f"{ikey} (''=None): ")
             if newval == '':
-                newval = np.nan
+                newval = None
             output[ikey] = newval
     
         # Update the datalake
@@ -207,6 +212,8 @@ class prepare_imaging:
         return output
 
     def save_data(self,ifile,bidskeys):
+
+        print(bidskeys)
 
         # Update keywords
         entities  = {}

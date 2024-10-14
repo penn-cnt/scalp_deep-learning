@@ -25,8 +25,6 @@ class edf_handler(Subject):
         self.get_data_record()
 
         # Create objects that interact with observers
-        self.data_list     = []
-        self.type_list     = []
         self.BIDS_keywords = {'root':self.args.bids_root,'datatype':None,'session':None,'subject':None,'run':None,'task':None}
 
     def workflow(self):
@@ -40,15 +38,21 @@ class edf_handler(Subject):
         # Determine how to save the data
         self.get_inputs()
 
-        # Begin downloading the data
-        self.load_data_manager()
+        # Loop over the files individually for edf files. This option has to handle large files.
+        for idx in tqdm(range(len(self.edf_files)),total=len(self.edf_files),desc='Converting EDF to BIDS'):
+            # Create objects to store info
+            self.data_list     = []
+            self.type_list     = []
 
-        # Save the data
-        self.save_data()
+            # Begin downloading the data
+            self.load_data_manager(idx)
 
-        # Save the data record
-        self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
-        self.new_data_record.to_csv(self.data_record_path,index=False)
+            # Save the data
+            self.save_data()
+
+            # Save the data record
+            self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
+            self.new_data_record.to_csv(self.data_record_path,index=False)
 
         # Remove if debugging
         if self.args.debug:
@@ -164,7 +168,7 @@ class edf_handler(Subject):
         else:
             self.data_record = PD.DataFrame(columns=['orig_filename','source','creator','gendate','uid','subject_number','session_number','run_number','start_sec','duration_sec'])   
 
-    def load_data_manager(self):
+    def load_data_manager(self,idx):
         """
         Loop over the ieeg file list and download data. If annotations, does a first pass to get annotation layers and times, then downloads.
         """
@@ -172,28 +176,27 @@ class edf_handler(Subject):
         # Load the data exists exception handler so we can avoid already downloaded data.
         DE = DataExists(self.data_record)
 
-        # Loop over the requested data
-        for idx in tqdm(range(len(self.edf_files)),total=len(self.edf_files),desc='Converting EDF to BIDS'):
+        # Check if we have a specific set of times for this file
+        try:
+            istart    = self.start_times[idx]
+            iduration = self.durations[idx]
+        except TypeError:
+            istart    = None
+            iduration = None
 
-            # Check if we have a specific set of times for this file
-            try:
-                istart    = self.start_times[idx]
-                iduration = self.durations[idx]
-            except TypeError:
-                istart    = None
-                iduration = None
-
-            if DE.check_default_records(self.edf_files[idx],istart,iduration):
-                self.load_data(self.edf_files[idx])
-                        
-                # If successful, notify data observer. Else, add a skip
-                if self.success_flag:
-                    self.notify_data_observers()
-                else:
-                    self.data_list.append(None)
+        if DE.check_default_records(self.edf_files[idx],istart,iduration):
+            self.load_data(self.edf_files[idx])
+                    
+            # If successful, notify data observer. Else, add a skip
+            if self.success_flag:
+                self.notify_data_observers()
             else:
-                print(f"Skipping {self.edf_files[idx]}.")
                 self.data_list.append(None)
+                self.type_list.append(None)
+        else:
+            print(f"Skipping {self.edf_files[idx]}.")
+            self.data_list.append(None)
+            self.type_list.append(None)
 
     def load_data(self,infile):
         try:
