@@ -54,8 +54,11 @@ class machine_level(model_level):
             print(e)
             exit(1)
 
-    def failure(self):
-        raise Exception()
+    def failure(self,istr):
+        if not args.silent:
+            raise Exception(istr)
+        else:
+            print(istr)
 
     def test_header(self):
         
@@ -72,9 +75,9 @@ class machine_level(model_level):
         # Check the dataset level required header info
         for ikey in self.required_dataset_headers:
             if ikey.lower() not in self.header_keys():
-                raise Exception(f"Header missing the {ikey} information.")
+                self.failure(f"Header missing the {ikey} information.")
             if self.header[ikey] == None or self.header[ikey] == '':
-                raise Exception(f"Header missing the {ikey} information.")
+                self.failure(f"Header missing the {ikey} information.")
 
         # Check that the channel headers are all present and contain data
         channel_header_mask       = []
@@ -86,9 +89,9 @@ class machine_level(model_level):
         
         # Raise exceptions if poorly defined header is found
         if any(channel_header_mask) == False:
-            raise Exception("Header contains missing information.")
+            self.failure("Header contains missing information.")
         if any(channel_header_entry_mask) == True:
-            raise Exception("Header contains missing information.")
+            self.failure("Header contains missing information.")
 
     def test_sampfreq(self):
 
@@ -98,7 +101,7 @@ class machine_level(model_level):
         # Check against the expected frequency
         freq_mask = (samp_freqs!=self.args.sampfreq)
         if (freq_mask).any():
-            raise Exception(f"Unexpted sampling frequency found in {self.channels[freq_mask]}")
+            self.failure(f"Unexpted sampling frequency found in {self.channels[freq_mask]}")
 
     def test_channels(self):
 
@@ -122,11 +125,11 @@ class machine_level(model_level):
 
         # Make sure all channels are present
         if not all(channel_check):
-            raise Exception()
+            self.failure("Could not find all the expected channels")
         
         # Check number of channels
         if self.channels.size != self.ref_channels.size:
-            raise Exception("Did not receive expected number of channels. This can arise due to poorly inputted channels.")
+            self.failure("Did not receive expected number of channels. This can arise due to poorly inputted channels.")
 
     def load_data_mne(self):
         self.mne_data = read_raw_edf(self.args.infile).get_data()
@@ -147,7 +150,7 @@ class machine_level(model_level):
     def check_nan(self):
 
         if np.isnan(self.mne_data).any():
-            raise Exception("NaNs found in the data.")
+            self.failure("NaNs found in the data.")
         
     def check_running_stats(self,window_size):
 
@@ -177,7 +180,7 @@ class machine_level(model_level):
         # Get the channel wide variance sum. Zero means all channels had zero variance for the window size
         mask = variance_array.sum(axis=0)==0
         if (mask).any():
-            raise Exception(f"All channels have zero variance around second {self.args.sampfreq*np.arange(mask.size)[mask]} seconds.")
+            self.failure(f"All channels have zero variance around second {self.args.sampfreq*np.arange(mask.size)[mask]} seconds.")
 
 if __name__ == '__main__':
 
