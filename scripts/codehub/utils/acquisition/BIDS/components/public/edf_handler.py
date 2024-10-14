@@ -262,7 +262,7 @@ class edf_handler(Subject):
                 raise Exception("Please provide a --session_number to the input csv.")
             if 'run_number' not in input_cols:
                 raise Exception("Please provide a --run_number to the input csv.")
-            if 'uid_number' not in input_cols:
+            if 'uid' not in input_cols:
                 raise Exception("Please provide a --uid_number to the input csv.")
         else:
             if args.subject_number == None:
