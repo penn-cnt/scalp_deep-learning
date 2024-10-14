@@ -80,8 +80,7 @@ class machine_level(model_level):
         # Check that the channel headers are all present and contain data
         channel_header_mask       = []
         channel_header_entry_mask = []
-        print(self.header)
-        for ival in self.header['SignalHeaders']:
+        for ival in self.header['signalheaders']:
             ikeys = list(ival.keys())
             channel_header_mask.append(all(tmp in ikeys for tmp in self.required_channel_headers))
             channel_header_entry_mask.extend([ival[tmp]==None for tmp in self.required_channel_headers])
