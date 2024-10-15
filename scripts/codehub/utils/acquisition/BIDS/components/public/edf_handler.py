@@ -51,7 +51,10 @@ class edf_handler(Subject):
             # Save the data
             self.save_data(fidx)
 
-            # Save the data record
+            # Update the data records
+            self.get_data_record()
+            self.new_data_record = PD.concat((self.data_record,self.new_data_record))
+            self.new_data_record = self.new_data_record.drop_duplicates()
             self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
             self.new_data_record.to_csv(self.data_record_path,index=False)
 
