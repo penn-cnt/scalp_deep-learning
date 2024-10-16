@@ -18,10 +18,10 @@ from bids.layout.writing import build_path
 class prepare_imaging:
 
     def __init__(self,args):
-        self.args       = args
-        self.newflag    = False
-        self.lakekeys   = ['data_type', 'scan_type', 'modality', 'task', 'acq', 'ce']
-        self.white_list = [] 
+        self.args             = args
+        self.newflag          = False
+        self.lakekeys         = ['data_type', 'scan_type', 'modality', 'task', 'acq', 'ce']
+        self.protocol_counter = {}
 
     def workflow(self):
         """
@@ -78,12 +78,15 @@ class prepare_imaging:
                         break
                     elif keyflag == 'n':
                         self.acquire_keys(self.series)
-
-                # Get the bids keys
-                #bidskeys = self.get_protocol()
+                
+                # Keep count of how many times we've used this protocol
+                if self.series not in self.protocol_counter.keys():
+                    self.protocol_counter[self.series] = 1
+                else:
+                    self.protocol_counter[self.series] += 1
 
                 # Save the results
-                #self.save_data(ifile,bidskeys)
+                self.save_data(ifile,self.proposed_keys)
 
         # Update data lake as needed
         #self.update_datalake()
@@ -192,74 +195,14 @@ class prepare_imaging:
         self.datalake[iprotocol] = output
         self.keys = np.array(list(self.datalake.keys()))
 
-    def print_protocol(self,series,idict):
-        
-        # Make a pretty table to make interpreting results easier
-        table = PrettyTable(hrules=ALL)
-        tcols = ['protocol_name']
-        tcols.extend(self.lakekeys)
-        table.field_names = tcols
-        row = [series]
-        for ikey in self.lakekeys:
-            row.append(idict[ikey])
-        table.add_row(row)
-        table.align['path'] = 'l'
-        print(table)
-
-        # get user input if this is okay
-        while True:
-            user_input = input("Is this okay (Yy/Nn)? ")
-            if user_input.lower() in ['y','n']:
-                break
-        return user_input
-
-    def get_protocol(self):
-
-        # Check white list for already reviewed protocols
-        if self.series not in self.white_list:
-
-            # If there are no entries, get info from the user
-            if not self.proposed_keys.keys():
-                while True:
-                    passflag = self.print_protocol(self.series,self.proposed_keys)
-                    if passflag.lower() == 'y':
-                        break
-                    else:
-                        self.acquire_keys(self.series)
-                    self.proposed_keys = self.datalake[self.series]
-            print(self.proposed_keys)
-
-
-            """
-            # Get/confirm information
-            if not self.proposed_keys.keys():
-                self.acquire_keys(self.series)
-                output = self.datalake[self.series]
-            else:
-                while True:
-                    passflag = self.print_protocol(self.series,output)
-                    if passflag.lower() == 'y':
-                        break
-                    else:
-                        self.acquire_keys(self.series)
-                    output = self.datalake[self.series]
-            """
-
-        # Add this protocol to the whitelist to avoid asking again
-        self.white_list.append(self.series)
-
-        return output
-
     def save_data(self,ifile,bidskeys):
-
-        print(bidskeys)
 
         # Update keywords
         entities  = {}
 
         # Define the required keys
-        entities['subject']     = self.args.subject
-        entities['run']         = self.args.run
+        entities['subject'] = self.args.subject
+        entities['run']     = self.protocol_counter[self.series]
         
         # Check for undefined data type
         datatype = bidskeys['data_type']
