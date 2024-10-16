@@ -175,15 +175,15 @@ class prepare_imaging:
         output = {}
 
         # Get new inputs
-        print(f"Please provide information for '{iprotocol}'\n")
+        print(f"Please provide information for '{iprotocol}'")
         for ikey in self.lakekeys:
             if ikey == 'data_type':
                 while True:
-                    newval = input("Data Type (Required): ")
+                    newval = input("    Data Type (Required): ")
                     if newval != '':
                         break
             else:
-                newval = input(f"{ikey} (''=None): ")
+                newval = input(f"    {ikey} (''=None): ")
             if newval == '':
                 newval = None
             output[ikey] = newval
