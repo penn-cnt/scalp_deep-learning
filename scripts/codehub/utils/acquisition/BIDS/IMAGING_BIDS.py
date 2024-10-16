@@ -42,7 +42,6 @@ class prepare_imaging:
             self.infer_sessions()
 
         # Loop over the files
-        print("\n")
         for ifile in self.json_files:
             
             # Open the metadata
@@ -53,7 +52,7 @@ class prepare_imaging:
 
             # Ask the user if we should move this file
             while True:
-                print(f"Current File: {ifile}")
+                print(f"\nCurrent File: {ifile}")
                 print(f"Current protocol name: {self.series}")
                 print(f"=============")
 
