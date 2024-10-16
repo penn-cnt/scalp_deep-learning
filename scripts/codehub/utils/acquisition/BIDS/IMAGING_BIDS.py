@@ -46,7 +46,7 @@ class prepare_imaging:
         for ifile in tqdm(self.json_files, total=len(self.json_files), desc="Making BIDS"):
             
             # Open the metadata
-            self.metadata = json.load(open(infile,'r'))
+            self.metadata = json.load(open(ifile,'r'))
             
             # get the protocol name
             self.series = self.metadata["ProtocolName"].lower()
