@@ -203,7 +203,7 @@ class prepare_imaging:
 
         # Define the required keys
         entities['subject'] = self.args.subject
-        entities['run']     = self.protocol_counter[self.series]
+        entities['run']     = f"{self.protocol_counter[self.series]:02d}"
         
         # Check for undefined data type
         datatype = bidskeys['data_type']
@@ -238,7 +238,7 @@ class prepare_imaging:
             match_str += '[_ce-{ceagent}]'
 
         # Add in the run number here
-        match_str += '[_run-{run:02d}]'
+        match_str += '[_run-{run}]'
 
         # Remaining optional keys
         if type(bidskeys['modality']) == str or not bidskeys['modality'] != None:
