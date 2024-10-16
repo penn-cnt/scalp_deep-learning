@@ -8,7 +8,6 @@ import argparse
 import datetime
 import numpy as np
 from sys import exit
-from tqdm import tqdm
 from pathlib import Path as Pathlib
 from prettytable import PrettyTable,ALL
 
@@ -43,7 +42,7 @@ class prepare_imaging:
             self.infer_sessions()
 
         # Loop over the files
-        for ifile in tqdm(self.json_files, total=len(self.json_files), desc="Making BIDS"):
+        for ifile in self.json_files:
             
             # Open the metadata
             self.metadata = json.load(open(ifile,'r'))
