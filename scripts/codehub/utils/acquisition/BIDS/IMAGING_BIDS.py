@@ -42,6 +42,7 @@ class prepare_imaging:
             self.infer_sessions()
 
         # Loop over the files
+        print("\n")
         for ifile in self.json_files:
             
             # Open the metadata
@@ -54,9 +55,10 @@ class prepare_imaging:
             while True:
                 print(f"Current File: {ifile}")
                 print(f"Current protocol name: {self.series}")
+                print(f"=============")
 
                 # Ask if we should move this file
-                continueflag = input(f"\nCreate BIDS data for this file (Yy/Nn)? ")
+                continueflag = input(f"Create BIDS data for this file (Yy/Nn)? ")
                 if continueflag.lower() in ['y','n']:
                     break
 
@@ -71,7 +73,7 @@ class prepare_imaging:
                         self.proposed_keys = {}
 
                     # Check if we should use this bids keywords
-                    print(f"Current proposed keys: {self.proposed_keys}")
+                    print(f"\nCurrent proposed keys: {self.proposed_keys}")
                     keyflag = input(f"Use current keyword set (Yy/Nn)? ")
                     if keyflag.lower() == 'y':
                         break
