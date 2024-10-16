@@ -57,7 +57,7 @@ class prepare_imaging:
                 print(f"Current protocol name: {self.series}")
 
                 # Ask if we should move this file
-                continueflag = input(f"Create BIDS data for this file (Yy/Nn)? ")
+                continueflag = input(f"\nCreate BIDS data for this file (Yy/Nn)? ")
                 if continueflag.lower() in ['y','n']:
                     break
 
@@ -74,9 +74,9 @@ class prepare_imaging:
                     # Check if we should use this bids keywords
                     print(f"Current proposed keys: {self.proposed_keys}")
                     keyflag = input(f"Use current keyword set (Yy/Nn)? ")
-                    if keyflag.lower() in ['y','n']:
+                    if keyflag.lower() == 'y':
                         break
-                    else:
+                    elif keyflag == 'n':
                         self.acquire_keys()
 
                 # Get the bids keys
