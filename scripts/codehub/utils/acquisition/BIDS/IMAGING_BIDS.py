@@ -51,19 +51,32 @@ class prepare_imaging:
             # get the protocol name
             self.series = self.metadata["ProtocolName"].lower()
 
+            # get the appropriate keywords
+            if self.series in self.keys:
+                self.proposed_keys = self.datalake[self.series]
+            else:
+                self.proposed_keys = {}
+
+            # Ask the user if we should move this file
             while True:
-                continueflag = input(f"Use file ({ifile}) with protocol name ({self.series}) (Yy/Nn)? ")
+                print(f"Current File: {ifile}")
+                print(f"Current protocol name: {self.series}")
+                print(f"Current proposed keys: {self.proposed_keys}")
+                continueflag = input(f"Create BIDS data for this file (Yy/Nn)? ")
                 if continueflag.lower() in ['y','n']:
                     break
+
+            # If requested, create the keywords and proceed
             if continueflag.lower() == 'y':
+                pass
                 # Get the bids keys
-                bidskeys = self.get_protocol(ifile)
+                #bidskeys = self.get_protocol(ifile)
 
                 # Save the results
-                self.save_data(ifile,bidskeys)
+                #self.save_data(ifile,bidskeys)
 
         # Update data lake as needed
-        self.update_datalake()
+        #self.update_datalake()
 
     def infer_sessions(self):
 
@@ -108,9 +121,13 @@ class prepare_imaging:
             'License': 'License information'
             }
 
+        # Define the output path
+        description_path = f"{self.args.bidsroot}dataset_description.json"
+        
         # Save the dataset description as JSON
-        with open(f"{self.args.bidsroot}dataset_description.json", 'w') as f:
-            json.dump(dataset_description, f, indent=4)
+        if not os.path.exists(description_path):
+            with open(description_path, 'w') as f:
+                json.dump(dataset_description, f, indent=4)
 
     def update_datalake(self):
 
@@ -187,12 +204,6 @@ class prepare_imaging:
         return user_input
 
     def get_protocol(self):
-
-        # get the appropriate keywords
-        if self.series in self.keys:
-            output = self.datalake[self.series]
-        else:
-            output = {}
 
         # Check white list for already reviewed protocols
         if self.series not in self.white_list:
