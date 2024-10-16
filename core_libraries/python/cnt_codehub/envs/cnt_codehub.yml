@@ -30,3 +30,4 @@ dependencies:
     - fooof
     - neurodsp
     - prettytable
+    - pybids
