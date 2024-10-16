@@ -68,9 +68,9 @@ class prepare_imaging:
 
             # If requested, create the keywords and proceed
             if continueflag.lower() == 'y':
-                pass
+
                 # Get the bids keys
-                #bidskeys = self.get_protocol(ifile)
+                bidskeys = self.get_protocol(ifile)
 
                 # Save the results
                 #self.save_data(ifile,bidskeys)
@@ -207,8 +207,22 @@ class prepare_imaging:
 
         # Check white list for already reviewed protocols
         if self.series not in self.white_list:
+
+            # If there are no entries, get info from the user
+            if not self.proposed_keys.keys():
+                while True:
+                    passflag = self.print_protocol(self.series,self.proposed_keys)
+                    if passflag.lower() == 'y':
+                        break
+                    else:
+                        self.acquire_keys(self.series)
+                    self.proposed_keys = self.datalake[self.series]
+            print(self.proposed_keys)
+
+
+            """
             # Get/confirm information
-            if not output.keys():
+            if not self.proposed_keys.keys():
                 self.acquire_keys(self.series)
                 output = self.datalake[self.series]
             else:
@@ -219,6 +233,7 @@ class prepare_imaging:
                     else:
                         self.acquire_keys(self.series)
                     output = self.datalake[self.series]
+            """
 
         # Add this protocol to the whitelist to avoid asking again
         self.white_list.append(self.series)
