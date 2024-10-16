@@ -70,7 +70,7 @@ class prepare_imaging:
             if continueflag.lower() == 'y':
 
                 # Get the bids keys
-                bidskeys = self.get_protocol(ifile)
+                bidskeys = self.get_protocol()
 
                 # Save the results
                 #self.save_data(ifile,bidskeys)
