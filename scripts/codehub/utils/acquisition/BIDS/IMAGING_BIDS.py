@@ -89,7 +89,7 @@ class prepare_imaging:
                 self.save_data(ifile,self.proposed_keys)
 
         # Update data lake as needed
-        #self.update_datalake()
+        self.update_datalake()
 
     def infer_sessions(self):
 
