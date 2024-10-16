@@ -42,7 +42,7 @@ class prepare_imaging:
             self.infer_sessions()
 
         # Loop over the files
-        for ifile in self.json_files:
+        for fcnt,ifile in enumerate(self.json_files):
             
             # Open the metadata
             self.metadata = json.load(open(ifile,'r'))
@@ -52,7 +52,7 @@ class prepare_imaging:
 
             # Ask the user if we should move this file
             while True:
-                print(f"\nCurrent File: {ifile}")
+                print(f"\nCurrent File ({(fcnt+1)/len(self.json_files)}): {ifile}")
                 print(f"Current protocol name: {self.series}")
                 print(f"=============")
 
