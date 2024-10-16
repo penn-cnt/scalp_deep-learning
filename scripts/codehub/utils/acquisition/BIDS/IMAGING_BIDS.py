@@ -52,7 +52,7 @@ class prepare_imaging:
 
             # Ask the user if we should move this file
             while True:
-                print(f"\nCurrent File ({(fcnt+1)/len(self.json_files)}): {ifile}")
+                print(f"\nCurrent File ({fcnt+1} out of {len(self.json_files)}): {ifile}")
                 print(f"Current protocol name: {self.series}")
                 print(f"=============")
 
