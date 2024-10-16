@@ -123,7 +123,8 @@ class prepare_imaging:
             for idx,ifile in enumerate(self.json_files):
                 
                 # For a simple mapping by 
-                self.session_map[ifile] = f"{np.where(udates==dates[idx])[0][0]:02d}"
+                session_index = np.where(udates==dates[idx])[0][0]
+                self.session_map[ifile] = f"{session_index+1:02d}"
 
     def make_description(self):
 
@@ -237,7 +238,7 @@ class prepare_imaging:
             match_str += '[_ce-{ceagent}]'
 
         # Add in the run number here
-        match_str += '[_run-{run}]'
+        match_str += '[_run-{run:02d}]'
 
         # Remaining optional keys
         if type(bidskeys['modality']) == str or not bidskeys['modality'] != None:
