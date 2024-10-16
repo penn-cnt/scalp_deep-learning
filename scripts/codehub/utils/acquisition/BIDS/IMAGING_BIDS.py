@@ -45,11 +45,22 @@ class prepare_imaging:
         # Loop over the files
         for ifile in tqdm(self.json_files, total=len(self.json_files), desc="Making BIDS"):
             
-            # Get the bids keys
-            bidskeys = self.get_protocol(ifile)
+            # Open the metadata
+            self.metadata = json.load(open(infile,'r'))
             
-            # Save the results
-            self.save_data(ifile,bidskeys)
+            # get the protocol name
+            self.series = self.metadata["ProtocolName"].lower()
+
+            while True:
+                continueflag = input(f"Use file ({ifile}) with protocol name ({self.series}) (Yy/Nn)? ")
+                if continueflag.lower() in ['y','n']:
+                    break
+            if continueflag.lower() == 'y':
+                # Get the bids keys
+                bidskeys = self.get_protocol(ifile)
+
+                # Save the results
+                self.save_data(ifile,bidskeys)
 
         # Update data lake as needed
         self.update_datalake()
@@ -175,40 +186,31 @@ class prepare_imaging:
                 break
         return user_input
 
-    def get_protocol(self,infile):
-
-        # Open the metadata
-        metadata = json.load(open(infile,'r'))
-        
-        # get the protocol name
-        series     = metadata["ProtocolName"].lower()
-        series_alt = series.replace(' ','_')
+    def get_protocol(self):
 
         # get the appropriate keywords
-        if series in self.keys:
-            output = self.datalake[series]
-        elif series_alt in self.keys:
-            output = self.datalake[series_alt]
+        if self.series in self.keys:
+            output = self.datalake[self.series]
         else:
             output = {}
 
         # Check white list for already reviewed protocols
-        if series not in self.white_list:
+        if self.series not in self.white_list:
             # Get/confirm information
             if not output.keys():
-                self.acquire_keys(series)
-                output = self.datalake[series]
+                self.acquire_keys(self.series)
+                output = self.datalake[self.series]
             else:
                 while True:
-                    passflag = self.print_protocol(series,output)
+                    passflag = self.print_protocol(self.series,output)
                     if passflag.lower() == 'y':
                         break
                     else:
-                        self.acquire_keys(series)
-                    output = self.datalake[series]
+                        self.acquire_keys(self.series)
+                    output = self.datalake[self.series]
 
         # Add this protocol to the whitelist to avoid asking again
-        self.white_list.append(series)
+        self.white_list.append(self.series)
 
         return output
 
