@@ -77,7 +77,7 @@ class prepare_imaging:
                     if keyflag.lower() == 'y':
                         break
                     elif keyflag == 'n':
-                        self.acquire_keys()
+                        self.acquire_keys(self.series)
 
                 # Get the bids keys
                 #bidskeys = self.get_protocol()
