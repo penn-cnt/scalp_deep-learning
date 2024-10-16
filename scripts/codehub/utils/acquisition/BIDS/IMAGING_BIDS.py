@@ -51,26 +51,36 @@ class prepare_imaging:
             # get the protocol name
             self.series = self.metadata["ProtocolName"].lower()
 
-            # get the appropriate keywords
-            if self.series in self.keys:
-                self.proposed_keys = self.datalake[self.series]
-            else:
-                self.proposed_keys = {}
-
             # Ask the user if we should move this file
             while True:
                 print(f"Current File: {ifile}")
                 print(f"Current protocol name: {self.series}")
-                print(f"Current proposed keys: {self.proposed_keys}")
+
+                # Ask if we should move this file
                 continueflag = input(f"Create BIDS data for this file (Yy/Nn)? ")
                 if continueflag.lower() in ['y','n']:
                     break
 
             # If requested, create the keywords and proceed
             if continueflag.lower() == 'y':
+                while True:
+
+                    # get the appropriate keywords
+                    if self.series in self.keys:
+                        self.proposed_keys = self.datalake[self.series]
+                    else:
+                        self.proposed_keys = {}
+
+                    # Check if we should use this bids keywords
+                    print(f"Current proposed keys: {self.proposed_keys}")
+                    keyflag = input(f"Use current keyword set (Yy/Nn)? ")
+                    if keyflag.lower() in ['y','n']:
+                        break
+                    else:
+                        self.acquire_keys()
 
                 # Get the bids keys
-                bidskeys = self.get_protocol()
+                #bidskeys = self.get_protocol()
 
                 # Save the results
                 #self.save_data(ifile,bidskeys)
