@@ -14,9 +14,18 @@ def return_backend(user_request='MNE'):
 class backend_observer(Observer):
 
     def listen_data(self):
+        
+        # Send the data through the backend handler
         idata,itype = self.backend.workflow(self.args,self.data,self.channels,self.fs)
+
+        # Add objects to the shared list
         self.data_list.append(idata)
         self.type_list.append(itype)
+
+        # Clean up the memory space by removing the data
+        self.data     = None
+        self.channels = None
+        self.fs       = None
 
 class MNE_handler:
 
