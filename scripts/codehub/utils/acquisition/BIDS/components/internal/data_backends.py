@@ -14,9 +14,13 @@ def return_backend(user_request='MNE'):
 class backend_observer(Observer):
 
     def listen_data(self):
-        idata,itype = self.backend.workflow(self.args,self.data,self.channels,self.fs)
-        self.data_list.append(idata)
-        self.type_list.append(itype)
+        if self.args.direct_copy == None:
+            idata,itype = self.backend.workflow(self.args,self.data,self.channels,self.fs)
+            self.data_list.append(idata)
+            self.type_list.append(itype)
+        else:
+            self.data_list.append(self.data)
+            self.type_list.append(self.args.direct_copy)
 
 class MNE_handler:
 
