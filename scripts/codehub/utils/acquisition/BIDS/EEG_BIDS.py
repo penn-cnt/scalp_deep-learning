@@ -107,7 +107,6 @@ if __name__ == '__main__':
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug tools. Mainly removes files after generation.")
     misc_group.add_argument("--randomize", action='store_true', default=False, help="Randomize load order. Useful if doing a bit multipull and we're left with most of the work on a single core.")
     misc_group.add_argument("--zero_bad_data", action='store_true', default=False, help="Zero out bad data potions.")
-    misc_group.add_argument("--direct_copy", type=str, help="EDF Handler Only. If None, remake raw to ensure everything is valid. Otherwise, prove the datatype here to just directly use the existing raw.")
     args = parser.parse_args()
 
     # If the user wants an example input file, print it then close application
@@ -117,8 +116,6 @@ if __name__ == '__main__':
 
     # Basic clean-up
     if args.bids_root[-1] != '/': args.bids_root+='/'
-    if args.edf == False:
-        args.direct_copy = None
 
     # Main Logic
     if args.ieeg:

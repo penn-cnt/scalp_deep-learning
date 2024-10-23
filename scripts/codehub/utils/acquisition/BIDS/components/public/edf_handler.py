@@ -205,12 +205,9 @@ class edf_handler(Subject):
     def load_data(self,infile):
         try:
             raw = read_raw_edf(infile,verbose=False)
-            if self.args.direct_copy == None:
-                self.data         = raw.get_data().T
-                self.channels     = raw.ch_names
-                self.fs           = raw.info.get('sfreq')
-            else:
-                self.data = raw
+            self.data         = raw.get_data().T
+            self.channels     = raw.ch_names
+            self.fs           = raw.info.get('sfreq')
             self.success_flag = True
         except Exception as e:
             self.success_flag = False
