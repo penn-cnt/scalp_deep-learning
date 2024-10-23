@@ -69,8 +69,8 @@ class ieeg_handler(Subject):
             self.multipull_manager()
 
         # Remove if debugging
-        if self.args.debug:
-            os.system(f"rm -r {self.args.bids_root}*")
+        #if self.args.debug:
+        #    os.system(f"rm -r {self.args.bids_root}*")
 
     def attach_objects(self):
         """
