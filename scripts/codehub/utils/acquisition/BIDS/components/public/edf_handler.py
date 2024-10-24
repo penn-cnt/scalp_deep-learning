@@ -239,12 +239,11 @@ class edf_handler(Subject):
                                  'task':'rest','fs':iraw.info["sfreq"],'start':istart,'duration':iduration,'uid':self.uid_list[fidx]}
                 self.notify_metadata_observers()
 
-                # Make the actual bids data
-                if not self.args.copy_edf:
-                    # Save the data without events until a future release
-                    print(f"Converting {self.edf_files[fidx]} to BIDS...")
-                    success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
-                else:
+                # Save the data without events until a future release
+                print(f"Converting {self.edf_files[fidx]} to BIDS...")
+                success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
+
+                if not success_flag and self.args.copy_edf:
                     print(f"Copying {self.edf_files[fidx]} to BIDS...")
                     success_flag = self.BH.copy_raw_edf(self.edf_files[fidx],self.type_list[idx],debug=self.args.debug)
 
