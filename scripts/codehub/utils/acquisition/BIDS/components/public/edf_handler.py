@@ -243,7 +243,7 @@ class edf_handler(Subject):
                 print(f"Converting {self.edf_files[fidx]} to BIDS...")
                 success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
 
-                if not success_flag:
+                if not success_flag and self.args.zero_bad_data:
 
                     # Check if we can get around potential pmin and pmax issues
                     idata  = iraw.get_data()
