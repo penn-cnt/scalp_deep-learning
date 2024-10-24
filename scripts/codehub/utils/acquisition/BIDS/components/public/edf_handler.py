@@ -246,7 +246,7 @@ class edf_handler(Subject):
                     success_flag = self.BH.save_data_wo_events(iraw, debug=self.args.debug)
                 else:
                     print(f"Copying {self.edf_files[fidx]} to BIDS...")
-                    success_flag = self.BH.copy_raw_edf(self.edf_files[fidx],self.type_list[idx],debug=self.args.debyg)
+                    success_flag = self.BH.copy_raw_edf(self.edf_files[fidx],self.type_list[idx],debug=self.args.debug)
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
