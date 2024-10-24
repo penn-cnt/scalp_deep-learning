@@ -1,3 +1,4 @@
+import os
 import time
 import getpass
 import pickle
@@ -174,6 +175,16 @@ class BIDS_handler:
         except Exception as e:
             if debug:
                 print("Raw write error: {e}")
+            return False
+        
+    def copy_raw_edf(self,original_path,debug=False):
+
+        try:
+            os.system(f"cp {original_path} {str(self.bids_path)+f"_{itype}.edf"}")
+            return True
+        except Exception as e:
+            if debug:
+                print("Raw copy error: {e}")
             return False
 
 
