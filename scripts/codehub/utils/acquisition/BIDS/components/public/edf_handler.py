@@ -245,15 +245,8 @@ class edf_handler(Subject):
 
                 if not success_flag and self.args.zero_bad_data:
 
-                    # Check if we can get around potential pmin and pmax issues
-                    idata  = iraw.get_data()
-                    allmin = idata.min()
-                    allmax = idata.max()
-                    idata  = None
-
-                    if allmin!=allmax:
-                        # try a direct save
-                        success_flag = self.BH.save_raw_edf(iraw,self.type_list[idx],pmin=allmin,pmax=allmax,debug=self.args.debug)
+                    print(self.edf_files[fidx])
+                    exit()
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
