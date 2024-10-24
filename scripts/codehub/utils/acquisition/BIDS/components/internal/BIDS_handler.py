@@ -177,10 +177,10 @@ class BIDS_handler:
                 print("Raw write error: {e}")
             return False
         
-    def copy_raw_edf(self,original_path,debug=False):
+    def copy_raw_edf(self,original_path,itype,debug=False):
 
         try:
-            os.system(f"cp {original_path} {str(self.bids_path)+f"_{itype}.edf"}")
+            os.system(f"cp {original_path} {str(self.bids_path)}_{itype}.edf")
             return True
         except Exception as e:
             if debug:
