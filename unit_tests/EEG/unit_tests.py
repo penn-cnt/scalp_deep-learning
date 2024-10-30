@@ -130,16 +130,18 @@ class machine_level(model_level):
             self.failure("Did not receive expected number of channels. This can arise due to poorly inputted channels.")
 
     def load_data_mne(self):
-        self.mne_data = read_raw_edf(self.args.infile).get_data()
+        self.mne_data = read_raw_edf(self.args.infile).get_data()[:,self.args.start_samp:self.args.end_samp]
 
     def load_data_pyedf(self):
         self.pyedf_data, self.pyedf_chan_info,_ = read_edf(self.args.infile)
         self.pyedf_data *= 1e-6
+        self.pyedf_data  = self.pyedf_data[:,self.args.start_samp:self.args.end_samp]
 
     def compare_libraries(self,tol=1e-8):
 
         diffs=self.mne_data-self.pyedf_data
         if (diffs>tol).any():
+            print("Tolerance issue.")
             exit(1)
 
         # Drop the pyedf data to reduce memory usage now that we dont need it
@@ -188,6 +190,8 @@ if __name__ == '__main__':
     parser.add_argument("--sampfreq", type=int, default=256, help='Expected sampling frequency')
     parser.add_argument("--channel_file", type=str, default='configs/hup_standard.csv', help='CSV file containing the expected channels')
     parser.add_argument("--silent", action='store_true', default=False, help="Silence exceptions.")
+    parser.add_argument("--start_samp", default=0, help="Start sample to read data in from. Useful if spot checking a large file. (Warning. Still requires initial load of full data into memory.)")
+    parser.add_argument("--end_samp", default=-1, help="End sample to read data in from. Useful if spot checking a large file. (Warning. Still requires initial load of full data into memory.)")
     args = parser.parse_args()
 
     # Run machine level tests
