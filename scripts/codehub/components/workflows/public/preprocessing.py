@@ -320,6 +320,10 @@ class preprocessing_utils:
         if outpath == None:
             outpath = self.outdir+f"/preprocessing_snapshot/pickle/{self.step_num:02}/"
         outfile = outpath+self.filename
+        
+        print(substr)
+        print(self.filename)
+        exit()
 
         # Downcast the results to a smaller size
         for icol in self.dataset.columns:
