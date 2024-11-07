@@ -169,6 +169,7 @@ class data_curation:
 
                 if ifile == '/mnt/leif/littlab/cache/Human_Data/scalp/BIDS/sub-00001/ses-preimplant008/eeg/sub-00001_ses-preimplant008_task-task_run-07_eeg.edf':
                     print(t_start)
+                    print(t_end)
                     exit()
 
                 # Calculate the correct step if using -1 flags to denote rest of file
