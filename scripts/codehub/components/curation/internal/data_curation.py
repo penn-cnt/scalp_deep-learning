@@ -149,7 +149,7 @@ class data_curation:
             for ifile in self.files:
 
                 # Read in just the header to get duration
-                t_end = self.args.t_end
+                t_end = self.args.t_end.copy()
                 for idx,ival in enumerate(t_end):
                     if ival == -1:
 
@@ -159,14 +159,8 @@ class data_curation:
                             dtype = ifile.split('.')[-1].lower()
                         
                         if dtype == 'edf':
-                            print(t_end[idx])
                             header = read_edf_header(ifile)
-                            print(header)
-                            print(header['Duration'])
-                            exit()
-
-                            t_end[idx] = ['Duration']
-                            print(t_end[idx])
+                            t_end[idx] = header['Duration']
                         elif dtype == 'pickle':
                             idict      = pickle.load(open(ifile,'rb'))
                             t_end[idx] = idict['data'].shape[0]/idict['samp_freq']
