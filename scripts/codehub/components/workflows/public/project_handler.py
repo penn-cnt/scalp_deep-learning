@@ -45,9 +45,6 @@ class project_handlers:
             self.t_end    = self.end_times[ii]
             self.t_window = self.ref_windows[ii]
 
-            if 'sub-00001_ses-preimplant008_task-task_run-07_eeg.edf' in ifile:
-                print(self.infile,self.t_start,self.t_window)
-
             # Initialize the metadata container
             self.file_cntr = ii
 

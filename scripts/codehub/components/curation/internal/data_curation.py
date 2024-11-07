@@ -228,6 +228,10 @@ class data_curation:
         
         self.test_input_data()
         self.limit_data_volume()
+
+        print(self.files)
+        exit()
+
         self.create_time_windows()
         return self.files,self.start_times,self.end_times,self.ref_win
 
