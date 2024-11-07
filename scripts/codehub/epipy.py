@@ -463,6 +463,11 @@ if __name__ == "__main__":
     DC = data_curation(args,files,start_times,end_times)
     files, start_times, end_times,ref_windows = DC.get_dataload()
 
+    iDF = PD.DataFrame(files,columns=['file'])
+    iDF['start'] = start_times
+    iDF.to_csv("foo.csv",index=False)
+    exit()
+
     # Make configuration files as needed
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     if args.preprocess_file == None and not args.no_preprocess_flag:
