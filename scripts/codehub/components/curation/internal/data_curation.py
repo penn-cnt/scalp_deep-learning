@@ -159,10 +159,10 @@ class data_curation:
                             dtype = ifile.split('.')[-1].lower()
                         
                         if dtype == 'edf':
-                            print("A")
+                            print(t_end[idx])
                             t_end[idx] = read_edf_header(ifile)['Duration']
+                            print(t_end[idx])
                         elif dtype == 'pickle':
-                            print("B")
                             idict      = pickle.load(open(ifile,'rb'))
                             t_end[idx] = idict['data'].shape[0]/idict['samp_freq']
 
