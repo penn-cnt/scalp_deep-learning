@@ -45,11 +45,7 @@ class project_handlers:
             self.t_end    = self.end_times[ii]
             self.t_window = self.ref_windows[ii]
 
-            print(ifile)
-            if 'edf' in ifile:
-                print("true")
-            exit()
-            if ifile == 'sub-00001_ses-preimplant008_task-task_run-07_eeg.edf':
+            if 'sub-00001_ses-preimplant008_task-task_run-07_eeg.edf' in ifile:
                 print(self.infile,self.t_start,self.t_window)
 
             # Initialize the metadata container
