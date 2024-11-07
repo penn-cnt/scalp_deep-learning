@@ -45,6 +45,9 @@ class project_handlers:
             self.t_end    = self.end_times[ii]
             self.t_window = self.ref_windows[ii]
 
+            if ifile == 'sub-00001_ses-preimplant008_task-task_run-07_eeg.edf':
+                print(self.infile,self.t_start,self.t_window)
+
             # Initialize the metadata container
             self.file_cntr = ii
 
@@ -150,9 +153,6 @@ class project_handlers:
 
                 # Put the data into a specific montage
                 self.montaged_dataframe = channel_montage.pipeline(self,df)
-
-                print(self.montaged_dataframe)
-                exit()
 
                 # Update the output list
                 output_manager.update_output_list(self,self.montaged_dataframe.values)
