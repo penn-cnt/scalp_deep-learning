@@ -229,7 +229,10 @@ class data_curation:
         self.test_input_data()
         self.limit_data_volume()
 
-        print(self.files)
+        mask = ['sub-00001_ses-preimplant008_task-task_run-07_eeg.edf' in ifile for ifile in self.files]
+        inds = np.arange(len(files))[mask]
+        print(self.files[inds])
+        print(self.start_times[inds])
         exit()
 
         self.create_time_windows()
