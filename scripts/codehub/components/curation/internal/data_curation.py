@@ -167,6 +167,10 @@ class data_curation:
                 # Get the start time for the windows
                 t_start = self.args.t_start
 
+                if ifile == '/mnt/leif/littlab/cache/Human_Data/scalp/BIDS/sub-00001/ses-preimplant008/eeg/sub-00001_ses-preimplant008_task-task_run-07_eeg.edf':
+                    print(t_start)
+                    exit()
+
                 # Calculate the correct step if using -1 flags to denote rest of file
                 t_window = self.args.t_window.copy()
                 for idx,ival in enumerate(t_window):
@@ -228,6 +232,7 @@ class data_curation:
         
         self.test_input_data()
         self.limit_data_volume()
+        self.create_time_windows()
 
         mask = ['sub-00001_ses-preimplant008_task-task_run-07_eeg.edf' in ifile for ifile in self.files]
         inds = np.arange(len(self.files))[mask]
@@ -235,7 +240,6 @@ class data_curation:
         print(self.start_times[inds])
         exit()
 
-        self.create_time_windows()
         return self.files,self.start_times,self.end_times,self.ref_win
 
     ########################################################
