@@ -160,7 +160,12 @@ class data_curation:
                         
                         if dtype == 'edf':
                             print(t_end[idx])
-                            t_end[idx] = read_edf_header(ifile)['Duration']
+                            header = read_edf_header(ifile)
+                            print(header)
+                            print(header['Duration'])
+                            exit()
+
+                            t_end[idx] = ['Duration']
                             print(t_end[idx])
                         elif dtype == 'pickle':
                             idict      = pickle.load(open(ifile,'rb'))
