@@ -244,7 +244,49 @@ class signal_processing:
             return spectral_energy,self.optional_tag
         else:
             return spectral_energy,self.optional_tag,(['freqs','psd_welch'],frequencies.astype('float16'),psd.astype('float32'))
-    
+
+    def normalized_spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
+        """
+        Returns the spectral energy using the Welch method.
+
+        Args:
+            low_freq (float, optional): Low frequency cutoff. Defaults to -np.inf.
+            hi_freq (float, optional): High frequency cutoff. Defaults to np.inf.
+            win_size (float, optional): Window size in units of sampling frequency. Defaults to 2.
+            win_stride (float, optional): Window overlap in units of sampling frequency. Defaults to 1.
+
+        Returns:
+            spectral_energy (float): Spectral energy within the frequency band.
+            optional_tag (string): Unique identifier that is added to the output dataframe to show the frequency window for which a welch spectral energy was calculated.
+            (frequencies,psd): If trace is enabled for this pipeline, return the frequencies and psd for this channel for testing.
+        """
+
+        # Add in the optional tagging to denote frequency range of this step
+        low_freq_str      = f"{low_freq:.2f}"
+        hi_freq_str       = f"{hi_freq:.2f}"
+        self.optional_tag = '['+low_freq_str+','+hi_freq_str+']'
+
+        # Get the number of samples in each window for welch average and the overlap
+        nperseg = int(float(win_size) * self.fs)
+        noverlap = int(float(win_stride) * self.fs)
+
+        # Calculate the welch periodogram
+        frequencies, initial_power_spectrum = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
+        initial_power_spectrum              = initial_power_spectrum.flatten()
+        inds                                = (frequencies>=0.5)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
+        freqs                               = frequencies[inds]
+        initial_power_spectrum              = initial_power_spectrum[inds]
+        psd                                 = np.interp(frequencies,freqs,initial_power_spectrum)
+
+        # Calculate the spectral energy
+        mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
+        spectral_energy = np.trapz(psd[mask], frequencies[mask])/np.trapz(psd, frequencies)
+
+        if not self.trace:
+            return spectral_energy,self.optional_tag
+        else:
+            return spectral_energy,self.optional_tag,(['freqs','psd_welch'],frequencies.astype('float16'),psd.astype('float32'))
+
     def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
         """
         Find the topographic peaks in channel data. This is a naive/fast way of finding spikes or slowing.
