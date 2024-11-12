@@ -1,0 +1,44 @@
+    def get_scale(self):
+        scale_fitter.__init__(self)
+        scale_fitter.make_data(self,self.raw_X[:,0])
+        scale_fitter.fit_normal(self)
+
+class scale_fitter:
+
+    def __init__(self):
+        pass
+
+    def make_data(self,X,nbin=1000):
+        self.Xmin    = X[X>0].min()
+        self.Xmax    = X[X>0].max()
+        self.bins    = np.logspace(np.floor(np.log10(self.Xmin)),np.ceil(np.log10(self.Xmax)),nbin)
+        counts,edges = np.histogram(X,bins=self.bins)
+        self.centers = 0.5*(edges[1:]+edges[:-1])
+        self.pdf     = counts/counts.sum()
+
+    def fit_normal(self):
+
+        # Set the distribution type to fit
+        dist = stats.norm
+
+        # Set the approximate bounds
+        max_loc     = np.argmax(self.pdf)
+        loc_bound   = (0.5*max_loc,1.5*max_loc)
+        scale_bound = (0,max_loc)
+        bounds      = [loc_bound,scale_bound]
+
+        # Get the residual on the fit
+        res = stats.fit(dist,self.pdf, bounds)
+
+        # Convert fit params to the right units
+        fit_loc   = res.params.loc 
+        fit_scale = res.params.scale
+        fit_loc_corrected = np.interp(fit_loc,np.arange(self.centers.size),self.centers)
+        return res
+
+
+("sleep_encoder", LabelBinarizer(), self.model_block['sleep_state'])
+
+
+("sleep_encoder", MyLabelBinarizer(), self.model_block['sleep_state']),
+                                ("target_encoder", MyLabelBinarizer(), self.model_block['targets'])

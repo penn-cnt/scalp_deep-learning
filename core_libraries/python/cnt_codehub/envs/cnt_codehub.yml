@@ -3,10 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.0
+  - python==3.10
   - numpy
   - scipy
   - pandas
+  - seaborn
   - requests
   - deprecation
   - tqdm
@@ -16,6 +17,7 @@ dependencies:
   - paramiko
   - nltk
   - pip:
+    - ../wheels/ieeg-1.6-py3-none-any.whl
     - pennprov
     - mne
     - mne-bids
@@ -23,7 +25,6 @@ dependencies:
     - pyEDFlib
     - EDFlib-Python
     - pyyaml
-    - ../wheels/ieeg-1.6-py3-none-any.whl
     - dearpygui
     - pyperclip
     - keyring
@@ -31,3 +32,5 @@ dependencies:
     - neurodsp
     - prettytable
     - pybids
+    - torchvision
+    - edfio
