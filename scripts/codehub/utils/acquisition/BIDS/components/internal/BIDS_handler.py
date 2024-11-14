@@ -98,6 +98,11 @@ class BIDS_handler:
         events             = []
         self.alldesc       = []
         self.event_mapping = {}
+
+        print(annotations)
+        print(ifile,run)
+        exit()
+
         for ii,iannot in enumerate(annotations[ifile][run].keys()):
             
             # Get the raw annotation and the index
