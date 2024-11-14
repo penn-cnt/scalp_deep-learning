@@ -104,6 +104,7 @@ class BIDS_handler:
             # Get the raw annotation and the index
             desc  = annotations[ifile][run][iannot]
             index = (1e-6*iannot)*fs
+            print(desc)
 
             # Make the required mne event mapper
             self.event_mapping[desc] = ii
@@ -113,10 +114,6 @@ class BIDS_handler:
             self.alldesc.append(desc)
         self.events  = np.array(events)
         
-        print(annotations)
-        print(ifile)
-        print(self.event_mapping)
-
     def save_targets(self,target):
 
         # Store the targets
