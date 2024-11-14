@@ -98,7 +98,6 @@ class BIDS_handler:
         # Make the events file and save the results
         events             = []
         self.alldesc       = []
-        self.annot_list    = []
         self.event_mapping = {}
         for ii,iannot in enumerate(annotations[ifile][run].keys()):
             
@@ -108,7 +107,6 @@ class BIDS_handler:
 
             # Make the required mne event mapper
             self.event_mapping[str(iannot)] = ii
-            self.annot_list.append(iannot)
 
             # Store the results
             events.append([index,0,ii])
@@ -135,15 +133,11 @@ class BIDS_handler:
 
         # Save the bids data
         try:
-            annotations = Annotations(self.events[:,0], self.events[:,1], self.annot_list)  
-            raw.set_annotations(annotations)  
-            write_raw_bids(bids_path=self.bids_path, raw=raw, events=self.events, event_id=self.event_mapping, allow_preload=True, format='EDF', overwrite=True, verbose=False)
+            write_raw_bids(bids_path=self.bids_path, raw=raw, events_data=self.events,event_id=self.event_mapping, allow_preload=True, format='EDF', overwrite=True, verbose=False)
             return True
         except Exception as e:
             if debug:
                 print(f"Write error: {e}")
-                print(self.events)
-                print(self.event_mapping)
             return False
         
     def save_data_wo_events(self, raw, debug=False):
