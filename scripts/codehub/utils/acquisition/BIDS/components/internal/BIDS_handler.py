@@ -98,11 +98,6 @@ class BIDS_handler:
         events             = []
         self.alldesc       = []
         self.event_mapping = {}
-
-        print(annotations)
-        print(ifile,run)
-        exit()
-
         for ii,iannot in enumerate(annotations[ifile][run].keys()):
             
             # Get the raw annotation and the index
@@ -115,10 +110,7 @@ class BIDS_handler:
             # Store the results
             events.append([index,0,ii])
             self.alldesc.append(desc)
-        print(events)
         self.events  = np.array(events)
-        print(self.events)
-        exit()
 
     def save_targets(self,target):
 
@@ -147,7 +139,6 @@ class BIDS_handler:
                 print(f"Write error: {e}")
             print(self.events)
             print(self.event_mapping)
-            exit()
             return False
         
     def save_data_wo_events(self, raw, debug=False):
