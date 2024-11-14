@@ -113,8 +113,6 @@ class BIDS_handler:
             self.alldesc.append(desc)
         self.events  = np.array(events)
 
-        print(annotations)
-
     def save_targets(self,target):
 
         # Store the targets

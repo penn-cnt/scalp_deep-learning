@@ -463,7 +463,7 @@ class ieeg_handler(Subject):
             self.session_list = self.annotation_ses
 
             # Loop over the file list that is expanded by all the annotations
-            for idx in range(len(self.ieeg_files))[:4]:
+            for idx in range(len(self.ieeg_files)):
 
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
                 if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
