@@ -91,7 +91,6 @@ class BIDS_handler:
                                   task=keywords['task'])
         
         self.target_path = str(self.bids_path.copy()).rstrip('.edf')+'_targets.pickle'
-        print(keywords['session'])
 
     def create_events(self,ifile,run,fs,annotations):
 
