@@ -105,8 +105,7 @@ class BIDS_handler:
             index = (1e-6*iannot)*fs
 
             # Make the required mne event mapper
-            #self.event_mapping[str(iannot)] = ii
-            self.event_mapping[ii] = str(iannot)
+            self.event_mapping[str(iannot)] = ii
 
             # Store the results
             events.append([index,0,ii])
@@ -156,6 +155,8 @@ class BIDS_handler:
 
         # Save the bids data
         try:
+            print(self.events)
+            
             write_raw_bids(bids_path=self.bids_path, raw=raw, allow_preload=True, format='EDF',verbose=False,overwrite=True)
             return True
         except Exception as e:
