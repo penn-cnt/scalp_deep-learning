@@ -137,8 +137,8 @@ class BIDS_handler:
         except Exception as e:
             if debug:
                 print(f"Write error: {e}")
-            print(self.events)
-            print(self.event_mapping)
+                print(self.events)
+                print(self.event_mapping)
             return False
         
     def save_data_wo_events(self, raw, debug=False):
