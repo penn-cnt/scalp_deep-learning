@@ -102,9 +102,8 @@ class BIDS_handler:
         for ii,iannot in enumerate(annotations[ifile][run].keys()):
             
             # Get the raw annotation and the index
-            desc  = annotations[ifile][run][iannot]
+            desc  = str(annotations[ifile][run][iannot])
             index = (1e-6*iannot)*fs
-            print(desc)
 
             # Make the required mne event mapper
             self.event_mapping[desc] = ii
