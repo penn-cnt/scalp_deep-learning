@@ -466,7 +466,7 @@ class ieeg_handler(Subject):
             for idx in range(len(self.ieeg_files))[:4]:
 
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
-                if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
+                if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]) and self.start_times[idx]!=0:
 
                     # Download the data
                     self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
