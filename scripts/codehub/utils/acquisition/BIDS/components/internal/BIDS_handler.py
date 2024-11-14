@@ -63,8 +63,6 @@ class BIDS_observer(Observer):
             try:
                 if self.args.include_annotation or self.args.annotations:
                     # Update the events
-                    print(self.annotations)
-                    exit()
                     self.BH.create_events(self.keywords['filename'],int(self.keywords['run']),
                                         self.keywords['fs'],self.annotations)
             except AttributeError:
@@ -112,7 +110,10 @@ class BIDS_handler:
             # Store the results
             events.append([index,0,ii])
             self.alldesc.append(desc)
+        print(events)
         self.events  = np.array(events)
+        print(self.events)
+        exit()
 
     def save_targets(self,target):
 
