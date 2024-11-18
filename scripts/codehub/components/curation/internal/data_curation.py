@@ -56,9 +56,11 @@ class data_curation:
 
                 # Use the load type and perform a load test
                 if ftype == 'edf':
+                    print("A")
                     DLT  = data_loader_test()
                     flag = DLT.test_logic(ifile,ftype)
                 else:
+                    print("B")
                     flag = (True,)
 
                 # Store the files that pass and fail, including error if it fails
