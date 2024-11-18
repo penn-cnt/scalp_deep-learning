@@ -23,7 +23,9 @@ global persistance_dict
 persistance_dict = {}
 
 # Ignore FutureWarnings. Pandas is giving a warning for concat. But the data is not zero. Might be due to a single channel of all NaNs.
+from sklearn.exceptions import InconsistentVersionWarning
 warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=InconsistentVersionWarning)
 
 class YASA_processing:
     
@@ -487,6 +489,9 @@ class features:
         in the output data container.
         """
 
+        # Define the classes that only need to process the data once. (i.e. Use all channels, cannot go channel-wise.)
+        avoid_reprocessing_classes = ['YASA_processing']
+
         # Initialize some variables
         channels  = self.montage_channels.copy()
         outcols   = ['file','t_start','t_end','t_window','method','tag']+channels
@@ -526,8 +531,8 @@ class features:
                         fs = imeta['fs']
 
                         # Loop over the channels and get the updated values
-                        output             = []
-                        whole_dataset_flag = False
+                        output         = []
+                        reprocess_flag = True
                         for ichannel in range(dataset.shape[1]):
 
                             for key, value in method_args.items():
@@ -551,17 +556,19 @@ class features:
                                 if cls.__name__ == 'FOOOF_processing':
                                     namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
                                 elif cls.__name__ == 'YASA_processing':
-                                    if not whole_dataset_flag:
-                                        namespace          = cls(dataset,channels,fs[ichannel])
-                                        whole_dataset_flag = True
+                                    namespace = cls(dataset,channels,fs[ichannel])
                                 else:
                                     namespace = cls(idata,fs[ichannel],self.args.trace)
 
-                                # Get the method name and return results from the method
-                                method_call = getattr(namespace,method_name)
-                                results     = method_call(**method_args)
-                                result_a    = results[0]
-                                result_b    = results[1]
+                                if reprocess_flag:
+                                    # Get the method name and return results from the method
+                                    method_call = getattr(namespace,method_name)
+                                    results     = method_call(**method_args)
+                                    result_a    = results[0]
+                                    result_b    = results[1]
+
+                                    # Check if we can avoid reprocessing this feature step
+                                    if cls.__name__ in avoid_reprocessing_classes: reprocess_flag=False
 
                                 # If the user wants to trace some values (see the results as they are processed), they can return result_c
                                 if len(results) == 3:
