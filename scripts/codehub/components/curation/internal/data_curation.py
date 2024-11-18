@@ -50,8 +50,8 @@ class data_curation:
             for idx,ifile in enumerate(self.files):
 
                 # Get the load type
-                ftype = self.args.datatype
-                if ftype.lower() == 'mix':
+                ftype = self.args.datatype.lower()
+                if ftype == 'mix':
                     ftype = ifile.split('.')[-1]
 
                 # Use the load type and perform a load test
