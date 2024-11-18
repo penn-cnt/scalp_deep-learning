@@ -1,12 +1,15 @@
 import os
 import ast
 import sys
+import mne
+import yasa
 import inspect
 import warnings
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
 from fooof import FOOOF
+from scipy.stats import mode
 from scipy.integrate import simpson
 from scipy.signal import welch, find_peaks, detrend
 from neurodsp.spectral import compute_spectrum_welch
@@ -24,13 +27,63 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 class YASA_processing:
     
-    def __init__ (self,data,channels):
-        self.data     = data
-        self.channels = channels
+    def __init__ (self,data,channels,fs):
+        self.data        = data
+        self.channels    = channels
+        self.fs          = fs
 
-    def get_sleep_stage(self):
+    def make_montage_object(self,config_path):
 
-        raw = mne.io(self.data,self.channels) # Fix this
+        #Create the mne channel types
+        mapping = yaml.safe_load(open(config_path,'r'))
+        persistance_dict['mne_mapping'] = mapping
+
+    def make_raw_object(self,config_path):
+
+        # Get the channel mappings in mne compliant form
+        if 'mne_mapping' not in persistance_dict.keys():
+            self.make_montage_object(config_path)
+        mapping      = persistance_dict['mne_mapping']
+        mapping_keys = list(mapping.keys())
+
+        # Assign the mapping to each channel
+        ch_types     = []
+        for ichannel in self.channels:
+            if ichannel in mapping_keys:
+                ch_types.append(mapping[ichannel])
+            else:
+                ch_types.append('eeg')
+
+        # Create the raw mne object and set the reference
+        info     = mne.create_info(self.channels, self.fs, ch_types=ch_types,verbose=False)
+        self.raw = mne.io.RawArray(self.data.T, info, verbose=False)
+
+    def yasa_sleep_stage(self,config_path,consensus_channels=['CZ','C03','C04']):
+
+        # Make the raw object for YASA to work with
+        self.make_raw_object(config_path)
+
+        # Set the right reference for eyeblink removal (CAR by default)
+        self.raw = self.raw.set_eeg_reference('average',verbose=False)
+
+        # Apply the minimum needed filter for eyeblink removal
+        self.raw = self.raw.filter(0.5,30,verbose=False)
+
+        # Resample down to 100 HZ
+        self.raw = self.raw.resample(100)
+
+        # Get the yasa prediction
+        results = []
+        for ichannel in consensus_channels:
+            sls = yasa.SleepStaging(self.raw, eeg_name=ichannel)
+            results.append(list(sls.predict()))
+        results = PD.DataFrame(np.array(results).T,columns=consensus_channels)
+
+        # Get the consensus prediction
+        yasa_results = results.mode(axis=1).values.flatten()
+        output = ','.join(yasa_results)
+        
+        return output,''
  
 class FOOOF_processing:
 
@@ -473,7 +526,8 @@ class features:
                         fs = imeta['fs']
 
                         # Loop over the channels and get the updated values
-                        output = [] 
+                        output             = []
+                        whole_dataset_flag = False
                         for ichannel in range(dataset.shape[1]):
 
                             for key, value in method_args.items():
@@ -497,7 +551,9 @@ class features:
                                 if cls.__name__ == 'FOOOF_processing':
                                     namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
                                 elif cls.__name__ == 'YASA_processing':
-                                    namespace = cls(dataset,channels)
+                                    if not whole_dataset_flag:
+                                        namespace          = cls(dataset,channels,fs[ichannel])
+                                        whole_dataset_flag = True
                                 else:
                                     namespace = cls(idata,fs[ichannel],self.args.trace)
 
