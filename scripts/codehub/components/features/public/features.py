@@ -83,7 +83,7 @@ class YASA_processing:
 
         # Get the consensus prediction
         yasa_results = results.mode(axis=1).values.flatten()
-        print(yasa_reuslts)
+        print(yasa_results)
         exit()
         output = ','.join(yasa_results)
         
