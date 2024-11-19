@@ -85,6 +85,7 @@ class YASA_processing:
         yasa_results = results.mode(axis=1).values.flatten()
         
         print(results)
+        print(results.mode(axis=1))
         print(yasa_results)
         exit()
         output = ','.join(yasa_results)
