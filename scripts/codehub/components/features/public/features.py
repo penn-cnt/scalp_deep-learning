@@ -79,19 +79,19 @@ class YASA_processing:
         for ichannel in consensus_channels:
             sls = yasa.SleepStaging(self.raw, eeg_name=ichannel)
             results.append(list(sls.predict()))
-        #results = PD.DataFrame(np.array(results).T,columns=consensus_channels)
         results = np.array(results)
 
-        # Get the consensus prediction
-        #yasa_results = results.mode(axis=1).values.flatten()
+        # Get the epipy formatted output
         output = ''
         for irow in results.T:
             output += ','.join(irow)
             output += '|'
-        print(output)
-        exit()
+        output = output[:-1]
+
+        # Make the optional string. In this case, the consensus channel list
+        optional_str = ','.join(consensus_channels)
         
-        return output,''
+        return output,optional_str
  
 class FOOOF_processing:
 
