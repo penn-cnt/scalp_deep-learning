@@ -79,12 +79,12 @@ class YASA_processing:
         for ichannel in consensus_channels:
             sls = yasa.SleepStaging(self.raw, eeg_name=ichannel)
             results.append(list(sls.predict()))
-        results = PD.DataFrame(np.array(results).T,columns=consensus_channels)
+        #results = PD.DataFrame(np.array(results).T,columns=consensus_channels)
 
         # Get the consensus prediction
         #yasa_results = results.mode(axis=1).values.flatten()
         output = ''
-        for irow in results:
+        for irow in results.T:
             output += ','.join(irow)
             output += '|'
         print(output)
