@@ -82,6 +82,8 @@ class YASA_processing:
         results = PD.DataFrame(np.array(results).T,columns=consensus_channels)
 
         # Get the consensus prediction
+        print(results)
+        exit()
         yasa_results = results.mode(axis=1).values.flatten()
         output = ','.join(yasa_results)
         
