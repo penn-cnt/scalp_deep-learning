@@ -596,8 +596,11 @@ class features:
 
                                 # Add the ability to see the error if debugging
                                 if self.args.debug and not self.args.silent:
-                                    print(f"Error {e} in step {istep} in {imeta['file']}.")
-                                    print(sys.exc_info())
+                                    #print(f"Error {e} in step {istep} in {imeta['file']}.")
+                                    #print(sys.exc_info())
+                                    fname = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
+                                    print(sys.exc_info()[0],fname,sys.exc_info()[2].tb_lineno)
+                                    exit()
 
                                 # We need a flexible solution to errors, so just populating a nan value
                                 output.append(None)
