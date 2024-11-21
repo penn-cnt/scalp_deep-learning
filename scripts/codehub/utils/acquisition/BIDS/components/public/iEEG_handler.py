@@ -593,7 +593,7 @@ class ieeg_handler(Subject):
                 channel_cntr  = list(range(len(self.channels)))
 
                 # If duration is greater than 10 min, break up the call. Make array of start,duration with max 10 min each chunk
-                twin_min    = 10
+                twin_min    = self.args.download_time_window
                 time_cutoff = int(twin_min*60*1e6)
                 end_time    = start+duration
                 ival        = start
