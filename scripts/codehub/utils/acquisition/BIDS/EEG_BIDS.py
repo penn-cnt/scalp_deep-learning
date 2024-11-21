@@ -85,7 +85,7 @@ if __name__ == '__main__':
     ieeg_group.add_argument("--time_layer", type=str, default='EEG clip times', help="Annotation layer name for clip times.")
     ieeg_group.add_argument("--annot_layer", type=str, default='Imported Natus ENT annotations', help="Annotation layer name for annotation strings.")
     ieeg_group.add_argument("--timeout", type=int, default=60, help="Timeout interval for ieeg.org calls")
-    ieeg_group.add_argument("--download_time_window", type=int, default=10, help="The length of data to pull from iEEG.org for subprocess calls. Generally 10 minutes works well, but for high frequency, many channeled data, considering lowering. ")
+    ieeg_group.add_argument("--download_time_window", type=int, default=10, help="The length of data to pull from iEEG.org for subprocess calls (in minutes). For high frequency, many channeled data, consider lowering. ")
 
     bids_group = parser.add_argument_group('BIDS keyword options')
     bids_group.add_argument("--uid_number", type=str, help="Unique identifier string to use when not referencing a input_csv file. Only used for single data pulls. Can be used to map the same patient across different datasets to something like an MRN behind clinical firewalls.")
