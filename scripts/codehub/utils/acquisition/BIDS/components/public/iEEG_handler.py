@@ -589,8 +589,10 @@ class ieeg_handler(Subject):
                 print(f"Core {self.unique_id} is downloading {ieegfile} starting at {1e-6*start:011.2f} seconds for {1e-6*duration:08.2f} seconds.")
 
                 # Get the channel names and integer representations for data call
-                self.channels = dataset.ch_labels
-                channel_cntr  = list(range(len(self.channels)))
+                self.channels  = dataset.ch_labels
+                channel_cntr   = list(range(len(self.channels)))
+                nchan_win      = 25
+                channel_chunks = [channel_cntr[i:i+nchan_win] for i in range(0, len(channel_cntr), nchan_win)] 
 
                 # If duration is greater than 10 min, break up the call. Make array of start,duration with max 10 min each chunk
                 twin_min    = self.args.download_time_window
@@ -611,7 +613,13 @@ class ieeg_handler(Subject):
                 for idx,ival in enumerate(chunks):
                     self.logstart = ival[0]
                     self.logdur   = ival[1]
-                    self.data.append(dataset.get_data(ival[0],ival[1],channel_cntr))
+                    for chunk_cntr,ichunk in enumerate(channel_chunks):
+                        if chunk_cntr == 0:
+                            idata = dataset.get_data(ival[0],ival[1],ichunk)
+                        else:
+                            tmp   = dataset.get_data(ival[0],ival[1],ichunk)
+                            idata = np.hstack((idata,tmp))
+                    self.data.append(idata)
 
                 if len(self.data) > 1:
                     self.data = np.concatenate(self.data)
