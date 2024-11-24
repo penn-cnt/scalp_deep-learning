@@ -591,7 +591,7 @@ class ieeg_handler(Subject):
                 # Get the channel names and integer representations for data call
                 self.channels  = dataset.ch_labels
                 channel_cntr   = list(range(len(self.channels)))
-                nchan_win      = 25
+                nchan_win      = 50
                 channel_chunks = [channel_cntr[i:i+nchan_win] for i in range(0, len(channel_cntr), nchan_win)] 
 
                 # If duration is greater than 10 min, break up the call. Make array of start,duration with max 10 min each chunk
