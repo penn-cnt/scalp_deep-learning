@@ -51,4 +51,7 @@ if __name__ == '__main__':
         for ifile in tqdm(iblock[1:], total=len(iblock)-1, desc=f"Merging Block {idx:02d}"):
             newraw = read_raw_edf(ifile)
             outraw = concatenate_raws([outraw,newraw],on_mismatch='ignore')
-        export_raw(f"{args.outdir}merged_{idx:03d}.edf",outraw,fmt='edf')
+        try:
+            export_raw(f"{args.outdir}merged_{idx:03d}.edf",outraw,fmt='edf')
+        except ValueError:
+            export_raw(f"{args.outdir}merged_{idx:03d}.edf",outraw,fmt='edf',physical_range=(0,1))
