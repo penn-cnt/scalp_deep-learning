@@ -2,7 +2,6 @@ import os
 import argparse
 import pandas as PD
 from sys import exit
-from prettytable import PrettyTable,ALL
 
 # Local import
 from components.internal.BIDS_handler import *
