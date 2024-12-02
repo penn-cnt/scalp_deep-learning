@@ -108,6 +108,7 @@ if __name__ == '__main__':
     misc_group.add_argument("--randomize", action='store_true', default=False, help="Randomize load order. Useful if doing a bit multipull and we're left with most of the work on a single core.")
     misc_group.add_argument("--zero_bad_data", action='store_true', default=False, help="Zero out bad data potions.")
     misc_group.add_argument("--copy_edf", action='store_true', default=False, help="Straight copy an edf to bids format. Do not writeout via mne. (Still checks for valid data using mne)")
+    misc_group.add_argument("--connection_error_folder", default=None, type=str, help="If provided, save connection errors to this folder. Helps determine access issues after a large download.")
     args = parser.parse_args()
 
     # If the user wants an example input file, print it then close application

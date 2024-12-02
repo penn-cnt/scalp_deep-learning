@@ -562,6 +562,10 @@ class ieeg_handler(Subject):
                         n_attempts += 1
                     else:
                         print(f"Connection Error: {e}")
+                        if self.args.connection_error_folder != None:
+                            fp = open(f"{self.args.connection_error_folder}/{self.unique_id}.errors")
+                            fp.write(f"{e}\n")
+                            fp.close()
                         break
 
     def ieeg_session(self,ieegfile,start,duration,annotation_flag):
