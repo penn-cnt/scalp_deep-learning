@@ -431,7 +431,8 @@ class ieeg_handler(Subject):
             # Download the data
             if self.args.annotations:
                 self.download_data(self.ieeg_files[idx],0,0,True)
-                self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx],self.target_list[idx])
+                if self.success_flag:
+                    self.annotation_cleanup(self.ieeg_files[idx],self.uid_list[idx],self.subject_list[idx],self.session_list[idx],self.target_list[idx])
             else:
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
                 if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
