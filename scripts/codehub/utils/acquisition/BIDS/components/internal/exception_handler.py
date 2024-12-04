@@ -69,7 +69,7 @@ class DataExists:
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
 
         print(checkfile,self.record_checkfile)
-        print(checkstart,self.record_start,self.data_record['start'].values[:10])
+        print(checkstart,self.record_start,self.data_record['start_sec'].values[:10])
         print(checkduration,self.record_duration)
 
         print(self.record_file_mask)
