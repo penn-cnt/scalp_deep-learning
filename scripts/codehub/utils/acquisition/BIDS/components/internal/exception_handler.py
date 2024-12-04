@@ -68,6 +68,7 @@ class DataExists:
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
 
+        print(mask)
         print(not(any(mask)))
 
         # Check for any existing records
