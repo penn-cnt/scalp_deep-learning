@@ -471,7 +471,6 @@ class ieeg_handler(Subject):
                 if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
 
                     print("passed data check")
-                    exit()
 
                     # Download the data
                     self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
@@ -486,6 +485,7 @@ class ieeg_handler(Subject):
                     print(f"Skipping {self.ieeg_files[idx]} starting at {1e-6*self.start_times[idx]:011.2f} seconds for {1e-6*self.durations[idx]:08.2f} seconds.")
                     self.data_list.append(None)
                     self.type_list.append(None)
+                    exit()
                 
 
     def save_data(self):
