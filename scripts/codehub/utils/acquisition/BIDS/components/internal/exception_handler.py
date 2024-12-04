@@ -65,11 +65,10 @@ class DataExists:
             self.record_duration      = checkduration
             self.record_duration_mask = (self.data_record['duration_sec'].values==checkduration)
 
-        print(checkfile,self.record_checkfile,self.record_file_mask)
-        exit()
-
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
+
+        print(not(any(mask)))
 
         # Check for any existing records
         return not(any(mask))
