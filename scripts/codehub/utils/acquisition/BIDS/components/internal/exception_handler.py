@@ -68,6 +68,13 @@ class DataExists:
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
 
+        print(checkfile,self.record_checkfile)
+        print(checkstart,self.record_start)
+        print(checkduration,self.record_duration)
+
+        print(self.record_file_mask)
+        print(self.record_start_mask)
+        print(self.record_duration_mask)
         print(mask)
         print(not(any(mask)))
 
