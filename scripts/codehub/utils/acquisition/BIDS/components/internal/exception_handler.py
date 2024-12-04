@@ -40,6 +40,10 @@ class DataExists:
         self.record_start     = -1
         self.record_duration  = -1
 
+        # Convert data record times to microseconds
+        self.data_record['start_sec']    *= 1e-6
+        self.data_record['duration_sec'] *= 1e-6
+
     def check_default_records(self,checkfile,checkstart,checkduration):
         """
         Check the data record for data that matched the current query.
