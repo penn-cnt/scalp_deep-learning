@@ -54,6 +54,7 @@ class DataExists:
         """
 
         # Update file mask as needed
+        print("Checking data.")
         if checkfile != self.record_checkfile:
             self.record_checkfile = checkfile
             self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
@@ -63,6 +64,9 @@ class DataExists:
         if checkduration != self.record_duration:
             self.record_duration      = checkduration
             self.record_duration_mask = (self.data_record['duration_sec'].values==checkduration)
+
+        print(checkfile,self.record_checkfile,self.record_file_mask)
+        exit()
 
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
