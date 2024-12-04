@@ -471,7 +471,6 @@ class ieeg_handler(Subject):
                 if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
 
                     print("passed data check")
-                    exit()
 
                     # Download the data
                     self.download_data(self.ieeg_files[idx],self.start_times[idx],self.durations[idx],False)
