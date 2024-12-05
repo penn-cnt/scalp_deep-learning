@@ -58,7 +58,6 @@ class DataExists:
         """
 
         # Update file mask as needed
-        print("Checking data.")
         if checkfile != self.record_checkfile:
             self.record_checkfile = checkfile
             self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
@@ -71,16 +70,6 @@ class DataExists:
 
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
-
-        print(checkfile,self.record_checkfile)
-        print(checkstart,self.record_start,self.data_record['start_sec'].values[:10])
-        print(checkduration,self.record_duration)
-
-        print(self.record_file_mask)
-        print(self.record_start_mask)
-        print(self.record_duration_mask)
-        print(mask)
-        print(not(any(mask)))
 
         # Check for any existing records
         return not(any(mask))
