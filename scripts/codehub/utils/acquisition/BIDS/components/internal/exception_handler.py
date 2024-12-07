@@ -41,7 +41,7 @@ class DataExists:
         self.record_duration  = -1
 
         # Convert data record times to microseconds
-        print(self.data_record)
+        #print(self.data_record)
 
     def check_default_records(self,checkfile,checkstart,checkduration):
         """
@@ -72,7 +72,9 @@ class DataExists:
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
 
         if checkstart > 3860 and checkstart < 4000:
+            print(self.data_record['start_sec'].values)
             print(checkstart,checkduration)
+            print(self.record_start_mask)
             print(mask)
             print(not(any(mask)))
             exit()
