@@ -43,6 +43,7 @@ class DataExists:
         # Convert data record times to microseconds
         #self.data_record['start_sec']    *= 1e-6
         #self.data_record['duration_sec'] *= 1e-6
+        print(self.data_record)
 
     def check_default_records(self,checkfile,checkstart,checkduration):
         """
@@ -59,9 +60,8 @@ class DataExists:
 
 
         if checkstart != 0:
-            print(self.data_record)
             print(checkstart,checkduration)
-            exit()
+
 
         # Update file mask as needed
         if checkfile != self.record_checkfile:
