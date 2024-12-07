@@ -70,6 +70,7 @@ class DataExists:
             try:
                 self.record_start_mask = np.isclose(self.data_record['start_sec'].values,checkstart,atol=1)
             except:
+                print(self.record_file_mask)
                 print(self.data_record['start_sec'].values,checkstart)
                 exit()
 
