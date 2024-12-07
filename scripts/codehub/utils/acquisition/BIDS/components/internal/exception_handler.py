@@ -67,7 +67,11 @@ class DataExists:
         # Update the start mask as needed. Due to writeout rounding, using tolerance of 1 second.
         if checkstart != self.record_start:
             self.record_start      = checkstart
-            self.record_start_mask = np.isclose(self.data_record['start_sec'].values,checkstart,atol=1)
+            try:
+                self.record_start_mask = np.isclose(self.data_record['start_sec'].values,checkstart,atol=1)
+            except:
+                print(self.data_record['start_sec'].values,checkstart)
+                exit()
 
         # Update the duration mask as needed. Due to writeout rounding, using tolerance of 1 second.
         if checkduration != self.record_duration:
