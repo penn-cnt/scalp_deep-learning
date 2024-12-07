@@ -436,7 +436,6 @@ class ieeg_handler(Subject):
             else:
                 # If-else around if the data already exists in our records. Add a skip to the data list if found to maintain run order.
                 if DE.check_default_records(self.ieeg_files[idx],1e-6*self.start_times[idx],1e-6*self.durations[idx]):
-                    print("\n\n\nFOO\n\n\n\n")
 
                     # Get the annotations for just this download if requested
                     if self.args.include_annotation:
@@ -477,6 +476,7 @@ class ieeg_handler(Subject):
                     if self.success_flag:
                         self.notify_data_observers()
                     else:
+                        print("Download failed...")
                         self.data_list.append(None)
                         self.type_list.append(None)
                 else:
