@@ -58,29 +58,26 @@ class DataExists:
             bool: True if no data found in record. False is found.
         """
 
+        if self.data_record.shape[0] > 0:
+            # Update file mask as needed
+            if checkfile != self.record_checkfile:
+                self.record_checkfile = checkfile
+                self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
 
-        # Update file mask as needed
-        if checkfile != self.record_checkfile:
-            self.record_checkfile = checkfile
-            self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
-
-        # Update the start mask as needed. Due to writeout rounding, using tolerance of 1 second.
-        if checkstart != self.record_start:
-            self.record_start      = checkstart
-            try:
+            # Update the start mask as needed. Due to writeout rounding, using tolerance of 1 second.
+            if checkstart != self.record_start:
+                self.record_start      = checkstart
                 self.record_start_mask = np.isclose(self.data_record['start_sec'].values,checkstart,atol=1)
-            except:
-                print(self.record_file_mask)
-                print(self.data_record['start_sec'].values,checkstart)
-                exit()
 
-        # Update the duration mask as needed. Due to writeout rounding, using tolerance of 1 second.
-        if checkduration != self.record_duration:
-            self.record_duration      = checkduration
-            self.record_duration_mask = np.isclose(self.data_record['duration_sec'].values,checkduration,atol=1)
+            # Update the duration mask as needed. Due to writeout rounding, using tolerance of 1 second.
+            if checkduration != self.record_duration:
+                self.record_duration      = checkduration
+                self.record_duration_mask = np.isclose(self.data_record['duration_sec'].values,checkduration,atol=1)
 
-        # Get the combined mask
-        mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
+            # Get the combined mask
+            mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
 
-        # Check for any existing records
-        return not(any(mask))
+            # Check for any existing records
+            return not(any(mask))
+        else:
+            return True
