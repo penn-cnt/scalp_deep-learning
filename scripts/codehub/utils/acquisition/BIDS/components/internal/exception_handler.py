@@ -1,3 +1,5 @@
+import numpy as np
+
 # API timeout class
 import signal
 class TimeoutException(Exception):
@@ -63,10 +65,10 @@ class DataExists:
             self.record_file_mask = (self.data_record['orig_filename'].values==checkfile)
         if checkstart != self.record_start:
             self.record_start      = checkstart
-            self.record_start_mask = (self.data_record['start_sec'].values==checkstart)
+            self.record_start_mask = np.isclose(self.data_record['start_sec'].values,checkstart) #(self.data_record['start_sec'].values==checkstart)
         if checkduration != self.record_duration:
             self.record_duration      = checkduration
-            self.record_duration_mask = (self.data_record['duration_sec'].values==checkduration)
+            self.record_duration_mask = np.isclose(self.data_record['duration_sec'].values,checkduration) #(self.data_record['duration_sec'].values==checkduration)
 
         # Get the combined mask
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
