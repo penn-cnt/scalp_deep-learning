@@ -74,9 +74,12 @@ class DataExists:
         mask = self.record_file_mask*self.record_start_mask*self.record_duration_mask
 
         if checkstart > 3860 and checkstart < 4000:
-            print(self.data_record['start_sec'].values)
-            print(checkstart,checkduration)
+            print(self.data_record['orig_filename'].values,checkfile)
+            print(self.data_record['start_sec'].values,checkstart)
+            print(self.data_record['duration_sec'].values,checkduration)
+            print(self.record_file_mask)
             print(self.record_start_mask)
+            print(self.record_duration_mask)
             print(mask)
             print(not(any(mask)))
             exit()
