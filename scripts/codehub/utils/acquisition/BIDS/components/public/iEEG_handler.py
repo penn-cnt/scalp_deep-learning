@@ -480,7 +480,6 @@ class ieeg_handler(Subject):
                     if self.success_flag:
                         self.notify_data_observers()
                     else:
-                        print("Download failed...")
                         self.data_list.append(None)
                         self.type_list.append(None)
                 else:
@@ -530,6 +529,8 @@ class ieeg_handler(Subject):
 
                     # Try to save the zero data
                     success_flag = self.BH.save_raw_edf(newraw,self.type_list[idx],debug=self.args.debug)
+                else:
+                    print(f"Unable to save clip starting at {istart} seconds with duration {iduration} seconds.")
 
                 # If the data wrote out correctly, update the data record
                 if success_flag:
