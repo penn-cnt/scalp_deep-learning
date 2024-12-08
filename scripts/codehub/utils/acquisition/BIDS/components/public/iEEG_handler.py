@@ -455,8 +455,9 @@ class ieeg_handler(Subject):
                     self.data_list.append(None)
                     self.type_list.append(None)
 
-        print(self.start_times)
-        exit()
+        print("=======")
+        print(len(self.start_times))
+        print("=======")
 
         # If downloading by annotations, now loop over the clip level info and save
         if self.args.annotations:
