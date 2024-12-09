@@ -89,7 +89,7 @@ We provide a few sample commands here. Note, all examples utilize a username and
 `python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --dataset EMU0562_Day01_1 --start 2925000000 --duration 10000000 --debug`
 
 #### Download with an input csv that uses specific times
-`python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/sample_times.csv`
+`python utils/acquisition/BIDS/EEG_BIDS.py --ieeg --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --input_csv utils/acquisition/BIDS/samples/inputs/download_by_times.csv`
 
 #### Single raw edf file conversion without inputs. Should create subject HUP001, session 1, run 1
 `python utils/acquisition/BIDS/EEG_BIDS.py --edf --username BJPrager --bids_root /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/tests/single/  --dataset /Users/bjprager/Documents/GitHub/CNT-codehub/user_data/BIDS/sub-00001/ses-preimplant001/eeg/sub-00001_ses-preimplant001_task-task_run-01_eeg.edf --subject HUP001 --uid_number 1`

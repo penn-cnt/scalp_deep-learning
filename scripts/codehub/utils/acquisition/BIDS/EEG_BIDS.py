@@ -109,6 +109,7 @@ if __name__ == '__main__':
     misc_group.add_argument("--zero_bad_data", action='store_true', default=False, help="Zero out bad data potions.")
     misc_group.add_argument("--copy_edf", action='store_true', default=False, help="Straight copy an edf to bids format. Do not writeout via mne. (Still checks for valid data using mne)")
     misc_group.add_argument("--connection_error_folder", default=None, type=str, help="If provided, save connection errors to this folder. Helps determine access issues after a large download.")
+    misc_group.add_argument("--save_raw", action='store_true', default=False, help="Save the data as a raw csv")
     args = parser.parse_args()
 
     # If the user wants an example input file, print it then close application

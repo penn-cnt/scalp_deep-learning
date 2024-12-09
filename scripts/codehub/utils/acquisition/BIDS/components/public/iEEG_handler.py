@@ -59,18 +59,17 @@ class ieeg_handler(Subject):
             # Begin downloading the data
             self.download_data_manager()
 
-            # Save the data
-            self.save_data()
+            # Save the results
+            if not self.args.save_raw:
+                self.save_data()
+            else:
+                self.save_rawdata()
 
             # Save the data record
             self.new_data_record = self.new_data_record.sort_values(by=['subject_number','session_number','run_number'])
             self.new_data_record.to_csv(self.data_record_path,index=False)
         else:
             self.multipull_manager()
-
-        # Remove if debugging
-        #if self.args.debug:
-        #    os.system(f"rm -r {self.args.bids_root}*")
 
     def attach_objects(self):
         """
@@ -158,8 +157,12 @@ class ieeg_handler(Subject):
 
             # Hide disk i/o behind the semaphore. EDF writers sometimes access the same reference file for different runs
             with semaphore:
-                # Save the data
-                self.save_data()
+
+                # Save the results
+                if not self.args.save_raw:
+                    self.save_data()
+                else:
+                    self.save_rawdata()
 
                 # Reset the data and type lists
                 self.data_list = []
@@ -483,6 +486,37 @@ class ieeg_handler(Subject):
                     self.data_list.append(None)
                     self.type_list.append(None)
                 
+    def save_rawdata(self):
+        """
+        Save data directly as a csv
+        """
+
+        # Loop over the data, assign keys, and save
+        self.new_data_record = self.data_record.copy()
+        for idx,iraw in enumerate(self.data_list):
+            if iraw != None:
+
+                try:
+                    # Define start time and duration. Can differ for different filetypes
+                    # iEEG.org uses microseconds. So we convert here to seconds for output.
+                    istart    = 1e-6*self.start_times[idx]
+                    iduration = 1e-6*self.durations[idx]
+
+                    # Get the raw data
+                    DF    = PD.DataFrame(iraw.get_data().T,columns=iraw.ch_names)
+                    sfreq = iraw.info['sfreq']
+
+                    # Make the output filename
+                    outbasename = f"{self.ieeg_files[idx]}_{istart}_{iduration}_{sfreq}HZ.csv"
+                    outpath     = f"{self.args.bids_root}{outbasename}"
+                    
+                    # Save the output
+                    DF.to_csv(outpath,index=False)
+                except Exception as e:
+                    print("Unable to save data.")
+                    if self.args.debug:
+                        print(f"Error {e}")
+
 
     def save_data(self):
         """
@@ -525,7 +559,7 @@ class ieeg_handler(Subject):
 
                     # Try to save the zero data
                     success_flag = self.BH.save_raw_edf(newraw,self.type_list[idx],debug=self.args.debug)
-                else:
+                elif not success_flag and not self.args.zero_bad_data:
                     print(f"Unable to save clip starting at {istart} seconds with duration {iduration} seconds.")
 
                 # If the data wrote out correctly, update the data record
