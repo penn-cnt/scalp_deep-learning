@@ -34,3 +34,6 @@
 [submodule "core_libraries/submodules/networkx"]
 	path = core_libraries/submodules/networkx
 	url = https://github.com/networkx/networkx.git
+[submodule "scripts/codehub/utils/acquisition/BIDS"]
+	path = scripts/codehub/utils/acquisition/BIDS
+	url = https://github.com/penn-cnt/EEG_BIDS.git
