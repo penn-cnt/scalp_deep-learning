@@ -20,4 +20,3 @@ scripts/codehub/utils/etc/*
 # Exceptions
 !/user_data/README.md
 !/scripts/codehub/utils/private/README.md
-!/scripts/codehub/utils/acquisition/BIDS/datalakes/HUP_BIDS_DATALAKE.pickle
