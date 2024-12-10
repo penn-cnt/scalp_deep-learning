@@ -227,6 +227,8 @@ class data_curation:
 
     def get_dataload(self):
         
+        print(len(self.files))
+        exit()
         self.test_input_data()
         self.limit_data_volume()
         self.create_time_windows()
