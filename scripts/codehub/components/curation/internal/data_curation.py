@@ -60,8 +60,6 @@ class data_curation:
                     flag = DLT.test_logic(ifile,ftype)
                 else:
                     flag = (True,)
-                print(flag)
-                exit()
 
                 # Store the files that pass and fail, including error if it fails
                 if flag[0]:
