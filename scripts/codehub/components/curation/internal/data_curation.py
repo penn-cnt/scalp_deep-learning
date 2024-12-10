@@ -251,6 +251,7 @@ class data_curation:
             regex_match = re.match(r"(\D+)(\d+)", ifile)
             self.stratification_array.append(int(regex_match.group(2)))
         
+        print(len(self.files))
         print(self.stratification_array)
         exit()
         
