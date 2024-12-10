@@ -459,6 +459,9 @@ if __name__ == "__main__":
     start_times = np.array(start_times)
     end_times   = np.array(end_times)
 
+    print(len(files))
+    exit()
+
     # Curate the data inputs to get a valid (sub)set that maintains stratification of subjects
     DC = data_curation(args,files,start_times,end_times)
     files, start_times, end_times,ref_windows = DC.get_dataload()
