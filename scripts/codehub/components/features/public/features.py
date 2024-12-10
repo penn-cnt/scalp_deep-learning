@@ -553,52 +553,53 @@ class features:
                                 # Grab the data and give it a first pass check for all zeros
                                 idata = dataset[:,ichannel]
                                 if not np.any(idata):
-                                    raise ValueError(f"Channel {channels[ichannel]} contains all zeros for file {imeta['file']}.")
-
-                                #################################
-                                ###### CLASS INITILIZATION ######
-                                #################################
-                                # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
-                                if cls.__name__ == 'FOOOF_processing':
-                                    namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
-                                elif cls.__name__ == 'YASA_processing':
-                                    namespace = cls(dataset,channels,fs[ichannel])
+                                    output.append(np.nan)
                                 else:
-                                    namespace = cls(idata,fs[ichannel],self.args.trace)
 
-                                if reprocess_flag:
-                                    # Get the method name and return results from the method
-                                    method_call = getattr(namespace,method_name)
-                                    results     = method_call(**method_args)
-                                    result_a    = results[0]
-                                    result_b    = results[1]
+                                    #################################
+                                    ###### CLASS INITILIZATION ######
+                                    #################################
+                                    # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
+                                    if cls.__name__ == 'FOOOF_processing':
+                                        namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
+                                    elif cls.__name__ == 'YASA_processing':
+                                        namespace = cls(dataset,channels,fs[ichannel])
+                                    else:
+                                        namespace = cls(idata,fs[ichannel],self.args.trace)
 
-                                    # Check if we can avoid reprocessing this feature step
-                                    if cls.__name__ in avoid_reprocessing_classes: reprocess_flag=False
+                                    if reprocess_flag:
+                                        # Get the method name and return results from the method
+                                        method_call = getattr(namespace,method_name)
+                                        results     = method_call(**method_args)
+                                        result_a    = results[0]
+                                        result_b    = results[1]
 
-                                # If the user wants to trace some values (see the results as they are processed), they can return result_c
-                                if len(results) == 3:
+                                        # Check if we can avoid reprocessing this feature step
+                                        if cls.__name__ in avoid_reprocessing_classes: reprocess_flag=False
 
-                                    # Get the lower level column labels
-                                    cols = results[2][0]
-                                    vals = results[2][1:]
+                                    # If the user wants to trace some values (see the results as they are processed), they can return result_c
+                                    if len(results) == 3:
 
-                                    # Make the dictionary to nest into metadata
-                                    inner_dict = dict(zip(cols,vals))
-                                    tracemeta  = {ichannel:inner_dict}
+                                        # Get the lower level column labels
+                                        cols = results[2][0]
+                                        vals = results[2][1:]
 
-                                    # Add the trace to the metadata
-                                    metadata_handler.add_metadata(self,idx,method_name,tracemeta)
+                                        # Make the dictionary to nest into metadata
+                                        inner_dict = dict(zip(cols,vals))
+                                        tracemeta  = {ichannel:inner_dict}
 
-                                # Check if we have a multivalue output
-                                if type(result_a) == list:
-                                    metadata_handler.add_metadata(self,idx,method_name,result_a)
-                                    result_a = result_a[0]
+                                        # Add the trace to the metadata
+                                        metadata_handler.add_metadata(self,idx,method_name,tracemeta)
 
-                                # Add the results to the output object
-                                output.append(result_a)
+                                    # Check if we have a multivalue output
+                                    if type(result_a) == list:
+                                        metadata_handler.add_metadata(self,idx,method_name,result_a)
+                                        result_a = result_a[0]
 
-                            except OSError: #Exception as e:
+                                    # Add the results to the output object
+                                    output.append(result_a)
+
+                            except Exception as e:
 
                                 # Add the ability to see the error if debugging
                                 if self.args.debug and not self.args.silent:
