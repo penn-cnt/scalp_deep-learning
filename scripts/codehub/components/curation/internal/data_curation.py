@@ -246,13 +246,14 @@ class data_curation:
         Calculate the approximate number of subjects loaded into this analysis.
         """
 
-        print(self.files)
-        exit()
-
         self.stratification_array = []
         for ifile in self.files:
             regex_match = re.match(r"(\D+)(\d+)", ifile)
             self.stratification_array.append(int(regex_match.group(2)))
+        
+        print(self.stratification_array)
+        exit()
+        
         subcnt = np.unique(self.stratification_array).size
         if not self.args.silent:
             print(f"Assuming BIDS data, approximately {subcnt:04d} subjects loaded.")
