@@ -246,6 +246,9 @@ class data_curation:
         Calculate the approximate number of subjects loaded into this analysis.
         """
 
+        print(self.files)
+        exit()
+
         self.stratification_array = []
         for ifile in self.files:
             regex_match = re.match(r"(\D+)(\d+)", ifile)
