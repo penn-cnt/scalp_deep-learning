@@ -553,6 +553,8 @@ class features:
                                 # Grab the data and give it a first pass check for all zeros
                                 idata = dataset[:,ichannel]
                                 if not np.any(idata):
+                                    result_a = np.nan
+                                    result_b = ""
                                     output.append(np.nan)
                                 else:
 
