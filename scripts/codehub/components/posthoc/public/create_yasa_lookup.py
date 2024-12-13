@@ -15,6 +15,9 @@ if __name__ == '__main__':
     lookup_cols = ['file', 't_start', 't_end', 't_window', 'method', 'tag']
     channels    = np.setdiff1d(raw_DF.columns,lookup_cols)
 
+    print(raw_DF)
+    exit()
+
     # get the column headers for predictions
     cols = np.array(raw_DF.tag.values[0].split(','))
 
