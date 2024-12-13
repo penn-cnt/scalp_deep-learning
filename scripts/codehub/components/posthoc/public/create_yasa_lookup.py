@@ -22,11 +22,11 @@ if __name__ == '__main__':
     predictions = []
     for ival in raw_DF[channels[0]].values:
         formatted_pred = ival.replace('|',',')
+        formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,cols.size))
 
         print(formatted_pred)
         exit()
 
-        formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,cols.size))
         predictions.append(formatted_pred)
     
     # Get the start time and filename for each row
