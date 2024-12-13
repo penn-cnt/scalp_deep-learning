@@ -18,13 +18,14 @@ if __name__ == '__main__':
     # get the column headers for predictions
     cols = np.array(raw_DF.tag.values[0].split(','))
 
-    print(cols)
-    exit()
-
     # Get the YASA prediction. Which should be the same for all channels as we use a consensus across channels
     predictions = []
     for ival in raw_DF[channels[0]].values:
         formatted_pred = ival.replace('|',',')
+
+        print(formatted_pred)
+        exit()
+
         formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,cols.size))
         predictions.append(formatted_pred)
     
