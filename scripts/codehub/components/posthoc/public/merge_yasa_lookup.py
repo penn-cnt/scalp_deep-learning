@@ -7,10 +7,10 @@ if __name__ == '__main__':
 
     # Read in the raw data
     YASA_DF    = PD.read_csv(argv[1])
-    FEATURE_DF = PD.read_csv(argv[2])
+    FEATURE_DF = PD.read_pickle(argv[2])
 
     # Clean up the labels to just be sleep or wake
-    new_map      = {'N1':'S','N2':'S','N3':'S','R':'S','W':'W'}
+    new_map      = {'N1':'S','N2':'S','N3':'S','R':'S','W':'W','nan':'nan'}
     consensus_cols = [icol for icol in YASA_DF if 'yasa' in icol]
     for icol in consensus_cols:
         YASA_DF[icol] = YASA_DF[icol].apply(lambda x:new_map[x])

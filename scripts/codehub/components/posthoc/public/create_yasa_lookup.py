@@ -25,7 +25,6 @@ if __name__ == '__main__':
             formatted_pred = ival.replace('|',',')
             formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,cols.size))
             predictions.append(formatted_pred)
-            print(formatted_pred.shape)
         except:
             predictions.append(np.nan*np.ones((10,3)))
     
