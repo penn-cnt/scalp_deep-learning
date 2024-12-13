@@ -20,13 +20,13 @@ if __name__ == '__main__':
 
     # Get the YASA prediction. Which should be the same for all channels as we use a consensus across channels
     predictions = []
-    for ival in raw_DF[channels[0]].values:
+    for idx,ival in enumerate(raw_DF[channels[0]].values):
         try:
             formatted_pred = ival.replace('|',',')
             formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,cols.size))
             predictions.append(formatted_pred)
         except:
-            print(ival)
+            print(raw_DF.iloc[idx])
             print(formatted_pred)
             exit()
     
