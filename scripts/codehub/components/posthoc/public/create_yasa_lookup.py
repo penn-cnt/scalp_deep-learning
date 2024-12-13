@@ -26,6 +26,7 @@ if __name__ == '__main__':
             formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,cols.size))
             predictions.append(formatted_pred)
         except:
+            print(ival)
             print(formatted_pred)
             exit()
     
