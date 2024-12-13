@@ -13,7 +13,7 @@ if __name__ == '__main__':
     new_map      = {'N1':'S','N2':'S','N3':'S','R':'S','W':'W'}
     consensus_cols = [icol for icol in YASA_DF if 'yasa' in icol]
     for icol in consensus_cols:
-        YASA_DF[icol] = YASA_DF[icol].apply(lambda x: new_map[x] if x in new_map.keys() else x)
+        YASA_DF[icol] = YASA_DF[icol].apply(lambda x: new_map[x] if x in new_map.keys() else 'U')
 
     # Get the consensus prediction
     preds                     = YASA_DF[consensus_cols].mode(axis=1).values
