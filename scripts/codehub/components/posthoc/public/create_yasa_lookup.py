@@ -27,9 +27,7 @@ if __name__ == '__main__':
             predictions.append(formatted_pred)
             print(formatted_pred.shape)
         except:
-            print(raw_DF.iloc[idx])
-            print(formatted_pred)
-            exit()
+            predictions.append(np.nan*np.ones((10,3)))
     
     # Get the start time and filename for each row
     files   = raw_DF.file.values
