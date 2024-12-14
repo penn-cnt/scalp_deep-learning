@@ -77,7 +77,7 @@ class clean_yasa:
         outDF = PD.DataFrame(outfile,columns=['file'])
         outDF['t_start']          = outstart
         outDF['t_end']            = outend
-        for idx,icol in enumerate(cols):
+        for idx,icol in enumerate(self.yasa_cols):
             outDF[f"yasa_{icol}"] = outstage[:,idx]
         
         # Sort the results
