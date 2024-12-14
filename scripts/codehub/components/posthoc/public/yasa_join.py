@@ -38,6 +38,9 @@ class clean_yasa:
         self.yasa_cols = np.array(self.raw_yasa.tag.values[0].split(','))
 
     def format_predictions(self):
+        """
+        Format the predictions to be a time by yasa channel array
+        """
 
         # Get the YASA prediction. Which should be the same for all channels as we use a consensus across channels
         self.predictions = []
@@ -53,6 +56,9 @@ class clean_yasa:
                 self.predictions.append(np.nan*np.ones((nrow,self.yasa_cols.size)))
 
     def make_dataframe(self):
+        """
+        Make the predictions into a similar format as the feature dataframe for easier merging.
+        """
 
         # Get the start time and filename for each row
         files   = self.raw_yasa.file.values
@@ -83,6 +89,89 @@ class clean_yasa:
         # Sort the results
         self.outDF = outDF.sort_values(by=['file','t_start'])
 
+class merge_yasa:
+
+    def __init__(self,feature_path,yasa_df):
+
+        self.yasa     = yasa_df
+        self.features = PD.read.pickle(feature_path) 
+
+    def pipeline(self):
+        
+        self.yasa_mapping()
+        self.joint_prediction()
+        self.merge_results()
+
+    def yasa_mapping(self):
+        """
+        Apply project specific mapping to the yasa labels.
+        """
+
+        # Clean up the labels to just be sleep or wake
+        new_map             = {'N1':'S','N2':'S','N3':'S','R':'S','W':'W'}
+        self.consensus_cols = [icol for icol in self.yasa if 'yasa' in icol]
+        for icol in self.consensus_cols:
+            self.yasa[icol] = self.yasa[icol].apply(lambda x: new_map[x] if x in new_map.keys() else 'U')
+
+    def joint_prediction(self):
+        """
+        Get the joint prediction for yasa
+        """
+
+        # Get the consensus prediction
+        preds                       = self.yasa[self.consensus_cols].mode(axis=1).values
+        self.yasa['yasa_consensus'] = preds.flatten()
+        self.yasa                   = self.yasa.drop(self.consensus_cols,axis=1)
+
+    def merge_results(self):
+
+        # Create the yasa lookup arrays
+        yasa_files     = self.yasa.file.values
+        yasa_tstart    = self.yasa.t_start.values
+        yasa_tend      = self.yasa.t_end.values
+        unique_files   = np.unique(yasa_files)
+
+        # Create the feature dataframe lookup arrays
+        feature_files  = self.features.file.values
+        feature_tstart = self.features.t_start.values
+
+        # Populate the YASA feature column with unknowns that we can replace by index with the correct value
+        YASA_FEATURE = np.array(['U' for ii in range(self.features.shape[0])])
+        YASA_LOOKUP  = self.yasa['yasa_consensus'].values
+        
+        # Step through the unique files
+        for ifile in tqdm(unique_files,total=unique_files.size):
+                    
+            # Get the file indices
+            yasa_file_inds    = (yasa_files==ifile)
+            feature_file_inds = (feature_files==ifile)
+            
+            # The yasa lookup was made for more than just the PNES project. So we can cull for files in the feature df
+            if feature_file_inds.sum() > 0:
+
+                # Step through the time values
+                unique_tstart = np.unique(yasa_tstart[yasa_file_inds])
+                for istart in unique_tstart:
+
+                    # Get the time indices
+                    yasa_time_inds    = (yasa_tstart==istart)
+                    feature_time_inds = (feature_tstart>=istart)&(feature_tstart<(istart+30))
+
+                    # Get the current prediction, if available
+                    YASA_slice = YASA_LOOKUP[yasa_file_inds&yasa_time_inds]
+
+                    # Step through the possible outcomes for the yasa slice size
+                    combined_inds = feature_file_inds&feature_time_inds
+                    if combined_inds.sum() > 0:
+                        if YASA_slice.size == 1:
+                            YASA_FEATURE[combined_inds] = YASA_slice[0]
+                        elif YASA_slice.size > 1:
+                            raise Exception("Too many YASA values map to this feature. Check YASA generation.")
+                        else:
+                            pass
+        self.YASA_FEATURE = YASA_FEATURE
+        print(self.YASA_FEATURE)
+
 if __name__ == '__main__':
 
     # Command line options needed to obtain data.
@@ -96,4 +185,6 @@ if __name__ == '__main__':
     CLN    = clean_yasa(args.yasa_path,args.yasa_window_size)
     yasaDF = CLN.pipeline()
 
-    print(yasaDF)
+    # Merge the results
+    MRG = merge_yasa(args.feature_path,yasaDF)
+    MRG.pipeline()
