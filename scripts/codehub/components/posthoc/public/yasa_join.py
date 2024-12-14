@@ -17,6 +17,7 @@ class clean_yasa:
     def pipeline(self):
 
         self.data_prep()
+        self.format_predictions()
         self.make_dataframe()
         return self.outDF
 
