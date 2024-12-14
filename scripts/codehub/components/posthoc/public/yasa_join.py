@@ -94,7 +94,7 @@ class merge_yasa:
     def __init__(self,feature_path,yasa_df):
 
         self.yasa     = yasa_df
-        self.features = PD.read.pickle(feature_path) 
+        self.features = PD.read_pickle(feature_path) 
 
     def pipeline(self):
         
