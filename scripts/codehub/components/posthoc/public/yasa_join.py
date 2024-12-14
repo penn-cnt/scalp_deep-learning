@@ -93,6 +93,6 @@ if __name__ == '__main__':
 
     # Clean up the yasa data
     CLN    = clean_yasa(args.yasa_path,args.yasa_window_size)
-    yasaDF = CLN.pipeline
+    yasaDF = CLN.pipeline()
 
     print(yasaDF)
