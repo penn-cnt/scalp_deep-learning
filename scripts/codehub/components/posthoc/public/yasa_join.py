@@ -91,16 +91,18 @@ class clean_yasa:
 
 class merge_yasa:
 
-    def __init__(self,feature_path,yasa_df):
+    def __init__(self,feature_path,yasa_df,outpath):
 
         self.yasa     = yasa_df
         self.features = PD.read_pickle(feature_path) 
+        self.outpath  = outpath
 
     def pipeline(self):
         
         self.yasa_mapping()
         self.joint_prediction()
         self.merge_results()
+        self.save_results()
 
     def yasa_mapping(self):
         """
@@ -170,7 +172,11 @@ class merge_yasa:
                         else:
                             pass
         self.YASA_FEATURE = YASA_FEATURE
-        print(self.YASA_FEATURE)
+        
+    def save_results(self):
+
+        self.features['yasa_prediction'] = self.YASA_FEATURE
+        self.features.to_pickle(args.outpath)
 
 if __name__ == '__main__':
 
@@ -178,6 +184,7 @@ if __name__ == '__main__':
     parser   = argparse.ArgumentParser()
     parser.add_argument('--feature_path', type=str, help='Input path to the feature dataframe.')
     parser.add_argument('--yasa_path', type=str, help='Input path to the yasa dataframe.')
+    parser.add_argument('--outpath', type=str, help='Output path for the feature dataframe with yasa added.')
     parser.add_argument('--yasa_window_size', type=int, default=300, help='Input path to the yasa dataframe.')
     args = parser.parse_args()
 
@@ -186,5 +193,5 @@ if __name__ == '__main__':
     yasaDF = CLN.pipeline()
 
     # Merge the results
-    MRG = merge_yasa(args.feature_path,yasaDF)
+    MRG = merge_yasa(args.feature_path,yasaDF,args.outpath)
     MRG.pipeline()
