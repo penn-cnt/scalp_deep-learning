@@ -86,9 +86,9 @@ if __name__ == '__main__':
 
     # Command line options needed to obtain data.
     parser   = argparse.ArgumentParser()
-    parser.add_argument('--feature_path', dtype=str, help='Input path to the feature dataframe.')
-    parser.add_argument('--yasa_path', dtype=str, help='Input path to the yasa dataframe.')
-    parser.add_argument('--yasa_window_size', dtype=int, default=300, help='Input path to the yasa dataframe.')
+    parser.add_argument('--feature_path', type=str, help='Input path to the feature dataframe.')
+    parser.add_argument('--yasa_path', type=str, help='Input path to the yasa dataframe.')
+    parser.add_argument('--yasa_window_size', type=int, default=300, help='Input path to the yasa dataframe.')
     args = parser.parse_args()
 
     # Clean up the yasa data
