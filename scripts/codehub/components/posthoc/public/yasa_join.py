@@ -46,7 +46,7 @@ class clean_yasa:
             try:
                 formatted_pred = ival.replace('|',',')
                 formatted_pred = np.array(formatted_pred.split(',')).reshape((-1,self.yasa_cols.size))
-                predictions.append(formatted_pred)
+                self.predictions.append(formatted_pred)
             except:
                 nrow = np.floor(self.yasa_window_size/30).astype('int')
                 self.predictions.append(np.nan*np.ones((nrow,self.yasa_cols.size)))
