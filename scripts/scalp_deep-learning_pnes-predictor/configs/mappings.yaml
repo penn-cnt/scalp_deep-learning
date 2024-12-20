@@ -1,0 +1,7 @@
+target_epidx:
+    pnes: 0
+    epilepsy: 1
+yasa_prediction:
+    S: 0
+    W: 1
+    U: 2

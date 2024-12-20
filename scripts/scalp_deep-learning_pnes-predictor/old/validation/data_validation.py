@@ -5,7 +5,7 @@ from sys import exit
 import seaborn as sns
 from tqdm import tqdm
 from scipy.stats import zscore
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_ind,ttest_rel
 from sklearn.feature_selection import f_classif
 
 class vector_analysis:
@@ -15,13 +15,13 @@ class vector_analysis:
         self.mlp_object = mlp_object 
 
         # Store scaled input vectors
-        model_block              = self.mlp_object[8]
-        self.X_train_bandpower   = PD.DataFrame(self.mlp_object[0],columns=model_block['bandpower'])
-        self.X_train_timeseries  = PD.DataFrame(self.mlp_object[2],columns=model_block['timeseries'])
-        self.X_train_categorical = PD.DataFrame(self.mlp_object[4],columns=model_block['categoricals'])
-        self.X_test_bandpower    = PD.DataFrame(self.mlp_object[1],columns=model_block['bandpower'])
-        self.X_test_timeseries   = PD.DataFrame(self.mlp_object[3],columns=model_block['timeseries'])
-        self.X_test_categorical  = PD.DataFrame(self.mlp_object[5],columns=model_block['categoricals'])
+        self.model_block         = self.mlp_object[8]
+        self.X_train_bandpower   = PD.DataFrame(self.mlp_object[0],columns=self.model_block['bandpower'])
+        self.X_train_timeseries  = PD.DataFrame(self.mlp_object[2],columns=self.model_block['timeseries'])
+        self.X_train_categorical = PD.DataFrame(self.mlp_object[4],columns=self.model_block['categoricals'])
+        self.X_test_bandpower    = PD.DataFrame(self.mlp_object[1],columns=self.model_block['bandpower'])
+        self.X_test_timeseries   = PD.DataFrame(self.mlp_object[3],columns=self.model_block['timeseries'])
+        self.X_test_categorical  = PD.DataFrame(self.mlp_object[5],columns=self.model_block['categoricals'])
 
         # Attach the targets
         target_vector       = np.array(['epilepsy' for ival in self.mlp_object[6].flatten()])
@@ -121,59 +121,82 @@ class vector_analysis:
         self.anova_df = PD.DataFrame(rows,columns=['feature','f-stat','p-val'])
         self.anova_df = self.anova_df.set_index('feature')
 
-    def plot_paired_whisker(self,outdir):
+    def paired_whisker_plotter(self,iDF,exog_col,plotcols,outdir,ydown=.25,yup=0.5,bonustitle=None):
 
-        def plot_fnc(iDF,outdir):
-            summary_arr = []
-            for icol in iDF:
-                if icol != 'target':
+        # Grab the unique values in the exogenous column
+        exog_vals = np.unique(iDF[exog_col].values)
+        all_exog  = iDF[exog_col].values
+        
+        # Loop over the columns to plot
+        for icol in plotcols:
 
-                    # Add a helpful vector for sns plots
-                    iDF['x'] = icol
+            # Get the values shared between patients for the exogenous column
+            DF_grp      = iDF.groupby(['uid',exog_col],as_index=False)[icol].median()
+            DF_0        = DF_grp.loc[DF_grp[exog_col]==exog_vals[0]]
+            DF_1        = DF_grp.loc[DF_grp[exog_col]==exog_vals[1]]
+            shared_uids = np.intersect1d(DF_0.uid.values,DF_1.uid.values)
+            vals_0      = DF_0.loc[DF_grp['uid'].isin(shared_uids)][icol]
+            vals_1      = DF_1.loc[DF_grp['uid'].isin(shared_uids)][icol]
 
-                    # Get the unpaired t-test
-                    pnes_vals     = iDF.loc[iDF.target=='pnes'][icol].values
-                    epilepsy_vals = iDF.loc[iDF.target=='epilepsy'][icol].values
-                    t_score,pval  = ttest_ind(pnes_vals,epilepsy_vals)
+            # get the paired t-test values
+            t_score,pval = ttest_rel(vals_0,vals_1)
 
-                    # Get the anova scores
-                    anova = self.anova_df.loc[icol]
+            # Make a title string with stats
+            title_str = f"{icol}\nP-value between {exog_col} {exog_vals[0]} and {exog_vals[1]}:{pval:.2e}"
+            if bonustitle != None:
+                title_str += f" ({bonustitle})"
 
-                    # Make a slightly better plotting scale
-                    all_vals   = iDF[icol].values
-                    zvals      = np.fabs(zscore(all_vals))
-                    yrange_raw = np.ceil(np.fabs(np.interp([5],zvals,all_vals)[0]))
-                    yrange     = [-yrange_raw-1,yrange_raw+1]
+            # Make a plotting dataframe
+            all_vals  = np.concatenate((vals_0,vals_1))
+            all_exog  = [exog_vals[0] for ii in range(vals_0.size)] 
+            all_exog.extend([exog_vals[1] for ii in range(vals_1.size)])
+            pDF           = PD.DataFrame(all_vals,columns=[icol])
+            pDF[exog_col] = all_exog
+            pDF['x']      = icol
 
-                    # Make a title string with stats
-                    title_str = f"{icol}\nP-value between PNES and Epilepsy:{pval:.2e}\nFeature Anova F-score/Pvalue: {anova['f-stat']:.1f}/{anova['p-val']:.2e}"
+            # Make a slightly better plotting scale
+            all_vals   = pDF[icol].values
+            zvals      = np.fabs(zscore(all_vals))
+            yrange_raw = np.ceil(np.fabs(np.interp([1],zvals,all_vals)[0]))
+            yrange     = [-yrange_raw+ydown,yrange_raw+yup]
 
-                    # Make the plot
-                    print(f"Plotting {icol}")
-                    fig = PLT.figure(dpi=100,figsize=(6.,6.))
-                    ax  = fig.add_subplot(111)
-                    sns.boxplot(data=iDF,x='x',y=icol,hue='target')
-                    ax.set_xlabel(f"Feature",fontsize=16)
-                    ax.set_ylabel(f"{icol}",fontsize=16)
-                    ax.set_title(title_str,fontsize=13)
-                    try:
-                        ax.set_ylim(yrange)
-                    except:
-                        pass
-                    PLT.savefig(f"{outdir}{icol}.png")
-                    PLT.close("all")
+            # Make the plot
+            print(f"Plotting {icol}")
+            fig = PLT.figure(dpi=100,figsize=(6.,6.))
+            ax  = fig.add_subplot(111)
+            sns.boxplot(data=pDF,x='x',y=icol,hue=exog_col, boxprops={'alpha': 0.4}, ax=ax)
+            sns.stripplot(data=pDF, x="x", y=icol, hue=exog_col, dodge=True, ax=ax)
+            ax.set_xlabel(f"Feature",fontsize=13)
+            ax.set_ylabel(f"{icol}",fontsize=13)
+            ax.set_title(title_str,fontsize=13)
+            try:
+                ax.set_ylim(yrange)
+            except:
+                pass
+            PLT.savefig(f"{outdir}{icol}.png")
+            PLT.close("all")
 
-                    # Make a summary dataframe
-                    summary_arr.append([[icol,pval,anova['f-stat'],anova['p-val']]])
-            return summary_arr
+    def plot_paired_whisker_pnes_vs_epilepsy(self,outdir):
 
-        summary_DF     = PD.DataFrame(columns=['rawcol','PNES-Epilepsy P-value','ANOVA F','ANOVA P-value'])
-        bandpower_arr  = np.array(plot_fnc(self.X_train_bandpower.copy(),outdir)).squeeze()
-        timeseries_arr = np.array(plot_fnc(self.X_train_timeseries.copy(),outdir)).squeeze()
-        iDF = PD.DataFrame(bandpower_arr,columns=summary_DF.columns)
-        jDF = PD.DataFrame(timeseries_arr,columns=summary_DF.columns)
-        summary_DF = PD.concat((iDF,jDF))
-        summary_DF.to_csv(f"{outdir}pnes_epilepsy_feature_stats.csv")
+        # Make the mixed version of target
+        smap = {1:'sleep',2:'wake'} 
+        iDF  = self.data.loc[self.data.sleep_state.isin([1])]
+        self.paired_whisker_plotter(iDF,'target',self.model_block['bandpower'],outdir+'SLEEP/',ydown=0.85,yup=-.45,bonustitle="sleep")
+        self.paired_whisker_plotter(iDF,'target',self.model_block['timeseries'],outdir+'SLEEP/',ydown=0.5,yup=-.25,bonustitle="sleep")
+        iDF  = self.data.loc[self.data.sleep_state.isin([2])]
+        self.paired_whisker_plotter(iDF,'target',self.model_block['bandpower'],outdir+'WAKE/',ydown=0.85,yup=-.45,bonustitle="wake")
+        self.paired_whisker_plotter(iDF,'target',self.model_block['timeseries'],outdir+'WAKE/',ydown=0.5,yup=-.25,bonustitle="wake")
+
+    def plot_paired_whisker_sleep_vs_wake(self,outdir):
+
+        # Create a more human readable label
+        smap = {1:'sleep',2:'wake'} 
+
+        # Plot differences in bandpower columns
+        iDF  = self.data.loc[self.data.sleep_state.isin([1,2])]
+        iDF['sleep_state'] = iDF['sleep_state'].apply(lambda x:smap[x])
+        self.paired_whisker_plotter(iDF,'sleep_state',self.model_block['bandpower'],outdir)
+        self.paired_whisker_plotter(iDF,'sleep_state',self.model_block['timeseries'],outdir)
 
     def plot_paired_pdf(self,outdir):
 
@@ -236,42 +259,50 @@ class vector_analysis:
         model_block         = self.mlp_object[8]
 
         for icol in range(X_train_bandpower.shape[1]):
-            vals = X_train_bandpower[:,icol]
+            vals    = X_train_bandpower[:,icol]
+            colname = model_block['bandpower'][icol] 
             
             fig = PLT.figure(dpi=100,figsize=(8.,6.))
             ax  = fig.add_subplot(111)
             ax.hist(vals,bins=200,histtype='step')
+            ax.set_title(f"{colname}", fontsize=14)
             PLT.savefig(f"{outdir}bandpower_train_{icol}")
             PLT.close("all")
 
         for icol in range(X_test_bandpower.shape[1]):
-            vals = X_test_bandpower[:,icol]
-            
+            vals    = X_test_bandpower[:,icol]
+            colname = model_block['bandpower'][icol]
+
             fig = PLT.figure(dpi=100,figsize=(8.,6.))
             ax  = fig.add_subplot(111)
             ax.hist(vals,bins=200,histtype='step')
+            ax.set_title(f"{colname}", fontsize=14)
             PLT.savefig(f"{outdir}bandpower_test_{icol}")
             PLT.close("all")
 
         for icol in range(X_train_timeseries.shape[1]):
-            vals = X_train_timeseries[:,icol]
+            vals    = X_train_timeseries[:,icol]
+            colname = model_block['timeseries'][icol]
             
             fig = PLT.figure(dpi=100,figsize=(8.,6.))
             ax  = fig.add_subplot(111)
             ax.hist(vals,bins=200,histtype='step')
+            ax.set_title(f"{colname}", fontsize=14)
             PLT.savefig(f"{outdir}timeseries_train_{icol}")
             PLT.close("all")
 
         for icol in range(X_test_timeseries.shape[1]):
-            vals = X_test_timeseries[:,icol]
+            vals    = X_test_timeseries[:,icol]
+            colname = model_block['timeseries'][icol]
             
             fig = PLT.figure(dpi=100,figsize=(8.,6.))
             ax  = fig.add_subplot(111)
             ax.hist(vals,bins=200,histtype='step')
+            ax.set_title(f"{colname}", fontsize=14)
             PLT.savefig(f"{outdir}timeseries_test_{icol}")
             PLT.close("all")
 
-    def quantile_features(self):
+    def quantile_features(self,outdir):
 
         # get the sleep data
         sleep_DF = self.data.loc[self.data.sleep_state==1]
@@ -282,10 +313,11 @@ class vector_analysis:
         for icol in sleep_DF.columns:
             if 'C03' in icol or 'C04' in icol:
                 if 'welch' in icol:
-                    if '[1.0]' in icol:
+                    if '1.00' in icol:
                         outcols.append(icol)
                 else:
-                    outcols.append(icol)
+                    if 'quantile' not in icol:
+                        outcols.append(icol)
         allcols = localcols+outcols
 
         # Make an output dataframe
@@ -307,7 +339,7 @@ class vector_analysis:
         
         # Save the results
         outDF = outDF[outcols2].sort_values(by=localcols)
-        outDF.to_csv('feature_quantiles.csv',index=False)
+        outDF.to_csv(f"{outdir}feature_quantiles.csv",index=False)
 
     def linear_seperability_search(self,outdir):
 

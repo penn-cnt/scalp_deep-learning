@@ -1,7 +1,12 @@
 import os
+import re
+import ast
+import yaml
 import pickle
 import numpy as np
 import pandas as PD
+import pylab as PLT
+import seaborn as sns
 from tqdm import tqdm
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
@@ -13,157 +18,104 @@ from sklearn.linear_model import LogisticRegression,SGDClassifier
 from sklearn.model_selection import train_test_split,GroupShuffleSplit 
 from sklearn.preprocessing import StandardScaler,LabelBinarizer,PowerTransformer
 
-class data_manager:
+class pivot_manager:
+    """
+    Class for cleaning and pivoting the raw feature data to make columns for all features in one row for each clip (versus unique rows for each feature and clip).
+    """
 
-    def __init__(self,inpath,pivotpath,mlppath,splitmethod):
+    def __init__(self,inpath,pivotpath,clip_length):
+        """
+        Initialize the pivot manager class with some relevant filepaths.
+
+        Args:
+            inpath (_type_): Path to the raw feature csv
+            pivotpath (_type_): Path to save the pivoted data to.
+        """
         
         self.inpath      = inpath
         self.pivotpath   = pivotpath
-        self.mlppath     = mlppath
-        self.splitmethod = splitmethod
+        self.clip_length = clip_length
 
-    def pivotdata_prep(self):
+    def workflow(self):
+        """
+        Workflow for creating a pivoted dataset.
+
+        Returns:
+            pandas dataframe: A pivoted and cleaned up dataset with all the features for a given clip as columns.
+        """
 
         if not os.path.exists(self.pivotpath):
 
             print("Creating pivot data.")            
             # Create the pivot dataset
-            self.DF = PD.read_pickle(self.inpath)
-            self.get_sleep_state()
+            self.DF = PD.read_csv(self.inpath)
             self.drop_extra_raw_labels()
             self.drop_failed_runs()
-            self.marsh_filter()
-            self.drop_fullfile()
-            self.define_columns()
+            self.keep_clips_only()
+            self.define_pivot()
             self.pivot()
-            #self.normalized_bandpower()
             self.get_alpha_delta()
             self.shift_ref()
+            self.expand_targets()
+            self.make_uid()
+            self.drop_extra_pivot_labels()
             self.DF.dropna(inplace=True)
-
+            
             # Save the pivot dataset
             self.DF.to_pickle(self.pivotpath)
         else:
             self.DF = PD.read_pickle(self.pivotpath)
         return self.DF
 
-    def mlpdata_prep(self):
-        # Create the neural network inputs
-        if not os.path.exists(self.mlppath):
-            
-            print("Creating MLP data.")
-
-            # Create the MLP input
-            self.map_targets()
-            self.drop_extra_cols()
-            self.define_column_groups()
-            self.make_model_groups()
-            self.data_rejection()
-            self.apply_column_transform()
-            self.sleep_to_categorical()
-            self.target_to_categorical()
-            self.define_inputs()
-
-            # Create the output object
-            out_object = (self.X_train_bandpower,self.X_test_bandpower,self.X_train_timeseries,self.X_test_timeseries,
-                          self.X_train_categorical,self.X_test_categorical,self.Y_train,self.Y_test,self.model_block,
-                          self.train_localization,self.test_localization)
-
-            # Save the MLP input
-            pickle.dump(out_object,open(self.mlppath,'wb'))
-        else:
-            out_object = pickle.load(open(self.mlppath,'rb'))
-        return out_object
-
-    ################################
-    ##### Data Pivot functions #####
-    ################################
-
-    def normalized_bandpower(self):
-
-        # Make a summed column for all the bandpowers in a row for a given channel
-        print("Normalizing Bandpower")
-        for ichannel in self.channels:
-            col_mask = []
-            for icol in self.DF.columns:
-                if ichannel in icol and 'welch' in icol:
-                    col_mask.append(icol)
-        
-            # get the summed bandpower
-            self.DF[f"{ichannel}_total_BP"] = self.DF[col_mask].values.sum(axis=1)
-
-            # Remove nans and zeros
-            self.DF.dropna(inplace=True)
-            self.DF = self.DF.loc[self.DF[f"{ichannel}_total_BP"] > 0]
-
-            # Create the normalized power
-            for icol in col_mask:
-                self.DF.loc[:,[icol]] = self.DF[icol].values/self.DF[f"{ichannel}_total_BP"].values
-        
-    def get_sleep_state(self):
-
-        # Set up the word tokenizer
-        stop_words      = set(stopwords.words('english'))
-        tokenizer       = RegexpTokenizer(r'\w+')
-
-        # Grab the annotation values
-        annots      = self.DF['annotation'].values
-        sleep_state = []
-        for istr in annots:
-
-            # Tokenize the annotations
-            tokens          = tokenizer.tokenize(istr.lower())
-            filtered_tokens = [token for token in tokens if token not in stop_words and len(token) > 1]
-
-            # See if we can predict the sleep state from tokens
-            sleep_pred = []
-            for itoken in filtered_tokens:
-                if itoken in ['sleep','asleep','n1','n2','n3','sws','rem','spindles']:
-                    sleep_pred.append('sleep')
-                if itoken in ['wake','eye','blink','pdr','eat','chew']:
-                    sleep_pred.append('wake')
-            
-            # Add in the values to the output list
-            if len(sleep_pred) >= 2:
-                sleep_state.append(-1)
-            elif len(sleep_pred) == 0:
-                sleep_state.append(0)
-            else:
-                if sleep_pred[0] == 'sleep':
-                    sleep_state.append(1)
-                elif sleep_pred[0] == 'wake':
-                    sleep_state.append(2)
-        self.DF['sleep_state'] = sleep_state
-        self.DF = self.DF.loc[self.DF.sleep_state!=-1]
-
     def drop_extra_raw_labels(self):
+        """
+        Drop a few unnecessary columns from the raw feature dataframe.
+        """
 
-        self.DF.drop(['annotation','ieeg_file','ieeg_start_sec','ieeg_duration_sec'],axis=1,inplace=True)
+        self.DF.drop(['annotation','marsh_rejection'],axis=1,inplace=True)
 
     def drop_failed_runs(self):
+        """
+        Remove any clips with failed feature extractions.
+        """
+
         self.DF = self.DF.loc[self.DF.tag!='None']
 
-    def marsh_filter(self):
+    def keep_clips_only(self):
+        """
+        Remove any clips with a different clip length that needed for the experiment. This can easily arise if using longer clips to get some baseline metrics (i.e. Marsh Filtering) which are in the raw feature dataframe.
+        """
 
-        self.DF = self.DF.loc[self.DF.marsh_rejection==True].drop(['marsh_rejection'],axis=1)
+        self.DF = self.DF.loc[self.DF.t_window==self.clip_length]
 
-    def drop_fullfile(self):
+    def define_pivot(self):
+        """
+        Define the columns needed to make a pivot dataframe.
+        """
 
-        self.DF = self.DF.loc[self.DF.t_window==30]
+        # Columns with known identifiers (not channel features)
+        blacklist       = ['file', 't_start', 't_end', 't_window', 'method', 'tag', 'target','yasa_prediction']
 
-    def define_columns(self):
-        blacklist       = ['file', 't_start', 't_end', 't_window', 'method', 'tag', 'uid', 'target','sleep_state']
+        # GHHet the channel column names
         self.channels   = np.setdiff1d(self.DF.columns,blacklist)
-        self.ref_cols   = ['file', 't_start', 't_end', 't_window', 'uid', 'target','sleep_state']
+
+        # Define the reference columns and the pivot columns
+        self.ref_cols   = ['file', 't_start', 't_end', 't_window', 'target','yasa_prediction']
         self.pivot_cols = ['method', 'tag'] 
 
     def pivot(self):
+        """
+        Perform the dataframe pivot and make new column labels that combine channel label and feature name
+        """
 
         pivot_df         = self.DF.pivot_table(index=self.ref_cols,columns=self.pivot_cols,values=self.channels,aggfunc='first')
         pivot_df.columns = [f'{val}_{method}_{tag}' for val, method, tag in pivot_df.columns]
         self.DF          = pivot_df.reset_index()
 
     def get_alpha_delta(self):
+        """
+        Calculate the alpha delta ratio for each clip.
+        """
 
         # Make a blank array for later averaging
         blank_ad = np.zeros((self.DF.shape[0],self.channels.size))
@@ -200,71 +152,187 @@ class data_manager:
             self.DF[q75_ref] = self.DF[q75_ref]-self.DF[med_ref]
             self.DF[q25_ref] = self.DF[q25_ref]-self.DF[med_ref]
 
-    def return_data(self):
-        return self.DF
+    def expand_targets(self):
+        """
+        New data repository uses a dictionary to store a lot more target data. Need to make these into discrete columns.
+        """
 
-    ##############################
-    ##### MLP Prep functions #####
-    ##############################
+        # Sample the new target labels from the first entry, make objects to store results
+        rawstr = self.DF.iloc[0].target
 
-    def map_targets(self):
-        self.tmap         = {'pnes':0,'epilepsy':1}
-        self.DF['target'] = self.DF['target'].apply(lambda x:self.tmap[x])
+        # Clean up the string. Stored targets dont have well formed string denotation.
+        target_cols = ast.literal_eval(rawstr.replace('{','{"').replace('}','"}').replace(':','":"').replace(',','","')).keys()
 
-    def drop_extra_cols(self):
+        # Make the object we will attach to the dataframe
+        output = {}
+        for icol in target_cols:
+            output[f"target_{icol}"] = []
 
-        # Define drop columns
-        drop_cols = ['t_end','t_start','t_window']
-        self.DF = self.DF.drop(drop_cols,axis=1)
+        # Make a dictionary to store the new target info
+        for ii in range(self.DF.shape[0]):
+            
+            # Get the target and clean it up
+            rawtarget   = self.DF.iloc[ii].target
+            cleantarget = rawtarget.replace('{','{"').replace('}','"}').replace(':','":"').replace(',','","')
+
+            # Add the results to the output object
+            targets = ast.literal_eval(cleantarget)
+            for icol in targets.keys():
+                output[f"target_{icol}"].append(targets[icol])
+            
+        # Concatenate the results
+        self.DF = PD.concat((self.DF,PD.DataFrame(output)),axis=1)
+
+    def make_uid(self):
+        """
+        Make a unique identifier for each patient based on the filepath.
+        """
+
+        # Define the regular expression used to find the subject number
+        pattern = r'HUP(\d+)_'
+
+        # Loop over the filenames to get the new uid column
+        self.DF['uid'] = self.DF['file'].apply(lambda x:int(re.search(pattern, x).group(1)))
+
+    def drop_extra_pivot_labels(self):
+        """
+        Drop any extraneous columns not needed now that we have a pivoted datafrme.
+        """
+
+        self.DF.drop(['t_end', 't_window','target'],axis=1,inplace=True)
+
+class vector_manager:
+    """
+    Class for making the actual input vectors to whatever DL model we choose to use.
+    """
+
+    def __init__(self, pivot_DF, target_col, vector_path, criteria_path, mapping_path, transformer_path, vector_plot_dir):
+
+        # Save some class variables from the front-end
+        self.DF               = pivot_DF
+        self.target_col       = target_col
+        self.vector_path      = vector_path
+        self.criteria_path    = criteria_path
+        self.mapping_path     = mapping_path
+        self.transformer_path = transformer_path
+        self.vector_plot_dir  = vector_plot_dir
+
+        # Save some hard-coded class variables
+        self.split_method     = 'uid'
+        self.outlier_method   = 'iso'
+        self.leading_cols     = ['file','t_start','uid']
+
+    def workflow(self):
+        """
+        Workflow for creating MLP inputs
+
+        Returns:
+            tuple: A tuple with the data, column headers, etc. for use in a DL network.
+        """
+
+        # Create the neural network inputs
+        if not os.path.exists(self.vector_path):
+            
+            print("Creating Vector data.")
+
+            # Create the MLP input
+            self.apply_criteria()
+            self.select_target()
+            self.map_columns()
+            self.define_column_groups()
+            self.split_model_group()
+            self.outlier_rejection()
+            self.apply_column_transform()
+            self.encode_categoricals()
+
+            # Plot the vectors as need
+            if self.vector_plot_dir != None:
+                self.vector_plots()
+
+            # Package the DL input object
+            DL_object = (self.model_block,self.train_transformed,self.test_transformed)
+            
+            # Save the DL object
+            pickle.dump(DL_object,open(self.vector_path,"wb"))
+        else:
+            DL_object = pickle.load(open(self.vector_path,"rb"))
+        return DL_object
+
+    def apply_criteria(self):
+        """
+        Apply any criteria for data usage in the model. This could be epilepsy diagnosis, type, lateralization, gender, etc.
+        """
+
+        if self.criteria_path != None:
+            
+            # Load the criteria dictionary
+            criteria = yaml.safe_load(open(self.criteria_path,'r'))
+            
+            # Loop over the criteria columns and apply the criteria lists
+            for icol in criteria.keys():
+                self.DF = self.DF.loc[self.DF[icol].isin(criteria[icol])]
+
+    def select_target(self):
+        """
+        Remove extra target columns and only use the singular target column the user wants.
+        Note: This is after apply criteria so criteria can be used with other targets (i.e. Laterality, etc.)
+        """
+
+        # Find all the target columns
+        target_cols = [icol for icol in self.DF.columns if 'target' in icol and icol != self.target_col]
+        
+        # Drop unused target cols
+        self.DF.drop(target_cols,axis=1,inplace=True)
+
+    def map_columns(self):
+
+        # Load the mapping file
+        mapping_config = yaml.safe_load(open(self.mapping_path,'r'))
+
+        # Apply the mappings
+        for icol in mapping_config.keys():
+            self.DF[icol] = self.DF[icol].apply(lambda x:mapping_config[icol][x])
 
     def define_column_groups(self):
         """
         Define the modeling blocks based on column name.
         """
 
-        # Store the columns into the right modeling block for preprocessing and initial fits.
-        self.iso_cols        = []
-        self.transform_block = {'standard_scaler_wlog10':[],'yeo-johnson':[],'passthrough':[]}
-        self.model_block     = {'bandpower':[],'timeseries':[],'categoricals':[],'targets':[]}
+        # Load the transformer block configuration
+        self.transformer_config = yaml.safe_load(open(self.transformer_path,'r'))
+        
+        # Define the transformer block names according to the configuration keys
+        self.model_block = {key: [] for key in self.transformer_config.keys()}
+
+        # Use the transformer config to find the relevant columns
         for icol in self.DF.columns:
-            if 'spectral_energy_welch' in icol:
-                self.transform_block['standard_scaler_wlog10'].append(icol)
-                self.model_block['bandpower'].append(icol)
-            elif 'stdev' in icol:
-                self.transform_block['standard_scaler_wlog10'].append(icol)
-                self.model_block['timeseries'].append(icol)
-            elif 'rms' in icol:
-                self.transform_block['standard_scaler_wlog10'].append(icol)
-                self.model_block['timeseries'].append(icol)
-            elif 'line_length' in icol:
-                self.transform_block['standard_scaler_wlog10'].append(icol)
-                self.model_block['timeseries'].append(icol)
-            elif 'median' in icol:
-                self.iso_cols.append((icol,0.05))
-                self.transform_block['yeo-johnson'].append(icol)
-                self.model_block['timeseries'].append(icol)
-            elif 'quantile' in icol:
-                self.transform_block['yeo-johnson'].append(icol)
-                self.model_block['timeseries'].append(icol)
-            elif 'AD' in icol:
-                self.transform_block['yeo-johnson'].append(icol)
-                self.model_block['timeseries'].append(icol)
-            elif 'sleep' in icol:
-                self.transform_block['passthrough'].append(icol)
-            elif 'target' in icol:
-                self.transform_block['passthrough'].append(icol)
-            else:
-                self.transform_block['passthrough'].append(icol)
 
-    def make_model_groups(self):
+            # Make a case for a catch-all passthrough option
+            passflag = True
+            
+            # Step through the difference transformer options to assign the column name
+            for itransformer in self.transformer_config.keys():
+                for substr in self.transformer_config[itransformer]['cols']:
+                    if substr in icol:
+                        self.model_block[itransformer].append(icol)
+                        passflag = False
 
-        if self.splitmethod == 'raw':
+            # If the column has not been handled by the transformer config, make it a passthrough
+            if passflag:
+                self.model_block['passthrough'].append(icol)
+    
+    def split_model_group(self):
+        """
+        Split the model group randomly, by patient, or by time.
+        """
+
+        if self.split_method == 'random':
             # Make an index object for splitting
             DF_inds = np.arange(self.DF.shape[0])
 
             #self.train_raw, self.test_raw = train_test_split(self.DF, test_size=0.33, random_state=42)
             train_inds, test_inds = train_test_split(DF_inds, test_size=0.33, random_state=42)
-        elif self.splitmethod == 'uid':
+        elif self.split_method == 'uid':
             # Split on uid
             splitter              = GroupShuffleSplit(test_size=.33, n_splits=1, random_state = 42)
             split                 = splitter.split(self.DF, groups=self.DF['uid'])
@@ -274,49 +342,65 @@ class data_manager:
         self.train_raw = self.DF.iloc[train_inds]
         self.test_raw  = self.DF.iloc[test_inds]
 
-    def data_rejection(self):
+    def outlier_rejection(self,contamination_factor=0.01):
+        """
+        Apply outlier rejection to the dataset
+        """
 
-        # Alert user
-        print("Running isolation forest to reject the most extreme time segments (by median).")
+        if self.outlier_method == 'iso':
 
-        # Run an isolation forest across each feature in the training block
-        self.iso_forests = {}
-        for ipair in self.iso_cols:
-            icol                   = ipair[0]
-            contam_factor          = ipair[1]
-            ISO                    = IsolationForest(contamination=contam_factor, random_state=42)
-            self.iso_forests[icol] = ISO.fit(self.train_raw[icol].values.reshape((-1,1)))
+            # Alert user
+            print("Running isolation forest to reject the most extreme time segments.")
 
-        # Get the training mask
-        train_2d_mask = np.zeros((self.train_raw.shape[0],len(self.iso_cols)))
-        for idx,ipair in enumerate(self.iso_cols):
-            icol                 = ipair[0]
-            train_2d_mask[:,idx] = self.iso_forests[icol].predict(self.train_raw[icol].values.reshape((-1,1)))
-        train_mask     = (train_2d_mask==1).all(axis=1)
-        self.train_raw = self.train_raw.iloc[train_mask]
-        
-        # Get the testing mask
-        test_2d_mask = np.zeros((self.test_raw.shape[0],len(self.iso_cols)))
-        for idx,ipair in enumerate(self.iso_cols):
-            icol                = ipair[0]
-            test_2d_mask[:,idx] = self.iso_forests[icol].predict(self.test_raw[icol].values.reshape((-1,1)))
-        test_mask     = (test_2d_mask==1).all(axis=1)
-        self.test_raw = self.test_raw.iloc[test_mask]
+            # Get the columns we can use for outlier rejection
+            iso_cols = []
+            for itransformer in self.transformer_config.keys():
+                if self.transformer_config[itransformer]['iso']:
+                    iso_cols.extend(self.model_block[itransformer])
 
-        print(f"Isolation Forest reduced training size to {train_mask.sum()} from {train_mask.size} samples.")
-        print(f"Isolation Forest reduced test size to {test_mask.sum()} from {test_mask.size} samples.")
+            # Create and fit the isolation forest
+            self.ISO = IsolationForest(contamination=contamination_factor, random_state=42).fit(self.train_raw[iso_cols].values)
+
+            # Get the training mask
+            train_mask     = (self.ISO.predict(self.train_raw[iso_cols].values)==1)
+            self.train_raw = self.train_raw.iloc[train_mask]
+            
+            # Get the testing mask
+            test_mask     = (self.ISO.predict(self.test_raw[iso_cols].values)==1)
+            self.test_raw = self.test_raw.iloc[test_mask]
+
+            print(f"Isolation Forest reduced training size to {train_mask.sum()} from {train_mask.size} samples.")
+            print(f"Isolation Forest reduced test size to {test_mask.sum()} from {test_mask.size} samples.")
 
     def apply_column_transform(self):
+        """
+        Apply the scaling transformations to the transformer blocks.
+        """
+
+        # Create the column transformer list
+        transformer_list = []
+
+        # Loop over the model blocks to get the right transform type
+        for itransformer in self.transformer_config.keys():
+            method = self.transformer_config[itransformer]['method']
+
+            # Case statements for different transform types
+            if method == 'standard_scaler_wlog10':
+                transformer_list.append((f"{itransformer}_{method}", StandardScaler(), self.model_block[itransformer]))
+            elif method == 'yeo-johnson':
+                transformer_list.append((f"{itransformer}_{method}", PowerTransformer('yeo-johnson'), self.model_block[itransformer]))
+            else:
+                transformer_list.append((f"{itransformer}_{method}", 'passthrough', self.model_block[itransformer]))
 
         # Create the column transformation actions
-        ct = ColumnTransformer([("standard_scaler_wlog10", StandardScaler(), self.transform_block['standard_scaler_wlog10']),
-                                ("yeo-johnson", PowerTransformer('yeo-johnson'), self.transform_block['yeo-johnson']),
-                                ("pass_encoder", 'passthrough', self.transform_block['passthrough'])])
+        ct = ColumnTransformer(transformer_list)
 
-        # Apply the needed log-transformations
-        print("Applying log-transformation.")
-        self.train_raw[self.transform_block['standard_scaler_wlog10']] = np.log10(self.train_raw[self.transform_block['standard_scaler_wlog10']])
-        self.test_raw[self.transform_block['standard_scaler_wlog10']]  = np.log10(self.test_raw[self.transform_block['standard_scaler_wlog10']])
+        # Apply the log transforms if requested
+        for itransformer in self.transformer_config.keys():
+            if self.transformer_config[itransformer]['log10']:
+                for icol in self.model_block[itransformer]:
+                    self.train_raw[icol] = np.log10(self.train_raw[icol].values)
+                    self.test_raw[icol]  = np.log10(self.test_raw[icol].values)
 
         # Convert the data
         print("Applying distribution scaling.")
@@ -329,64 +413,98 @@ class data_manager:
         self.train_transformed = PD.DataFrame(train_transformed,columns=flat_cols)
         self.test_transformed  = PD.DataFrame(test_transformed,columns=flat_cols)
 
-        # Fix some typing issues from including the file
-        self.train_transformed['sleep_state'] = self.train_transformed['sleep_state'].astype('int')
-        self.test_transformed['sleep_state']  = self.test_transformed['sleep_state'].astype('int')
-        self.train_transformed['target']      = self.train_transformed['target'].astype('int')
-        self.test_transformed['target']       = self.test_transformed['target'].astype('int')
+        # Make a more easily parsed structure
+        trailing_cols = np.setdiff1d(self.train_transformed.columns,self.leading_cols)
+        cols          = self.leading_cols.copy()
+        cols.extend(trailing_cols)
 
+        # Reorder the columns
+        self.train_transformed = self.train_transformed[cols]
+        self.test_transformed  = self.test_transformed[cols]
 
-    def sleep_to_categorical(self):
+        # Fix typings
+        for icol in self.train_transformed.columns:
+            try:
+                self.train_transformed[icol] = PD.to_numeric(self.train_transformed[icol])
+                self.test_transformed[icol]  = PD.to_numeric(self.test_transformed[icol])
+            except:
+                pass
 
-        # Apply the label binarizer to the sleep labels
-        LB = LabelBinarizer()
-        LB.fit(self.train_transformed['sleep_state'])
-        sleep_labels = [f"sleep_{int(x):02d}" for x in LB.classes_]
-        self.model_block['categoricals'].extend(sleep_labels)
+    def encode_categoricals(self):
+        """
+        Convert categoricals with an encoder.
+        """
+
+        # Find the transformer blocks that need encoding
+        for itransformer in self.transformer_config.keys():
+            if self.transformer_config[itransformer]['method'] == 'encoder':
+
+                # Make the new output model block object
+                new_model_block = []
+
+                # Loop over the columns in this model block
+                for icol in self.model_block[itransformer]:
+
+                    # Apply the label binarizer to the sleep labels
+                    LB = LabelBinarizer()
+                    LB.fit(self.train_transformed[icol])
+                    encoder_labels = [f"{icol}_{int(x):02d}" for x in LB.classes_]
+                    new_model_block.extend(encoder_labels)
+
+                    # Add the vectors to train
+                    encoded_data = LB.transform(self.train_transformed[icol])
+                    if len(encoder_labels) == 2:
+                        encoded_data = np.hstack((encoded_data, 1 - encoded_data))
+                    train_vectors = PD.DataFrame(encoded_data,columns=encoder_labels)
+                    self.train_transformed.drop([icol],axis=1,inplace=True)
+                    self.train_transformed = PD.concat((self.train_transformed,train_vectors),axis=1)
+
+                    # Add the vectors to test
+                    encoded_data = LB.transform(self.test_transformed[icol])
+                    if len(encoder_labels) == 2:
+                        encoded_data = np.hstack((encoded_data, 1 - encoded_data))
+                    test_vectors = PD.DataFrame(encoded_data,columns=encoder_labels)
+                    self.test_transformed.drop([icol],axis=1,inplace=True)
+                    self.test_transformed = PD.concat((self.test_transformed,test_vectors),axis=1)
+
+                # Update the stored model block
+                self.model_block[itransformer] = new_model_block
+
+    def vector_plots(self):
+        """
+        Creates a series of plots of the input vectors to ensure well formed inputs.
+        """
         
-        # Add in the sleep labels to train
-        sleep_vectors = LB.transform(self.train_transformed['sleep_state'])
-        self.train_transformed.drop(['sleep_state'],axis=1,inplace=True)
-        self.train_transformed[sleep_labels] = sleep_vectors
-
-        # Add in the sleep labels to test
-        sleep_vectors = LB.transform(self.test_transformed['sleep_state'])
-        self.test_transformed.drop(['sleep_state'],axis=1,inplace=True)
-        self.test_transformed[sleep_labels] = sleep_vectors
-
-    def target_to_categorical(self,multiclass_format=False):
-
-        if multiclass_format:
-            # Apply the label binarizer to the target labels
-            LB = LabelBinarizer()
-            LB.fit(self.train_transformed['target'])
-            self.target_labels = [f"target_{int(x):02d}" for x in LB.classes_]
-            self.model_block['targets'].extend(self.target_labels)
+        # Make sure the plot directory exists first. If not, confirm with user if we should make it.
+        if not os.path.isdir(self.vector_plot_dir):
             
-            # Add in the sleep labels to train
-            target_vectors = LB.transform(self.train_transformed['target'])
-            target_vectors = np.hstack((target_vectors, 1 - target_vectors))
-            self.train_transformed.drop(['target'],axis=1,inplace=True)
-            self.train_transformed[self.target_labels] = target_vectors
+            # Get input from the user as to what to do
+            print(f"Vector output plot directory {self.vector_plot_dir} does not exist.")
+            
+            # Enter loop to get acceptable inputs
+            while True:
+                user_input = input(f"Create this directory (Yy/Nn)? ").lower()
 
-            # Add in the sleep labels to test
-            target_vectors = LB.transform(self.test_transformed['target'])
-            target_vectors = np.hstack((target_vectors, 1 - target_vectors))
-            self.test_transformed.drop(['target'],axis=1,inplace=True)
-            self.test_transformed[self.target_labels] = target_vectors
-        else:
-            self.model_block['targets'].append('target')
+                if user_input == 'y':
+                    os.system(f"mkdir -p {self.vector_plot_dir}")
+                    break
+                elif user_input=='n':
+                    return
+                
+        # Create the vector plots
+        for itransformer in self.transformer_config.keys():
+            if self.transformer_config[itransformer]['plot']:
+                for icol in self.model_block[itransformer]:
 
-    def define_inputs(self):
-        self.Ycols = self.model_block['targets']
-        self.Xcols = np.setdiff1d(self.train_transformed.columns,self.Ycols)
-        self.X_train_bandpower   = self.train_transformed[self.model_block['bandpower']].values
-        self.X_test_bandpower    = self.test_transformed[self.model_block['bandpower']].values
-        self.X_train_timeseries  = self.train_transformed[self.model_block['timeseries']].values
-        self.X_test_timeseries   = self.test_transformed[self.model_block['timeseries']].values
-        self.X_train_categorical = self.train_transformed[self.model_block['categoricals']].values
-        self.X_test_categorical  = self.test_transformed[self.model_block['categoricals']].values
-        self.Y_train             = self.train_transformed[self.Ycols].values
-        self.Y_test              = self.test_transformed[self.Ycols].values
-        self.train_localization  = self.train_transformed[['file','uid']]
-        self.test_localization   = self.test_transformed[['file','uid']]
+                    # Make the title string
+                    title_str  = f"Train: {icol}"
+                    title_str += '\n'
+                    title_str += f"{self.transformer_config[itransformer]['method']}"
+
+                    # Make the plotting objects
+                    fig = PLT.figure(dpi=100,figsize=(8.,6.))
+                    ax  = fig.add_subplot(111)
+                    sns.histplot(data=self.train_transformed,x=icol)
+                    ax.set_title(title_str)
+                    PLT.savefig(f"{self.vector_plot_dir}/train_{icol}.png")
+                    PLT.close("all")

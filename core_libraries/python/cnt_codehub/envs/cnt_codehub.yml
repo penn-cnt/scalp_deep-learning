@@ -4,9 +4,9 @@ channels:
   - defaults
 dependencies:
   - python==3.10
-  - numpy
+  - numpy==1.26.4
   - scipy
-  - pandas
+  - pandas==2.2.2
   - seaborn
   - requests
   - deprecation
@@ -34,3 +34,4 @@ dependencies:
     - pybids
     - torchvision
     - edfio
+    - ray[data,train,tune,serve]

@@ -280,7 +280,7 @@ class signal_processing:
 
         # Calculate the spectral energy
         mask            = (frequencies >= low_freq) & (frequencies <= hi_freq)
-        spectral_energy = np.trapz(psd[mask], frequencies[mask])/np.trapz(psd, frequencies)
+        spectral_energy = np.trapz(psd[mask], frequencies[mask])/np.trapz(psd[inds], frequencies[inds])
 
         if not self.trace:
             return spectral_energy,self.optional_tag

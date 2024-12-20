@@ -4,55 +4,49 @@ from sys import exit
 
 # Local imports
 from preproc.clean import *
-from validation.data_validation import *
-from deep_learning.simple_mlp import mlp_handler as MLPH
-from deep_learning.tuned_mlp import tuned_mlp_handler as TMLPH
-from deep_learning.tuned_ss_mlp import tuned_mlp_handler as TMLPH
+from deep_learning.mlp_tuner import *
 
 if __name__ == '__main__':
     
     # Command line options needed to obtain data.
     parser = argparse.ArgumentParser(description="iEEG to bids conversion tool.")
     parser.add_argument("--feature_file", type=str, required=True, help="Filepath to the feature file.")
-    parser.add_argument("--pivotfile", type=str, help="Intermediate file with pivoted inputs. Can be used for different models like LR, ANOVA, etc. Provide to skip generation.")
-    parser.add_argument("--mlpfile", type=str, help="Intermediate file with MLP inputs. Has undergone various transformations to better model the data. Provide to skip generation.")
-    parser.add_argument("--mlpdir", type=str, help="Directory to store torch datasets.")
-    parser.add_argument("--splitmethod", type=str, default='uid', choices=['raw','uid'], help="Split the data into train/test by number of records (raw) or by subjects (uid)")
-    parser.add_argument("--ncpu", type=int, default=2, help="Number of cpus.")
-    parser.add_argument("--ntrials", type=int, default=10, help="Number of trials.")
-    parser.add_argument("--plotdir", type=str, help="Directory to store plots.")
-    parser.add_argument("--logfile", type=str, help="Log file path for hyperparameter testing.")
-    parser.add_argument("--raydir", type=str, help="Output directory for ray results.")
+    parser.add_argument("--target_col", type=str, default='target_epidx', help="Target vector to model.")
+
+    pivot_group = parser.add_argument_group('Pivot Options')
+    pivot_group.add_argument("--pivot_file", type=str, help="Intermediate file with pivoted inputs. Can be used for different models like LR, ANOVA, etc. Provide to skip generation.")
+    pivot_group.add_argument("--clip_length", type=int, default=30, help="Expected clip length for the study. Used to remove other clips used for baseline stats (like Marsh)")
+
+    vector_group = parser.add_argument_group('DL Vector Options')
+    vector_group.add_argument("--vector_file", type=str, help="Intermediate file with DL vectors.")
+    vector_group.add_argument("--criteria_file", type=str, help="Optional. Yaml file with criteria for data usage in model.")
+    vector_group.add_argument("--mapping_file", type=str, default='./configs/mappings.yaml', help="Yaml file with column mappings.")
+    vector_group.add_argument("--transformer_file", type=str, default='./configs/transformer_blocks.yaml', help="Yaml file with criteria for vector transformer blocks.")
+    vector_group.add_argument("--vector_plot_dir", type=str, help="Optional. Directory to save plots of the input vector distributions.")
+
+    tuning_group = parser.add_argument_group('DL Tuning Options')
+    tuning_group.add_argument("--ncpu", type=int, default=1, help="Number of cpus to use for hyperparameter tuning.")
+
     args = parser.parse_args()
 
-    # Initialize the data cleaning class
-    DM = data_manager(args.feature_file, args.pivotfile, args.mlpfile, args.splitmethod)
+    # Initialize the pivot workflow
+    PM       = pivot_manager(args.feature_file, args.pivot_file, args.clip_length)
+    pivot_DF = PM.workflow()
 
-    # Prepare the pivot data
-    pivot_DF = DM.pivotdata_prep()
+    # Make the DL vectors
+    VM        = vector_manager(pivot_DF, args.target_col, args.vector_file, args.criteria_file, args.mapping_file, args.transformer_file, args.vector_plot_dir)
+    DL_object = VM.workflow()
 
-    # Prepare the MLP data
-    MLP_objects = DM.mlpdata_prep()
+    # Initialize the ray tuning class
+    TUNING_HANDLER = tuning_manager(DL_object,args.ncpu)
+    
+    # Perform MLP tuning
+    #TUNING_HANDLER.make_tuning_config_mlp()
+    #TUNING_HANDLER.run_ray_tune_mlp()
 
-    # Perform some validation
-    DV = vector_analysis(pivot_DF,MLP_objects)
-    DV.quantile_features()
-    #DV.linear_seperability_search(f"{args.plotdir}/sleep_seperability_normalized/")
-
-
-
-    #DV.bootstrap_validation(f"{args.plotdir}/bootstrap/")
-    #DV.calculate_anova()
-    #DV.plot_paired_whisker(f"{args.plotdir}/whisker_plots/")
-    #DV.plot_paired_pdf(f"{args.plotdir}/pdf_plots/")
-    #DV.plot_vectors(f"{args.plotdir}/mlp_vectors/")
-
-    # Run a simple pre-defined MLP model
-    #DL = MLPH(MLP_objects)
-    #DL.run_mlp(1e-3,64,[0.5,0.5,1,0.5],verbose=True) # .72,.71 Raw
-
-    # Run a tuned MLP model
-    #DL = TMLPH(args.ncpu,args.ntrials,args.logfile,args.raydir)
-    #DL.create_config(args.mlpfile)
-    #DL.run_ray_tune(args.mlpfile)
-    #DL.test_set_config()
+    config = {'batchsize':64,'normorder':'first','activation':'relu','lr':1e-5}
+    config['frequency']   = {'nlayer':3,'hsize_1':0.9,'hsize_2':0.8,'hsize_3':0.6,'drop_1':0.6,'drop_2':0.4,'drop_3':0.2}
+    config['time']        = {'nlayer':2,'hsize_1':0.8,'hsize_2':0.6,'drop_1':0.6,'drop_2':0.4}
+    config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}
+    config['combined']    = {'nlayer':1,'hsize_1':0.2,'drop_1':0.6}
+    train_pnes(config,DL_object)

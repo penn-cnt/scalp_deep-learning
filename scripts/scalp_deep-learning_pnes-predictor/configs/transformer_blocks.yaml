@@ -1,0 +1,45 @@
+frequency:
+    method: standard_scaler_wlog10
+    log10: True
+    iso: True
+    plot: True
+    cols:
+        - spectral_energy_welch
+  
+time:
+    method: yeo-johnson
+    log10: False
+    iso: True
+    plot: True
+    cols:
+        - median
+        - rms
+        - line_length
+        - AD
+        - quantile
+        - stdev
+
+categorical:
+    method: encoder
+    log10: False
+    iso: False
+    plot: False
+    cols:
+        - yasa
+
+target:
+    method: encoder
+    log10: False
+    iso: False
+    plot: False
+    cols:
+        - target
+
+
+passthrough:
+    method: passthrough
+    log10: False
+    iso: False
+    plot: False
+    cols:
+        - None

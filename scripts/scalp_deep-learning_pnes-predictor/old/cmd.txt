@@ -1,0 +1,10 @@
+python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.pickle --pivotfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data.pickle --mlpfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data.pickle --splitmethod raw --ncpu 2 --ntrial 5 --logfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_hyperparameters.log --plotdir ../../user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/
+
+python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.pickle --pivotfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data_normalized_bandpower.pickle --mlpfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data_normalized_bandpower.pickle --plotdir ../../user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/
+
+
+
+python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.pickle --pivotfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data_normalized_bandpower.pickle --mlpfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data_normalized_bandpower.pickle --plotdir ../../user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/
+
+# 112124
+python pnes_predictor.py --feature_file /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.csv --pivotfile /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data.pickle --mlpfile /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data.pickle --plotdir /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/ --outdir /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/

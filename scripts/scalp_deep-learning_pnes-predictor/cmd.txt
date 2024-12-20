@@ -1,7 +1,5 @@
-python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.pickle --pivotfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data.pickle --mlpfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data.pickle --splitmethod raw --ncpu 2 --ntrial 5 --logfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_hyperparameters.log --plotdir ../../user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/
+# Prepare sample without plots
+python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/combined_features_filtered.sample --pivot_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/pivot_data.sample --vector_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/vector_data.sample --criteria_file configs/criteria.yaml
 
-python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.pickle --pivotfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data_normalized_bandpower.pickle --mlpfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data_normalized_bandpower.pickle --plotdir ../../user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/
-
-
-
-python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/outputs/combined_features.pickle --pivotfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data_normalized_bandpower.pickle --mlpfile ../../user_data/derivative/FEATURE_EXTRACTION/outputs/raw_mlp_data_normalized_bandpower.pickle --plotdir ../../user_data/derivative/FEATURE_EXTRACTION/outputs/PLOTS/
+# Prepare sample with plots
+python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/combined_features_filtered.sample --pivot_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/pivot_data.sample --vector_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/vector_data.sample --criteria_file configs/criteria.yaml --vector_plot_dir ../../user_data/derivative/FEATURE_EXTRACTION/DEV/PLOTS/VECTORS
