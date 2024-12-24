@@ -3,3 +3,6 @@ python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRA
 
 # Prepare sample with plots
 python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/combined_features_filtered.sample --pivot_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/pivot_data.sample --vector_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/vector_data.sample --criteria_file configs/criteria.yaml --vector_plot_dir ../../user_data/derivative/FEATURE_EXTRACTION/DEV/PLOTS/VECTORS
+
+export OMP_NUM_THREADS=1
+python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/combined_features_filtered.csv --pivot_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/pivot_data.pickle --vector_file ../../user_data/derivative/FEATURE_EXTRACTION/DEV/DATA/vector_data.pickle --criteria_file configs/criteria.yaml

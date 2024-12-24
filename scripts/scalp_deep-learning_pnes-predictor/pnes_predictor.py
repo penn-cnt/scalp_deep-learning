@@ -44,7 +44,7 @@ if __name__ == '__main__':
     #TUNING_HANDLER.make_tuning_config_mlp()
     #TUNING_HANDLER.run_ray_tune_mlp()
 
-    config = {'batchsize':1024,'normorder':'first','activation':'relu','lr':1e-5}
+    config = {'batchsize':128,'normorder':'first','activation':'relu','lr':1e-5}
     config['frequency']   = {'nlayer':3,'hsize_1':0.9,'hsize_2':0.8,'hsize_3':0.6,'drop_1':0.6,'drop_2':0.4,'drop_3':0.2}
     config['time']        = {'nlayer':2,'hsize_1':0.8,'hsize_2':0.6,'drop_1':0.6,'drop_2':0.4}
     config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}

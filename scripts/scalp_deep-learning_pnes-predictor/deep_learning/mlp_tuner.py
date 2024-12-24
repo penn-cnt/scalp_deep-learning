@@ -197,7 +197,7 @@ def reshape_clips_to_patient_level(clip_predictions,datasets,uid_indices,labels=
                 predictions_by_categorical.append(fractional_sample_size.unsqueeze(0))
             else:
                 placeholder = torch.tensor([0,0,0])
-                predictions_by_categorical.extend(placeholder)
+                predictions_by_categorical.append(placeholder)
         
         # Store the patient level features to a list
         patient_features.append(torch.cat(predictions_by_categorical))
@@ -218,7 +218,7 @@ def train_pnes(config,DL_object):
 
     # Unpack the data for our model
     model_block       = DL_object[0]
-    train_transformed = DL_object[1][::20]
+    train_transformed = DL_object[1][::25]
     test_transformed  = DL_object[2]
 
     # Define the dictionaries that store the different network options
@@ -292,7 +292,7 @@ def train_pnes(config,DL_object):
     consensus_optimizer = optim.Adam(consensus_model.parameters(), lr=config['lr'])
 
     # Train the model
-    num_epochs = 2
+    num_epochs = 20
     nbatch     = int(np.ceil(train_transformed.shape[0]/config['batchsize']))
     for epoch in range(num_epochs):
 
@@ -300,18 +300,12 @@ def train_pnes(config,DL_object):
         clip_predictions = []
         clip_model.train()
         for ibatch in tqdm(train_loader, total=nbatch, desc=f"Training Epoch {epoch:02d}", leave=False):
-            clip_optimizer.zero_grad()
-            print("A")
+            #clip_optimizer.zero_grad()
             outputs   = clip_model(*ibatch)
-            print("B")
-            clip_loss = clip_criterion(outputs, ibatch[-1])
-            print("C")
-            clip_loss.backward()
-            print("D")
-            clip_optimizer.step()
-            print("E")
+            #clip_loss = clip_criterion(outputs, ibatch[-1])
+            #clip_loss.backward()
+            #clip_optimizer.step()
             clip_predictions.append(outputs)
-            print("F")
 
         # Make a new input tensor with all of the clips
         clip_predictions = torch.cat(clip_predictions,dim=0)
@@ -322,8 +316,11 @@ def train_pnes(config,DL_object):
 
         # Send the patient level predictions to the consensus model
         consensus_model.train()
-        outputs      = consensus_model(patient_train_features)
-        patient_loss = patient_criterion(outputs, patient_train_labels)
+        consensus_optimizer.zero_grad()
+        outputs        = consensus_model(patient_train_features)
+        patient_loss   = patient_criterion(outputs, patient_train_labels)
+        patient_loss.backward()
+        consensus_optimizer.step()
 
     # Evaluate the model on the test set
     clip_model.eval()
@@ -340,6 +337,7 @@ def train_pnes(config,DL_object):
         train_auc                                   = roc_auc_score(y_meas_clean,y_pred_clean)
 
         # Get the test AUC
+        """
         clip_predictions                            = clip_model(test_datasets['frequency'],test_datasets['time'],test_datasets['categorical'],test_targets)
         patient_test_features,patient_test_labels   = reshape_clips_to_patient_level(clip_predictions,train_datasets,uid_test_indices,labels=train_targets)
         patient_test_features                       = patient_test_features.float()
@@ -347,9 +345,10 @@ def train_pnes(config,DL_object):
         y_pred_clean                                = np.round(y_pred)
         y_meas_clean                                = patient_test_labels
         test_auc                                    = roc_auc_score(y_meas_clean,y_pred_clean)
+        """
         
         print(f"Train AUC:",train_auc)
-        print(f"Test AUC:",test_auc)
+        #print(f"Test AUC:",test_auc)
 
 class tuning_manager:
 
