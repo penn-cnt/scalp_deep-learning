@@ -126,8 +126,9 @@ class CombinedNetwork(nn.Module):
         return output
 
 class ConsensusNetwork(nn.Module):
-    def __init__(self, config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches):
+    def __init__(self, config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size):
         super(ConsensusNetwork, self).__init__()
+
 
         self.config           = config
         self.input_dict       = input_dict
@@ -135,7 +136,6 @@ class ConsensusNetwork(nn.Module):
         self.dropout_dict     = dropout_dict
         self.combination_dict = combination_dict
         self.output_size      = output_size
-        self.n_batches        = n_batches
         self.combine_net      = CombinedNetwork(self.input_dict, self.hidden_dict, self.dropout_dict, self.combination_dict, self.output_size, normorder=self.config['normorder'], activation=self.config['activation'])
 
         self.fc      = nn.Linear(9, output_size)
@@ -145,33 +145,21 @@ class ConsensusNetwork(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, x, epoch, categoricals, uids, targets):
+    def forward(self, x):
 
-        # Send the data to the subnetworks
-        outputs = []
-        for ibatch in tqdm(x, total=self.n_batches, desc=f"Training Epoch {epoch:02d}", leave=False):
-            outputs.append(self.combine_net(*ibatch))
-
-        # Make a new input tensor with all of the clips
-        clip_predictions = torch.cat(outputs,dim=0)
-
-        # Get the patient level features
-        patient_train_features,patient_train_labels = reshape_clips_to_patient_level(clip_predictions,categoricals,uids,labels=targets)
-        patient_train_features                      = patient_train_features.float()
-        
-        # Advance the consensus network
-        x = self.fc(patient_train_features)
+        x = self.fc(x)
         x = self.bn(x)
         x = self.relu(x)
         x = self.dropout(x)
         x = self.sigmoid(x)
-        return x, patient_train_labels
+        return x
 
-def reshape_clips_to_patient_level(clip_predictions,categorcial_block,uid_indices,labels=None):
+def reshape_clips_to_patient_level(clip_predictions,datasets,uid_indices,labels=None):
 
     # Make a pandas dataframe of sleep stage, prediction, and uid so we can use pandas groupby for easier restructure
     patient_features  = []
     patient_labels    = []
+    categorcial_block = datasets['categorical']
     for unique_uid in uid_indices.keys():
         
         # Break up the user ids and get the indices we need to subslice
@@ -230,7 +218,7 @@ def train_pnes(config,DL_object):
 
     # Unpack the data for our model
     model_block       = DL_object[0]
-    train_transformed = DL_object[1]
+    train_transformed = DL_object[1][::25]
     test_transformed  = DL_object[2]
 
     # Define the dictionaries that store the different network options
@@ -292,45 +280,75 @@ def train_pnes(config,DL_object):
     train_loader  = DataLoader(train_tensor_dataset, batch_size=config['batchsize'], shuffle=True)
 
     # Make the model
-    n_batches       = int(np.ceil(train_transformed.shape[0]/config['batchsize']))
-    consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches)
+    clip_model      = CombinedNetwork(input_dict, hidden_dict, dropout_dict, combination_dict, output_size, normorder=config['normorder'], activation=config['activation'])
+    consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size)
 
     # Define the loss criterion
+    clip_criterion    = nn.BCELoss()
     patient_criterion = nn.BCELoss()
 
     # Select the optimizer
+    clip_optimizer      = optim.Adam(clip_model.parameters(), lr=config['lr'])
     consensus_optimizer = optim.Adam(consensus_model.parameters(), lr=config['lr'])
 
     # Train the model
-    num_epochs = 50
+    num_epochs = 20
+    nbatch     = int(np.ceil(train_transformed.shape[0]/config['batchsize']))
     for epoch in range(num_epochs):
 
-        # Kick off the consensus handler
+        # Handle the clip training
+        clip_predictions = []
+        clip_model.train()
+        for ibatch in tqdm(train_loader, total=nbatch, desc=f"Training Epoch {epoch:02d}", leave=False):
+            #clip_optimizer.zero_grad()
+            outputs   = clip_model(*ibatch)
+            #clip_loss = clip_criterion(outputs, ibatch[-1])
+            #clip_loss.backward()
+            #clip_optimizer.step()
+            clip_predictions.append(outputs)
+
+        # Make a new input tensor with all of the clips
+        clip_predictions = torch.cat(clip_predictions,dim=0)
+
+        # Get the patient level features
+        patient_train_features,patient_train_labels = reshape_clips_to_patient_level(clip_predictions,train_datasets,uid_train_indices,labels=train_targets)
+        patient_train_features = patient_train_features.float()
+
+        # Send the patient level predictions to the consensus model
         consensus_model.train()
         consensus_optimizer.zero_grad()
+        outputs        = consensus_model(patient_train_features)
+        patient_loss   = patient_criterion(outputs, patient_train_labels)
+        patient_loss.backward()
+        consensus_optimizer.step()
 
-        # get the model outputs
-        outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
-        
-        # Check for a bad run
-        if torch.isnan(outputs).any():
-            continue
-        else:
-            patient_loss = patient_criterion(outputs, patient_train_labels)
-            patient_loss.backward()
-            consensus_optimizer.step()
-
-    # Get the AUC for the training data
+    # Evaluate the model on the test set
+    clip_model.eval()
     consensus_model.eval()
     with torch.no_grad():
 
         # Get the train AUC
-        outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
-        y_pred                        = outputs.squeeze().numpy()
-        y_pred_clean                  = np.round(y_pred)
-        y_meas_clean                  = patient_train_labels
-        train_auc                     = roc_auc_score(y_meas_clean,y_pred_clean)
-    print(f"Train AUC: {train_auc}")
+        clip_predictions                            = clip_model(train_datasets['frequency'],train_datasets['time'],train_datasets['categorical'],train_targets)
+        patient_train_features,patient_train_labels = reshape_clips_to_patient_level(clip_predictions,train_datasets,uid_train_indices,labels=train_targets)
+        patient_train_features                      = patient_train_features.float()
+        y_pred                                      = consensus_model(patient_train_features).squeeze().numpy()
+        y_pred_clean                                = np.round(y_pred)
+        y_meas_clean                                = patient_train_labels
+        train_auc                                   = roc_auc_score(y_meas_clean,y_pred_clean)
+
+        # Get the test AUC
+        """
+        clip_predictions                            = clip_model(test_datasets['frequency'],test_datasets['time'],test_datasets['categorical'],test_targets)
+        patient_test_features,patient_test_labels   = reshape_clips_to_patient_level(clip_predictions,train_datasets,uid_test_indices,labels=train_targets)
+        patient_test_features                       = patient_test_features.float()
+        y_pred                                      = consensus_model(patient_test_features).squeeze().numpy()
+        y_pred_clean                                = np.round(y_pred)
+        y_meas_clean                                = patient_test_labels
+        test_auc                                    = roc_auc_score(y_meas_clean,y_pred_clean)
+        """
+        
+        print(f"Train AUC:",train_auc)
+        #print(f"Test AUC:",test_auc)
 
 class tuning_manager:
 
