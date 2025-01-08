@@ -3,6 +3,7 @@ frequency:
     log10: True
     iso: True
     plot: True
+    pca: False
     cols:
         - spectral_energy_welch
   
@@ -11,6 +12,7 @@ time:
     log10: False
     iso: True
     plot: True
+    pca: False
     cols:
         - median
         - rms
@@ -24,6 +26,7 @@ categorical:
     log10: False
     iso: False
     plot: False
+    pca: False
     cols:
         - yasa
 
@@ -32,6 +35,7 @@ target:
     log10: False
     iso: False
     plot: False
+    pca: False
     cols:
         - target
 
@@ -41,5 +45,6 @@ passthrough:
     log10: False
     iso: False
     plot: False
+    pca: False
     cols:
         - None

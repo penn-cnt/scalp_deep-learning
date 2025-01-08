@@ -27,6 +27,11 @@ if __name__ == '__main__':
     tuning_group = parser.add_argument_group('DL Tuning Options')
     tuning_group.add_argument("--ncpu", type=int, default=1, help="Number of cpus to use for hyperparameter tuning.")
 
+    misc_group = parser.add_argument_group('Misc Options')
+    misc_group.add_argument("--debug", action='store_true', default=False, help="Show extra debugging info.")
+    misc_group.add_argument("--test_config", action='store_true', default=False, help="Run model using just one config setting. Good for testing.")
+    misc_group.add_argument("--track_weights", action='store_true', default=False, help="Track if the model is updating weights at each epoch.")
+
     args = parser.parse_args()
 
     # Initialize the pivot workflow
@@ -40,13 +45,15 @@ if __name__ == '__main__':
     # Initialize the ray tuning class
     TUNING_HANDLER = tuning_manager(DL_object,args.ncpu)
     
-    # Perform MLP tuning
-    #TUNING_HANDLER.make_tuning_config_mlp()
-    #TUNING_HANDLER.run_ray_tune_mlp()
-
-    config = {'batchsize':128,'normorder':'first','activation':'relu','lr':1e-5}
-    config['frequency']   = {'nlayer':3,'hsize_1':0.9,'hsize_2':0.8,'hsize_3':0.6,'drop_1':0.6,'drop_2':0.4,'drop_3':0.2}
-    config['time']        = {'nlayer':2,'hsize_1':0.8,'hsize_2':0.6,'drop_1':0.6,'drop_2':0.4}
-    config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}
-    config['combined']    = {'nlayer':1,'hsize_1':0.2,'drop_1':0.6}
-    train_pnes(config,DL_object)
+    # Run tuner or a single config model
+    if not args.test_config:
+        # Perform MLP tuning
+        TUNING_HANDLER.make_tuning_config_mlp()
+        TUNING_HANDLER.run_ray_tune_mlp()
+    else:
+        config = {'batchsize':128,'normorder':'first','activation':'relu','lr':1e-2}
+        config['frequency']   = {'nlayer':3,'hsize_1':0.9,'hsize_2':0.8,'hsize_3':0.6,'drop_1':0.6,'drop_2':0.4,'drop_3':0.2}
+        config['time']        = {'nlayer':2,'hsize_1':0.8,'hsize_2':0.6,'drop_1':0.6,'drop_2':0.4}
+        config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}
+        config['combined']    = {'nlayer':1,'hsize_1':0.2,'drop_1':0.6}
+        train_pnes(config, DL_object, debug=args.debug, patient_level=False)

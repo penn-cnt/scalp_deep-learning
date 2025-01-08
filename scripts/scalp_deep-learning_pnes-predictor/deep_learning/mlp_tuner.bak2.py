@@ -23,13 +23,13 @@ class SubNetwork(nn.Module):
         self.size_array.extend(hidden_sizes)
 
         # Make the list of linear transformers based on number of layers
-        self.fc = nn.ModuleList([nn.Linear(self.size_array[ii], self.size_array[ii+1]) for ii in range(len(hidden_sizes))])
+        self.fc = [nn.Linear(self.size_array[ii], self.size_array[ii+1]) for ii in range(len(hidden_sizes))]
         
         # Make the list of dropouts based on number of layers
-        self.dropout = nn.ModuleList([nn.Dropout(p=dropout_rates[ii]) for ii in range(len(hidden_sizes))])
+        self.dropout = [nn.Dropout(p=dropout_rates[ii]) for ii in range(len(hidden_sizes))]
 
         # Define the normalization layers
-        self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
+        self.bn = [nn.BatchNorm1d(isize) for isize in hidden_sizes]
 
         # Define the possible activation layers
         self.relu    = nn.ReLU()
@@ -62,29 +62,28 @@ class CombinedNetwork(nn.Module):
     def __init__(self, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, normorder='first',activation='relu'):
         super(CombinedNetwork, self).__init__()
 
-        # Loop over the training blocks to make the subnetwork architecture
+        # Loop over the training blocks to make the subnetwork size
         input_combined_size = 0
-        self.subnets        = nn.ModuleList([])
         for iblock in input_dict.keys():
-
-            # Store sizing of subnetwork outputs
             input_combined_size += hidden_dict[iblock][-1]
-
-            # Make the subnetwork object
-            self.subnets.append(SubNetwork(input_dict[iblock], hidden_dict[iblock], dropout_dict[iblock]))
+        
+        # Initialize subnets. Would like to not hardcode, by pytorch doesnt inherit the objects correctly for some reason
+        self.frequency_net = SubNetwork(input_dict['frequency'], hidden_dict['frequency'], dropout_dict['frequency'])
+        self.time_net      = SubNetwork(input_dict['time'], hidden_dict['time'], dropout_dict['time'])
+        self.cat_net       = SubNetwork(input_dict['categorical'], hidden_dict['categorical'], dropout_dict['categorical'])
 
         # Make the list of linear transformers based on number of layers
         hidden_sizes    = combination_dict['hidden']
         dropouts        = combination_dict['dropout']
         self.size_array = [input_combined_size]
         self.size_array.extend(hidden_sizes)
-        self.fc = nn.ModuleList([nn.Linear(self.size_array[ii], self.size_array[ii+1]) for ii in range(len(hidden_sizes))])
+        self.fc = [nn.Linear(self.size_array[ii], self.size_array[ii+1]) for ii in range(len(hidden_sizes))]
 
         # Make the list of dropouts based on number of layers
-        self.dropout = nn.ModuleList([nn.Dropout(p=dropouts[ii]) for ii in range(len(hidden_sizes))])
+        self.dropout = [nn.Dropout(p=dropouts[ii]) for ii in range(len(hidden_sizes))]
 
         # Define the normalization layers
-        self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
+        self.bn = [nn.BatchNorm1d(isize) for isize in hidden_sizes]
 
         # Remaining combination layersFinal layers after combining the sub-networks
         output_hsize     = hidden_sizes[-1]
@@ -104,12 +103,12 @@ class CombinedNetwork(nn.Module):
     def forward(self, *input_vectors):
 
         # Get the subnet results
-        subnet_tensors = []
-        for idx,itensor in enumerate(input_vectors[:-1]):
-            subnet_tensors.append(self.subnets[idx](itensor))
+        freq_out = self.frequency_net(input_vectors[0])
+        time_out = self.time_net(input_vectors[1])
+        cat_out  = self.cat_net(input_vectors[2])
 
         # Concatenate the outputs of the three sub-networks
-        combined = torch.cat(subnet_tensors, dim=1)
+        combined = torch.cat([freq_out,time_out,cat_out], dim=1)
 
         # Apply the forward transforms
         for idx,ifc in enumerate(self.fc):
@@ -126,11 +125,11 @@ class CombinedNetwork(nn.Module):
             
             output   = self.fc_output(combined)
             output   = self.dropout[idx](output)
-            #output   = self.sigmoid(output)
+            output   = self.sigmoid(output)
         return output
 
 class ConsensusNetwork(nn.Module):
-    def __init__(self, config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches, clip_level):
+    def __init__(self, config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches):
         super(ConsensusNetwork, self).__init__()
 
         self.config           = config
@@ -141,7 +140,6 @@ class ConsensusNetwork(nn.Module):
         self.output_size      = output_size
         self.n_batches        = n_batches
         self.combine_net      = CombinedNetwork(self.input_dict, self.hidden_dict, self.dropout_dict, self.combination_dict, self.output_size, normorder=self.config['normorder'], activation=self.config['activation'])
-        self.clip_level       = clip_level
 
         self.fc      = nn.Linear(9, output_size)
         self.relu    = nn.ReLU()
@@ -160,13 +158,13 @@ class ConsensusNetwork(nn.Module):
         # Make a new input tensor with all of the clips
         clip_predictions = torch.cat(outputs,dim=0)
 
-        # Return the clip level predictions if requested. Good for testing
-        if self.clip_level:
-            return clip_predictions, targets
-
         # Get the patient level features
         patient_train_features,patient_train_labels = reshape_clips_to_patient_level(clip_predictions,categoricals,uids,labels=targets)
         patient_train_features                      = patient_train_features.float()
+
+        # Compute mean and standard deviation
+        #mean = patient_train_features.mean(dim=0, keepdim=True)
+        #std  = patient_train_features.std(dim=0, unbiased=True, keepdim=True)
         
         # Advance the consensus network
         x = self.fc(patient_train_features)
@@ -239,12 +237,10 @@ def reshape_clips_to_patient_level(clip_predictions,categorcial_block,uid_indice
 
     return patient_features,patient_labels
 
-def train_pnes(config,DL_object,debug=False,patient_level=False):
+def train_pnes(config,DL_object):
     """
     Function that manages the workflow for the MLP model.
     """
-
-    exit()
 
     # Unpack the data for our model
     model_block       = DL_object[0]
@@ -311,35 +307,26 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
 
     # Make the model
     n_batches       = int(np.ceil(train_transformed.shape[0]/config['batchsize']))
-    if patient_level:
-        consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches, False)
-    else:
-        consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches, True)
+    consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches)
 
     # Define the loss criterion
-    #patient_criterion = nn.BCELoss()
-
-    sums              = train_targets.numpy().sum(axis=0)
-    pos_weight        = torch.tensor([10*sums[0]/sums[1]])
-    patient_criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    patient_criterion = nn.BCELoss()
 
     # Select the optimizer
     consensus_optimizer = optim.Adam(consensus_model.parameters(), lr=config['lr'])
 
-    # Debugging step to see all the items being adjusted
-    old_weights = {}
     for name, param in consensus_model.named_parameters():
-        
-        # Store the initial weights
-        old_weights[name]             = param.detach().numpy().copy()
-        old_weights[f"{name}_update"] = []
+        print(name)
+        print(param)
+        print("===")
+    exit()
 
     # Train the model
-    num_epochs  = 10
-    consensus_model.train()
+    num_epochs = 5
     for epoch in range(num_epochs):
 
         # Kick off the consensus handler
+        consensus_model.train()
         consensus_optimizer.zero_grad()
 
         # get the model outputs
@@ -353,43 +340,18 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
             patient_loss.backward()
             consensus_optimizer.step()
 
-            print(f"Loss: {patient_loss}")
-
-        # Track weight changes
-        for name, param in consensus_model.named_parameters():
-            values                        = param.detach().numpy().copy()
-            old_weights[f"{name}_update"].append((old_weights[name]==values).all())
-            old_weights[name]             = values
-
-    # Print info if in debugging mode
-    if debug:
-        spacer = ''
-        print("Step n+1 weights == Step n Previous Weights")
-        for ikey in old_weights.keys():
-            if 'update' in ikey:
-                print(f"{ikey.ljust(80)}{spacer.ljust(20)}:{old_weights[ikey]}")
-
     # Get the AUC for the training data
     consensus_model.eval()
     with torch.no_grad():
 
-        # Get the clean targets
-        #outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
-        y_pred       = outputs.squeeze().numpy()
-        y_pred_max   = np.argmax(y_pred,axis=1).reshape((-1,1))
-        y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
-        y_meas_clean = patient_train_labels.detach().numpy()
-
-        # Measure the accuracy
-        y_meas_max = np.argmax(y_meas_clean,axis=1)
-        train_acc  = (y_pred_max.flatten()==y_meas_max).sum()/y_meas_max.size
-
-        # Measure the auc
-        train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
-
-    print(f"Train ACC: {train_acc}")
+        # Get the train AUC
+        outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
+        y_pred                        = outputs.squeeze().numpy()
+        y_pred_clean                  = np.round(y_pred)
+        y_meas_clean                  = patient_train_labels
+        train_auc                     = roc_auc_score(y_meas_clean,y_pred_clean)
     print(f"Train AUC: {train_auc}")
-    
+
 class tuning_manager:
 
     def __init__(self,DL_object,ncpu):
@@ -460,7 +422,7 @@ class tuning_manager:
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes, {"cpu": self.ncpu})
-        trainable_with_parameters = tune.with_parameters(trainable_with_resources, DL_object=(self.DL_object))
+        trainable_with_parameters = tune.with_parameters(trainable_with_resources, data=(self.DL_object))
 
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
