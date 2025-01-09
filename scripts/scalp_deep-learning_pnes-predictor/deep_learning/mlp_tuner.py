@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
@@ -10,6 +11,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 # Ray imports
+import tempfile
 from ray import train, tune
 from ray.train import Checkpoint,RunConfig
 from ray.tune.search.hyperopt import HyperOptSearch
@@ -106,7 +108,8 @@ class CombinedNetwork(nn.Module):
         # Get the subnet results
         subnet_tensors = []
         for idx,itensor in enumerate(input_vectors[:-1]):
-            subnet_tensors.append(self.subnets[idx](itensor))
+            idata = self.subnets[idx](itensor)
+            subnet_tensors.append(idata)
 
         # Concatenate the outputs of the three sub-networks
         combined = torch.cat(subnet_tensors, dim=1)
@@ -124,9 +127,12 @@ class CombinedNetwork(nn.Module):
                 combined = self.activation_layer(combined)        
                 combined = self.bn[idx](combined)
             
-            output   = self.fc_output(combined)
-            output   = self.dropout[idx](output)
-            #output   = self.sigmoid(output)
+            try:
+                output   = self.fc_output(combined)
+                output   = self.dropout[idx](output)
+            except:
+                print(self.normorder,combined.shape,self.size_array)
+                exit()
         return output
 
 class ConsensusNetwork(nn.Module):
@@ -154,7 +160,9 @@ class ConsensusNetwork(nn.Module):
 
         # Send the data to the subnetworks
         outputs = []
-        for ibatch in tqdm(x, total=self.n_batches, desc=f"Training Epoch {epoch:02d}", leave=False):
+        #for ibatch in tqdm(x, total=self.n_batches, desc=f"Training Epoch {epoch:02d}", leave=False):
+        #    outputs.append(self.combine_net(*ibatch))
+        for ibatch in x:
             outputs.append(self.combine_net(*ibatch))
 
         # Make a new input tensor with all of the clips
@@ -239,12 +247,10 @@ def reshape_clips_to_patient_level(clip_predictions,categorcial_block,uid_indice
 
     return patient_features,patient_labels
 
-def train_pnes(config,DL_object,debug=False,patient_level=False):
+def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False):
     """
     Function that manages the workflow for the MLP model.
     """
-
-    exit()
 
     # Unpack the data for our model
     model_block       = DL_object[0]
@@ -279,18 +285,36 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
             # Make the subnetwork configuration
             input_dict[iblock] = len(cols)
             nlayer             = config[iblock]['nlayer']
+            hsizes = []
+            dsizes = []
             if nlayer > 0:
-                hsizes = []
-                dsizes = []
                 for ilayer in range(nlayer):
-                    hsizes.append(int(config[iblock][f"hsize_{ilayer+1}"]*len(cols)))
-                    dsizes.append(int(config[iblock][f"drop_{ilayer+1}"]))
+
+                    # Calculate the current size
+                    hidden_size = int(config[iblock][f"hsize_{ilayer+1}"]*len(cols))
+                    drop_size   = float(config[iblock][f"drop_{ilayer+1}"])
+
+                    # Ensure a minimum size of one output neuron
+                    if hidden_size == 0:
+                        hidden_size = 1
+
+                    # Store the sizes
+                    hsizes.append(hidden_size)
+                    dsizes.append(drop_size)
+                    final_layer_size = hsizes[-1]
+            else:
+                final_layer_size = len(cols)
+
+            # Store the info about the hidden layer network
             hidden_dict[iblock]  = hsizes
             dropout_dict[iblock] = dsizes
-            subnetwork_size_out += hsizes[-1]
+            subnetwork_size_out += final_layer_size
+
         elif iblock == 'target':
-            train_targets = torch.from_numpy(train_transformed[cols].values.astype(np.float32))
-            test_targets  = torch.from_numpy(test_transformed[cols].values.astype(np.float32))
+            train_arr     = train_transformed[cols].values.astype(np.float32)
+            test_arr      = test_transformed[cols].values.astype(np.float32)
+            train_targets = torch.from_numpy(train_arr)
+            test_targets  = torch.from_numpy(test_arr)
             output_size   = len(cols)
 
     # Define the combined network
@@ -298,8 +322,18 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
     hsizes = []
     dsizes = []
     for ilayer in range(nlayer):
-        hsizes.append(int(config['combined'][f"hsize_{ilayer+1}"]*subnetwork_size_out))
-        dsizes.append(int(config['combined'][f"drop_{ilayer+1}"]))
+
+        # Calculate the current size
+        hidden_size = int(config['combined'][f"hsize_{ilayer+1}"]*subnetwork_size_out)
+        drop_size   = float(config['combined'][f"drop_{ilayer+1}"])
+
+        # Ensure a minimum size of the output neurons
+        if hidden_size < output_size:
+            hidden_size = output_size 
+
+        # Store the info about the hidden layer network
+        hsizes.append(hidden_size)
+        dsizes.append(drop_size)
     combination_dict = {'hidden':hsizes,'dropout':dsizes}
 
     # Make the datasets
@@ -318,26 +352,26 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
 
     # Define the loss criterion
     #patient_criterion = nn.BCELoss()
-
     sums              = train_targets.numpy().sum(axis=0)
-    pos_weight        = torch.tensor([10*sums[0]/sums[1]])
+    pos_weight        = torch.tensor([sums[0]/sums[1]])
     patient_criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     # Select the optimizer
     consensus_optimizer = optim.Adam(consensus_model.parameters(), lr=config['lr'])
 
     # Debugging step to see all the items being adjusted
-    old_weights = {}
-    for name, param in consensus_model.named_parameters():
-        
-        # Store the initial weights
-        old_weights[name]             = param.detach().numpy().copy()
-        old_weights[f"{name}_update"] = []
+    if debug:
+        old_weights = {}
+        for name, param in consensus_model.named_parameters():
+            
+            # Store the initial weights
+            old_weights[name]             = param.detach().numpy().copy()
+            old_weights[f"{name}_update"] = []
 
     # Train the model
     num_epochs  = 10
     consensus_model.train()
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs), total=num_epochs, disable=np.invert(directload)):
 
         # Kick off the consensus handler
         consensus_optimizer.zero_grad()
@@ -345,37 +379,24 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
         # get the model outputs
         outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
         
-        # Check for a bad run
-        if torch.isnan(outputs).any():
-            exit()
-        else:
-            patient_loss = patient_criterion(outputs, patient_train_labels)
-            patient_loss.backward()
-            consensus_optimizer.step()
+        # Get the loss and propagate model changes
+        patient_loss = patient_criterion(outputs, patient_train_labels)
+        patient_loss.backward()
+        consensus_optimizer.step()
 
+        # If requested, give more info to user
+        if debug:
+            # Show loss
             print(f"Loss: {patient_loss}")
 
-        # Track weight changes
-        for name, param in consensus_model.named_parameters():
-            values                        = param.detach().numpy().copy()
-            old_weights[f"{name}_update"].append((old_weights[name]==values).all())
-            old_weights[name]             = values
+            # Track weight changes
+            for name, param in consensus_model.named_parameters():
+                values                        = param.detach().numpy().copy()
+                old_weights[f"{name}_update"].append((old_weights[name]==values).all())
+                old_weights[name]             = values
 
-    # Print info if in debugging mode
-    if debug:
-        spacer = ''
-        print("Step n+1 weights == Step n Previous Weights")
-        for ikey in old_weights.keys():
-            if 'update' in ikey:
-                print(f"{ikey.ljust(80)}{spacer.ljust(20)}:{old_weights[ikey]}")
-
-    # Get the AUC for the training data
-    consensus_model.eval()
-    with torch.no_grad():
-
-        # Get the clean targets
-        #outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
-        y_pred       = outputs.squeeze().numpy()
+        # Calculate accuracy and auc
+        y_pred       = outputs.squeeze().detach().numpy()
         y_pred_max   = np.argmax(y_pred,axis=1).reshape((-1,1))
         y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
         y_meas_clean = patient_train_labels.detach().numpy()
@@ -387,12 +408,54 @@ def train_pnes(config,DL_object,debug=False,patient_level=False):
         # Measure the auc
         train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
 
-    print(f"Train ACC: {train_acc}")
-    print(f"Train AUC: {train_auc}")
+        if not directload:
+            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                checkpoint = None
+                if (epoch + 1) % 5 == 0:
+                    # This saves the model to the trial directory
+                    torch.save(
+                        consensus_model.state_dict(),
+                        os.path.join(temp_checkpoint_dir, "model.pth")
+                    )
+                    checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+
+                # Send the current training result back to Tune
+                train.report({"Train_AUC": train_auc}, checkpoint=checkpoint)
+
+    # Print info if in debugging mode
+    if debug:
+        spacer = ''
+        print("Step n+1 weights == Step n Previous Weights")
+        for ikey in old_weights.keys():
+            if 'update' in ikey:
+                print(f"{ikey.ljust(80)}{spacer.ljust(20)}:{old_weights[ikey]}")
+
+    if directload:
+        # Get the AUC for the training data
+        consensus_model.eval()
+        with torch.no_grad():
+
+            # Get the clean targets
+            #outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
+            y_pred       = outputs.squeeze().numpy()
+            y_pred_max   = np.argmax(y_pred,axis=1).reshape((-1,1))
+            y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
+            y_meas_clean = patient_train_labels.detach().numpy()
+
+            # Measure the accuracy
+            y_meas_max = np.argmax(y_meas_clean,axis=1)
+            train_acc  = (y_pred_max.flatten()==y_meas_max).sum()/y_meas_max.size
+
+            # Measure the auc
+            train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
+
+        # Report metrics
+        print(f"Train ACC: {train_acc}")
+        print(f"Train AUC: {train_auc}")
     
 class tuning_manager:
 
-    def __init__(self,DL_object,ncpu):
+    def __init__(self, DL_object, ncpu, outfile):
         """
         Initialize the tuning manager class. It creates the initial parameter space and kicks off the subprocesses.
         """
@@ -405,6 +468,7 @@ class tuning_manager:
         self.ncpu              = ncpu
         self.ntrial            = 2
         self.raydir            = '/Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/DEV/HYPERPARAMTER_TUNING/RAY/'
+        self.outfile           = outfile
 
     def make_tuning_config_mlp(self):
         """
@@ -435,6 +499,16 @@ class tuning_manager:
             self.config[iblock]["drop_2"] = tune.quniform(0.05, .5, .05)
             self.config[iblock]["drop_3"] = tune.quniform(0.05, .5, .05)
 
+        # Define the combination configuration block
+        self.config['combined'] = {}
+        self.config['combined']['nlayer']  = tune.randint(1, 3)
+        self.config['combined']["hsize_1"] = tune.uniform(0.05, 1.5)
+        self.config['combined']["hsize_2"] = tune.uniform(0.05, 1.5)
+        self.config['combined']["hsize_3"] = tune.uniform(0.3, 1.5)
+        self.config['combined']["drop_1"]  = tune.quniform(0.05, .5, .05)
+        self.config['combined']["drop_2"]  = tune.quniform(0.05, .5, .05)
+        self.config['combined']["drop_3"]  = tune.quniform(0.05, .5, .05)
+
         # Global fitting criteria selection
         self.config['lr']         = tune.loguniform(1e-5,1e-3)
         self.config['batchsize']  = tune.choice([32,64,128,256])
@@ -454,6 +528,8 @@ class tuning_manager:
             current_best_params[0][iblock] = {'nlayer':nlayer_guess, 'hsize_1':h1guess, 'hsize_2':h2guess,
                                               'hsize_3':h3guess, 'drop_1':drop1guess, 'drop_2':drop2guess,
                                               'drop_3':drop3guess}
+        current_best_params[0]['combined'] = {'nlayer': 1, 'hsize_1': 0.8, 'hsize_2': 1.0, 'hsize_3': 1.0,
+                                              'drop_1': 0.1, 'drop_2': 0.1, 'drop_3': 0.1}
 
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params)
@@ -468,4 +544,8 @@ class tuning_manager:
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment"))
 
         # Get the hyper parameter search results
-        results   = tuner.fit()
+        results = tuner.fit()
+
+        # Save the tuned results
+        result_DF = results.get_dataframe()
+        result_DF.to_csv(self.outfile)

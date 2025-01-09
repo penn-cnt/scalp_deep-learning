@@ -26,6 +26,7 @@ if __name__ == '__main__':
 
     tuning_group = parser.add_argument_group('DL Tuning Options')
     tuning_group.add_argument("--ncpu", type=int, default=1, help="Number of cpus to use for hyperparameter tuning.")
+    tuning_group.add_argument("--tune_file", type=str, help="Output file for hyper parameter tuning.")
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--debug", action='store_true', default=False, help="Show extra debugging info.")
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     DL_object = VM.workflow()
 
     # Initialize the ray tuning class
-    TUNING_HANDLER = tuning_manager(DL_object,args.ncpu)
+    TUNING_HANDLER = tuning_manager(DL_object,args.ncpu,args.tune_file)
     
     # Run tuner or a single config model
     if not args.test_config:
@@ -56,4 +57,4 @@ if __name__ == '__main__':
         config['time']        = {'nlayer':2,'hsize_1':0.8,'hsize_2':0.6,'drop_1':0.6,'drop_2':0.4}
         config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}
         config['combined']    = {'nlayer':1,'hsize_1':0.2,'drop_1':0.6}
-        train_pnes(config, DL_object, debug=args.debug, patient_level=False)
+        train_pnes(config, DL_object, debug=args.debug, patient_level=False, directload=True)
