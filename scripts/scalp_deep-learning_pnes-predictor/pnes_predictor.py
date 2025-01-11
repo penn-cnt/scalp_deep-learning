@@ -5,6 +5,7 @@ from sys import exit
 # Local imports
 from preproc.clean import *
 from deep_learning.mlp_tuner import *
+from nntest.basic_nn import train_pnes as TP
 
 if __name__ == '__main__':
     
@@ -58,3 +59,4 @@ if __name__ == '__main__':
         config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}
         config['combined']    = {'nlayer':1,'hsize_1':0.2,'drop_1':0.6}
         train_pnes(config, DL_object, debug=args.debug, patient_level=False, directload=True)
+        #TP(config, DL_object, debug=args.debug, patient_level=False, directload=True)

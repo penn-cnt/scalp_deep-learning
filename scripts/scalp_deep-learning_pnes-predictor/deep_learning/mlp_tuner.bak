@@ -107,7 +107,7 @@ class CombinedNetwork(nn.Module):
 
         # Get the subnet results
         subnet_tensors = []
-        for idx,itensor in enumerate(input_vectors[0]):
+        for idx,itensor in enumerate(input_vectors[:-1]):
             idata = self.subnets[idx](itensor)
             subnet_tensors.append(idata)
 
@@ -129,11 +129,7 @@ class CombinedNetwork(nn.Module):
             
             output = self.fc_output(combined)
             output = self.dropout[idx](output)
-        
-        # Final logits to prob transform
         output = self.sigmoid(output)
-        #output = self.softmax(output)
-
         return output
 
 class ConsensusNetwork(nn.Module):
@@ -314,6 +310,8 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
         elif iblock == 'target':
             train_arr     = train_transformed[cols].values.astype(np.float32)
             test_arr      = test_transformed[cols].values.astype(np.float32)
+            #train_arr     = np.roll(train_arr, shift=1, axis=1)
+            #test_arr      = np.roll(test_arr, shift=1, axis=1)
             train_targets = torch.from_numpy(train_arr)
             test_targets  = torch.from_numpy(test_arr)
             output_size   = len(cols)
@@ -345,69 +343,123 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     train_loader  = DataLoader(train_tensor_dataset, batch_size=config['batchsize'], shuffle=True)
 
     # Make the model
-    combine_model = CombinedNetwork(input_dict,hidden_dict,dropout_dict,combination_dict,output_size,normorder=config['normorder'], activation=config['activation'])
+    n_batches       = int(np.ceil(train_transformed.shape[0]/config['batchsize']))
+    if patient_level:
+        consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches, False)
+    else:
+        consensus_model = ConsensusNetwork(config, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, n_batches, True)
 
     # Define the loss criterion
+    #patient_criterion = nn.BCELoss()
     sums              = train_targets.numpy().sum(axis=0)
     pos_weight        = 100*torch.tensor([sums[0]/sums[1]])
     patient_criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     # Select the optimizer
-    combine_optimizer   = optim.Adam(combine_model.parameters(), lr=config['lr'])
+    consensus_optimizer = optim.Adam(consensus_model.parameters(), lr=config['lr'])
+
+    # Debugging step to see all the items being adjusted
+    if debug:
+        old_weights = {}
+        for name, param in consensus_model.named_parameters():
+            
+            # Store the initial weights
+            old_weights[name]             = param.detach().numpy().copy()
+            old_weights[f"{name}_update"] = []
 
     # Train the model
-    num_epochs  = 25
+    num_epochs  = 10
+    consensus_model.train()
     for epoch in tqdm(range(num_epochs), total=num_epochs, disable=np.invert(directload)):
-        combine_model.train()
-        for ibatch in train_loader:
-            
-            # Kick off the consensus handler
-            combine_optimizer.zero_grad()
 
-            # Unpack the batch
-            labels       = ibatch[-1]
-            batchtensors = ibatch[:-1]
+        # Kick off the consensus handler
+        consensus_optimizer.zero_grad()
 
-            # get the output for the current batch
-            outputs = combine_model(batchtensors)
-            loss    = patient_criterion(outputs, labels)
-            loss.backward()
-            combine_optimizer.step()
+        # get the model outputs
+        outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
 
-    # get the clip level predictions
-    combine_model.eval()
-    outputs = combine_model([*train_datasets.values()])
+        # Get the loss and propagate model changes
+        patient_loss = patient_criterion(outputs, patient_train_labels)
+        patient_loss.backward()
+        consensus_optimizer.step()
 
-    # Get the predicted outputs
-    y_pred       = outputs.squeeze().detach().numpy()
-    y_pred_max   = (y_pred[:,1]>y_pred[:,0]).astype(int).reshape((-1,1))
-    y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
-    y_pred_max   = np.argmax(y_pred_clean,axis=1)
+        # If requested, give more info to user
+        if debug:
+            # Show loss
+            print(f"Loss: {patient_loss}")
 
-    # Get the measured outputs in useable format
-    y_meas_clean = train_arr
-    y_meas_max   = np.argmax(y_meas_clean,axis=1)
+            # Track weight changes
+            for name, param in consensus_model.named_parameters():
+                values                        = param.detach().numpy().copy()
+                old_weights[f"{name}_update"].append((old_weights[name]==values).all())
+                old_weights[name]             = values
 
-    # Measure the accuracy
-    train_acc  = (y_pred_max==y_meas_max).sum()/y_meas_max.size
+        # Get the predicted outputs
+        y_pred       = outputs.squeeze().detach().numpy()
+        y_pred_max   = (y_pred[:,1]>y_pred[:,0]).astype(int).reshape((-1,1))
+        y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
+        y_pred_max   = np.argmax(y_pred_clean,axis=1)
 
-    # Measure the auc
-    train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
+        # Get the measured outputs in useable format
+        y_meas_clean = patient_train_labels.detach().numpy()
+        y_meas_max = np.argmax(y_meas_clean,axis=1)
 
-    # Make a checkpoint for RAY tuning
-    if not directload:
-        with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-            checkpoint = None
-            if (epoch + 1) % 5 == 0:
-                # This saves the model to the trial directory
-                torch.save(
-                    combine_model.state_dict(),
-                    os.path.join(temp_checkpoint_dir, "model.pth")
-                )
-                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+        # Measure the accuracy
+        train_acc  = (y_pred_max==y_meas_max).sum()/y_meas_max.size
 
-            # Send the current training result back to Tune
-            train.report({"Train_AUC": train_auc}, checkpoint=checkpoint)
+        # Measure the auc
+        train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
+
+        if not directload:
+            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                checkpoint = None
+                if (epoch + 1) % 5 == 0:
+                    # This saves the model to the trial directory
+                    torch.save(
+                        consensus_model.state_dict(),
+                        os.path.join(temp_checkpoint_dir, "model.pth")
+                    )
+                    checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+
+                # Send the current training result back to Tune
+                train.report({"Train_AUC": train_auc}, checkpoint=checkpoint)
+
+    # Print info if in debugging mode
+    if debug:
+        spacer = ''
+        print("Step n+1 weights == Step n Previous Weights")
+        for ikey in old_weights.keys():
+            if 'update' in ikey:
+                print(f"{ikey.ljust(80)}{spacer.ljust(20)}:{old_weights[ikey]}")
+
+    if directload:
+        # Get the AUC for the training data
+        consensus_model.eval()
+        with torch.no_grad():
+
+            #outputs, patient_train_labels = consensus_model(train_loader, epoch, train_datasets['categorical'], uid_train_indices, train_targets)
+
+            # Get the predicted outputs
+            y_pred       = outputs.squeeze().detach().numpy()
+            y_pred_max   = (y_pred[:,1]>y_pred[:,0]).astype(int).reshape((-1,1))
+            y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
+            y_pred_max   = np.argmax(y_pred_clean,axis=1)
+
+            # Get the measured outputs in useable format
+            y_meas_clean = patient_train_labels.detach().numpy()
+            y_meas_max = np.argmax(y_meas_clean,axis=1)
+
+            # Measure the accuracy
+            train_acc  = (y_pred_max==y_meas_max).sum()/y_meas_max.size
+
+            # Measure the auc
+            train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
+
+        # Report metrics
+        print(f"Train ACC: {train_acc}")
+        print(f"Train AUC: {train_auc}")
+        import pickle
+        pickle.dump((y_meas_clean,y_pred),open("foo.pickle","wb"))
     
 class tuning_manager:
 
