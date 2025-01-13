@@ -129,7 +129,7 @@ class CombinedNetwork(nn.Module):
                 combined = self.bn[idx](combined)
             
             # Add a dropput
-            output = self.dropout[idx](output)
+            combined = self.dropout[idx](combined)
         
         # Final logits to prob transform
         output = self.fc_output(combined)
