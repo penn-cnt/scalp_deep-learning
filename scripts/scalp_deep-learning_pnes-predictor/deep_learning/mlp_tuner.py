@@ -362,7 +362,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
 
     # Define the loss criterion
     sums              = train_targets.numpy().sum(axis=0)
-    pos_weight        = 100*torch.tensor([sums[0]/sums[1]])
+    pos_weight        = 1000*torch.tensor([sums[0]/sums[1]])
     patient_criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     # Select the optimizer
@@ -461,7 +461,7 @@ class tuning_manager:
             self.config[iblock] = {}
 
             # Hidden size selection methods. Currently limiting the max number of layers to three
-            self.config[iblock]['nlayer']  = tune.randint(0, 3)
+            self.config[iblock]['nlayer']  = tune.randint(1, 3)
             self.config[iblock]["hsize_1"] = tune.quniform(0.05, 1.5, .05)
             self.config[iblock]["hsize_2"] = tune.quniform(0.05, 1.5, .05)
             self.config[iblock]["hsize_3"] = tune.quniform(0.3, 1.5, .05)
