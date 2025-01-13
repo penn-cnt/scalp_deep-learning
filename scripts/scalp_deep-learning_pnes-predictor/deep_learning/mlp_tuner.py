@@ -455,7 +455,6 @@ class tuning_manager:
         for iblock in self.model_block.keys():
             if iblock not in ['target','passthrough']:
                 self.subnetwork_list.append(iblock)
-        self.subnetwork_list.append('combination')
 
         # Define the block specific options
         for iblock in self.subnetwork_list:
@@ -522,9 +521,6 @@ class tuning_manager:
             current_best_params[0]['categorical'] = {"nlayer": 2, "hsize_1": 1.3, "hsize_2": 0.75, "hsize_3": 0.75, "drop_1": 0.15, "drop_2": 0.3, "drop_3": 0.1}
             current_best_params[0]['combined']    = {"nlayer": 2, "hsize_1": 1.35, "hsize_2": 0.1, "hsize_3": 0.3, "drop_1": 0.3, "drop_2": 0.4, "drop_3": 0.1}            
         
-        print(current_best_params)
-        exit()
-
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params)
 
