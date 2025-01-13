@@ -430,7 +430,7 @@ class tuning_manager:
         """
 
         # Set the random seed
-        #torch.manual_seed(42)
+        torch.manual_seed(42)
 
         # Save variables from the front end
         self.DL_object         = DL_object
@@ -522,7 +522,7 @@ class tuning_manager:
             current_best_params[0]['combined']    = {"nlayer": 2, "hsize_1": 1.35, "hsize_2": 0.1, "hsize_3": 0.3, "drop_1": 0.3, "drop_2": 0.4, "drop_3": 0.1}            
         
         # Define the search parameters
-        hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params)
+        hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes, {"cpu": self.ncpu})
