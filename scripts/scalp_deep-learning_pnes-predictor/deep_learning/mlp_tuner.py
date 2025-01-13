@@ -415,7 +415,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     
 class tuning_manager:
 
-    def __init__(self, DL_object, ncpu, outfile):
+    def __init__(self, DL_object, ncpu, outfile, raydir):
         """
         Initialize the tuning manager class. It creates the initial parameter space and kicks off the subprocesses.
         """
@@ -427,7 +427,7 @@ class tuning_manager:
         self.test_transformed  = DL_object[2][::20]
         self.ncpu              = ncpu
         self.ntrial            = 2
-        self.raydir            = '/Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/DEV/HYPERPARAMTER_TUNING/RAY/'
+        self.raydir            = raydir
         self.outfile           = outfile
 
     def make_tuning_config_mlp(self):
