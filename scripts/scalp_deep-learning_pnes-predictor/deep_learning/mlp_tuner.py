@@ -127,12 +127,16 @@ class CombinedNetwork(nn.Module):
                 combined = self.activation_layer(combined)        
                 combined = self.bn[idx](combined)
             
-            output = self.fc_output(combined)
-            output = self.dropout[idx](output)
+            try:
+                output = self.fc_output(combined)
+                output = self.dropout[idx](output)
+            except RuntimeError:
+                print(self.size_array)
+                print(combined.shape)
+                exit()
         
         # Final logits to prob transform
         output = self.sigmoid(output)
-        #output = self.softmax(output)
 
         return output
 
@@ -435,7 +439,10 @@ class tuning_manager:
         self.config = {}
 
         # Create a list of sub-networks we need to define networks for
-        self.subnetwork_list = list(self.model_block.keys())
+        self.subnetwork_list = []
+        for iblock in self.model_block.keys():
+            if iblock not in ['target','passthrough']:
+                self.subnetwork_list.append(iblock)
         self.subnetwork_list.append('combination')
 
         # Define the block specific options
