@@ -413,7 +413,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     
 class tuning_manager:
 
-    def __init__(self, DL_object, ncpu, outfile, raydir):
+    def __init__(self, DL_object, ncpu, ntrial, outfile, raydir):
         """
         Initialize the tuning manager class. It creates the initial parameter space and kicks off the subprocesses.
         """
@@ -424,7 +424,7 @@ class tuning_manager:
         self.train_transformed = DL_object[1][::20]
         self.test_transformed  = DL_object[2][::20]
         self.ncpu              = ncpu
-        self.ntrial            = 2
+        self.ntrial            = ntrial
         self.raydir            = raydir
         self.outfile           = outfile
 
