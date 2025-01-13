@@ -28,6 +28,7 @@ if __name__ == '__main__':
     tuning_group = parser.add_argument_group('DL Tuning Options')
     tuning_group.add_argument("--ncpu", type=int, default=1, help="Number of cpus to use for hyperparameter tuning.")
     tuning_group.add_argument("--tune_file", type=str, help="Output file for hyper parameter tuning.")
+    tuning_group.add_argument("--raydir", type=str, help="Output folder for ray tuning.")
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--debug", action='store_true', default=False, help="Show extra debugging info.")
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     DL_object = VM.workflow()
 
     # Initialize the ray tuning class
-    TUNING_HANDLER = tuning_manager(DL_object,args.ncpu,args.tune_file)
+    TUNING_HANDLER = tuning_manager(DL_object,args.ncpu,args.tune_file, args.raydir)
     
     # Run tuner or a single config model
     if not args.test_config:
