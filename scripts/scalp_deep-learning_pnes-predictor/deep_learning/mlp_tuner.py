@@ -491,7 +491,7 @@ class tuning_manager:
         self.config['activation'] = tune.choice(['relu','tanh'])
         self.config['weight']     = tune.loguniform(1,1e5)
 
-    def run_ray_tune_mlp(self,coldstart=True,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
+    def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
         # Define the starting parameters for the global parameters
         if coldstart:
