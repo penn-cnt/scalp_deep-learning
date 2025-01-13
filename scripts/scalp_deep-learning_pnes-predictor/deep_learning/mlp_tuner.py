@@ -429,6 +429,9 @@ class tuning_manager:
         Initialize the tuning manager class. It creates the initial parameter space and kicks off the subprocesses.
         """
 
+        # Set the random seed
+        torch.manual_seed(42)
+
         # Save variables from the front end
         self.DL_object         = DL_object
         self.model_block       = DL_object[0]
@@ -487,24 +490,37 @@ class tuning_manager:
         self.config['normorder']  = tune.choice(['before','after'])
         self.config['activation'] = tune.choice(['relu','tanh'])
 
-    def run_ray_tune_mlp(self,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
+    def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
         # Define the starting parameters for the global parameters
-        current_best_params = [{'lr':lrguess,
-                                'batchsize':batchguess,
-                                'normorder':'before',
-                                'activation': "relu"}]
+        if coldstart:
+            current_best_params = [{'lr':lrguess,
+                                    'batchsize':batchguess,
+                                    'normorder':'before',
+                                    'activation': "relu"}]
 
-        # Add in the model block specific parameters
-        for iblock in self.subnetwork_list:
-            current_best_params[0][iblock] = {'nlayer':nlayer_guess, 'hsize_1':h1guess, 'hsize_2':h2guess,
-                                              'hsize_3':h3guess, 'drop_1':drop1guess, 'drop_2':drop2guess,
-                                              'drop_3':drop3guess}
-        current_best_params[0]['combined'] = {'nlayer': 1, 'hsize_1': 0.8, 'hsize_2': 1.0, 'hsize_3': 1.0,
+            # Add in the model block specific parameters
+            for iblock in self.subnetwork_list:
+                current_best_params[0][iblock] = {'nlayer':nlayer_guess, 'hsize_1':h1guess, 'hsize_2':h2guess,
+                                                'hsize_3':h3guess, 'drop_1':drop1guess, 'drop_2':drop2guess,
+                                                'drop_3':drop3guess}
+            
+            # Make the combinatorial guess network
+            current_best_params[0]['combined'] = {'nlayer': 1, 'hsize_1': 0.8, 'hsize_2': 1.0, 'hsize_3': 1.0,
                                               'drop_1': 0.1, 'drop_2': 0.1, 'drop_3': 0.1}
+        else:
+            current_best_params = [{'lr':lrguess,
+                                    'batchsize':batchguess,
+                                    'normorder':'before',
+                                    'activation': "relu"}]
+
+            current_best_params[0]['frequency']   = {"nlayer": 2, "hsize_1": 1.45, "hsize_2": 0.9, "hsize_3": 0.7, "drop_1": 0.2, "drop_2": 0.3, "drop_3": 0.15}
+            current_best_params[0]['time']        = {"nlayer": 1, "hsize_1": 0.35, "hsize_2": 0.85, "hsize_3": 0.85, "drop_1": 0.25, "drop_2": 0.35, "drop_3": 0.3}
+            current_best_params[0]['categorical'] = {"nlayer": 2, "hsize_1": 1.3, "hsize_2": 0.75, "hsize_3": 0.75, "drop_1": 0.15, "drop_2": 0.3, "drop_3": 0.1}
+            current_best_params[0]['combined']    = {"nlayer": 2, "hsize_1": 1.35, "hsize_2": 0.1, "hsize_3": 0.3, "drop_1": 0.3, "drop_2": 0.4, "drop_3": 0.1}            
 
         # Define the search parameters
-        hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params)
+        hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params,  random_state_seed=42)
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes, {"cpu": self.ncpu})
