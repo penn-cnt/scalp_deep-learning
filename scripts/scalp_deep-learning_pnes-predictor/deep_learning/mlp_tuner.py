@@ -350,6 +350,8 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
         dsizes.append(drop_size)
     combination_dict = {'hidden':hsizes,'dropout':dsizes}
 
+    print(hidden_dict)
+
     # Make the datasets
     train_tensor_dataset = TensorDataset(*train_datasets.values(),train_targets)
     test_tensor_dataset  = TensorDataset(*test_datasets.values(),test_targets)
