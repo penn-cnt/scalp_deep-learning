@@ -357,7 +357,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     combine_optimizer   = optim.Adam(combine_model.parameters(), lr=config['lr'])
 
     # Train the model
-    num_epochs  = 25
+    num_epochs  = 10
     for epoch in tqdm(range(num_epochs), total=num_epochs, disable=np.invert(directload)):
         combine_model.train()
         for ibatch in train_loader:
