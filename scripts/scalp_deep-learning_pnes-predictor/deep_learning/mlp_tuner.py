@@ -491,7 +491,7 @@ class tuning_manager:
         self.config['activation'] = tune.choice(['relu','tanh'])
         self.config['weight']     = tune.loguniform(1,1e5)
 
-    def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
+    def run_ray_tune_mlp(self,coldstart=True,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
         # Define the starting parameters for the global parameters
         if coldstart:
@@ -521,6 +521,9 @@ class tuning_manager:
             current_best_params[0]['time']        = {"nlayer": 1, "hsize_1": 0.35, "hsize_2": 0.85, "hsize_3": 0.85, "drop_1": 0.25, "drop_2": 0.35, "drop_3": 0.3}
             current_best_params[0]['categorical'] = {"nlayer": 2, "hsize_1": 1.3, "hsize_2": 0.75, "hsize_3": 0.75, "drop_1": 0.15, "drop_2": 0.3, "drop_3": 0.1}
             current_best_params[0]['combined']    = {"nlayer": 2, "hsize_1": 1.35, "hsize_2": 0.1, "hsize_3": 0.3, "drop_1": 0.3, "drop_2": 0.4, "drop_3": 0.1}            
+        
+        print(current_best_params)
+        exit()
 
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params)
