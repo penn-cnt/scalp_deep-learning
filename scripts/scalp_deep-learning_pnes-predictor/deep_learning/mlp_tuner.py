@@ -461,7 +461,7 @@ class tuning_manager:
             self.config[iblock] = {}
 
             # Hidden size selection methods. Currently limiting the max number of layers to three
-            self.config[iblock]['nlayer']  = tune.randint(1, 3)
+            self.config[iblock]['nlayer']  = tune.randint(0, 3)
             self.config[iblock]["hsize_1"] = tune.quniform(0.05, 1.5, .05)
             self.config[iblock]["hsize_2"] = tune.quniform(0.05, 1.5, .05)
             self.config[iblock]["hsize_3"] = tune.quniform(0.3, 1.5, .05)
