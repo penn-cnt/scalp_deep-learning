@@ -408,7 +408,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
             # Send the current training result back to Tune
-            train.report({"Train_AUC": train_auc}, checkpoint=checkpoint)
+            train.report({"Train_AUC": train_auc, "Train_ACC": train_acc}, checkpoint=checkpoint)
     
 class tuning_manager:
 
@@ -420,8 +420,8 @@ class tuning_manager:
         # Save variables from the front end
         self.DL_object         = DL_object
         self.model_block       = DL_object[0]
-        self.train_transformed = DL_object[1][::20]
-        self.test_transformed  = DL_object[2][::20]
+        self.train_transformed = DL_object[1]
+        self.test_transformed  = DL_object[2]
         self.ncpu              = ncpu
         self.ntrial            = ntrial
         self.raydir            = raydir
