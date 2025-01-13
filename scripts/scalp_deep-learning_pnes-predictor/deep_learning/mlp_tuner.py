@@ -120,6 +120,7 @@ class CombinedNetwork(nn.Module):
             # Pass the combined output through the final layers
             combined = ifc(combined)
 
+            # Some possible hidden network architecture
             if self.normorder == 'first':
                 combined = self.bn[idx](combined)
                 combined = self.activation_layer(combined)
@@ -127,13 +128,11 @@ class CombinedNetwork(nn.Module):
                 combined = self.activation_layer(combined)        
                 combined = self.bn[idx](combined)
             
-            try:
-                output = self.fc_output(combined)
-                output = self.dropout[idx](output)
-            except RuntimeError:
-                print("\n\n\n",self.size_array,combined.shape,self.fc,"\n\n\n")
+            # Add a dropput
+            output = self.dropout[idx](output)
         
         # Final logits to prob transform
+        output = self.fc_output(combined)
         output = self.sigmoid(output)
 
         return output
