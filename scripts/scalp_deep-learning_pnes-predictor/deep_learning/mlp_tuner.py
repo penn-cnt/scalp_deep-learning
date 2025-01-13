@@ -20,45 +20,54 @@ class SubNetwork(nn.Module):
     def __init__(self, input_size, hidden_sizes, dropout_rates, normorder='first', activation='relu'):
         super(SubNetwork, self).__init__()
 
-        # Figure out the shaping of the hidden network
-        self.size_array = [input_size]
-        self.size_array.extend(hidden_sizes)
+        if len(hidden_sizes) > 0:
+            # Make a flag to say we need to use subnetwork
+            self.passflag = False
 
-        # Make the list of linear transformers based on number of layers
-        self.fc = nn.ModuleList([nn.Linear(self.size_array[ii], self.size_array[ii+1]) for ii in range(len(hidden_sizes))])
-        
-        # Make the list of dropouts based on number of layers
-        self.dropout = nn.ModuleList([nn.Dropout(p=dropout_rates[ii]) for ii in range(len(hidden_sizes))])
+            # Figure out the shaping of the hidden network
+            self.size_array = [input_size]
+            self.size_array.extend(hidden_sizes)
 
-        # Define the normalization layers
-        self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
+            # Make the list of linear transformers based on number of layers
+            self.fc = nn.ModuleList([nn.Linear(self.size_array[ii], self.size_array[ii+1]) for ii in range(len(hidden_sizes))])
+            
+            # Make the list of dropouts based on number of layers
+            self.dropout = nn.ModuleList([nn.Dropout(p=dropout_rates[ii]) for ii in range(len(hidden_sizes))])
 
-        # Define the possible activation layers
-        self.relu    = nn.ReLU()
-        self.tanh    = nn.Tanh()
+            # Define the normalization layers
+            self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
 
-        # Handle selection of activation layer
-        self.normorder = normorder
-        if activation == 'relu':
-            self.activation_layer = self.relu
-        elif activation == 'tanh':
-            self.activation_layer = self.tanh
+            # Define the possible activation layers
+            self.relu    = nn.ReLU()
+            self.tanh    = nn.Tanh()
+
+            # Handle selection of activation layer
+            self.normorder = normorder
+            if activation == 'relu':
+                self.activation_layer = self.relu
+            elif activation == 'tanh':
+                self.activation_layer = self.tanh
+        else:
+            self.passflag = True
     
     def forward(self, x):
 
-        # Apply the forward transforms
-        for idx,ifc in enumerate(self.fc):
-            x = ifc(x)
+        if not self.passflag:
+            # Apply the forward transforms
+            for idx,ifc in enumerate(self.fc):
+                x = ifc(x)
 
-            if self.normorder == 'first':
-                x = self.bn[idx](x)
-                x = self.activation_layer(x)
-            else:
-                x = self.activation_layer(x)
-                x = self.bn[idx](x)   
+                if self.normorder == 'first':
+                    x = self.bn[idx](x)
+                    x = self.activation_layer(x)
+                else:
+                    x = self.activation_layer(x)
+                    x = self.bn[idx](x)   
 
-            x = self.dropout[idx](x)
-        return x
+                x = self.dropout[idx](x)
+            return x
+        else:
+            return x
 
 class CombinedNetwork(nn.Module):
     def __init__(self, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, normorder='first',activation='relu'):
@@ -70,7 +79,10 @@ class CombinedNetwork(nn.Module):
         for iblock in input_dict.keys():
 
             # Store sizing of subnetwork outputs
-            input_combined_size += hidden_dict[iblock][-1]
+            if len(hidden_dict[iblock]) > 0:
+                input_combined_size += hidden_dict[iblock][-1]
+            else:
+                input_combined_size += input_dict[iblock]
 
             # Make the subnetwork object
             self.subnets.append(SubNetwork(input_dict[iblock], hidden_dict[iblock], dropout_dict[iblock]))
@@ -450,9 +462,9 @@ class tuning_manager:
 
             # Hidden size selection methods. Currently limiting the max number of layers to three
             self.config[iblock]['nlayer']  = tune.randint(1, 3)
-            self.config[iblock]["hsize_1"] = tune.uniform(0.05, 1.5)
-            self.config[iblock]["hsize_2"] = tune.uniform(0.05, 1.5)
-            self.config[iblock]["hsize_3"] = tune.uniform(0.3, 1.5)
+            self.config[iblock]["hsize_1"] = tune.quniform(0.05, 1.5, .05)
+            self.config[iblock]["hsize_2"] = tune.quniform(0.05, 1.5, .05)
+            self.config[iblock]["hsize_3"] = tune.quniform(0.3, 1.5, .05)
 
             # Drouput fraction selection methods. Currently limiting the max number of layers to three (pairs to the hidden size networks)
             self.config[iblock]["drop_1"] = tune.quniform(0.05, .5, .05)
@@ -462,9 +474,9 @@ class tuning_manager:
         # Define the combination configuration block
         self.config['combined'] = {}
         self.config['combined']['nlayer']  = tune.randint(1, 3)
-        self.config['combined']["hsize_1"] = tune.uniform(0.05, 1.5)
-        self.config['combined']["hsize_2"] = tune.uniform(0.05, 1.5)
-        self.config['combined']["hsize_3"] = tune.uniform(0.3, 1.5)
+        self.config['combined']["hsize_1"] = tune.quniform(0.05, 1.5, .05)
+        self.config['combined']["hsize_2"] = tune.quniform(0.05, 1.5, .05)
+        self.config['combined']["hsize_3"] = tune.quniform(0.3, 1.5, .05)
         self.config['combined']["drop_1"]  = tune.quniform(0.05, .5, .05)
         self.config['combined']["drop_2"]  = tune.quniform(0.05, .5, .05)
         self.config['combined']["drop_3"]  = tune.quniform(0.05, .5, .05)
