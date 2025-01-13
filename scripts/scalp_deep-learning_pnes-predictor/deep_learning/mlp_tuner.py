@@ -131,9 +131,7 @@ class CombinedNetwork(nn.Module):
                 output = self.fc_output(combined)
                 output = self.dropout[idx](output)
             except RuntimeError:
-                print(self.size_array)
-                print(combined.shape)
-                exit()
+                print("\n\n\n",self.size_array,combined.shape,"\n\n\n")
         
         # Final logits to prob transform
         output = self.sigmoid(output)
