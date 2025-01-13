@@ -486,7 +486,7 @@ class tuning_manager:
 
         # Global fitting criteria selection
         self.config['lr']         = tune.loguniform(1e-5,1e-3)
-        self.config['batchsize']  = tune.choice([32,64,128,256])
+        self.config['batchsize']  = tune.choice([64,128,256,512])
         self.config['normorder']  = tune.choice(['before','after'])
         self.config['activation'] = tune.choice(['relu','tanh'])
 
@@ -509,10 +509,10 @@ class tuning_manager:
             current_best_params[0]['combined'] = {'nlayer': 1, 'hsize_1': 0.8, 'hsize_2': 1.0, 'hsize_3': 1.0,
                                               'drop_1': 0.1, 'drop_2': 0.1, 'drop_3': 0.1}
         else:
-            current_best_params = [{'lr':lrguess,
-                                    'batchsize':batchguess,
-                                    'normorder':'before',
-                                    'activation': "relu"}]
+            current_best_params = [{'lr':1e-5,
+                                    'batchsize':256,
+                                    'normorder':'after',
+                                    'activation': "tanh"}]
 
             current_best_params[0]['frequency']   = {"nlayer": 2, "hsize_1": 1.45, "hsize_2": 0.9, "hsize_3": 0.7, "drop_1": 0.2, "drop_2": 0.3, "drop_3": 0.15}
             current_best_params[0]['time']        = {"nlayer": 1, "hsize_1": 0.35, "hsize_2": 0.85, "hsize_3": 0.85, "drop_1": 0.25, "drop_2": 0.35, "drop_3": 0.3}
