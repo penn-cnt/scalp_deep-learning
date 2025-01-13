@@ -534,7 +534,7 @@ class tuning_manager:
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment"))
 
         # Get the hyper parameter search results
-        results = tuner.fit()
+        results = tuner.fit(verbose=1,raise_on_failed_trial=False)
 
         # Save the tuned results
         result_DF = results.get_dataframe()
