@@ -575,6 +575,7 @@ class tuning_manager:
                                                 failure_config=train.FailureConfig(fail_fast=True)))
 
         # Get the hyper parameter search results
+        print(self.ncpu)
         results = tuner.fit()
 
         # Save the tuned results
