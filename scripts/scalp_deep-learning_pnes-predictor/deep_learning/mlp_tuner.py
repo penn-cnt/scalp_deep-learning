@@ -540,17 +540,17 @@ class tuning_manager:
                                     'weight': 1000}]
 
             # Hot start with some better guesses
-            current_best_params[0][f"frequency_nlayer"]    = 1
+            current_best_params[0][f"frequency_nlayer"]    = 2
             current_best_params[0][f"frequency_hsize_1"]   = 1.10
             current_best_params[0][f"frequency_hsize_2"]   = 0.50
             current_best_params[0][f"frequency_drop_1"]    = 0.05
             current_best_params[0][f"frequency_drop_2"]    = 0.35
-            current_best_params[0][f"time_nlayer"]         = 1
+            current_best_params[0][f"time_nlayer"]         = 2
             current_best_params[0][f"time_hsize_1"]        = 1.10
             current_best_params[0][f"time_hsize_2"]        = 0.85
             current_best_params[0][f"time_drop_1"]         = 0.20
             current_best_params[0][f"time_drop_2"]         = 0.35
-            current_best_params[0][f"categorical_nlayer"]  = 1
+            current_best_params[0][f"categorical_nlayer"]  = 2
             current_best_params[0][f"categorical_hsize_1"] = 1.05
             current_best_params[0][f"categorical_hsize_2"] = 0.15
             current_best_params[0][f"categorical_drop_1"]  = 0.15
@@ -575,7 +575,6 @@ class tuning_manager:
                                                 failure_config=train.FailureConfig(fail_fast=True)))
 
         # Get the hyper parameter search results
-        print(self.ncpu)
         results = tuner.fit()
 
         # Save the tuned results
