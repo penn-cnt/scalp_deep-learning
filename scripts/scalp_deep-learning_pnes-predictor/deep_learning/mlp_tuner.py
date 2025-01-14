@@ -478,7 +478,7 @@ class tuning_manager:
         for iblock in self.subnetwork_list:
 
             # Hidden size selection methods. Currently limiting the max number of layers to three
-            self.config[f"{iblock}_nlayer"]  = tune.randint(0, 2)
+            self.config[f"{iblock}_nlayer"]  = tune.randint(1, 2)
             self.config[f"{iblock}_hsize_1"] = tune.quniform(0.05, 1.5, .05)
             self.config[f"{iblock}_hsize_2"] = tune.quniform(0.05, 1.5, .05)
 
