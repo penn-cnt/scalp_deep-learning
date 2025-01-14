@@ -478,7 +478,7 @@ class tuning_manager:
         for iblock in self.subnetwork_list:
 
             # Hidden size selection methods. Currently limiting the max number of layers to three
-            self.config[f"{iblock}_nlayer"]  = tune.randint(1, 2)
+            self.config[f"{iblock}_nlayer"]  = tune.randint(0, 2)
             self.config[f"{iblock}_hsize_1"] = tune.quniform(0.05, 1.5, .05)
             self.config[f"{iblock}_hsize_2"] = tune.quniform(0.05, 1.5, .05)
 
@@ -519,14 +519,14 @@ class tuning_manager:
                 current_best_params[0][f"{iblock}_drop_2"]  = drop2guess
             
             # Make the combinatorial guess network
-            current_best_params[0]['combined'] = {'nlayer': 1, 'hsize_1': 0.8, 'hsize_2': 1.0,
-                                              'drop_1': 0.1, 'drop_2': 0.1}
+
             current_best_params[0][f"combined_nlayer"]  = 1
             current_best_params[0][f"combined_hsize_1"] = 0.8
             current_best_params[0][f"combined_hsize_2"] = 0.8
             current_best_params[0][f"combined_drop_1"]  = 0.1
             current_best_params[0][f"combined_drop_2"]  = 0.1
         else:
+            print("Hi")
             current_best_params = [{'lr':1e-5,
                                     'batchsize':256,
                                     'normorder':'after',
