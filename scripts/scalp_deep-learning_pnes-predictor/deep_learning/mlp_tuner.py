@@ -541,25 +541,33 @@ class tuning_manager:
 
             # Hot start with some better guesses
             current_best_params[0][f"frequency_nlayer"]    = 2
-            current_best_params[0][f"frequency_hsize_1"]   = 1.10
-            current_best_params[0][f"frequency_hsize_2"]   = 0.50
-            current_best_params[0][f"frequency_drop_1"]    = 0.05
-            current_best_params[0][f"frequency_drop_2"]    = 0.35
-            current_best_params[0][f"time_nlayer"]         = 2
-            current_best_params[0][f"time_hsize_1"]        = 1.10
+            current_best_params[0][f"frequency_hsize_1"]   = 1.45
+            current_best_params[0][f"frequency_hsize_2"]   = 0.90
+            current_best_params[0][f"frequency_hsize_3"]   = 0.70
+            current_best_params[0][f"frequency_drop_1"]    = 0.20
+            current_best_params[0][f"frequency_drop_2"]    = 0.30
+            current_best_params[0][f"frequency_drop_3"]    = 0.15
+            current_best_params[0][f"time_nlayer"]         = 1
+            current_best_params[0][f"time_hsize_1"]        = 0.35
             current_best_params[0][f"time_hsize_2"]        = 0.85
-            current_best_params[0][f"time_drop_1"]         = 0.20
+            current_best_params[0][f"time_hsize_3"]        = 0.85
+            current_best_params[0][f"time_drop_1"]         = 0.25
             current_best_params[0][f"time_drop_2"]         = 0.35
+            current_best_params[0][f"time_drop_3"]         = 0.30
             current_best_params[0][f"categorical_nlayer"]  = 2
-            current_best_params[0][f"categorical_hsize_1"] = 1.05
-            current_best_params[0][f"categorical_hsize_2"] = 0.15
+            current_best_params[0][f"categorical_hsize_1"] = 1.30
+            current_best_params[0][f"categorical_hsize_2"] = 0.75
+            current_best_params[0][f"categorical_hsize_3"] = 0.75
             current_best_params[0][f"categorical_drop_1"]  = 0.15
             current_best_params[0][f"categorical_drop_2"]  = 0.30
+            current_best_params[0][f"categorical_drop_3"]  = 0.10
             current_best_params[0][f"combined_nlayer"]     = 2
-            current_best_params[0][f"combined_hsize_1"]    = 1.50
+            current_best_params[0][f"combined_hsize_1"]    = 1.35
             current_best_params[0][f"combined_hsize_2"]    = 0.10
-            current_best_params[0][f"combined_drop_1"]     = 0.45
+            current_best_params[0][f"combined_hsize_3"]    = 0.30
+            current_best_params[0][f"combined_drop_1"]     = 0.30
             current_best_params[0][f"combined_drop_2"]     = 0.40
+            current_best_params[0][f"combined_drop_3"]     = 0.10
             
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
