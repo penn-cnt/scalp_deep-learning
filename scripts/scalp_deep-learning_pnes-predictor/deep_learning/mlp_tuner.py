@@ -485,20 +485,24 @@ class tuning_manager:
         for iblock in self.subnetwork_list:
 
             # Hidden size selection methods. Currently limiting the max number of layers to three
-            self.config[f"{iblock}_nlayer"]  = tune.randint(0, 2)
+            self.config[f"{iblock}_nlayer"]  = tune.randint(0, 4)
             self.config[f"{iblock}_hsize_1"] = tune.quniform(0.05, 1.5, .05)
             self.config[f"{iblock}_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+            self.config[f"{iblock}_hsize_3"] = tune.quniform(0.05, 1.5, .05)
 
             # Drouput fraction selection methods. Currently limiting the max number of layers to three (pairs to the hidden size networks)
             self.config[f"{iblock}_drop_1"] = tune.quniform(0.05, .5, .05)
             self.config[f"{iblock}_drop_2"] = tune.quniform(0.05, .5, .05)
+            self.config[f"{iblock}_drop_3"] = tune.quniform(0.05, .5, .05)
 
         # Define the combination configuration block
-        self.config[f"combined_nlayer"]  = tune.randint(1, 2)
+        self.config[f"combined_nlayer"]  = tune.randint(1, 4)
         self.config[f"combined_hsize_1"] = tune.quniform(0.05, 1.5, .05)
         self.config[f"combined_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+        self.config[f"combined_hsize_3"] = tune.quniform(0.05, 1.5, .05)
         self.config[f"combined_drop_1"]  = tune.quniform(0.05, .5, .05)
         self.config[f"combined_drop_2"]  = tune.quniform(0.05, .5, .05)
+        self.config[f"combined_drop_3"]  = tune.quniform(0.05, .5, .05)
 
         # Global fitting criteria selection
         self.config['lr']         = tune.loguniform(1e-5,1e-3)
@@ -522,16 +526,19 @@ class tuning_manager:
                 current_best_params[0][f"{iblock}_nlayer"]  = nlayer_guess
                 current_best_params[0][f"{iblock}_hsize_1"] = h1guess
                 current_best_params[0][f"{iblock}_hsize_2"] = h2guess
+                current_best_params[0][f"{iblock}_hsize_3"] = h3guess
                 current_best_params[0][f"{iblock}_drop_1"]  = drop1guess
                 current_best_params[0][f"{iblock}_drop_2"]  = drop2guess
+                current_best_params[0][f"{iblock}_drop_3"]  = drop3guess
             
             # Make the combinatorial guess network
-
             current_best_params[0][f"combined_nlayer"]  = 1
             current_best_params[0][f"combined_hsize_1"] = 0.8
             current_best_params[0][f"combined_hsize_2"] = 0.8
+            current_best_params[0][f"combined_hsize_3"] = 0.8
             current_best_params[0][f"combined_drop_1"]  = 0.1
             current_best_params[0][f"combined_drop_2"]  = 0.1
+            current_best_params[0][f"combined_drop_3"]  = 0.1
         else:
             current_best_params = [{'lr':1e-5,
                                     'batchsize':256,
