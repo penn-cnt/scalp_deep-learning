@@ -281,6 +281,14 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     uid_train_indices = train_transformed.groupby(['uid']).indices
     uid_test_indices  = test_transformed.groupby(['uid']).indices
 
+    # Get the output info
+    outcols       = model_block['target']
+    train_arr     = train_transformed[outcols].values.astype(np.float32)
+    test_arr      = test_transformed[outcols].values.astype(np.float32)
+    train_targets = torch.from_numpy(train_arr)
+    test_targets  = torch.from_numpy(test_arr)
+    output_size   = len(outcols)
+
     # Make the tensor objects for the main blocks
     for iblock in model_block:
 
@@ -296,19 +304,24 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
 
             # Make the subnetwork configuration
             input_dict[iblock] = len(cols)
-            nlayer             = config[iblock]['nlayer']
+            nlayer             = config[f"{iblock}_nlayer"]
             hsizes = []
             dsizes = []
             if nlayer > 0:
                 for ilayer in range(nlayer):
 
                     # Calculate the current size
-                    hidden_size = int(config[iblock][f"hsize_{ilayer+1}"]*len(cols))
-                    drop_size   = float(config[iblock][f"drop_{ilayer+1}"])
+                    hidden_size = int(config[f"{iblock}_hsize_{ilayer+1}"]*len(cols))
 
                     # Ensure a minimum size of one output neuron
                     if hidden_size == 0:
                         hidden_size = 1
+
+                    # Calculate the dropout size
+                    if hidden_size > output_size:
+                        drop_size = float(config[f"{iblock}_drop_{ilayer+1}"])
+                    else:
+                        drop_size = 0
 
                     # Store the sizes
                     hsizes.append(hidden_size)
@@ -322,21 +335,14 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
             dropout_dict[iblock] = dsizes
             subnetwork_size_out += final_layer_size
 
-        elif iblock == 'target':
-            train_arr     = train_transformed[cols].values.astype(np.float32)
-            test_arr      = test_transformed[cols].values.astype(np.float32)
-            train_targets = torch.from_numpy(train_arr)
-            test_targets  = torch.from_numpy(test_arr)
-            output_size   = len(cols)
-
     # Define the combined network
-    nlayer = config['combined']['nlayer']
+    nlayer = config['combined_nlayer']
     hsizes = []
     dsizes = []
     for ilayer in range(nlayer):
 
         # Calculate the current hidden size
-        hidden_size = int(config['combined'][f"hsize_{ilayer+1}"]*subnetwork_size_out)
+        hidden_size = int(config[f"combined_hsize_{ilayer+1}"]*subnetwork_size_out)
 
         # Ensure a minimum size of the output neurons
         if hidden_size < output_size:
@@ -344,7 +350,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
 
         # Calculate the dropout size
         if hidden_size > output_size:
-            drop_size = float(config['combined'][f"drop_{ilayer+1}"])
+            drop_size = float(config[f"combined_drop_{ilayer+1}"])
         else:
             drop_size = 0
 
@@ -424,6 +430,9 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
 
             # Send the current training result back to Tune
             train.report({"Train_AUC": train_auc, "Train_ACC": train_acc}, checkpoint=checkpoint)
+    else:
+        print("Acc:",train_acc)
+        print("AUC:",train_auc)
     
 class tuning_manager:
 
@@ -462,29 +471,25 @@ class tuning_manager:
         # Define the block specific options
         for iblock in self.subnetwork_list:
 
-            # Create a configuration block for the current set of inputs
-            self.config[iblock] = {}
-
             # Hidden size selection methods. Currently limiting the max number of layers to three
-            self.config[iblock]['nlayer']  = tune.randint(1, 3)
-            self.config[iblock]["hsize_1"] = tune.quniform(0.05, 1.5, .05)
-            self.config[iblock]["hsize_2"] = tune.quniform(0.05, 1.5, .05)
-            self.config[iblock]["hsize_3"] = tune.quniform(0.3, 1.5, .05)
+            self.config[f"{iblock}_nlayer"]  = tune.randint(1, 3)
+            self.config[f"{iblock}_hsize_1"] = tune.quniform(0.05, 1.5, .05)
+            self.config[f"{iblock}_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+            self.config[f"{iblock}_hsize_3"] = tune.quniform(0.3, 1.5, .05)
 
             # Drouput fraction selection methods. Currently limiting the max number of layers to three (pairs to the hidden size networks)
-            self.config[iblock]["drop_1"] = tune.quniform(0.05, .5, .05)
-            self.config[iblock]["drop_2"] = tune.quniform(0.05, .5, .05)
-            self.config[iblock]["drop_3"] = tune.quniform(0.05, .5, .05)
+            self.config[f"{iblock}_drop_1"] = tune.quniform(0.05, .5, .05)
+            self.config[f"{iblock}_drop_2"] = tune.quniform(0.05, .5, .05)
+            self.config[f"{iblock}_drop_3"] = tune.quniform(0.05, .5, .05)
 
         # Define the combination configuration block
-        self.config['combined'] = {}
-        self.config['combined']['nlayer']  = tune.randint(1, 3)
-        self.config['combined']["hsize_1"] = tune.quniform(0.05, 1.5, .05)
-        self.config['combined']["hsize_2"] = tune.quniform(0.05, 1.5, .05)
-        self.config['combined']["hsize_3"] = tune.quniform(0.3, 1.5, .05)
-        self.config['combined']["drop_1"]  = tune.quniform(0.05, .5, .05)
-        self.config['combined']["drop_2"]  = tune.quniform(0.05, .5, .05)
-        self.config['combined']["drop_3"]  = tune.quniform(0.05, .5, .05)
+        self.config[f"combined_nlayer"]  = tune.randint(1, 3)
+        self.config[f"combined_hsize_1"] = tune.quniform(0.05, 1.5, .05)
+        self.config[f"combined_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+        self.config[f"combined_hsize_3"] = tune.quniform(0.3, 1.5, .05)
+        self.config[f"combined_drop_1"]  = tune.quniform(0.05, .5, .05)
+        self.config[f"combined_drop_2"]  = tune.quniform(0.05, .5, .05)
+        self.config[f"combined_drop_3"]  = tune.quniform(0.05, .5, .05)
 
         # Global fitting criteria selection
         self.config['lr']         = tune.loguniform(1e-5,1e-3)
@@ -505,13 +510,24 @@ class tuning_manager:
 
             # Add in the model block specific parameters
             for iblock in self.subnetwork_list:
-                current_best_params[0][iblock] = {'nlayer':nlayer_guess, 'hsize_1':h1guess, 'hsize_2':h2guess,
-                                                'hsize_3':h3guess, 'drop_1':drop1guess, 'drop_2':drop2guess,
-                                                'drop_3':drop3guess}
+                current_best_params[0][f"{iblock}_nlayer"]  = nlayer_guess
+                current_best_params[0][f"{iblock}_hsize_1"] = h1guess
+                current_best_params[0][f"{iblock}_hsize_2"] = h2guess
+                current_best_params[0][f"{iblock}_hsize_3"] = h3guess
+                current_best_params[0][f"{iblock}_drop_1"]  = drop1guess
+                current_best_params[0][f"{iblock}_drop_2"]  = drop2guess
+                current_best_params[0][f"{iblock}_drop_3"]  = drop3guess
             
             # Make the combinatorial guess network
             current_best_params[0]['combined'] = {'nlayer': 1, 'hsize_1': 0.8, 'hsize_2': 1.0, 'hsize_3': 1.0,
                                               'drop_1': 0.1, 'drop_2': 0.1, 'drop_3': 0.1}
+            current_best_params[0][f"combined_nlayer"]  = 1
+            current_best_params[0][f"combined_hsize_1"] = 0.8
+            current_best_params[0][f"combined_hsize_2"] = 0.8
+            current_best_params[0][f"combined_hsize_3"] = 0.8
+            current_best_params[0][f"combined_drop_1"]  = 0.1
+            current_best_params[0][f"combined_drop_2"]  = 0.1
+            current_best_params[0][f"combined_drop_3"]  = 0.1
         else:
             current_best_params = [{'lr':1e-5,
                                     'batchsize':256,
@@ -519,11 +535,36 @@ class tuning_manager:
                                     'activation': "tanh",
                                     'weight': 1000}]
 
-            current_best_params[0]['frequency']   = {"nlayer": 2, "hsize_1": 1.45, "hsize_2": 0.9, "hsize_3": 0.7, "drop_1": 0.2, "drop_2": 0.3, "drop_3": 0.15}
-            current_best_params[0]['time']        = {"nlayer": 1, "hsize_1": 0.35, "hsize_2": 0.85, "hsize_3": 0.85, "drop_1": 0.25, "drop_2": 0.35, "drop_3": 0.3}
-            current_best_params[0]['categorical'] = {"nlayer": 2, "hsize_1": 1.3, "hsize_2": 0.75, "hsize_3": 0.75, "drop_1": 0.15, "drop_2": 0.3, "drop_3": 0.1}
-            current_best_params[0]['combined']    = {"nlayer": 2, "hsize_1": 1.35, "hsize_2": 0.1, "hsize_3": 0.3, "drop_1": 0.3, "drop_2": 0.4, "drop_3": 0.1}            
-        
+            # Hot start with some better guesses
+            current_best_params[0][f"frequency_nlayer"]    = 2
+            current_best_params[0][f"frequency_hsize_1"]   = 1.45
+            current_best_params[0][f"frequency_hsize_2"]   = 0.90
+            current_best_params[0][f"frequency_hsize_3"]   = 0.70
+            current_best_params[0][f"frequency_drop_1"]    = 0.20
+            current_best_params[0][f"frequency_drop_2"]    = 0.30
+            current_best_params[0][f"frequency_drop_3"]    = 0.15
+            current_best_params[0][f"time_nlayer"]         = 1
+            current_best_params[0][f"time_hsize_1"]        = 0.35
+            current_best_params[0][f"time_hsize_2"]        = 0.85
+            current_best_params[0][f"time_hsize_3"]        = 0.85
+            current_best_params[0][f"time_drop_1"]         = 0.25
+            current_best_params[0][f"time_drop_2"]         = 0.35
+            current_best_params[0][f"time_drop_3"]         = 0.30
+            current_best_params[0][f"categorical_nlayer"]  = 2
+            current_best_params[0][f"categorical_hsize_1"] = 1.30
+            current_best_params[0][f"categorical_hsize_2"] = 0.75
+            current_best_params[0][f"categorical_hsize_3"] = 0.75
+            current_best_params[0][f"categorical_drop_1"]  = 0.15
+            current_best_params[0][f"categorical_drop_2"]  = 0.30
+            current_best_params[0][f"categorical_drop_3"]  = 0.10
+            current_best_params[0][f"combined_nlayer"]     = 2
+            current_best_params[0][f"combined_hsize_1"]    = 1.35
+            current_best_params[0][f"combined_hsize_2"]    = 0.10
+            current_best_params[0][f"combined_hsize_3"]    = 0.30
+            current_best_params[0][f"combined_drop_1"]     = 0.30
+            current_best_params[0][f"combined_drop_2"]     = 0.40
+            current_best_params[0][f"combined_drop_3"]     = 0.10
+            
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
 

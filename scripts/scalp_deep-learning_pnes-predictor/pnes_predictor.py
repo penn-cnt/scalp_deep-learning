@@ -55,10 +55,35 @@ if __name__ == '__main__':
         TUNING_HANDLER.make_tuning_config_mlp()
         TUNING_HANDLER.run_ray_tune_mlp()
     else:
-        config = {'batchsize':128,'normorder':'first','activation':'relu','lr':1e-2}
-        config['frequency']   = {'nlayer':3,'hsize_1':0.9,'hsize_2':0.8,'hsize_3':0.6,'drop_1':0.6,'drop_2':0.4,'drop_3':0.2}
-        config['time']        = {'nlayer':2,'hsize_1':0.8,'hsize_2':0.6,'drop_1':0.6,'drop_2':0.4}
-        config['categorical'] = {'nlayer':1,'hsize_1':0.6,'drop_1':0.6}
-        config['combined']    = {'nlayer':1,'hsize_1':0.2,'drop_1':0.6}
+        config = {'batchsize':256, 'normorder':'after', 'activation':'tanh', 'lr':1e-5, 'weight':1000}
+        config[f"frequency_nlayer"]    = 2
+        config[f"frequency_hsize_1"]   = 1.45
+        config[f"frequency_hsize_2"]   = 0.90
+        config[f"frequency_hsize_3"]   = 0.70
+        config[f"frequency_drop_1"]    = 0.20
+        config[f"frequency_drop_2"]    = 0.30
+        config[f"frequency_drop_3"]    = 0.15
+        config[f"time_nlayer"]         = 1
+        config[f"time_hsize_1"]        = 0.35
+        config[f"time_hsize_2"]        = 0.85
+        config[f"time_hsize_3"]        = 0.85
+        config[f"time_drop_1"]         = 0.25
+        config[f"time_drop_2"]         = 0.35
+        config[f"time_drop_3"]         = 0.30
+        config[f"categorical_nlayer"]  = 2
+        config[f"categorical_hsize_1"] = 1.30
+        config[f"categorical_hsize_2"] = 0.75
+        config[f"categorical_hsize_3"] = 0.75
+        config[f"categorical_drop_1"]  = 0.15
+        config[f"categorical_drop_2"]  = 0.30
+        config[f"categorical_drop_3"]  = 0.10
+        config[f"combined_nlayer"]     = 2
+        config[f"combined_hsize_1"]    = 1.35
+        config[f"combined_hsize_2"]    = 0.10
+        config[f"combined_hsize_3"]    = 0.30
+        config[f"combined_drop_1"]     = 0.30
+        config[f"combined_drop_2"]     = 0.40
+        config[f"combined_drop_3"]     = 0.10
+
         train_pnes(config, DL_object, debug=args.debug, patient_level=False, directload=True)
         #TP(config, DL_object, debug=args.debug, patient_level=False, directload=True)
