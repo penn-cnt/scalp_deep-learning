@@ -534,7 +534,8 @@ class tuning_manager:
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
-                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1))
+                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1,
+                                                failure_config=tune.FailureConfig(fail_fast=False)))
 
         # Get the hyper parameter search results
         results = tuner.fit()
