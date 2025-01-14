@@ -264,11 +264,13 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     Function that manages the workflow for the MLP model.
     """
 
+    print("A")
     # Unpack the data for our model
     model_block       = DL_object[0]
     train_transformed = DL_object[1]
     test_transformed  = DL_object[2]
 
+    print("B")
     # Define the dictionaries that store the different network options
     train_datasets      = {}
     test_datasets       = {}
@@ -277,10 +279,12 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     dropout_dict        = {}
     subnetwork_size_out = 0
 
+    print("C")
     # Make the UID tensor for the final consensus score
     uid_train_indices = train_transformed.groupby(['uid']).indices
     uid_test_indices  = test_transformed.groupby(['uid']).indices
 
+    print("D")
     # Get the output info
     outcols       = model_block['target']
     train_arr     = train_transformed[outcols].values.astype(np.float32)
@@ -289,6 +293,7 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     test_targets  = torch.from_numpy(test_arr)
     output_size   = len(outcols)
 
+    print("E")
     # Make the tensor objects for the main blocks
     for iblock in model_block:
 
@@ -335,6 +340,8 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
             dropout_dict[iblock] = dsizes
             subnetwork_size_out += final_layer_size
 
+
+    print("F")
     # Define the combined network
     nlayer = config['combined_nlayer']
     hsizes = []
@@ -556,9 +563,6 @@ class tuning_manager:
             
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
-
-        print("Hello")
-        exit()
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes, {"cpu": self.ncpu})
