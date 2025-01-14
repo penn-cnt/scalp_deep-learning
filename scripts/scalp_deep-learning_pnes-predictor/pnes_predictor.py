@@ -55,35 +55,23 @@ if __name__ == '__main__':
         TUNING_HANDLER.make_tuning_config_mlp()
         TUNING_HANDLER.run_ray_tune_mlp()
     else:
-        config = {'batchsize':256, 'normorder':'after', 'activation':'tanh', 'lr':1e-5, 'weight':1000}
-        config[f"frequency_nlayer"]    = 2
-        config[f"frequency_hsize_1"]   = 1.45
-        config[f"frequency_hsize_2"]   = 0.90
-        config[f"frequency_hsize_3"]   = 0.70
-        config[f"frequency_drop_1"]    = 0.20
-        config[f"frequency_drop_2"]    = 0.30
-        config[f"frequency_drop_3"]    = 0.15
+        config = {'batchsize':256, 'normorder':'before', 'activation':'tanh', 'lr':2.2e-5, 'weight':6766}
+        config[f"frequency_nlayer"]    = 1
+        config[f"frequency_hsize_1"]   = 1.10
+        config[f"frequency_hsize_2"]   = 0.50
+        config[f"frequency_drop_1"]    = 0.05
+        config[f"frequency_drop_2"]    = 0.35
         config[f"time_nlayer"]         = 1
-        config[f"time_hsize_1"]        = 0.35
-        config[f"time_hsize_2"]        = 0.85
-        config[f"time_hsize_3"]        = 0.85
-        config[f"time_drop_1"]         = 0.25
-        config[f"time_drop_2"]         = 0.35
-        config[f"time_drop_3"]         = 0.30
-        config[f"categorical_nlayer"]  = 2
-        config[f"categorical_hsize_1"] = 1.30
-        config[f"categorical_hsize_2"] = 0.75
-        config[f"categorical_hsize_3"] = 0.75
+        config[f"time_hsize_1"]        = 0.10
+        config[f"time_drop_1"]         = 0.20
+        config[f"categorical_nlayer"]  = 1
+        config[f"categorical_hsize_1"] = 1.05
         config[f"categorical_drop_1"]  = 0.15
-        config[f"categorical_drop_2"]  = 0.30
-        config[f"categorical_drop_3"]  = 0.10
         config[f"combined_nlayer"]     = 2
-        config[f"combined_hsize_1"]    = 1.35
+        config[f"combined_hsize_1"]    = 1.50
         config[f"combined_hsize_2"]    = 0.10
-        config[f"combined_hsize_3"]    = 0.30
-        config[f"combined_drop_1"]     = 0.30
+        config[f"combined_drop_1"]     = 0.45
         config[f"combined_drop_2"]     = 0.40
-        config[f"combined_drop_3"]     = 0.10
 
         train_pnes(config, DL_object, debug=args.debug, patient_level=False, directload=True)
         #TP(config, DL_object, debug=args.debug, patient_level=False, directload=True)
