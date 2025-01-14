@@ -174,8 +174,6 @@ class ConsensusNetwork(nn.Module):
 
         # Send the data to the subnetworks
         outputs = []
-        #for ibatch in tqdm(x, total=self.n_batches, desc=f"Training Epoch {epoch:02d}", leave=False):
-        #    outputs.append(self.combine_net(*ibatch))
         for ibatch in x:
             outputs.append(self.combine_net(*ibatch))
 
@@ -337,20 +335,23 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     dsizes = []
     for ilayer in range(nlayer):
 
-        # Calculate the current size
+        # Calculate the current hidden size
         hidden_size = int(config['combined'][f"hsize_{ilayer+1}"]*subnetwork_size_out)
-        drop_size   = float(config['combined'][f"drop_{ilayer+1}"])
 
         # Ensure a minimum size of the output neurons
         if hidden_size < output_size:
             hidden_size = output_size 
 
+        # Calculate the dropout size
+        if hidden_size > output_size:
+            drop_size = float(config['combined'][f"drop_{ilayer+1}"])
+        else:
+            drop_size = 0
+
         # Store the info about the hidden layer network
         hsizes.append(hidden_size)
         dsizes.append(drop_size)
     combination_dict = {'hidden':hsizes,'dropout':dsizes}
-
-    print(hidden_dict)
 
     # Make the datasets
     train_tensor_dataset = TensorDataset(*train_datasets.values(),train_targets)
