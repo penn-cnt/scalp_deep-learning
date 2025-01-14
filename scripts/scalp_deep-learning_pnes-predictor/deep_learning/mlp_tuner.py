@@ -526,7 +526,6 @@ class tuning_manager:
             current_best_params[0][f"combined_drop_1"]  = 0.1
             current_best_params[0][f"combined_drop_2"]  = 0.1
         else:
-            print("Hi")
             current_best_params = [{'lr':1e-5,
                                     'batchsize':256,
                                     'normorder':'after',
@@ -557,6 +556,9 @@ class tuning_manager:
             
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
+
+        print("Hello")
+        exit()
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes, {"cpu": self.ncpu})
