@@ -385,7 +385,7 @@ def train_pnes(config,DL_object,patient_level=False,raytuning=True,clip_checkpoi
     else:
         # Train the combination model
         num_epochs  = 10
-        for epoch in tqdm(range(num_epochs), total=num_epochs, disable=np.invert(raytuning)):
+        for epoch in tqdm(range(num_epochs), total=num_epochs, disable=raytuning):
             combine_model.train()
             for ibatch in train_loader:
                 
