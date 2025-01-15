@@ -1,3 +1,4 @@
+import json
 import argparse
 import pylab as PLT
 from sys import exit
@@ -31,9 +32,16 @@ if __name__ == '__main__':
     tuning_group.add_argument("--tune_file", type=str, help="Output file for hyper parameter tuning.")
     tuning_group.add_argument("--raydir", type=str, help="Output folder for ray tuning.")
 
+    checkpoint_group = parser.add_argument_group('Checkpoint options')
+    checkpoint_group.add_argument("--combine_checkpoint", type=str, default=None, help="Path to checkpoint for combination model.")
+
+    method_group = parser.add_mutually_exclusive_group()
+    method_group.add_argument("--test_config", action='store_true', default=False, help="Run model using just one config setting. Good for testing.")
+    method_group.add_argument("--test_model", action='store_true', default=False, help="Run model using saved torch model.")
+    method_group.add_argument("--raytune", action='store_true', default=False, help="Use raytume.")
+
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--debug", action='store_true', default=False, help="Show extra debugging info.")
-    misc_group.add_argument("--test_config", action='store_true', default=False, help="Run model using just one config setting. Good for testing.")
     misc_group.add_argument("--track_weights", action='store_true', default=False, help="Track if the model is updating weights at each epoch.")
 
     args = parser.parse_args()
@@ -47,31 +55,15 @@ if __name__ == '__main__':
     DL_object = VM.workflow()
 
     # Initialize the ray tuning class
-    TUNING_HANDLER = tuning_manager(DL_object, args.ncpu, args.ntrial, args.tune_file, args.raydir)
+    config = json.load(open("configs/test_config.json",'r'))
+    TUNING_HANDLER = tuning_manager(DL_object, args.ncpu, args.ntrial, args.tune_file, args.raydir, config)
     
     # Run tuner or a single config model
-    if not args.test_config:
+    if args.raytune:
         # Perform MLP tuning
         TUNING_HANDLER.make_tuning_config_mlp()
         TUNING_HANDLER.run_ray_tune_mlp()
-    else:
-        config = {'batchsize':256, 'normorder':'before', 'activation':'tanh', 'lr':2.2e-5, 'weight':6766}
-        config[f"frequency_nlayer"]    = 1
-        config[f"frequency_hsize_1"]   = 1.10
-        config[f"frequency_hsize_2"]   = 0.50
-        config[f"frequency_drop_1"]    = 0.05
-        config[f"frequency_drop_2"]    = 0.35
-        config[f"time_nlayer"]         = 1
-        config[f"time_hsize_1"]        = 0.10
-        config[f"time_drop_1"]         = 0.20
-        config[f"categorical_nlayer"]  = 1
-        config[f"categorical_hsize_1"] = 1.05
-        config[f"categorical_drop_1"]  = 0.15
-        config[f"combined_nlayer"]     = 2
-        config[f"combined_hsize_1"]    = 1.50
-        config[f"combined_hsize_2"]    = 0.10
-        config[f"combined_drop_1"]     = 0.45
-        config[f"combined_drop_2"]     = 0.40
-
-        train_pnes(config, DL_object, debug=args.debug, patient_level=False, directload=True)
-        #TP(config, DL_object, debug=args.debug, patient_level=False, directload=True)
+    elif args.test_config:
+        train_pnes(config, DL_object, patient_level=False, raytuning=False)
+    elif args.test_model:
+        train_pnes(config, DL_object, patient_level=False, raytuning=False, clip_checkpoint_path=args.combine_checkpoint)

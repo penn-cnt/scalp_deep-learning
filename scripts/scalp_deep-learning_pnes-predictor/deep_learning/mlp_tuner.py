@@ -259,7 +259,7 @@ def reshape_clips_to_patient_level(clip_predictions,categorcial_block,uid_indice
 
     return patient_features,patient_labels
 
-def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False):
+def train_pnes(config,DL_object,patient_level=False,raytuning=False,clip_checkpoint_path=None):
     """
     Function that manages the workflow for the MLP model.
     """
@@ -377,32 +377,35 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     # Select the optimizer
     combine_optimizer   = optim.Adam(combine_model.parameters(), lr=config['lr'])
 
-    # Train the model
-    num_epochs  = 10
-    loss_arr    = []
-    for epoch in tqdm(range(num_epochs), total=num_epochs, disable=np.invert(directload)):
-        combine_model.train()
-        iloss = []
-        for ibatch in train_loader:
-            
-            # Kick off the consensus handler
-            combine_optimizer.zero_grad()
+    # If we were passed a checkpoint, load it now
+    if clip_checkpoint_path != None:
+        checkpoint = torch.load(clip_checkpoint_path)
+        combine_model.load_state_dict(checkpoint['model_state_dict'])
+        combine_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    else:
+        # Train the combination model
+        num_epochs  = 10
+        for epoch in tqdm(range(num_epochs), total=num_epochs, disable=raytuning):
+            combine_model.train()
+            for ibatch in train_loader:
+                
+                # Kick off the consensus handler
+                combine_optimizer.zero_grad()
 
-            # Unpack the batch
-            labels       = ibatch[-1]
-            batchtensors = ibatch[:-1]
+                # Unpack the batch
+                labels       = ibatch[-1]
+                batchtensors = ibatch[:-1]
 
-            # get the output for the current batch
-            outputs = combine_model(batchtensors)
-            loss    = patient_criterion(outputs, labels)
-            loss.backward()
-            combine_optimizer.step()
-            iloss.append(loss.detach().numpy())
-        loss_arr.append(iloss)
-    loss_arr = np.array(loss_arr)
+                # get the output for the current batch
+                outputs = combine_model(batchtensors)
+                loss    = patient_criterion(outputs, labels)
+                loss.backward()
+                combine_optimizer.step()
 
-    # get the clip level predictions
+    # Evaluate the combination model
     combine_model.eval()
+
+    # Get the clip level predictions
     outputs = combine_model([*train_datasets.values()])
 
     # Get the predicted outputs
@@ -422,27 +425,18 @@ def train_pnes(config,DL_object,debug=False,patient_level=False,directload=False
     train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
 
     # Make a checkpoint for RAY tuning
-    if not directload:
+    if not raytuning:
         with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-            checkpoint = None
-            if (epoch + 1) % 5 == 0:
-                # This saves the model to the trial directory
-                torch.save(
-                    combine_model.state_dict(),
-                    os.path.join(temp_checkpoint_dir, "model.pth")
-                )
-                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
-
-            # Send the current training result back to Tune
+            checkpoint = {'model': combine_model.state_dict(),'optimizer': combine_optimizer.state_dict()}
+            torch.save(checkpoint,os.path.join(temp_checkpoint_dir, "model.pth"))
             train.report({"Train_AUC": train_auc, "Train_ACC": train_acc}, checkpoint=checkpoint)
     else:
         print("Acc:",train_acc)
         print("AUC:",train_auc)
-        print(np.median(loss_arr,axis=1))
     
 class tuning_manager:
 
-    def __init__(self, DL_object, ncpu, ntrial, outfile, raydir):
+    def __init__(self, DL_object, ncpu, ntrial, outfile, raydir, hotconfig):
         """
         Initialize the tuning manager class. It creates the initial parameter space and kicks off the subprocesses.
         """
@@ -459,6 +453,7 @@ class tuning_manager:
         self.ntrial            = ntrial
         self.raydir            = raydir
         self.outfile           = outfile
+        self.hotconfig         = hotconfig
 
     def make_tuning_config_mlp(self):
         """
@@ -533,41 +528,7 @@ class tuning_manager:
             current_best_params[0][f"combined_drop_2"]  = 0.1
             current_best_params[0][f"combined_drop_3"]  = 0.1
         else:
-            current_best_params = [{'lr':1e-5,
-                                    'batchsize':256,
-                                    'normorder':'after',
-                                    'activation': "tanh",
-                                    'weight': 1000}]
-
-            # Hot start with some better guesses
-            current_best_params[0][f"frequency_nlayer"]    = 2
-            current_best_params[0][f"frequency_hsize_1"]   = 1.45
-            current_best_params[0][f"frequency_hsize_2"]   = 0.90
-            current_best_params[0][f"frequency_hsize_3"]   = 0.70
-            current_best_params[0][f"frequency_drop_1"]    = 0.20
-            current_best_params[0][f"frequency_drop_2"]    = 0.30
-            current_best_params[0][f"frequency_drop_3"]    = 0.15
-            current_best_params[0][f"time_nlayer"]         = 1
-            current_best_params[0][f"time_hsize_1"]        = 0.35
-            current_best_params[0][f"time_hsize_2"]        = 0.85
-            current_best_params[0][f"time_hsize_3"]        = 0.85
-            current_best_params[0][f"time_drop_1"]         = 0.25
-            current_best_params[0][f"time_drop_2"]         = 0.35
-            current_best_params[0][f"time_drop_3"]         = 0.30
-            current_best_params[0][f"categorical_nlayer"]  = 2
-            current_best_params[0][f"categorical_hsize_1"] = 1.30
-            current_best_params[0][f"categorical_hsize_2"] = 0.75
-            current_best_params[0][f"categorical_hsize_3"] = 0.75
-            current_best_params[0][f"categorical_drop_1"]  = 0.15
-            current_best_params[0][f"categorical_drop_2"]  = 0.30
-            current_best_params[0][f"categorical_drop_3"]  = 0.10
-            current_best_params[0][f"combined_nlayer"]     = 2
-            current_best_params[0][f"combined_hsize_1"]    = 1.35
-            current_best_params[0][f"combined_hsize_2"]    = 0.10
-            current_best_params[0][f"combined_hsize_3"]    = 0.30
-            current_best_params[0][f"combined_drop_1"]     = 0.30
-            current_best_params[0][f"combined_drop_2"]     = 0.40
-            current_best_params[0][f"combined_drop_3"]     = 0.10
+            current_best_params = [self.hotconfig]
             
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
