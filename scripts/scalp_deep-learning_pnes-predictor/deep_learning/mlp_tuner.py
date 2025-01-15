@@ -259,7 +259,7 @@ def reshape_clips_to_patient_level(clip_predictions,categorcial_block,uid_indice
 
     return patient_features,patient_labels
 
-def train_pnes(config,DL_object,patient_level=False,raytuning=False,clip_checkpoint_path=None):
+def train_pnes(config,DL_object,patient_level=False,raytuning=True,clip_checkpoint_path=None):
     """
     Function that manages the workflow for the MLP model.
     """
@@ -385,7 +385,7 @@ def train_pnes(config,DL_object,patient_level=False,raytuning=False,clip_checkpo
     else:
         # Train the combination model
         num_epochs  = 10
-        for epoch in tqdm(range(num_epochs), total=num_epochs, disable=raytuning):
+        for epoch in tqdm(range(num_epochs), total=num_epochs, disable=np.invert(raytuning)):
             combine_model.train()
             for ibatch in train_loader:
                 
@@ -425,7 +425,7 @@ def train_pnes(config,DL_object,patient_level=False,raytuning=False,clip_checkpo
     train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
 
     # Make a checkpoint for RAY tuning
-    if not raytuning:
+    if raytuning:
         with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
             checkpoint = {'model': combine_model.state_dict(),'optimizer': combine_optimizer.state_dict()}
             torch.save(checkpoint,os.path.join(temp_checkpoint_dir, "model.pth"))
