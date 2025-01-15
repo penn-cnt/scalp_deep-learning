@@ -41,3 +41,12 @@ if __name__ == '__main__':
     # Plot the results
     sns.scatterplot(data=new_DF,x='pca_0',y='pca_1',hue='cutoff')
     PLT.show()
+
+    # Add in auc to bigger dataframe
+    incols         = DF.columns
+    outcols        = ['train_auc']
+    DF[outcols[0]] = aucs
+    outcols.extend(incols)
+    DF = DF[outcols]
+    DF = DF.sort_values(by=['train_auc'],ascending=False)
+    DF.to_csv("model_hyperparameters.csv",index=False)
