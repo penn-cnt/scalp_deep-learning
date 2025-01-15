@@ -431,6 +431,9 @@ def train_pnes(config,DL_object,patient_level=False,raytuning=True,clip_checkpoi
             outdict    = {'model': combine_model.state_dict(),'optimizer': combine_optimizer.state_dict()}
             torch.save(outdict,os.path.join(temp_checkpoint_dir, "model.pth"))
             checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+
+            # Send the current training result back to Tune
+            train.report({"Train_AUC": train_auc,"Test_ACC":train_acc}, checkpoint=checkpoint)
     else:
         print("Acc:",train_acc)
         print("AUC:",train_auc)
