@@ -427,9 +427,10 @@ def train_pnes(config,DL_object,patient_level=False,raytuning=True,clip_checkpoi
     # Make a checkpoint for RAY tuning
     if raytuning:
         with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-            checkpoint = {'model': combine_model.state_dict(),'optimizer': combine_optimizer.state_dict()}
-            torch.save(checkpoint,os.path.join(temp_checkpoint_dir, "model.pth"))
-            train.report({"Train_AUC": train_auc, "Train_ACC": train_acc}, checkpoint=checkpoint)
+            checkpoint = None
+            outdict    = {'model': combine_model.state_dict(),'optimizer': combine_optimizer.state_dict()}
+            torch.save(outdict,os.path.join(temp_checkpoint_dir, "model.pth"))
+            checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
     else:
         print("Acc:",train_acc)
         print("AUC:",train_auc)
