@@ -70,5 +70,5 @@ if __name__ == '__main__':
     elif args.test_model:
         training_data = train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False, clip_checkpoint_path=args.combine_checkpoint)
 
-    # Save the output data
-    training_data.to_pickle(f"{args.outdir}training_data.pickle")
+        # Save the output data
+        training_data.to_pickle(f"{args.outdir}training_data.pickle")
