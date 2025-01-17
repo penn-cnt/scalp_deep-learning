@@ -205,7 +205,6 @@ class ConsensusNetwork(nn.Module):
 
         return x
 
-
 class train_pnes:
 
     def __init__(self,config,DL_object,patient_level=False,raytuning=True,clip_checkpoint_path=None):
@@ -726,6 +725,19 @@ class tuning_manager:
         self.config['activation'] = tune.choice(['relu','tanh'])
         self.config['weight']     = tune.loguniform(1,1e5)
 
+        # Consensus configuration
+        self.config[f"consensus_nlayer"]  = tune.randint(1, 4)
+        self.config[f"consensus_hsize_1"] = tune.quniform(0.05, 1.5, .05)
+        self.config[f"consensus_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+        self.config[f"consensus_hsize_3"] = tune.quniform(0.05, 1.5, .05)
+        self.config[f"consensus_drop_1"]  = tune.quniform(0.05, .5, .05)
+        self.config[f"consensus_drop_2"]  = tune.quniform(0.05, .5, .05)
+        self.config[f"consensus_drop_3"]  = tune.quniform(0.05, .5, .05)
+        self.config['consensus_theshold_method']             = tune.choice(['posterior','quantile'])
+        self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.05, 1.0, .05)
+        self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.05, 1.0, .05)
+        self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.05, 1.0, .05)
+
     def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
         # Define the starting parameters for the global parameters
@@ -754,6 +766,19 @@ class tuning_manager:
             current_best_params[0][f"combined_drop_1"]  = 0.1
             current_best_params[0][f"combined_drop_2"]  = 0.1
             current_best_params[0][f"combined_drop_3"]  = 0.1
+
+            # Make the consensus network
+            current_best_params[0][f"consensus_nlayer"]  = 1
+            current_best_params[0][f"consensus_hsize_1"] = 0.8
+            current_best_params[0][f"consensus_hsize_2"] = 0.8
+            current_best_params[0][f"consensus_hsize_3"] = 0.8
+            current_best_params[0][f"consensus_drop_1"]  = 0.1
+            current_best_params[0][f"consensus_drop_2"]  = 0.1
+            current_best_params[0][f"consensus_drop_3"]  = 0.1
+            current_best_params[0][f"consensus_theshold_method"] = 'posterior'
+            current_best_params[0][f"consensus_theshold_yasa_prediction_00"] = 0.9
+            current_best_params[0][f"consensus_theshold_yasa_prediction_01"] = 0.9
+            current_best_params[0][f"consensus_theshold_yasa_prediction_02"] = 0.9
         else:
             current_best_params = [self.hotconfig]
             
