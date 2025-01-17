@@ -43,6 +43,7 @@ if __name__ == '__main__':
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--debug", action='store_true', default=False, help="Show extra debugging info.")
     misc_group.add_argument("--track_weights", action='store_true', default=False, help="Track if the model is updating weights at each epoch.")
+    misc_group.add_argument("--outdir", type=str, default='/Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/', help="Output directory for any miscelaneous info.")
 
     args = parser.parse_args()
 
@@ -64,6 +65,9 @@ if __name__ == '__main__':
         TUNING_HANDLER.make_tuning_config_mlp()
         TUNING_HANDLER.run_ray_tune_mlp()
     elif args.test_config:
-        train_pnes(config, DL_object, patient_level=False, raytuning=False)
+        training_data = train_pnes_handler(config, DL_object, patient_level=False, raytuning=False)
     elif args.test_model:
-        train_pnes(config, DL_object, patient_level=False, raytuning=False, clip_checkpoint_path=args.combine_checkpoint)
+        training_data = train_pnes_handler(config, DL_object, patient_level=False, raytuning=False, clip_checkpoint_path=args.combine_checkpoint)
+
+    # Save the output data
+    training_data.to_pickle(f"{args.outdir}training_data.pickle")
