@@ -445,6 +445,7 @@ class train_pnes:
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
+            exit()
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict()}
