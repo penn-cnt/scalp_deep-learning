@@ -445,6 +445,9 @@ class train_pnes:
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
+
+
+            print("\n\n\nBAD WORKER! SHAME!\n\n\n")
             exit()
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
