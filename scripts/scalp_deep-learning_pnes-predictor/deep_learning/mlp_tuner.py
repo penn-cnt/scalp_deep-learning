@@ -247,17 +247,19 @@ class train_pnes:
         self.update_tensors_w_probs()
 
         # Make a consensus tensor
-        self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
+        if self.patient_level:
+            self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
+            self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
 
-        # Make the consensus hidden states
-        self.create_consensus_datasets()
-        self.prepare_consensus_network()
-        self.make_consensus_model()
-        self.make_consensus_criterion()
-        self.make_consensus_optimizer()
+            # Make the consensus hidden states
+            self.create_consensus_datasets()
+            self.prepare_consensus_network()
+            self.make_consensus_model()
+            self.make_consensus_criterion()
+            self.make_consensus_optimizer()
 
-        # Consensus Model
-        self.run_consensus_model()
+            # Consensus Model
+            self.run_consensus_model()
 
         return self.train_transformed
 
@@ -267,12 +269,12 @@ class train_pnes:
         """
 
         # Get the output info
-        outcols            = self.model_block['target']
-        self.train_arr     = self.train_transformed[outcols].values.astype(np.float32)
-        self.test_arr      = self.test_transformed[outcols].values.astype(np.float32)
-        self.train_targets = torch.from_numpy(self.train_arr)
-        self.test_targets  = torch.from_numpy(self.test_arr)
-        self.output_size   = len(outcols)
+        outcols                 = self.model_block['target']
+        self.train_target_array = self.train_transformed[outcols].values.astype(np.float32)
+        self.test_target_array  = self.test_transformed[outcols].values.astype(np.float32)
+        self.train_targets      = torch.from_numpy(self.train_target_array)
+        self.test_targets       = torch.from_numpy(self.test_target_array)
+        self.output_size        = len(outcols)
 
     def get_uids(self):
 
@@ -385,6 +387,25 @@ class train_pnes:
 
         self.combine_optimizer = optim.Adam(self.combine_model.parameters(), lr=self.config['lr'])
 
+    def get_acc_auc(self,intensor,truth_arr):
+
+        # Get the predicted outputs
+        y_pred       = intensor.squeeze().detach().numpy()
+        y_pred_max   = (y_pred[:,1]>y_pred[:,0]).astype(int).reshape((-1,1))
+        y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
+        y_pred_max   = np.argmax(y_pred_clean,axis=1)
+
+        # Get the measured outputs in useable format
+        truth_max = np.argmax(truth_arr,axis=1)
+
+        # Measure the accuracy
+        acc  = (y_pred_max==truth_max).sum()/truth_max.size
+
+        # Measure the auc
+        auc = roc_auc_score(truth_arr,y_pred_clean)
+
+        return acc,auc,y_pred
+
     def run_combination_model(self):
         
         # If we were passed a checkpoint, load it now. Otherwise, train the combination layer
@@ -416,43 +437,50 @@ class train_pnes:
         self.combine_model.eval()
 
         # Get the clip level predictions
-        outputs = self.combine_model([*self.train_datasets.values()])
-
-        # Get the predicted outputs
-        y_pred       = outputs.squeeze().detach().numpy()
-        y_pred_max   = (y_pred[:,1]>y_pred[:,0]).astype(int).reshape((-1,1))
-        y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
-        y_pred_max   = np.argmax(y_pred_clean,axis=1)
-
-        # Get the measured outputs in useable format
-        y_meas_clean = self.train_arr
-        y_meas_max   = np.argmax(y_meas_clean,axis=1)
+        train_outputs = self.combine_model([*self.train_datasets.values()])
+        test_outputs  = self.combine_model([*self.test_datasets.values()])
 
         # Measure the accuracy
-        train_acc  = (y_pred_max==y_meas_max).sum()/y_meas_max.size
-
-        # Measure the auc
-        train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
+        train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
+        test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.test_target_array)
 
         # Make a checkpoint for RAY tuning
-        if self.raytuning:
+        if self.raytuning and not self.patient_level:
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict()}
-                torch.save(outdict,os.path.join(temp_checkpoint_dir, "combined_model.pth"))
+                torch.save(outdict,os.path.join(temp_checkpoint_dir, "consensus_model.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
                 train.report({"Train_AUC": train_auc,"Test_ACC":train_acc}, checkpoint=checkpoint)
-        else:
+        elif not self.raytuning and not self.patient_level:
             print(f"Training Accuracy (Clip): {train_acc:0.3f}")
             print(f"Training AUC      (Clip): {train_auc:0.3f}")
+            print(f"Testing Accuracy  (Clip): {test_acc:0.3f}")
+            print(f"Testing AUC       (Clip): {test_auc:0.3f}")
 
         # Store the clip layer predictions to the class instance
-        self.clip_training_predictions_tensor = outputs
+        self.clip_training_predictions_tensor = train_outputs
+        self.clip_testing_predictions_tensor  = test_outputs
         self.clip_training_predictions_array  = y_pred
 
     def clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
+
+        def posterior_selection(prior_predictions,threshold):
+            # Find the most predictive entires
+            diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
+            diff_inds = (diffs>threshold).squeeze()
+
+            # Get the posterior distribution
+            prior_predictions_log       = prior_predictions[diff_inds].log()
+            prior_predictions_log_joint = prior_predictions_log.sum(dim=0)
+            log_norm_factor             = torch.logsumexp(prior_predictions_log_joint, dim=0)
+            log_posteriors              = prior_predictions_log_joint - log_norm_factor
+            posterior_predictions       = log_posteriors.exp()
+            return posterior_predictions
+        def quantile(prior_predictions,theshold):
+            return torch.quantile(prior_predictions,q=theshold, dim=0)
 
         # Make a pandas dataframe of sleep stage, prediction, and uid so we can use pandas groupby for easier restructure
         patient_features  = []
@@ -473,6 +501,9 @@ class train_pnes:
             predictions_by_categorical = []
             for idx in range(categorical_by_uid.shape[1]):
                 
+                # Get the categorical column name
+                catcol = self.model_block['categorical'][idx]
+
                 # Get the rows in this subslice that match the given sleep stage
                 cat_inds = (categorical_by_uid[:,idx]==1)
 
@@ -485,16 +516,11 @@ class train_pnes:
                     # Get the list of priors
                     prior_predictions = prediction_by_uid[cat_inds]
                     
-                    # Find the most predictive entires
-                    diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
-                    diff_inds = (diffs>.2).squeeze()
-
-                    # Get the posterior distribution
-                    prior_predictions_log       = prior_predictions[diff_inds].log()
-                    prior_predictions_log_joint = prior_predictions_log.sum(dim=0)
-                    log_norm_factor             = torch.logsumexp(prior_predictions_log_joint, dim=0)
-                    log_posteriors              = prior_predictions_log_joint - log_norm_factor
-                    posterior_predictions       = log_posteriors.exp()
+                    # get the output probability for this categorical column
+                    if self.config['consensus_theshold_method'] == 'posterior':
+                        posterior_predictions = posterior_selection(prior_predictions,self.config[f"consensus_theshold_{catcol}"])
+                    elif self.config['consensus_theshold_method'] == 'quantile':
+                        posterior_predictions = quantile(prior_predictions,self.config[f"consensus_theshold_{catcol}"])
 
                     # Append the predictions to the new output object
                     predictions_by_categorical.extend([posterior_predictions])
@@ -545,9 +571,11 @@ class train_pnes:
 
         # Make the datasets
         self.consensus_train_tensor_dataset = TensorDataset(self.training_consensus_tensor.detach(),self.training_consensus_tensor_targets.detach())
+        self.consensus_test_tensor_dataset = TensorDataset(self.training_consensus_tensor.detach(),self.training_consensus_tensor_targets.detach())
 
         # Manage the dataloading
         self.consensus_train_loader = DataLoader(self.consensus_train_tensor_dataset, batch_size=self.config['consensus_batchsize'], shuffle=True)
+        self.consensus_test_loader  = DataLoader(self.consensus_test_tensor_dataset, batch_size=self.config['consensus_batchsize'], shuffle=True)
 
     def make_consensus_model(self):
         """
@@ -596,26 +624,28 @@ class train_pnes:
         self.consensus_model.eval()
 
         # Get the clip level predictions
-        outputs = self.consensus_model(self.training_consensus_tensor)
-
-        # Get the predicted outputs
-        y_pred       = outputs.squeeze().detach().numpy()
-        y_pred_max   = (y_pred[:,1]>y_pred[:,0]).astype(int).reshape((-1,1))
-        y_pred_clean = np.hstack((1-y_pred_max, y_pred_max))
-        y_pred_max   = np.argmax(y_pred_clean,axis=1)
-
-        # Get the measured outputs in useable format
-        y_meas_clean = self.training_consensus_tensor_targets.squeeze().detach().numpy()
-        y_meas_max   = np.argmax(y_meas_clean,axis=1)
-
+        train_outputs = self.consensus_model(self.training_consensus_tensor)
+        test_outputs  = self.consensus_model(self.testing_consensus_tensor)
+        
         # Measure the accuracy
-        train_acc  = (y_pred_max==y_meas_max).sum()/y_meas_max.size
+        train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
+        test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
 
-        # Measure the auc
-        train_auc = roc_auc_score(y_meas_clean,y_pred_clean)
+        # Make a checkpoint for RAY tuning
+        if self.raytuning and not self.patient_level:
+            checkpoint = None
+            outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
+                            'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict()}
+            torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
+            checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
-        print(f"Training Accuracy (Patient): {train_acc:0.3f}")
-        print(f"Training AUC      (Patient): {train_auc:0.3f}")
+            # Send the current training result back to Tune
+            train.report({"Train_AUC": train_auc,"Test_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc}, checkpoint=checkpoint)
+        elif not self.raytuning:
+            print(f"Training Accuracy (Patient): {train_acc:0.3f}")
+            print(f"Training AUC      (Patient): {train_auc:0.3f}")
+            print(f"Testing Accuracy  (Patient): {test_acc:0.3f}")
+            print(f"Testing AUC       (Patient): {test_auc:0.3f}")
 
     def update_tensors_w_probs(self):
         # Return updated dataframe with the probs
