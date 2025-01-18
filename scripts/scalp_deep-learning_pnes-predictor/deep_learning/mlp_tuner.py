@@ -445,10 +445,6 @@ class train_pnes:
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
-
-
-            print("\n\n\nBAD WORKER! SHAME!\n\n\n")
-            exit()
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict()}
@@ -635,7 +631,7 @@ class train_pnes:
         test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
 
         # Make a checkpoint for RAY tuning
-        if self.raytuning and not self.patient_level:
+        if self.raytuning:
             checkpoint = None
             outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
                             'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict()}
@@ -685,9 +681,6 @@ class tuning_manager:
         self.outfile           = outfile
         self.hotconfig         = hotconfig
         self.patient_level     = patient_level
-
-        print(patient_level)
-        exit()
 
     def make_tuning_config_mlp(self):
         """
