@@ -640,7 +640,7 @@ class train_pnes:
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
-                train.report({"Train_AUC": train_auc,"Test_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc}, checkpoint=checkpoint)
+                train.report({"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc}, checkpoint=checkpoint)
         elif not self.raytuning:
             print(f"Training Accuracy (Patient): {train_acc:0.3f}")
             print(f"Training AUC      (Patient): {train_auc:0.3f}")
