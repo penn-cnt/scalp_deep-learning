@@ -666,7 +666,7 @@ def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,clip_
     
 class tuning_manager:
 
-    def __init__(self, DL_object, ncpu, ntrial, outfile, raydir, hotconfig):
+    def __init__(self, DL_object, ncpu, ntrial, outfile, raydir, hotconfig, patient_level):
         """
         Initialize the tuning manager class. It creates the initial parameter space and kicks off the subprocesses.
         """
@@ -684,6 +684,10 @@ class tuning_manager:
         self.raydir            = raydir
         self.outfile           = outfile
         self.hotconfig         = hotconfig
+        self.patient_level     = patient_level
+
+        print(patient_level)
+        exit()
 
     def make_tuning_config_mlp(self):
         """
@@ -793,7 +797,7 @@ class tuning_manager:
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes_handler, {"cpu": self.ncpu})
-        trainable_with_parameters = tune.with_parameters(trainable_with_resources, DL_object=(self.DL_object))
+        trainable_with_parameters = tune.with_parameters(trainable_with_resources, DL_object=(self.DL_object), patient_level=(self.patient_level))
 
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
