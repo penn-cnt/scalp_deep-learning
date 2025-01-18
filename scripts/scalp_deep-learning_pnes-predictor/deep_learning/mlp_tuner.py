@@ -632,14 +632,15 @@ class train_pnes:
 
         # Make a checkpoint for RAY tuning
         if self.raytuning:
-            checkpoint = None
-            outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
-                            'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict()}
-            torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
-            checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                checkpoint = None
+                outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
+                                'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict()}
+                torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
+                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
-            # Send the current training result back to Tune
-            train.report({"Train_AUC": train_auc,"Test_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc}, checkpoint=checkpoint)
+                # Send the current training result back to Tune
+                train.report({"Train_AUC": train_auc,"Test_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc}, checkpoint=checkpoint)
         elif not self.raytuning:
             print(f"Training Accuracy (Patient): {train_acc:0.3f}")
             print(f"Training AUC      (Patient): {train_auc:0.3f}")
