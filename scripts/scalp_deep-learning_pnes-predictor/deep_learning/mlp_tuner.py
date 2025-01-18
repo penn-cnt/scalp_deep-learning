@@ -440,8 +440,13 @@ class train_pnes:
         test_outputs  = self.combine_model([*self.test_datasets.values()])
 
         # Measure the accuracy
-        train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
-        test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.test_target_array)
+        try:
+            train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
+            test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.test_target_array)
+        except:
+            print("\n\n\nCLIP",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
+                  test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
+            exit()
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
@@ -631,7 +636,7 @@ class train_pnes:
             train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
             test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
         except:
-            print("\n\n\n",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
+            print("\n\n\nPATIENT",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
                   test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
             exit()
 
