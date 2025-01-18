@@ -441,8 +441,8 @@ class train_pnes:
 
         # Measure the accuracy
         try:
-            train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
-            test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.test_target_array)
+            train_acc_clip, train_auc_clip,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
+            test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
         except:
             print("\n\n\nCLIP",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
                   test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
@@ -457,14 +457,18 @@ class train_pnes:
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
-                train.report({"Train_AUC": train_auc,"Test_ACC":train_acc}, checkpoint=checkpoint)
+                train.report({"Train_AUC": train_auc_clip,"Test_ACC":train_acc_clip}, checkpoint=checkpoint)
         elif not self.raytuning and not self.patient_level:
-            print(f"Training Accuracy (Clip): {train_acc:0.3f}")
-            print(f"Training AUC      (Clip): {train_auc:0.3f}")
-            print(f"Testing Accuracy  (Clip): {test_acc:0.3f}")
-            print(f"Testing AUC       (Clip): {test_auc:0.3f}")
+            print(f"Training Accuracy (Clip): {train_acc_clip:0.3f}")
+            print(f"Training AUC      (Clip): {train_auc_clip:0.3f}")
+            print(f"Testing Accuracy  (Clip): {test_acc_clip:0.3f}")
+            print(f"Testing AUC       (Clip): {test_auc_clip:0.3f}")
 
         # Store the clip layer predictions to the class instance
+        self.train_acc_clip = train_acc_clip
+        self.train_auc_clip = train_auc_clip
+        self.test_acc_clip  = test_acc_clip
+        self.test_auc_clip  = test_auc_clip
         self.clip_training_predictions_tensor = train_outputs
         self.clip_testing_predictions_tensor  = test_outputs
         self.clip_training_predictions_array  = y_pred
@@ -631,7 +635,7 @@ class train_pnes:
         train_outputs = self.consensus_model(self.training_consensus_tensor)
         test_outputs  = self.consensus_model(self.testing_consensus_tensor)
         
-        # Measure the accuracy
+        # Measure the accuracy)
         try:
             train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
             test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
@@ -650,7 +654,9 @@ class train_pnes:
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
-                train.report({"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc}, checkpoint=checkpoint)
+                train.report({"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc,
+                              "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
+                              "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}, checkpoint=checkpoint)
         elif not self.raytuning:
             print(f"Training Accuracy (Patient): {train_acc:0.3f}")
             print(f"Training AUC      (Patient): {train_auc:0.3f}")
@@ -806,7 +812,7 @@ class tuning_manager:
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
-                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1,
+                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",#verbose=1,
                                                 failure_config=train.FailureConfig(fail_fast=True)))
 
         # Get the hyper parameter search results
