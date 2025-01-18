@@ -627,8 +627,13 @@ class train_pnes:
         test_outputs  = self.consensus_model(self.testing_consensus_tensor)
         
         # Measure the accuracy
-        train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
-        test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
+        try:
+            train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
+            test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
+        except:
+            print("\n\n\n",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
+                  test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
+            exit()
 
         # Make a checkpoint for RAY tuning
         if self.raytuning:
