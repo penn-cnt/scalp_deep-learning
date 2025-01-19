@@ -675,7 +675,7 @@ class tuning_manager:
         """
 
         # Set the random seed
-        torch.manual_seed(42)
+        torch.manual_seed(42+8)
 
         # Save variables from the front end
         self.DL_object         = DL_object
