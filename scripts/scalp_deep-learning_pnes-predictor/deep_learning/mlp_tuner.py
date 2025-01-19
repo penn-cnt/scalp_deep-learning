@@ -420,7 +420,11 @@ class train_pnes:
                 for ibatch in self.train_loader:
                     
                     # Kick off the combine handler
-                    self.combine_optimizer.zero_grad()
+                    try:
+                        self.combine_optimizer.zero_grad()
+                    except:
+                        print("\n\n\nCombination Optimizer\n\n\n")
+                        exit()
 
                     # Unpack the batch
                     labels       = ibatch[-1]
@@ -615,7 +619,11 @@ class train_pnes:
             for ibatch in self.consensus_train_loader:
 
                 # Kick off the consensus handler
-                self.consensus_optimizer.zero_grad()
+                try:
+                    self.consensus_optimizer.zero_grad()
+                except:
+                    print("\n\n\nConsensus Optimizer\n\n\n")
+                    exit()
 
                 # Unpack the batch
                 batchtensor = ibatch[0]
