@@ -444,12 +444,20 @@ class train_pnes:
             train_acc_clip, train_auc_clip,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
             test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
         except:
-            print("\n\n\nCLIP",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
-                  test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
-            exit()
+            #print("\n\n\nCLIP",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
+            #      test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
+            #exit()
+            train_acc_clip = 0
+            train_auc_clip = 0
+            test_acc_clip  = 0
+            test_auc_clip  = 0
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
+
+            print("\n\n\nBAD\n\n\n")
+            exit()
+
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict()}
@@ -640,9 +648,13 @@ class train_pnes:
             train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
             test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
         except:
-            print("\n\n\nPATIENT",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
-                  test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
-            exit()
+            #print("\n\n\nPATIENT",train_outputs.shape,self.training_consensus_tensor_targets.detach().numpy().shape,
+            #      test_outputs.shape,self.testing_consensus_tensor_targets.detach().numpy().shape,"\n\n\n")
+            #exit()
+            train_acc = 0
+            train_auc = 0
+            test_acc  = 0
+            test_auc  = 0
 
         # Make a checkpoint for RAY tuning
         if self.raytuning:
