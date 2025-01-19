@@ -240,10 +240,18 @@ class train_pnes:
         self.make_combine_optimizer()
 
         # Combination (i.e. Clip level) model
-        self.run_combination_model()
+        try:
+            self.run_combination_model()
+        except:
+            print("\n\n\nFAILED AT MODEL\n\n\n")
+            exit()
 
         # Update tensors to return to user for possible downstream analysis
-        self.update_tensors_w_probs()
+        try:
+            self.update_tensors_w_probs()
+        except:
+            print("\n\n\nFAILED AT PROB\n\n\n")
+            exit()
 
         # Make a consensus tensor
         if self.patient_level:
@@ -437,11 +445,11 @@ class train_pnes:
 
         # Get the clip level predictions
         train_outputs = self.combine_model([*self.train_datasets.values()])
-        #test_outputs  = self.combine_model([*self.test_datasets.values()])
+        test_outputs  = self.combine_model([*self.test_datasets.values()])
 
         # Measure the accuracy
         train_acc_clip, train_auc_clip,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
-        #test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
+        test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
@@ -462,10 +470,10 @@ class train_pnes:
         # Store the clip layer predictions to the class instance
         self.train_acc_clip = train_acc_clip
         self.train_auc_clip = train_auc_clip
-        #self.test_acc_clip  = test_acc_clip
-        #self.test_auc_clip  = test_auc_clip
+        self.test_acc_clip  = test_acc_clip
+        self.test_auc_clip  = test_auc_clip
         self.clip_training_predictions_tensor = train_outputs
-        #self.clip_testing_predictions_tensor  = test_outputs
+        self.clip_testing_predictions_tensor  = test_outputs
         self.clip_training_predictions_array  = y_pred
 
     def clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
