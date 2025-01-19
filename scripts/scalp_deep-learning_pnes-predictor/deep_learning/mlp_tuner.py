@@ -247,8 +247,12 @@ class train_pnes:
 
         # Make a consensus tensor
         if self.patient_level:
-            self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
-            self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
+            try:
+                self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
+                self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
+            except:
+                print("\n\n\nCLIP TO PATIENT ERROR!!!\n\n\n")
+                exit()
 
             # Make the consensus hidden states
             self.create_consensus_datasets()
