@@ -240,18 +240,10 @@ class train_pnes:
         self.make_combine_optimizer()
 
         # Combination (i.e. Clip level) model
-        try:
-            self.run_combination_model()
-        except:
-            print("\n\n\nFAILED AT MODEL\n\n\n")
-            exit()
+        self.run_combination_model()
 
         # Update tensors to return to user for possible downstream analysis
-        try:
-            self.update_tensors_w_probs()
-        except:
-            print("\n\n\nFAILED AT PROB\n\n\n")
-            exit()
+        self.update_tensors_w_probs()
 
         # Make a consensus tensor
         if self.patient_level:
@@ -619,11 +611,7 @@ class train_pnes:
             for ibatch in self.consensus_train_loader:
 
                 # Kick off the consensus handler
-                try:
-                    self.consensus_optimizer.zero_grad()
-                except:
-                    print("\n\n\nConsensus Optimizer\n\n\n")
-                    exit()
+                self.consensus_optimizer.zero_grad()
 
                 # Unpack the batch
                 batchtensor = ibatch[0]
@@ -631,11 +619,7 @@ class train_pnes:
                 
                 # get the output for the current batch
                 outputs = self.consensus_model(batchtensor)
-                try:
-                    conloss = self.consensus_criterion(outputs, labels)
-                except:
-                    print("\n\n\nConsensus Loss:\n\n\n",outputs)
-                    exit()
+                conloss = self.consensus_criterion(outputs, labels)
                 conloss.backward()
                 self.consensus_optimizer.step()
 
