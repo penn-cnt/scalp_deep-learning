@@ -247,12 +247,8 @@ class train_pnes:
 
         # Make a consensus tensor
         if self.patient_level:
-            try:
-                self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
-                self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
-            except:
-                print("\n\n\nCLIP TO PATIENT ERROR!!!\n\n\n")
-                exit()
+            self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
+            self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
 
             # Make the consensus hidden states
             self.create_consensus_datasets()
@@ -424,11 +420,7 @@ class train_pnes:
                 for ibatch in self.train_loader:
                     
                     # Kick off the combine handler
-                    try:
-                        self.combine_optimizer.zero_grad()
-                    except:
-                        print("\n\n\nCombination Optimizer\n\n\n")
-                        exit()
+                    self.combine_optimizer.zero_grad()
 
                     # Unpack the batch
                     labels       = ibatch[-1]
@@ -436,11 +428,7 @@ class train_pnes:
 
                     # get the output for the current batch
                     outputs = self.combine_model(batchtensors)
-                    try:
-                        loss    = self.combine_criterion(outputs, labels)
-                    except:
-                        print("\n\n\nCombination Loss\n\n\n",outputs)
-                        exit()
+                    loss    = self.combine_criterion(outputs, labels)
                     loss.backward()
                     self.combine_optimizer.step()
 
@@ -449,11 +437,11 @@ class train_pnes:
 
         # Get the clip level predictions
         train_outputs = self.combine_model([*self.train_datasets.values()])
-        test_outputs  = self.combine_model([*self.test_datasets.values()])
+        #test_outputs  = self.combine_model([*self.test_datasets.values()])
 
         # Measure the accuracy
         train_acc_clip, train_auc_clip,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
-        test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
+        #test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
@@ -474,10 +462,10 @@ class train_pnes:
         # Store the clip layer predictions to the class instance
         self.train_acc_clip = train_acc_clip
         self.train_auc_clip = train_auc_clip
-        self.test_acc_clip  = test_acc_clip
-        self.test_auc_clip  = test_auc_clip
+        #self.test_acc_clip  = test_acc_clip
+        #self.test_auc_clip  = test_auc_clip
         self.clip_training_predictions_tensor = train_outputs
-        self.clip_testing_predictions_tensor  = test_outputs
+        #self.clip_testing_predictions_tensor  = test_outputs
         self.clip_training_predictions_array  = y_pred
 
     def clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
