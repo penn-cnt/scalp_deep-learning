@@ -31,5 +31,17 @@
 "batchsize": 512, 
 "normorder": "after", 
 "activation": "relu", 
-"weight": 1.0237033754222973
+"weight": 1.0237033754222973,
+"consensus_nlayer": 1,
+"consensus_hsize_1": 0.5,
+"consensus_hsize_2": 0.5,
+"consensus_hsize_3": 0.5,
+"consensus_drop_1": 0.1,
+"consensus_drop_2": 0.1,
+"consensus_drop_3": 0.1,
+"consensus_batchsize":32,
+"consensus_theshold_method": "quantile",
+"consensus_theshold_yasa_prediction_00":0.9,
+"consensus_theshold_yasa_prediction_01":0.9,
+"consensus_theshold_yasa_prediction_02":0.9
 }
