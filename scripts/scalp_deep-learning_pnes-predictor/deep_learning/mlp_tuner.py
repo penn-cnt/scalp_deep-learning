@@ -689,6 +689,9 @@ class tuning_manager:
         self.hotconfig         = hotconfig
         self.patient_level     = patient_level
 
+        print(self.hotconfig)
+        exit()
+
     def make_tuning_config_mlp(self):
         """
         Define how the parameter space is explored using Ray Tuning.
