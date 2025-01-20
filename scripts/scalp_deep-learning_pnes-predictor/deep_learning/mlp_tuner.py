@@ -428,11 +428,6 @@ class train_pnes:
 
                     # get the output for the current batch
                     outputs = self.combine_model(batchtensors)
-
-                    print(batchtensors)
-                    print(outputs)
-                    exit()
-
                     loss    = self.combine_criterion(outputs, labels)
                     loss.backward()
                     self.combine_optimizer.step()
