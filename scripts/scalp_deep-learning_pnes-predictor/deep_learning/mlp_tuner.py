@@ -791,8 +791,6 @@ class tuning_manager:
             current_best_params[0][f"consensus_theshold_yasa_prediction_02"] = 0.9
         else:
             current_best_params = [self.hotconfig]
-            print(current_best_params)
-            exit()
             
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
@@ -804,7 +802,7 @@ class tuning_manager:
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
-                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",#verbose=1,
+                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1,
                                                 failure_config=train.FailureConfig(fail_fast=False)))
 
         # Get the hyper parameter search results
