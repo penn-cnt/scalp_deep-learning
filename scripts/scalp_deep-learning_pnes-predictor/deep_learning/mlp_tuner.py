@@ -689,9 +689,6 @@ class tuning_manager:
         self.hotconfig         = hotconfig
         self.patient_level     = patient_level
 
-        print(self.hotconfig)
-        exit()
-
     def make_tuning_config_mlp(self):
         """
         Define how the parameter space is explored using Ray Tuning.
@@ -807,6 +804,9 @@ class tuning_manager:
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",#verbose=1,
                                                 failure_config=train.FailureConfig(fail_fast=False)))
+
+        print(tuner)
+        exit()
 
         # Get the hyper parameter search results
         results = tuner.fit()
