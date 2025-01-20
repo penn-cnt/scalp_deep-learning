@@ -428,6 +428,11 @@ class train_pnes:
 
                     # get the output for the current batch
                     outputs = self.combine_model(batchtensors)
+
+                    print(batchtensors)
+                    print(outputs)
+                    exit()
+
                     loss    = self.combine_criterion(outputs, labels)
                     loss.backward()
                     self.combine_optimizer.step()
@@ -804,10 +809,6 @@ class tuning_manager:
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",#verbose=1,
                                                 failure_config=train.FailureConfig(fail_fast=False)))
-
-        import pickle
-        pickle.dump(tuner,open("tuner.pickle","wb"))
-        exit()
 
         # Get the hyper parameter search results
         results = tuner.fit()
