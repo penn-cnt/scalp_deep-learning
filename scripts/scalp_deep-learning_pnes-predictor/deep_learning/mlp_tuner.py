@@ -734,6 +734,7 @@ class tuning_manager:
         self.config['weight']     = tune.loguniform(1,1e5)
 
         # Consensus configuration
+        """
         self.config["consensus_batchsize"] = tune.choice([16,32,64,128])
         self.config[f"consensus_nlayer"]   = tune.randint(1, 4)
         self.config[f"consensus_hsize_1"]  = tune.quniform(0.05, 1.5, .05)
@@ -746,6 +747,7 @@ class tuning_manager:
         self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.05, 1.0, .05)
         self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.05, 1.0, .05)
         self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.05, 1.0, .05)
+        """
 
     def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
@@ -777,6 +779,7 @@ class tuning_manager:
             current_best_params[0][f"combined_drop_3"]  = 0.1
 
             # Make the consensus network
+            """
             current_best_params[0][f"consensus_batchsize"]  = 32
             current_best_params[0][f"consensus_nlayer"]     = 1
             current_best_params[0][f"consensus_hsize_1"]    = 0.8
@@ -789,6 +792,7 @@ class tuning_manager:
             current_best_params[0][f"consensus_theshold_yasa_prediction_00"] = 0.9
             current_best_params[0][f"consensus_theshold_yasa_prediction_01"] = 0.9
             current_best_params[0][f"consensus_theshold_yasa_prediction_02"] = 0.9
+            """
         else:
             current_best_params = [self.hotconfig]
             

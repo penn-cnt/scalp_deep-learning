@@ -6,7 +6,7 @@
 "frequency_drop_1": 0.05, 
 "frequency_drop_2": 0.05, 
 "frequency_drop_3": 0.2,
-"time_nlayer": 1, 
+"time_nlayer": 0, 
 "time_hsize_1": 0.7000000000000001, 
 "time_hsize_2": 1.0, 
 "time_hsize_3": 0.35000000000000003, 
@@ -31,17 +31,5 @@
 "batchsize": 512, 
 "normorder": "after", 
 "activation": "relu", 
-"weight": 1.0237033754222973,
-"consensus_nlayer": 2,
-"consensus_hsize_1": 0.5,
-"consensus_hsize_2": 1.25,
-"consensus_hsize_3": 0.5,
-"consensus_drop_1": 0.3,
-"consensus_drop_2": 0.2,
-"consensus_drop_3": 0.1,
-"consensus_batchsize":32,
-"consensus_theshold_method": "quantile",
-"consensus_theshold_yasa_prediction_00":0.9,
-"consensus_theshold_yasa_prediction_01":0.9,
-"consensus_theshold_yasa_prediction_02":0.9
+"weight": 1.0237033754222973
 }
