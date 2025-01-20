@@ -791,6 +791,8 @@ class tuning_manager:
             current_best_params[0][f"consensus_theshold_yasa_prediction_02"] = 0.9
         else:
             current_best_params = [self.hotconfig]
+            print(current_best_params)
+            exit()
             
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
