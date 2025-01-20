@@ -805,7 +805,8 @@ class tuning_manager:
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",#verbose=1,
                                                 failure_config=train.FailureConfig(fail_fast=False)))
 
-        print(tuner)
+        import pickle
+        pickle.dump(tuner,open("tuner.pickle","wb"))
         exit()
 
         # Get the hyper parameter search results
