@@ -418,7 +418,7 @@ class train_pnes:
             self.combine_optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             # Train the combination model
-            num_epochs  = 10
+            num_epochs  = 2
             for epoch in tqdm(range(num_epochs), total=num_epochs, disable=self.raytuning):
                 self.combine_model.train()
                 for ibatch in self.train_loader:
@@ -806,7 +806,7 @@ class tuning_manager:
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
-                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1,
+                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=0,
                                                 failure_config=train.FailureConfig(fail_fast=True)))
 
         # Get the hyper parameter search results
