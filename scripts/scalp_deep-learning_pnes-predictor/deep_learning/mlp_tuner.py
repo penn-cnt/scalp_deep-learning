@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 # Ray imports
+import ray
 import tempfile
 from ray import train, tune
 from ray.train import Checkpoint,RunConfig
@@ -415,7 +416,7 @@ class train_pnes:
             self.combine_optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             # Train the combination model
-            num_epochs  = 2
+            num_epochs  = 12
             for epoch in tqdm(range(num_epochs), total=num_epochs, disable=self.raytuning):
                 self.combine_model.train()
                 for ibatch in self.train_loader:
@@ -606,7 +607,7 @@ class train_pnes:
     def run_consensus_model(self):
 
         # Train the combination model
-        num_epochs  = 10
+        num_epochs  = 12
         for epoch in tqdm(range(num_epochs), total=num_epochs, disable=self.raytuning):
             self.consensus_model.train()
             for ibatch in self.consensus_train_loader:
@@ -689,6 +690,10 @@ class tuning_manager:
         self.outfile           = outfile
         self.hotconfig         = hotconfig
         self.patient_level     = patient_level
+
+        # Configure some ray tuning info
+        ray.init(num_cpus=ncpu)
+        self.resources = {"cpu": 1,"gpu": 0}        
 
     def make_tuning_config_mlp(self):
         """
@@ -802,8 +807,8 @@ class tuning_manager:
 
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
-                           tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
-                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=0,
+                           tune_config=tune.TuneConfig(num_samples=self.ntrial, max_concurrent_trials=self.ncpu, search_alg=hyperopt_search),
+                           run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=0,resources_per_trial=self.resources,
                                                 failure_config=train.FailureConfig(fail_fast=False)))
 
         # Get the hyper parameter search results
