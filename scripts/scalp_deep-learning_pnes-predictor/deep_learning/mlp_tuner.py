@@ -802,12 +802,12 @@ class tuning_manager:
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
 
         # Set the number of cpus to use
-        trainable_with_resources = tune.with_resources(train_pnes_handler, {"cpu": self.ncpu})
+        trainable_with_resources = tune.with_resources(train_pnes_handler, {"cpu": 0.5})
         trainable_with_parameters = tune.with_parameters(trainable_with_resources, DL_object=(self.DL_object), patient_level=(self.patient_level))
 
         # Create the tranable object
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
-                           tune_config=tune.TuneConfig(num_samples=self.ntrial, max_concurrent_trials=self.ncpu, search_alg=hyperopt_search),
+                           tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1,
                                                 failure_config=train.FailureConfig(fail_fast=False)))
 
