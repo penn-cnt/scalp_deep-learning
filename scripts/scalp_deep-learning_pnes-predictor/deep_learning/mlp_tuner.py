@@ -380,8 +380,8 @@ class train_pnes:
         """
 
         sums                   = self.train_targets.numpy().sum(axis=0)
-        pos_weight             = self.config['weight']*torch.tensor([sums[0]/sums[1]])
-        self.combine_criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        self.pos_weight        = self.config['weight']*torch.tensor([sums[0]/sums[1]])
+        self.combine_criterion = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight)
 
     def make_combine_optimizer(self):
         """
@@ -597,7 +597,7 @@ class train_pnes:
         Make the criterion objects.
         """
 
-        self.consensus_criterion = nn.BCELoss()
+        self.consensus_criterion = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight)
 
     def make_consensus_optimizer(self):
         """
