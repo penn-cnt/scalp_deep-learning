@@ -270,7 +270,8 @@ class train_pnes:
             # Consensus Model
             self.run_consensus_model()
 
-        return self.train_transformed
+        if not self.raytuning:
+            return self.train_transformed
 
     def get_output_size(self):
         """
