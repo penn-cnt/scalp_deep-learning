@@ -231,11 +231,7 @@ class train_pnes:
         Manage the workflow for the PNES predictions.
         """
 
-        for name, value in self.__dict__.items():
-            print(f"{name}: {type(value).__name__}")
-
         # Basic setup steps
-        print("Begin prep")
         self.get_output_size()
         self.get_uids()
         self.prepare_hiddenstates_datasets()
@@ -244,16 +240,10 @@ class train_pnes:
         self.make_combine_optimizer()
 
         # Combination (i.e. Clip level) model
-        print("Begin model")
         self.run_combination_model()
 
         # Update tensors to return to user for possible downstream analysis
-        print("Begin update")
         self.update_tensors_w_probs()
-        print("Complete")
-
-        for name, value in self.__dict__.items():
-            print(f"{name}: {type(value).__name__}")
 
         # Make a consensus tensor
         if self.patient_level:
@@ -814,7 +804,7 @@ class tuning_manager:
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=0,
-                                                failure_config=train.FailureConfig(fail_fast=True)))
+                                                failure_config=train.FailureConfig(fail_fast=False)))
 
         # Get the hyper parameter search results
         results = tuner.fit()
