@@ -247,6 +247,7 @@ class train_pnes:
         # Update tensors to return to user for possible downstream analysis
         print("Begin update")
         self.update_tensors_w_probs()
+        print("Complete")
 
         # Make a consensus tensor
         if self.patient_level:
@@ -806,7 +807,7 @@ class tuning_manager:
         tuner = tune.Tuner(trainable_with_parameters,param_space=self.config,
                            tune_config=tune.TuneConfig(num_samples=self.ntrial, search_alg=hyperopt_search),
                            run_config=RunConfig(storage_path=self.raydir, name="pnes_experiment",verbose=1,
-                                                failure_config=train.FailureConfig(fail_fast=False)))
+                                                failure_config=train.FailureConfig(fail_fast=True)))
 
         # Get the hyper parameter search results
         results = tuner.fit()
