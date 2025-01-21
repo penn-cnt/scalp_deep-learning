@@ -231,6 +231,9 @@ class train_pnes:
         Manage the workflow for the PNES predictions.
         """
 
+        for name, value in self.__dict__.items():
+            print(f"{name}: {type(value).__name__}")
+
         # Basic setup steps
         print("Begin prep")
         self.get_output_size()
@@ -248,6 +251,9 @@ class train_pnes:
         print("Begin update")
         self.update_tensors_w_probs()
         print("Complete")
+
+        for name, value in self.__dict__.items():
+            print(f"{name}: {type(value).__name__}")
 
         # Make a consensus tensor
         if self.patient_level:
