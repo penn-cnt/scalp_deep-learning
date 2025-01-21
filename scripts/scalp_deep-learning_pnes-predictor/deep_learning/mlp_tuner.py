@@ -232,6 +232,7 @@ class train_pnes:
         """
 
         # Basic setup steps
+        print("Begin prep")
         self.get_output_size()
         self.get_uids()
         self.prepare_hiddenstates_datasets()
@@ -240,9 +241,11 @@ class train_pnes:
         self.make_combine_optimizer()
 
         # Combination (i.e. Clip level) model
+        print("Begin model")
         self.run_combination_model()
 
         # Update tensors to return to user for possible downstream analysis
+        print("Begin update")
         self.update_tensors_w_probs()
 
         # Make a consensus tensor
