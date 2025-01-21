@@ -227,14 +227,16 @@ class train_pnes:
         self.dropout_dict        = {}
         self.subnetwork_size_out = 0
 
-    def prepare_data_pipeline(self):
+        # Get the user id indices
+        self.get_uids()
+
+    def run_data_pipeline(self):
         """
         Manage the workflow for the PNES predictions.
         """
 
         # Basic setup steps
         self.get_output_size()
-        self.get_uids()
         self.prepare_hiddenstates_datasets()
         self.make_combine_model()
         self.make_combine_criterion()
@@ -264,6 +266,12 @@ class train_pnes:
         if not self.raytuning:
             return self.train_transformed
 
+    def get_uids(self):
+
+        # Make the UID tensor for the final consensus score
+        self.uid_train_indices = self.train_transformed.groupby(['uid']).indices
+        self.uid_test_indices  = self.test_transformed.groupby(['uid']).indices
+
     def get_output_size(self):
         """
         Define the output hidden layer size.
@@ -276,12 +284,6 @@ class train_pnes:
         self.train_targets      = torch.from_numpy(self.train_target_array)
         self.test_targets       = torch.from_numpy(self.test_target_array)
         self.output_size        = len(outcols)
-
-    def get_uids(self):
-
-        # Make the UID tensor for the final consensus score
-        self.uid_train_indices = self.train_transformed.groupby(['uid']).indices
-        self.uid_test_indices  = self.test_transformed.groupby(['uid']).indices
 
     def prepare_hiddenstates_datasets(self):
         """
@@ -666,7 +668,7 @@ def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,clip_
     """
 
     TP                = train_pnes(config,DL_object,patient_level,raytuning,clip_checkpoint_path)
-    train_transformed = TP.prepare_data_pipeline()
+    train_transformed = TP.run_data_pipeline()
     return train_transformed
     
 class tuning_manager:

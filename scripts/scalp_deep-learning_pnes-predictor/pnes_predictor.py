@@ -58,11 +58,11 @@ if __name__ == '__main__':
 
     # Initialize the ray tuning class
     config = json.load(open("configs/test_config.json",'r'))
-    TUNING_HANDLER = tuning_manager(DL_object, args.ncpu, args.ntrial, args.tune_file, args.raydir, config, args.patient_level)
     
     # Run tuner or a single config model
     if args.raytune:
         # Perform MLP tuning
+        TUNING_HANDLER = tuning_manager(DL_object, args.ncpu, args.ntrial, args.tune_file, args.raydir, config, args.patient_level)
         TUNING_HANDLER.make_tuning_config_mlp()
         TUNING_HANDLER.run_ray_tune_mlp()
     elif args.test_config:
