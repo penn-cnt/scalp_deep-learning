@@ -220,13 +220,13 @@ class train_pnes:
         self.clip_checkpoint_path = clip_checkpoint_path
 
         # Initialize some classwide variables
+        self.nepoch              = 20
         self.train_datasets      = {}
         self.test_datasets       = {}
         self.input_dict          = {}
         self.hidden_dict         = {}
         self.dropout_dict        = {}
         self.subnetwork_size_out = 0
-        self.nepoch              = 5
         self.comb_loss           = []
         self.con_loss            = []
 
