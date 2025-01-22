@@ -776,6 +776,8 @@ class tuning_manager:
             self.config[f"time_nlayer"]  = tune.randint(1, 3)
             self.config[f"time_hsize_1"] = tune.quniform(0.05, 0.75, .025)
             self.config[f"time_drop_1"] = tune.quniform(0.0, .2, .025)
+            self.config[f"time_hsize_2"] = tune.quniform(0.5, 1.25, .025)
+            self.config[f"time_drop_2"] = tune.quniform(0.15, .45, .025)
 
             # Define the categorical block settings
             self.config[f"categorical_nlayer"]  = tune.randint(2, 4)
@@ -802,7 +804,7 @@ class tuning_manager:
 
             # Consensus configuration
             self.config["consensus_batchsize"] = tune.quniform(16,64,8)
-            self.config[f"consensus_nlayer"]   = tune.randint(2, 3)
+            self.config[f"consensus_nlayer"]   = tune.randint(1, 3)
             self.config[f"consensus_hsize_1"]  = tune.quniform(0.25, 1.25, .025)
             self.config[f"consensus_hsize_2"]  = tune.quniform(0.25, 1.25, .025)
             self.config[f"consensus_drop_1"]   = tune.quniform(0.2, .5, .025)
