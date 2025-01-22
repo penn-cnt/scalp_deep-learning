@@ -226,6 +226,9 @@ class train_pnes:
         self.hidden_dict         = {}
         self.dropout_dict        = {}
         self.subnetwork_size_out = 0
+        self.nepoch              = 5
+        self.comb_loss           = []
+        self.con_loss            = []
 
         # Get the user id indices
         self.get_uids()
@@ -418,9 +421,9 @@ class train_pnes:
             self.combine_optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             # Train the combination model
-            num_epochs  = 12
-            for epoch in tqdm(range(num_epochs), total=num_epochs, disable=self.raytuning):
+            for epoch in tqdm(range(self.nepoch), total=self.nepoch, disable=self.raytuning):
                 self.combine_model.train()
+                loss_list = []
                 for ibatch in self.train_loader:
                     
                     # Kick off the combine handler
@@ -433,8 +436,10 @@ class train_pnes:
                     # get the output for the current batch
                     outputs = self.combine_model(batchtensors)
                     loss    = self.combine_criterion(outputs, labels)
+                    loss_list.append(loss.detach().item())
                     loss.backward()
                     self.combine_optimizer.step()
+                self.comb_loss.append(loss_list)
 
         # Evaluate the combination model
         self.combine_model.eval()
@@ -451,7 +456,7 @@ class train_pnes:
         if self.raytuning and not self.patient_level:
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
-                outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict()}
+                outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict(),'comb_loss':self.comb_loss}
                 torch.save(outdict,os.path.join(temp_checkpoint_dir, "consensus_model.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
@@ -609,9 +614,9 @@ class train_pnes:
     def run_consensus_model(self):
 
         # Train the combination model
-        num_epochs  = 12
-        for epoch in tqdm(range(num_epochs), total=num_epochs, disable=self.raytuning):
+        for epoch in tqdm(range(self.nepoch), total=self.nepoch, disable=self.raytuning):
             self.consensus_model.train()
+            loss_list = []
             for ibatch in self.consensus_train_loader:
 
                 # Kick off the consensus handler
@@ -624,8 +629,10 @@ class train_pnes:
                 # get the output for the current batch
                 outputs = self.consensus_model(batchtensor)
                 conloss = self.consensus_criterion(outputs, labels)
+                loss_list.append(conloss.detach().item())
                 conloss.backward()
                 self.consensus_optimizer.step()
+            self.con_loss.append(loss_list)
 
         # Evaluate the consensus model
         self.consensus_model.eval()
@@ -643,7 +650,8 @@ class train_pnes:
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
-                                'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict()}
+                                'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
+                                'comb_loss':self.comb_loss,'con_loss':self.con_loss}
                 torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
@@ -850,7 +858,7 @@ class tuning_manager:
             current_best_params = [self.hotconfig]
             
         # Define the search parameters
-        hyperopt_search = HyperOptSearch(metric="Test_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
+        hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes_handler, {"cpu": 0.5})
