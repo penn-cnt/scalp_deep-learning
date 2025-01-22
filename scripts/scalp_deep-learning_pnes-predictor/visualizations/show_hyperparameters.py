@@ -15,16 +15,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Read in the data
-    files = glob.glob(f"{args.result_dir}*/result.json")
-    DF    = PD.DataFrame()
-    aucs  = []
-    fpath = []
+    files             = glob.glob(f"{args.result_dir}*/result.json")
+    DF                = PD.DataFrame()
+    patient_auc_train = []
+    clip_auc_train    = []
+    patient_auc_test  = []
+    clip_auc_test     = []    
+    fpath             = []
     for idx,ifile in enumerate(files):
         try:
             jdata = json.load(open(ifile,'r'))
             iDF   = PD.DataFrame(jdata['config'],index=[idx])
             DF    = PD.concat((DF,iDF))
-            aucs.append(jdata['Train_AUC'])
+            patient_auc_train.append(jdata['Train_AUC'])
+            clip_auc_train.append(jdata['Train_AUC_clip'])
+            patient_auc_test.append(jdata['Test_AUC'])
+            clip_auc_test.append(jdata['Test_AUC_clip'])
             fpath.append(ifile)
         except:
             pass
@@ -38,13 +44,17 @@ if __name__ == '__main__':
     # Add in auc to bigger dataframe
     DF['fpath']    = fpath
     incols         = DF.columns
-    outcols        = ['train_auc']
-    DF[outcols[0]] = aucs
+    outcols        = ['train_auc','train_auc_clip','test_auc','test_auc_clip']
+    DF[outcols[0]] = patient_auc_train
+    DF[outcols[1]] = clip_auc_train
+    DF[outcols[2]] = patient_auc_test
+    DF[outcols[3]] = clip_auc_test
     outcols.extend(incols)
 
     # Save the results
     DF = DF[outcols]
     DF = DF.sort_values(by=['train_auc'],ascending=False)
+    """
     DF.to_csv("/Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/HYPERPARAMETERS/model_hyperparameters.csv",index=False)
 
     # Make a slice of the dataframe where we show only good aucs
@@ -71,3 +81,4 @@ if __name__ == '__main__':
             ax.set_xscale('log')
         PLT.savefig(f"{outdir}/{icol}.png")
         PLT.close("all")
+    """
