@@ -705,7 +705,7 @@ class tuning_manager:
         ray.init(num_cpus=ncpu)
         self.resources = {"cpu": 1,"gpu": 0}        
 
-    def make_tuning_config_mlp(self,granularity='shallow'):
+    def make_tuning_config_mlp(self,granularity='deep'):
         """
         Define how the parameter space is explored using Ray Tuning.
         """
@@ -763,7 +763,7 @@ class tuning_manager:
             self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.05, 1.0, .05)
             self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.05, 1.0, .05)
             self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.05, 1.0, .05)
-        else:
+        elif granularity=='deep':
 
             # Define the frequency block settings
             self.config[f"frequency_nlayer"]  = tune.randint(1, 3)
@@ -856,9 +856,6 @@ class tuning_manager:
             current_best_params[0][f"consensus_theshold_yasa_prediction_02"] = 0.9
         else:
             current_best_params = [self.hotconfig]
-            
-        print(current_best_params)
-        exit()
 
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
