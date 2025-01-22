@@ -801,7 +801,7 @@ class tuning_manager:
             self.config['weight']     = tune.uniform(.1,10)
 
             # Consensus configuration
-            self.config["consensus_batchsize"] = tune.quniform(16.64,8)
+            self.config["consensus_batchsize"] = tune.quniform(16,64,8)
             self.config[f"consensus_nlayer"]   = tune.randint(2, 3)
             self.config[f"consensus_hsize_1"]  = tune.quniform(0.25, 1.25, .025)
             self.config[f"consensus_hsize_2"]  = tune.quniform(0.25, 1.25, .025)
