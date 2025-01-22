@@ -765,9 +765,9 @@ class tuning_manager:
             self.config[f"frequency_drop_2"] = tune.quniform(0.0, .2, .025)
 
             # Define the time block settings
-            self.config[f"frequency_nlayer"]  = tune.randint(1, 2)
-            self.config[f"frequency_hsize_1"] = tune.quniform(0.05, 0.75, .025)
-            self.config[f"frequency_drop_1"] = tune.quniform(0.0, .2, .025)
+            self.config[f"time_nlayer"]  = tune.randint(1, 2)
+            self.config[f"time_hsize_1"] = tune.quniform(0.05, 0.75, .025)
+            self.config[f"time_drop_1"] = tune.quniform(0.0, .2, .025)
 
             # Define the categorical block settings
             self.config[f"categorical_nlayer"]  = tune.randint(3, 4)

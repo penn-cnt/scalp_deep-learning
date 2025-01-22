@@ -57,7 +57,10 @@ if __name__ == '__main__':
     DL_object = VM.workflow()
 
     # Initialize the ray tuning class
-    config = json.load(open("configs/test_config.json",'r'))
+    #config = json.load(open("configs/shallow_config.json",'r'))
+    config = json.load(open("configs/deep_config.json",'r'))
+    print(config)
+    exit()
     
     # Run tuner or a single config model
     if args.raytune:
