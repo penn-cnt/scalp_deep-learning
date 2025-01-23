@@ -208,16 +208,16 @@ class ConsensusNetwork(nn.Module):
 
 class train_pnes:
 
-    def __init__(self,config,DL_object,patient_level=False,raytuning=True,clip_checkpoint_path=None):
+    def __init__(self,config,DL_object,patient_level=False,raytuning=True,checkpoint_path=None):
         
         # Save important variables from handler input to the class instance
-        self.config               = config
-        self.model_block          = DL_object[0]
-        self.train_transformed    = DL_object[1]
-        self.test_transformed     = DL_object[2]
-        self.patient_level        = patient_level
-        self.raytuning            = raytuning
-        self.clip_checkpoint_path = clip_checkpoint_path
+        self.config            = config
+        self.model_block       = DL_object[0]
+        self.train_transformed = DL_object[1]
+        self.test_transformed  = DL_object[2]
+        self.patient_level     = patient_level
+        self.raytuning         = raytuning
+        self.checkpoint_path   = checkpoint_path
 
         # Initialize some classwide variables
         self.nepoch_clip         = 20
@@ -234,7 +234,7 @@ class train_pnes:
         # Get the user id indices
         self.get_uids()
 
-    def run_data_pipeline(self):
+    def run_basemodel_pipeline(self):
         """
         Manage the workflow for the PNES predictions.
         """
@@ -247,7 +247,7 @@ class train_pnes:
         self.make_combine_optimizer()
 
         # Combination (i.e. Clip level) model
-        self.run_combination_model()
+        self.run_combination_model(self.checkpoint_path)
 
         # Update tensors to return to user for possible downstream analysis
         self.update_tensors_w_probs()
@@ -265,10 +265,13 @@ class train_pnes:
             self.make_consensus_optimizer()
 
             # Consensus Model
-            self.run_consensus_model()
+            self.run_consensus_model(self.checkpoint_path)
 
         if not self.raytuning:
             return self.train_transformed
+        
+    def run_semi_model(self):
+        pass
 
     def get_uids(self):
 
@@ -413,13 +416,13 @@ class train_pnes:
 
         return acc,auc,y_pred
 
-    def run_combination_model(self):
+    def run_combination_model(self,checkpoint_path):
         
         # If we were passed a checkpoint, load it now. Otherwise, train the combination layer
-        if self.clip_checkpoint_path != None:
-            checkpoint = torch.load(self.clip_checkpoint_path)
-            self.combine_model.load_state_dict(checkpoint['model'])
-            self.combine_optimizer.load_state_dict(checkpoint['optimizer'])
+        if checkpoint_path != None:
+            checkpoint = torch.load(checkpoint_path)
+            self.combine_model.load_state_dict(checkpoint['combine_model'])
+            self.combine_optimizer.load_state_dict(checkpoint['combine_optimizer'])
         else:
             # Train the combination model
             for epoch in tqdm(range(self.nepoch_clip), total=self.nepoch_clip, disable=self.raytuning):
@@ -457,7 +460,7 @@ class train_pnes:
         if self.raytuning and not self.patient_level:
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
-                outdict    = {'model': self.combine_model.state_dict(),'optimizer': self.combine_optimizer.state_dict(),'comb_loss':self.comb_loss}
+                outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),'comb_loss':self.comb_loss, 'config':self.config}
                 torch.save(outdict,os.path.join(temp_checkpoint_dir, "consensus_model.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
@@ -612,28 +615,34 @@ class train_pnes:
 
         self.consensus_optimizer = optim.Adam(self.consensus_model.parameters(), lr=self.config['lr'])
 
-    def run_consensus_model(self):
+    def run_consensus_model(self,checkpoint_path):
 
-        # Train the combination model
-        for epoch in tqdm(range(self.nepoch_patient), total=self.nepoch_patient, disable=self.raytuning):
-            self.consensus_model.train()
-            loss_list = []
-            for ibatch in self.consensus_train_loader:
+        # If we were passed a checkpoint, load it now. Otherwise, train the combination layer
+        if checkpoint_path != None:
+            checkpoint = torch.load(checkpoint_path)
+            self.combine_model.load_state_dict(checkpoint['consensus_model'])
+            self.combine_optimizer.load_state_dict(checkpoint['consensus_optimizer'])
+        else:
+            # Train the combination model
+            for epoch in tqdm(range(self.nepoch_patient), total=self.nepoch_patient, disable=self.raytuning):
+                self.consensus_model.train()
+                loss_list = []
+                for ibatch in self.consensus_train_loader:
 
-                # Kick off the consensus handler
-                self.consensus_optimizer.zero_grad()
+                    # Kick off the consensus handler
+                    self.consensus_optimizer.zero_grad()
 
-                # Unpack the batch
-                batchtensor = ibatch[0]
-                labels      = ibatch[1]
-                
-                # get the output for the current batch
-                outputs = self.consensus_model(batchtensor)
-                conloss = self.consensus_criterion(outputs, labels)
-                loss_list.append(conloss.detach().item())
-                conloss.backward()
-                self.consensus_optimizer.step()
-            self.con_loss.append(loss_list)
+                    # Unpack the batch
+                    batchtensor = ibatch[0]
+                    labels      = ibatch[1]
+                    
+                    # get the output for the current batch
+                    outputs = self.consensus_model(batchtensor)
+                    conloss = self.consensus_criterion(outputs, labels)
+                    loss_list.append(conloss.detach().item())
+                    conloss.backward()
+                    self.consensus_optimizer.step()
+                self.con_loss.append(loss_list)
 
         # Evaluate the consensus model
         self.consensus_model.eval()
@@ -652,14 +661,14 @@ class train_pnes:
                 checkpoint = None
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
                                 'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
-                                'comb_loss':self.comb_loss,'con_loss':self.con_loss}
+                                'comb_loss':self.comb_loss,'con_loss':self.con_loss, 'config':self.config}
                 torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
                 train.report({"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc,
-                              "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
-                              "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}, checkpoint=checkpoint)
+                            "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
+                            "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}, checkpoint=checkpoint)
         elif not self.raytuning:
             print(f"Training Accuracy (Patient): {train_acc:0.3f}")
             print(f"Training AUC      (Patient): {train_auc:0.3f}")
@@ -671,13 +680,13 @@ class train_pnes:
         self.train_transformed['Epilepsy_Prob'] = self.clip_training_predictions_array[:,0]
         self.train_transformed['PNES_Prob']     = self.clip_training_predictions_array[:,1]
 
-def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,clip_checkpoint_path=None):
+def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,checkpoint_path=None):
     """
     Function that manages the workflow for the MLP model.
     """
 
-    TP                = train_pnes(config,DL_object,patient_level,raytuning,clip_checkpoint_path)
-    train_transformed = TP.run_data_pipeline()
+    TP                = train_pnes(config,DL_object,patient_level,raytuning,checkpoint_path)
+    train_transformed = TP.run_basemodel_pipeline()
     return train_transformed
     
 class tuning_manager:

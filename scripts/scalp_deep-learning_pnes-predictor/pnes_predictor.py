@@ -33,7 +33,7 @@ if __name__ == '__main__':
     tuning_group.add_argument("--raydir", type=str, help="Output folder for ray tuning.")
 
     checkpoint_group = parser.add_argument_group('Checkpoint options')
-    checkpoint_group.add_argument("--combine_checkpoint", type=str, default=None, help="Path to checkpoint for combination model.")
+    checkpoint_group.add_argument("--checkpoint", type=str, default=None, help="Path to checkpoint for model.")
 
     method_group = parser.add_mutually_exclusive_group()
     method_group.add_argument("--test_config", action='store_true', default=False, help="Run model using just one config setting. Good for testing.")
@@ -57,9 +57,12 @@ if __name__ == '__main__':
     DL_object = VM.workflow()
 
     # Initialize the ray tuning class
-    #config = json.load(open("configs/shallow_config.json",'r'))
-    #config = json.load(open("configs/deep_config.json",'r'))
-    config = json.load(open("configs/deep_tuned_config.json",'r'))
+    if args.checkpoint == None:
+        #config = json.load(open("configs/shallow_config.json",'r'))
+        #config = json.load(open("configs/deep_config.json",'r'))
+        config = json.load(open("configs/deep_tuned_config.json",'r'))
+    else:
+        config = torch.load(args.checkpoint)['config']
     
     # Run tuner or a single config model
     if args.raytune:
@@ -70,7 +73,7 @@ if __name__ == '__main__':
     elif args.test_config:
         training_data = train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False)
     elif args.test_model:
-        training_data = train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False, clip_checkpoint_path=args.combine_checkpoint)
+        training_data = train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False, checkpoint_path=args.checkpoint)
 
         # Save the output data
         training_data.to_pickle(f"{args.outdir}training_data.pickle")
