@@ -221,7 +221,7 @@ class train_pnes:
 
         # Initialize some classwide variables
         self.nepoch_clip         = 20
-        self.nepoch_patient      = 100
+        self.nepoch_patient      = 20
         self.train_datasets      = {}
         self.test_datasets       = {}
         self.input_dict          = {}

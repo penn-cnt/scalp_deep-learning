@@ -63,7 +63,7 @@ if __name__ == '__main__':
         config = json.load(open("configs/deep_tuned_config.json",'r'))
     else:
         config = torch.load(args.checkpoint)['config']
-    
+
     # Run tuner or a single config model
     if args.raytune:
         # Perform MLP tuning
