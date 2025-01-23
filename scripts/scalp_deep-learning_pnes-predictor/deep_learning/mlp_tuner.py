@@ -220,7 +220,8 @@ class train_pnes:
         self.clip_checkpoint_path = clip_checkpoint_path
 
         # Initialize some classwide variables
-        self.nepoch              = 20
+        self.nepoch_clip         = 20
+        self.nepoch_patient      = 40
         self.train_datasets      = {}
         self.test_datasets       = {}
         self.input_dict          = {}
@@ -421,7 +422,7 @@ class train_pnes:
             self.combine_optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             # Train the combination model
-            for epoch in tqdm(range(self.nepoch), total=self.nepoch, disable=self.raytuning):
+            for epoch in tqdm(range(self.nepoch_clip), total=self.nepoch_clip, disable=self.raytuning):
                 self.combine_model.train()
                 loss_list = []
                 for ibatch in self.train_loader:
@@ -614,7 +615,7 @@ class train_pnes:
     def run_consensus_model(self):
 
         # Train the combination model
-        for epoch in tqdm(range(self.nepoch), total=self.nepoch, disable=self.raytuning):
+        for epoch in tqdm(range(self.nepoch_patient), total=self.nepoch_patient, disable=self.raytuning):
             self.consensus_model.train()
             loss_list = []
             for ibatch in self.consensus_train_loader:
