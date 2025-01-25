@@ -241,7 +241,8 @@ class train_pnes:
 
         # Basic setup steps
         self.get_output_size()
-        self.prepare_hiddenstates_datasets()
+        self.prepare_datasets()
+        self.prepare_hiddenstates()
         self.make_combine_model()
         self.make_combine_criterion()
         self.make_combine_optimizer()
@@ -267,11 +268,27 @@ class train_pnes:
             # Consensus Model
             self.run_consensus_model(self.checkpoint_path)
 
-        if not self.raytuning:
-            return self.train_transformed
+    def update_basemodel_pipeline(self):
         
-    def run_semi_model(self):
-        pass
+        # Basic setup steps
+        self.get_output_size()
+        self.prepare_datasets()
+        self.prepare_hiddenstates()
+        self.make_combine_model()
+        self.make_combine_criterion()
+        self.make_combine_optimizer()
+
+        # Get the first pass predictions for the test dataset
+        self.run_combination_model(self.checkpoint_path)
+
+        # Make a copy of the testing dataset to update with new predictions
+        self.test_transformed_w_probs = self.test_transformed.copy()
+        self.test_transformed_w_probs[['epilepsy','pnes']] = self.clip_testing_predictions_tensor.detach().numpy()
+
+        import pickle
+        pickle.dump(self.test_transformed_w_probs,open("foo.pickle","wb"))
+        exit()
+                    
 
     def get_uids(self):
 
@@ -292,10 +309,7 @@ class train_pnes:
         self.test_targets       = torch.from_numpy(self.test_target_array)
         self.output_size        = len(outcols)
 
-    def prepare_hiddenstates_datasets(self):
-        """
-        Create the variably sized hidden states and make the tensor objects.
-        """
+    def prepare_datasets(self):
 
         # Make the tensor objects for the initial sub
         for iblock in self.model_block:
@@ -309,6 +323,27 @@ class train_pnes:
                 # Add the data to the train and test data loaders
                 self.train_datasets[iblock] = torch.from_numpy(self.train_transformed[cols].values.astype(np.float32))
                 self.test_datasets[iblock]  = torch.from_numpy(self.test_transformed[cols].values.astype(np.float32))
+
+        # Make the datasets
+        self.train_tensor_dataset = TensorDataset(*self.train_datasets.values(),self.train_targets)
+        self.test_tensor_dataset  = TensorDataset(*self.test_datasets.values(),self.test_targets)
+
+        # Manage the dataloading
+        self.train_loader  = DataLoader(self.train_tensor_dataset, batch_size=self.config['batchsize'], shuffle=True)
+
+    def prepare_hiddenstates(self):
+        """
+        Create the variably sized hidden states and make the tensor objects.
+        """
+
+        # Make the tensor objects for the initial sub
+        for iblock in self.model_block:
+
+            # Get the correct column subset
+            cols = self.model_block[iblock]
+
+            # Exogenous variable handling for subnetworks
+            if iblock != 'passthrough' and iblock != 'target':
 
                 # Make the subnetwork configuration
                 self.input_dict[iblock] = len(cols)
@@ -366,13 +401,6 @@ class train_pnes:
             hsizes.append(hidden_size)
             dsizes.append(drop_size)
         self.combination_dict = {'hidden':hsizes,'dropout':dsizes}
-
-        # Make the datasets
-        self.train_tensor_dataset = TensorDataset(*self.train_datasets.values(),self.train_targets)
-        self.test_tensor_dataset  = TensorDataset(*self.test_datasets.values(),self.test_targets)
-
-        # Manage the dataloading
-        self.train_loader  = DataLoader(self.train_tensor_dataset, batch_size=self.config['batchsize'], shuffle=True)
 
     def make_combine_model(self):
         """
@@ -620,8 +648,8 @@ class train_pnes:
         # If we were passed a checkpoint, load it now. Otherwise, train the combination layer
         if checkpoint_path != None:
             checkpoint = torch.load(checkpoint_path)
-            self.combine_model.load_state_dict(checkpoint['consensus_model'])
-            self.combine_optimizer.load_state_dict(checkpoint['consensus_optimizer'])
+            self.consensus_model.load_state_dict(checkpoint['consensus_model'])
+            self.consensus_optimizer.load_state_dict(checkpoint['consensus_optimizer'])
         else:
             # Train the combination model
             for epoch in tqdm(range(self.nepoch_patient), total=self.nepoch_patient, disable=self.raytuning):
@@ -660,8 +688,8 @@ class train_pnes:
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
-                                'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
-                                'comb_loss':self.comb_loss,'con_loss':self.con_loss, 'config':self.config}
+                              'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
+                              'comb_loss':self.comb_loss,'con_loss':self.con_loss, 'config':self.config}
                 torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
@@ -685,9 +713,16 @@ def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,check
     Function that manages the workflow for the MLP model.
     """
 
-    TP                = train_pnes(config,DL_object,patient_level,raytuning,checkpoint_path)
-    train_transformed = TP.run_basemodel_pipeline()
-    return train_transformed
+    TP = train_pnes(config,DL_object,patient_level,raytuning,checkpoint_path)
+    TP.run_basemodel_pipeline()
+
+def update_pnes_handler(config,DL_object,patient_level=True,raytuning=False,checkpoint_path=None):
+
+    if checkpoint_path==None:
+        raise FileNotFoundError("Please provide a model snapshot for semi-supervised learning of new patients.")
+
+    TP = train_pnes(config,DL_object,patient_level,raytuning,checkpoint_path)
+    TP.update_basemodel_pipeline()
     
 class tuning_manager:
 
@@ -868,7 +903,7 @@ class tuning_manager:
             current_best_params = [self.hotconfig]
 
         # Define the search parameters
-        hyperopt_search = HyperOptSearch(metric="Train_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
+        hyperopt_search = HyperOptSearch(metric="Test_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes_handler, {"cpu": 0.5})

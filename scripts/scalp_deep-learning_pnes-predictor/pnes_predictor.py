@@ -39,6 +39,7 @@ if __name__ == '__main__':
     method_group.add_argument("--test_config", action='store_true', default=False, help="Run model using just one config setting. Good for testing.")
     method_group.add_argument("--test_model", action='store_true', default=False, help="Run model using saved torch model.")
     method_group.add_argument("--raytune", action='store_true', default=False, help="Use raytume.")
+    method_group.add_argument("--fit_patient", action='store_true', default=False, help="Fit new patient data.")
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--patient_level", action='store_true', default=False, help="Fit patient level arrays.")
@@ -71,9 +72,8 @@ if __name__ == '__main__':
         TUNING_HANDLER.make_tuning_config_mlp()
         TUNING_HANDLER.run_ray_tune_mlp()
     elif args.test_config:
-        training_data = train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False)
+        train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False)
     elif args.test_model:
-        training_data = train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False, checkpoint_path=args.checkpoint)
-
-        # Save the output data
-        training_data.to_pickle(f"{args.outdir}training_data.pickle")
+        train_pnes_handler(config, DL_object, patient_level=args.patient_level, raytuning=False, checkpoint_path=args.checkpoint)
+    elif args.fit_patient:
+        update_pnes_handler(config, DL_object, checkpoint_path=args.checkpoint)
