@@ -282,11 +282,14 @@ class train_pnes:
         self.run_combination_model(self.checkpoint_path)
 
         # Make a copy of the testing dataset to update with new predictions
-        self.test_transformed_w_probs = self.test_transformed.copy()
-        self.test_transformed_w_probs[['epilepsy','pnes']] = self.clip_testing_predictions_tensor.detach().numpy()
+        self.train_transformed_w_probs = self.train_transformed.copy()
+        self.test_transformed_w_probs  = self.test_transformed.copy()
+        self.train_transformed_w_probs[['epilepsy','pnes']] = self.clip_training_predictions_tensor.detach().numpy()
+        self.test_transformed_w_probs[['epilepsy','pnes']]  = self.clip_testing_predictions_tensor.detach().numpy()
 
         import pickle
-        pickle.dump(self.test_transformed_w_probs,open("foo.pickle","wb"))
+        outpath = '/Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/SSL/DATA/traintest_transformed.pickle'
+        pickle.dump((self.train_transformed_w_probs,self.test_transformed_w_probs),open(outpath,"wb"))
         exit()
                     
 
@@ -853,9 +856,9 @@ class tuning_manager:
             self.config[f"consensus_drop_1"]   = tune.quniform(0.2, .5, .025)
             self.config[f"consensus_drop_2"]   = tune.quniform(0.0, .3, .025)
             self.config['consensus_theshold_method']             = tune.choice(['quantile'])
-            self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.1, 0.6, .025)
-            self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.3, 0.8, .025)
-            self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.0, 1.0, .025)
+            self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.5, 1.0, .025)
+            self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.5, 1.0, .025)
+            self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.5, 1.0, .025)
 
     def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
