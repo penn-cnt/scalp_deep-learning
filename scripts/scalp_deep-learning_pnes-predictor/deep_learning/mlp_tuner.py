@@ -364,7 +364,7 @@ class train_pnes:
         self.test_tensor_dataset  = TensorDataset(*self.test_datasets.values(),self.test_targets)
 
         # Manage the dataloading
-        self.train_loader  = DataLoader(self.train_tensor_dataset, batch_size=self.config['batchsize'], shuffle=True)
+        self.train_loader  = DataLoader(self.train_tensor_dataset, batch_size=int(self.config['batchsize']), shuffle=True)
 
     def prepare_hiddenstates(self):
         """
@@ -659,8 +659,8 @@ class train_pnes:
         self.consensus_test_tensor_dataset = TensorDataset(self.training_consensus_tensor.detach(),self.training_consensus_tensor_targets.detach())
 
         # Manage the dataloading
-        self.consensus_train_loader = DataLoader(self.consensus_train_tensor_dataset, batch_size=self.config['consensus_batchsize'], shuffle=True)
-        self.consensus_test_loader  = DataLoader(self.consensus_test_tensor_dataset, batch_size=self.config['consensus_batchsize'], shuffle=True)
+        self.consensus_train_loader = DataLoader(self.consensus_train_tensor_dataset, batch_size=int(self.config['consensus_batchsize']), shuffle=True)
+        self.consensus_test_loader  = DataLoader(self.consensus_test_tensor_dataset, batch_size=int(self.config['consensus_batchsize']), shuffle=True)
 
     def make_consensus_model(self):
         """
