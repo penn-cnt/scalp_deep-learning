@@ -827,12 +827,12 @@ class tuning_manager:
 
             # Define the combination configuration block
             self.config[f"combined_nlayer"]       = tune.randint(1, 4)
-            self.config[f"combined_hsize_1"]      = tune.quniform(0.05, 1.5, .05)
-            self.config[f"combined_hsize_2"]      = tune.quniform(0.05, 1.5, .05)
-            self.config[f"combined_hsize_3"]      = tune.quniform(0.05, 1.5, .05)
-            self.config[f"combined_drop_1"]       = tune.quniform(0.05, .5, .05)
-            self.config[f"combined_drop_2"]       = tune.quniform(0.05, .5, .05)
-            self.config[f"combined_drop_3"]       = tune.quniform(0.05, .5, .05)
+            self.config[f"combined_hsize_1"]      = tune.quniform(0.05, 1.5, .01)
+            self.config[f"combined_hsize_2"]      = tune.quniform(0.05, 1.5, .01)
+            self.config[f"combined_hsize_3"]      = tune.quniform(0.05, 1.5, .01)
+            self.config[f"combined_drop_1"]       = tune.quniform(0.05, .5, .01)
+            self.config[f"combined_drop_2"]       = tune.quniform(0.05, .5, .01)
+            self.config[f"combined_drop_3"]       = tune.quniform(0.05, .5, .01)
             self.config[f"combined_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
             self.config[f"combined_normaliation"] = tune.choice(['batch1d','pass'])
             self.config[f"combined_norm_order"]   = tune.choice(['before','after'])
@@ -841,74 +841,25 @@ class tuning_manager:
             self.config["combination_nepoch"] = tune.randint(1,101)
             self.config["consensus_nepoch"]   = tune.randint(1,101)
             self.config['lr']                 = tune.loguniform(1e-5,1e-3)
-            self.config['batchsize']          = tune.choice([64,128,256,512])
+            self.config['batchsize']          = tune.quniform(32, 1024, 32)
             self.config['weight']             = tune.uniform(.1,20)
 
             # Consensus configuration
-            self.config["consensus_batchsize"] = tune.choice([16,32,64,128])
+            self.config["consensus_batchsize"] = tune.quniform(8, 256, 8)
             self.config[f"consensus_nlayer"]   = tune.randint(1, 4)
-            self.config[f"consensus_hsize_1"]  = tune.quniform(0.05, 1.5, .05)
-            self.config[f"consensus_hsize_2"]  = tune.quniform(0.05, 1.5, .05)
-            self.config[f"consensus_hsize_3"]  = tune.quniform(0.05, 1.5, .05)
-            self.config[f"consensus_drop_1"]   = tune.quniform(0.05, .5, .05)
-            self.config[f"consensus_drop_2"]   = tune.quniform(0.05, .5, .05)
-            self.config[f"consensus_drop_3"]   = tune.quniform(0.05, .5, .05)
+            self.config[f"consensus_hsize_1"]  = tune.quniform(0.05, 1.5, .01)
+            self.config[f"consensus_hsize_2"]  = tune.quniform(0.05, 1.5, .01)
+            self.config[f"consensus_hsize_3"]  = tune.quniform(0.05, 1.5, .01)
+            self.config[f"consensus_drop_1"]   = tune.quniform(0.05, .5, .01)
+            self.config[f"consensus_drop_2"]   = tune.quniform(0.05, .5, .01)
+            self.config[f"consensus_drop_3"]   = tune.quniform(0.05, .5, .01)
             self.config['consensus_theshold_method']             = tune.choice(['posterior','quantile'])
-            self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.05, 1.0, .05)
-            self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.05, 1.0, .05)
-            self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.05, 1.0, .05)
+            self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.01, 1.0, .01)
+            self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.01, 1.0, .01)
+            self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.01, 1.0, .01)
             self.config[f"consensus_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
             self.config[f"consensus_normaliation"] = tune.choice(['batch1d','pass'])
             self.config[f"consensus_norm_order"]   = tune.choice(['before','after'])
-
-        elif granularity=='deep':
-
-            # Define the frequency block settings
-            self.config[f"frequency_nlayer"]  = tune.choice([1,2])
-            self.config[f"frequency_hsize_1"] = tune.quniform(0.25, 1.25, .025)
-            self.config[f"frequency_hsize_2"] = tune.quniform(0.05, 1.25, .025)
-            self.config[f"frequency_drop_1"] = tune.quniform(0.0, .2, .025)
-            self.config[f"frequency_drop_2"] = tune.quniform(0.0, .2, .025)
-
-            # Define the time block settings
-            self.config[f"time_nlayer"]  = tune.choice([1])
-            self.config[f"time_hsize_1"] = tune.quniform(0.05, 0.75, .025)
-            self.config[f"time_drop_1"] = tune.quniform(0.0, .2, .025)
-
-            # Define the categorical block settings
-            self.config[f"categorical_nlayer"]  = tune.choice([3])
-            self.config[f"categorical_hsize_1"] = tune.quniform(0.05, 0.75, .025)
-            self.config[f"categorical_hsize_2"] = tune.quniform(0.5, 1.25, .025)
-            self.config[f"categorical_hsize_3"] = tune.quniform(0.5, 1.25, .025)
-            self.config[f"categorical_drop_1"] = tune.quniform(0.3, .6, .025)
-            self.config[f"categorical_drop_2"] = tune.quniform(0.0, .3, .025)
-            self.config[f"categorical_drop_3"] = tune.quniform(0.3, .6, .025)
-
-            # Define the combination configuration block
-            self.config[f"combined_nlayer"]  = tune.choice([1,2])
-            self.config[f"combined_hsize_1"] = tune.quniform(0.75, 1.5, .025)
-            self.config[f"combined_hsize_2"] = tune.quniform(0.5, 1.25, .025)
-            self.config[f"combined_drop_1"]  = tune.quniform(0.0, .3, .025)
-            self.config[f"combined_drop_2"]  = tune.quniform(0.2, .5, .025)
-
-            # Global fitting criteria selection
-            self.config['lr']         = tune.loguniform(1e-4,1e-3)
-            self.config['batchsize']  = tune.choice([256,512,768])
-            self.config['normorder']  = tune.choice(['after'])
-            self.config['activation'] = tune.choice(['relu'])
-            self.config['weight']     = tune.uniform(.1,10)
-
-            # Consensus configuration
-            self.config["consensus_batchsize"] = tune.choice([16,24,32,40,48,56,64])
-            self.config[f"consensus_nlayer"]   = tune.choice([2])
-            self.config[f"consensus_hsize_1"]  = tune.quniform(0.25, 1.25, .025)
-            self.config[f"consensus_hsize_2"]  = tune.quniform(0.25, 1.25, .025)
-            self.config[f"consensus_drop_1"]   = tune.quniform(0.2, .5, .025)
-            self.config[f"consensus_drop_2"]   = tune.quniform(0.0, .3, .025)
-            self.config['consensus_theshold_method']             = tune.choice(['quantile'])
-            self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.5, 1.0, .025)
-            self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.5, 1.0, .025)
-            self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.5, 1.0, .025)
 
     def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
