@@ -889,8 +889,8 @@ class tuning_manager:
         except ValueError as e:
 
             # Check for the most common error, mismatch of paramter space and guess space
-            evaluate_keys = self.hotconfig.keys()
-            raykeys       = self.config.keys()
+            evaluate_keys = np.array(list(self.hotconfig.keys()))
+            raykeys       = np.array(list(self.config.keys()))
 
             # Find any excluded keys
             print(np.setdiff1d(evaluate_keys,raykeys))
