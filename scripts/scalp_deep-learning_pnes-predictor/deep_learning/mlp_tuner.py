@@ -822,7 +822,7 @@ class tuning_manager:
 
                 # Set the activation, normalization, and layer orders
                 self.config[f"{iblock}_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
-                self.config[f"{iblock}_normaliation"] = tune.choice(['batch1d','pass'])
+                self.config[f"{iblock}_normalization"] = tune.choice(['batch1d','pass'])
                 self.config[f"{iblock}_norm_order"]   = tune.choice(['before','after'])
 
             # Define the combination configuration block
@@ -834,7 +834,7 @@ class tuning_manager:
             self.config[f"combined_drop_2"]       = tune.quniform(0.05, .5, .01)
             self.config[f"combined_drop_3"]       = tune.quniform(0.05, .5, .01)
             self.config[f"combined_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
-            self.config[f"combined_normaliation"] = tune.choice(['batch1d','pass'])
+            self.config[f"combined_normalization"] = tune.choice(['batch1d','pass'])
             self.config[f"combined_norm_order"]   = tune.choice(['before','after'])
 
             # Global fitting criteria selection
@@ -858,7 +858,7 @@ class tuning_manager:
             self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.01, 1.0, .01)
             self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.01, 1.0, .01)
             self.config[f"consensus_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
-            self.config[f"consensus_normaliation"] = tune.choice(['batch1d','pass'])
+            self.config[f"consensus_normalization"] = tune.choice(['batch1d','pass'])
             self.config[f"consensus_norm_order"]   = tune.choice(['before','after'])
 
     def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
