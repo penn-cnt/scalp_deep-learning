@@ -887,4 +887,11 @@ class tuning_manager:
             result_DF = results.get_dataframe()
             result_DF.to_csv(self.outfile)
         except ValueError as e:
-            print("Ruhroh")
+
+            # Check for the most common error, mismatch of paramter space and guess space
+            evaluate_keys = self.hotconfig.keys()
+            raykeys       = self.config.keys()
+
+            # Find any excluded keys
+            print(np.setdiff1d(evaluate_keys,raykeys))
+            print(np.setdiff1d(raykeys,evaluate_keys))
