@@ -59,9 +59,7 @@ if __name__ == '__main__':
 
     # Initialize the ray tuning class
     if args.checkpoint == None:
-        #config = json.load(open("configs/shallow_config.json",'r'))
-        #config = json.load(open("configs/deep_config.json",'r'))
-        config = json.load(open("configs/deep_tuned_config.json",'r'))
+        config = json.load(open("configs/base_config.json",'r'))
     else:
         config = torch.load(args.checkpoint)['config']
 

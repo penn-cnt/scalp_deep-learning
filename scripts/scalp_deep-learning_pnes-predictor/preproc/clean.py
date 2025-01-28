@@ -342,7 +342,7 @@ class vector_manager:
         self.train_raw = self.DF.iloc[train_inds]
         self.test_raw  = self.DF.iloc[test_inds]
 
-    def outlier_rejection(self,contamination_factor=0.01):
+    def outlier_rejection(self,contamination_factor=0.05):
         """
         Apply outlier rejection to the dataset
         """

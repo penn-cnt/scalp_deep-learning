@@ -18,7 +18,7 @@ from ray.train import Checkpoint,RunConfig
 from ray.tune.search.hyperopt import HyperOptSearch
 
 class SubNetwork(nn.Module):
-    def __init__(self, input_size, hidden_sizes, dropout_rates, activation, normorder, normtype):
+    def __init__(self, input_size, hidden_sizes, dropout_rates, normorder='first', activation='relu'):
         super(SubNetwork, self).__init__()
 
         if len(hidden_sizes) > 0:
@@ -39,26 +39,15 @@ class SubNetwork(nn.Module):
             self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
 
             # Define the possible activation layers
-            if activation == 'relu':
-                self.activation_layer = nn.ReLU()
-            elif activation == 'tanh':
-                self.activation_layer = nn.Tanh()
-            elif activation == 'sigmoid':
-                self.activation_layer = nn.Sigmoid()
-            elif activation == 'softmax':
-                self.activation_layer = nn.Softmax()
-            elif activation == 'lrelu':
-                self.activation_layer = nn.LeakyReLU()
-            elif activation == 'pass':
-                self.activation_layer = nn.Identity()
+            self.relu    = nn.ReLU()
+            self.tanh    = nn.Tanh()
 
-            # Define the possible normalization layers
+            # Handle selection of activation layer
             self.normorder = normorder
-            if normtype == 'batch1d':
-                self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
-            elif normtype == 'pass':
-                self.bn = nn.ModuleList([nn.Identity(isize) for isize in hidden_sizes])
-
+            if activation == 'relu':
+                self.activation_layer = self.relu
+            elif activation == 'tanh':
+                self.activation_layer = self.tanh
         else:
             self.passflag = True
     
@@ -82,7 +71,7 @@ class SubNetwork(nn.Module):
             return x
 
 class CombinedNetwork(nn.Module):
-    def __init__(self, input_dict, hidden_dict, dropout_dict, activation_dict, norm_dict, combination_dict, output_size):
+    def __init__(self, input_dict, hidden_dict, dropout_dict, combination_dict, output_size, normorder='first',activation='relu'):
         super(CombinedNetwork, self).__init__()
 
         # Loop over the training blocks to make the subnetwork architecture
@@ -97,7 +86,7 @@ class CombinedNetwork(nn.Module):
                 input_combined_size += input_dict[iblock]
 
             # Make the subnetwork object
-            self.subnets.append(SubNetwork(input_dict[iblock], hidden_dict[iblock], dropout_dict[iblock], activation_dict[iblock], norm_dict[iblock]['order'], norm_dict[iblock]['type']))
+            self.subnets.append(SubNetwork(input_dict[iblock], hidden_dict[iblock], dropout_dict[iblock]))
 
         # Make the list of linear transformers based on number of layers
         hidden_sizes    = combination_dict['hidden']
@@ -114,31 +103,18 @@ class CombinedNetwork(nn.Module):
 
         # Remaining combination layersFinal layers after combining the sub-networks
         output_hsize     = hidden_sizes[-1]
+        self.relu        = nn.ReLU()
+        self.tanh        = nn.Tanh()
         self.fc_output   = nn.Linear(output_hsize, output_size)
+        self.softmax     = nn.Softmax(dim=1)
+        self.sigmoid     = nn.Sigmoid()
 
         # Handle variable normalization order and activation layer
-        activation = combination_dict['activation']
+        self.normorder = normorder
         if activation == 'relu':
-            self.activation_layer = nn.ReLU()
+            self.activation_layer = self.relu
         elif activation == 'tanh':
-            self.activation_layer = nn.Tanh()
-        elif activation == 'sigmoid':
-            self.activation_layer = nn.Sigmoid()
-        elif activation == 'softmax':
-            self.activation_layer = nn.Softmax()
-        elif activation == 'lrelu':
-            self.activation_layer = nn.LeakyReLU()
-        elif activation == 'pass':
-            self.activation_layer = nn.Identity()
-        self.out_activation = nn.Sigmoid()
-
-        # Define the possible normalization layers
-        self.normorder = combination_dict['norm_order']
-        normtype       = combination_dict['normalization']
-        if normtype == 'batch1d':
-            self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
-        elif normtype == 'pass':
-            self.bn = nn.ModuleList([nn.Identity(isize) for isize in hidden_sizes])
+            self.activation_layer = self.tanh
 
     def forward(self, *input_vectors):
 
@@ -170,12 +146,12 @@ class CombinedNetwork(nn.Module):
         
         # Final logits to prob transform
         output = self.fc_output(combined)
-        output = self.out_activation(output)
+        output = self.sigmoid(output)
 
         return output
 
 class ConsensusNetwork(nn.Module):
-    def __init__(self, consensus_dict, input_size, output_size):
+    def __init__(self, consensus_dict, input_size, output_size, normorder, activation):
         super(ConsensusNetwork, self).__init__()
 
         # Extract from input info
@@ -193,29 +169,22 @@ class ConsensusNetwork(nn.Module):
         # Make the list of dropouts based on number of layers
         self.dropout = nn.ModuleList([nn.Dropout(p=dropout_rates[ii]) for ii in range(len(hidden_sizes))])
 
-        # Define the possible activation layers
-        activation = consensus_dict['activation']
-        if activation == 'relu':
-            self.activation_layer = nn.ReLU()
-        elif activation == 'tanh':
-            self.activation_layer = nn.Tanh()
-        elif activation == 'sigmoid':
-            self.activation_layer = nn.Sigmoid()
-        elif activation == 'softmax':
-            self.activation_layer = nn.Softmax()
-        elif activation == 'lrelu':
-            self.activation_layer = nn.LeakyReLU()
-        elif activation == 'pass':
-            self.activation_layer = nn.Identity()
-        self.out_activation = nn.Sigmoid()
+        # Define the normalization layers
+        self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
 
-        # Define the possible normalization layers
-        self.normorder = consensus_dict['norm_order']
-        normtype       = consensus_dict['normalization']
-        if normtype == 'batch1d':
-            self.bn = nn.ModuleList([nn.BatchNorm1d(isize) for isize in hidden_sizes])
-        elif normtype == 'pass':
-            self.bn = nn.ModuleList([nn.Identity(isize) for isize in hidden_sizes])
+        # Define the possible activation layers
+        self.relu    = nn.ReLU()
+        self.tanh    = nn.Tanh()
+
+        # Output layer
+        self.sigmoid = nn.Sigmoid()
+
+        # Handle selection of activation layer
+        self.normorder = normorder
+        if activation == 'relu':
+            self.activation_layer = self.relu
+        elif activation == 'tanh':
+            self.activation_layer = self.tanh
 
     def forward(self, x):
 
@@ -233,7 +202,7 @@ class ConsensusNetwork(nn.Module):
 
         # Final output layer
         x = self.fc_output(x)
-        x = self.out_activation(x)
+        x = self.sigmoid(x)
 
         return x
 
@@ -258,8 +227,6 @@ class train_pnes:
         self.input_dict          = {}
         self.hidden_dict         = {}
         self.dropout_dict        = {}
-        self.activation_dict     = {}
-        self.norm_dict           = {}
         self.subnetwork_size_out = 0
         self.comb_loss           = []
         self.con_loss            = []
@@ -325,6 +292,7 @@ class train_pnes:
         pickle.dump((self.train_transformed_w_probs,self.test_transformed_w_probs),open(outpath,"wb"))
         exit()
                     
+
     def get_uids(self):
 
         # Make the UID tensor for the final consensus score
@@ -409,13 +377,9 @@ class train_pnes:
                     final_layer_size = len(cols)
 
                 # Store the info about the hidden layer network
-                self.hidden_dict[iblock]        = hsizes
-                self.dropout_dict[iblock]       = dsizes
-                self.activation_dict[iblock]    = self.config[f"{iblock}_activation"]
-                self.norm_dict[iblock]          = {}
-                self.norm_dict[iblock]['type']  = self.config[f"{iblock}_normalization"]
-                self.norm_dict[iblock]['order'] = self.config[f"{iblock}_norm_order"]
-                self.subnetwork_size_out       += final_layer_size
+                self.hidden_dict[iblock]  = hsizes
+                self.dropout_dict[iblock] = dsizes
+                self.subnetwork_size_out += final_layer_size
 
         # Define the combined network
         nlayer = self.config['combined_nlayer']
@@ -439,15 +403,14 @@ class train_pnes:
             # Store the info about the hidden layer network
             hsizes.append(hidden_size)
             dsizes.append(drop_size)
-        self.combination_dict = {'hidden':hsizes,'dropout':dsizes,'activation':self.config['combined_activation'],
-                                 'normalization':self.config['combined_normalization'],'norm_order':self.config['combined_norm_order']}
+        self.combination_dict = {'hidden':hsizes,'dropout':dsizes}
 
     def make_combine_model(self):
         """
         Create the model object pointers.
         """
 
-        self.combine_model = CombinedNetwork(self.input_dict,self.hidden_dict,self.dropout_dict,self.activation_dict,self.norm_dict,self.combination_dict,self.output_size)
+        self.combine_model = CombinedNetwork(self.input_dict,self.hidden_dict,self.dropout_dict,self.combination_dict,self.output_size,normorder=self.config['normorder'], activation=self.config['activation'])
  
     def make_combine_criterion(self):
         """
@@ -493,7 +456,7 @@ class train_pnes:
             self.combine_optimizer.load_state_dict(checkpoint['combine_optimizer'])
         else:
             # Train the combination model
-            for epoch in tqdm(range(self.config["combination_nepoch"]), total=self.config["combination_nepoch"], disable=self.raytuning):
+            for epoch in tqdm(range(self.nepoch_clip), total=self.nepoch_clip, disable=self.raytuning):
                 self.combine_model.train()
                 loss_list = []
                 for ibatch in self.train_loader:
@@ -649,8 +612,7 @@ class train_pnes:
             # Store the info about the hidden layer network
             hsizes.append(hidden_size)
             dsizes.append(drop_size)
-        self.consensus_dict = {'hidden':hsizes,'dropout':dsizes,'activation':self.config['consensus_activation'],
-                               'normalization':self.config['consensus_normalization'],'norm_order':self.config['consensus_norm_order']}
+        self.consensus_dict = {'hidden':hsizes,'dropout':dsizes}
 
     def create_consensus_datasets(self):
 
@@ -668,7 +630,7 @@ class train_pnes:
         """
 
         input_size           = self.training_consensus_tensor.shape[1]
-        self.consensus_model = ConsensusNetwork(self.consensus_dict,input_size,self.output_size)
+        self.consensus_model = ConsensusNetwork(self.consensus_dict,input_size,self.output_size,normorder=self.config['normorder'], activation=self.config['activation'])
  
     def make_consensus_criterion(self):
         """
@@ -693,7 +655,7 @@ class train_pnes:
             self.consensus_optimizer.load_state_dict(checkpoint['consensus_optimizer'])
         else:
             # Train the combination model
-            for epoch in tqdm(range(self.config['consensus_nepoch']), total=self.config['consensus_nepoch'], disable=self.raytuning):
+            for epoch in tqdm(range(self.nepoch_patient), total=self.nepoch_patient, disable=self.raytuning):
                 self.consensus_model.train()
                 loss_list = []
                 for ibatch in self.consensus_train_loader:
@@ -791,7 +753,7 @@ class tuning_manager:
         ray.init(num_cpus=ncpu)
         self.resources = {"cpu": 1,"gpu": 0}        
 
-    def make_tuning_config_mlp(self,granularity='shallow'):
+    def make_tuning_config_mlp(self,granularity='deep'):
         """
         Define how the parameter space is explored using Ray Tuning.
         """
@@ -811,38 +773,30 @@ class tuning_manager:
 
                 # Hidden size selection methods. Currently limiting the max number of layers to three
                 self.config[f"{iblock}_nlayer"]  = tune.randint(0, 4)
-                self.config[f"{iblock}_hsize_1"] = tune.quniform(0.05, 1.5, .01)
-                self.config[f"{iblock}_hsize_2"] = tune.quniform(0.05, 1.5, .01)
-                self.config[f"{iblock}_hsize_3"] = tune.quniform(0.05, 1.5, .01)
+                self.config[f"{iblock}_hsize_1"] = tune.quniform(0.05, 1.5, .05)
+                self.config[f"{iblock}_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+                self.config[f"{iblock}_hsize_3"] = tune.quniform(0.05, 1.5, .05)
 
                 # Drouput fraction selection methods. Currently limiting the max number of layers to three (pairs to the hidden size networks)
-                self.config[f"{iblock}_drop_1"] = tune.quniform(0.0, 0.5, .01)
-                self.config[f"{iblock}_drop_2"] = tune.quniform(0.0, 0.5, .01)
-                self.config[f"{iblock}_drop_3"] = tune.quniform(0.0, 0.5, .01)
-
-                # Set the activation, normalization, and layer orders
-                self.config[f"{iblock}_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
-                self.config[f"{iblock}_normaliation"] = tune.choice(['batch1d','pass'])
-                self.config[f"{iblock}_norm_order"]   = tune.choice(['before','after'])
+                self.config[f"{iblock}_drop_1"] = tune.quniform(0.05, .5, .05)
+                self.config[f"{iblock}_drop_2"] = tune.quniform(0.05, .5, .05)
+                self.config[f"{iblock}_drop_3"] = tune.quniform(0.05, .5, .05)
 
             # Define the combination configuration block
-            self.config[f"combined_nlayer"]       = tune.randint(1, 4)
-            self.config[f"combined_hsize_1"]      = tune.quniform(0.05, 1.5, .05)
-            self.config[f"combined_hsize_2"]      = tune.quniform(0.05, 1.5, .05)
-            self.config[f"combined_hsize_3"]      = tune.quniform(0.05, 1.5, .05)
-            self.config[f"combined_drop_1"]       = tune.quniform(0.05, .5, .05)
-            self.config[f"combined_drop_2"]       = tune.quniform(0.05, .5, .05)
-            self.config[f"combined_drop_3"]       = tune.quniform(0.05, .5, .05)
-            self.config[f"combined_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
-            self.config[f"combined_normaliation"] = tune.choice(['batch1d','pass'])
-            self.config[f"combined_norm_order"]   = tune.choice(['before','after'])
+            self.config[f"combined_nlayer"]  = tune.randint(1, 4)
+            self.config[f"combined_hsize_1"] = tune.quniform(0.05, 1.5, .05)
+            self.config[f"combined_hsize_2"] = tune.quniform(0.05, 1.5, .05)
+            self.config[f"combined_hsize_3"] = tune.quniform(0.05, 1.5, .05)
+            self.config[f"combined_drop_1"]  = tune.quniform(0.05, .5, .05)
+            self.config[f"combined_drop_2"]  = tune.quniform(0.05, .5, .05)
+            self.config[f"combined_drop_3"]  = tune.quniform(0.05, .5, .05)
 
             # Global fitting criteria selection
-            self.config["combination_nepoch"] = tune.randint(1,101)
-            self.config["consensus_nepoch"]   = tune.randint(1,101)
-            self.config['lr']                 = tune.loguniform(1e-5,1e-3)
-            self.config['batchsize']          = tune.choice([64,128,256,512])
-            self.config['weight']             = tune.uniform(.1,20)
+            self.config['lr']         = tune.loguniform(1e-5,1e-3)
+            self.config['batchsize']  = tune.choice([64,128,256,512])
+            self.config['normorder']  = tune.choice(['before','after'])
+            self.config['activation'] = tune.choice(['relu','tanh'])
+            self.config['weight']     = tune.loguniform(1,1e5)
 
             # Consensus configuration
             self.config["consensus_batchsize"] = tune.choice([16,32,64,128])
@@ -857,10 +811,6 @@ class tuning_manager:
             self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.05, 1.0, .05)
             self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.05, 1.0, .05)
             self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.05, 1.0, .05)
-            self.config[f"consensus_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
-            self.config[f"consensus_normaliation"] = tune.choice(['batch1d','pass'])
-            self.config[f"consensus_norm_order"]   = tune.choice(['before','after'])
-
         elif granularity=='deep':
 
             # Define the frequency block settings
@@ -913,7 +863,47 @@ class tuning_manager:
     def run_ray_tune_mlp(self,coldstart=False,nlayer_guess=1,h1guess=1.0,h2guess=1.0,h3guess=1.0,drop1guess=0.4,drop2guess=0.4,drop3guess=0.2,batchguess=64,lrguess=5e-5):
         
         # Define the starting parameters for the global parameters
-        current_best_params = [self.hotconfig]
+        if coldstart:
+            current_best_params = [{'lr':lrguess,
+                                    'batchsize':batchguess,
+                                    'normorder':'before',
+                                    'activation': "relu",
+                                    'weight': 1000}]
+
+            # Add in the model block specific parameters
+            for iblock in self.subnetwork_list:
+                current_best_params[0][f"{iblock}_nlayer"]  = nlayer_guess
+                current_best_params[0][f"{iblock}_hsize_1"] = h1guess
+                current_best_params[0][f"{iblock}_hsize_2"] = h2guess
+                current_best_params[0][f"{iblock}_hsize_3"] = h3guess
+                current_best_params[0][f"{iblock}_drop_1"]  = drop1guess
+                current_best_params[0][f"{iblock}_drop_2"]  = drop2guess
+                current_best_params[0][f"{iblock}_drop_3"]  = drop3guess
+            
+            # Make the combinatorial guess network
+            current_best_params[0][f"combined_nlayer"]  = 1
+            current_best_params[0][f"combined_hsize_1"] = 0.8
+            current_best_params[0][f"combined_hsize_2"] = 0.8
+            current_best_params[0][f"combined_hsize_3"] = 0.8
+            current_best_params[0][f"combined_drop_1"]  = 0.1
+            current_best_params[0][f"combined_drop_2"]  = 0.1
+            current_best_params[0][f"combined_drop_3"]  = 0.1
+
+            # Make the consensus network
+            current_best_params[0][f"consensus_batchsize"]  = 32
+            current_best_params[0][f"consensus_nlayer"]     = 1
+            current_best_params[0][f"consensus_hsize_1"]    = 0.8
+            current_best_params[0][f"consensus_hsize_2"]    = 0.8
+            current_best_params[0][f"consensus_hsize_3"]    = 0.8
+            current_best_params[0][f"consensus_drop_1"]     = 0.1
+            current_best_params[0][f"consensus_drop_2"]     = 0.1
+            current_best_params[0][f"consensus_drop_3"]     = 0.1
+            current_best_params[0][f"consensus_theshold_method"] = 'posterior'
+            current_best_params[0][f"consensus_theshold_yasa_prediction_00"] = 0.9
+            current_best_params[0][f"consensus_theshold_yasa_prediction_01"] = 0.9
+            current_best_params[0][f"consensus_theshold_yasa_prediction_02"] = 0.9
+        else:
+            current_best_params = [self.hotconfig]
 
         # Define the search parameters
         hyperopt_search = HyperOptSearch(metric="Test_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
