@@ -880,8 +880,11 @@ class tuning_manager:
                                                 failure_config=train.FailureConfig(fail_fast=False)))
 
         # Get the hyper parameter search results
-        results = tuner.fit()
+        try:
+            results = tuner.fit()
 
-        # Save the tuned results
-        result_DF = results.get_dataframe()
-        result_DF.to_csv(self.outfile)
+            # Save the tuned results
+            result_DF = results.get_dataframe()
+            result_DF.to_csv(self.outfile)
+        except ValueError as e:
+            print("Ruhroh")

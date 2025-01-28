@@ -1,6 +1,7 @@
 {
     "lr": 0.0008712789690647122, 
     "batchsize": 256,
+    "weight": 1.3708866252744654, 
     "combination_nepoch": 10,
     "consensus_nepoch": 10,
     "frequency_nlayer": 1, 
@@ -43,7 +44,6 @@
     "combined_activation": "relu", 
     "combined_normalization": "batch1d",
     "combined_norm_order": "after",
-    "weight": 1.3708866252744654, 
     "consensus_batchsize": 64, 
     "consensus_nlayer": 2, 
     "consensus_hsize_1": 0.7250000000000001, 
