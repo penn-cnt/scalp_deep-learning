@@ -6,7 +6,6 @@ from sys import exit
 # Local imports
 from preproc.clean import *
 from deep_learning.mlp_tuner import *
-from nntest.basic_nn import train_pnes as TP
 
 if __name__ == '__main__':
     
