@@ -201,54 +201,6 @@ class pivot_manager:
 
         self.DF.drop(['t_end', 't_window','target'],axis=1,inplace=True)
 
-    def make_windowed(DF,window_size=7):
-
-        # Make an output object we can append to and pass to the user
-        outDF = []
-
-        # Ensure the dataframe is structured correctly
-        DF = DF.sort_values(by=['uid','file','t_start']).reset_index(drop=True)
-
-        # Find the indices for each unique file and user
-        uid_file_inds      = DF.groupby(['uid','file']).indices
-        uid_file_inds_keys = list(uid_file_inds.keys())
-
-        # Rename the output columns
-        attention_columns = [f'{val}_00' for val in DF.columns]
-        for idx in range(1,window_size,1):
-            attention_columns.extend([f'{val}_{idx:02d}' for val in DF.columns])
-
-        # Loop over the group index keys
-        for group_inds in tqdm(uid_file_inds_keys,total=len(uid_file_inds_keys),desc='Making attention datafrme'):
-
-            # Get the group inds
-            ginds = uid_file_inds[group_inds]
-
-            # Only work with data that has a large enough time horizon for the window
-            if ginds.size > window_size:
-
-                # Get the windowed indices
-                winds = np.lib.stride_tricks.sliding_window_view(ginds,window_size)
-                
-                # Work through the slices to make a new attention dataframe
-                for irow in winds:
-
-                    # get the first slice
-                    attention_slice = DF.loc[irow[0]].values
-
-                    for idx,ii in enumerate(irow[1:]):
-                        
-                        # Grab the current slice
-                        iDF = DF.loc[ii].values
-
-                        # Join the dataframe slices
-                        attention_slice = np.concatenate((attention_slice,iDF))
-                    
-                    # Append to output object
-                    outDF.append(attention_slice)
-
-        return PD.DataFrame(outDF,columns=attention_columns)
-
 class vector_manager:
     """
     Class for making the actual input vectors to whatever DL model we choose to use.
