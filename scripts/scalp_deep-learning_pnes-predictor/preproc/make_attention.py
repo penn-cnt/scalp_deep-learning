@@ -63,7 +63,7 @@ def make_windowed(DF,outpath,window_size=9):
     refDF = PD.DataFrame(outref,columns=blacklist)
     outDF = PD.concat((refDF,outDF),axis=1,ignore_index=True)
     outDF.columns = outcols
-    outDF.to_csv(outpath)
+    outDF.to_pickle(outpath)
 
 if __name__ == '__main__':
 
