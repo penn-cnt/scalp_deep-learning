@@ -551,6 +551,25 @@ class train_pnes:
 
     def clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
 
+        # Hardcoded logic for different consensus types
+        consensus_type = 'weighted_sleep_stage'
+
+        # Loop over each patient to make the consensus layer
+        patient_features  = []
+        patient_targets   = []
+        for unique_uid in uid_indices.keys():
+
+            # Break up the user ids and get the indices we need to subslice
+            unique_uid_indices = uid_indices[unique_uid]
+            categorical_by_uid = categorcial_block[unique_uid_indices]
+            prediction_by_uid  = clip_predictions[unique_uid_indices]
+
+            print(categorical_by_uid)
+            print(prediction_by_uid)
+            exit()
+
+    def backup_clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
+
         def posterior_selection(prior_predictions,threshold):
             # Find the most predictive entires
             diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
