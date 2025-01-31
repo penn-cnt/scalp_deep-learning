@@ -23,7 +23,7 @@ def make_windowed(DF,window_size=9):
 
     # Find the indices for each unique file and user
     uid_file_inds      = DF.groupby(['uid','file']).indices
-    uid_file_inds_keys = list(uid_file_inds.keys())[:2]
+    uid_file_inds_keys = list(uid_file_inds.keys())
 
     # Rename the output columns
     attention_columns = []
