@@ -564,8 +564,7 @@ class train_pnes:
             categorical_by_uid = categorcial_block[unique_uid_indices]
             prediction_by_uid  = clip_predictions[unique_uid_indices]
 
-            print(categorical_by_uid)
-            print(prediction_by_uid)
+            print(categorical_by_uid.shape)
             exit()
 
     def backup_clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
