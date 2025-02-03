@@ -584,6 +584,7 @@ class train_pnes:
             if encoding_type == 'attention':
                 print(categorical_by_uid.shape)
                 print(self.model_block['categorical'])
+                print(len(self.model_block['categorical']))
                 exit()
 
             """
