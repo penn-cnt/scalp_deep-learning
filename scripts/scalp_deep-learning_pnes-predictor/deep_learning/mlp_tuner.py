@@ -583,12 +583,15 @@ class train_pnes:
 
             # Apply logic based on the consensus type
             if encoding_type == 'attention':
-                mid_ind                     = n_attention//2
-                centered_categorical_labels = []
+                mid_ind                      = n_attention//2
+                centered_categorical_indices = []
                 for ilabel in self.model_block['categorical']:
                     if int(ilabel.split('_')[-1])==mid_ind:
-                        centered_categorical_labels.append(ilabel)
-                print(centered_categorical_labels)                
+                        centered_categorical_indices.append(True)
+                    else:
+                        centered_categorical_indices.append(False)
+                print(centered_categorical_indices)
+                exit()
 
             """
             if consensus_type == 'weighted_sleep_stage':
