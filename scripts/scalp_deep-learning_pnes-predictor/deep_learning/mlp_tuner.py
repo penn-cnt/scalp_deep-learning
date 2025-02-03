@@ -577,8 +577,12 @@ class train_pnes:
 
             # Break up the user ids and get the indices we need to subslice
             unique_uid_indices = uid_indices[unique_uid]
-            categorical_by_uid = categorcial_block[unique_uid_indices,:]
-            prediction_by_uid  = clip_predictions[unique_uid_indices,:]
+            categorical_by_uid = categorcial_block[unique_uid_indices]
+            prediction_by_uid  = clip_predictions[unique_uid_indices]
+
+            print(unique_uid_indices.shape)
+            print(clip_predictions.shape)
+            exit()
 
             # Apply logic based on the consensus type
             if consensus_type == 'weighted_sleep_stage':
