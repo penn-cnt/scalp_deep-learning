@@ -580,8 +580,9 @@ class train_pnes:
             categorical_by_uid = categorcial_block[unique_uid_indices]
             prediction_by_uid  = clip_predictions[unique_uid_indices]
 
-            print(unique_uid_indices.shape)
             print(clip_predictions.shape)
+            print(unique_uid_indices.shape)
+            print(prediction_by_uid.shape)
             exit()
 
             # Apply logic based on the consensus type
