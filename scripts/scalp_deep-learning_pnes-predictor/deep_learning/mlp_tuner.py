@@ -551,7 +551,26 @@ class train_pnes:
 
     def clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
 
+        def posterior_selection(prior_predictions,threshold):
+            # Find the most predictive entires
+            diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
+            diff_inds = (diffs>threshold).squeeze()
+
+            # Get the posterior distribution
+            prior_predictions_log       = prior_predictions[diff_inds].log()
+            prior_predictions_log_joint = prior_predictions_log.sum(dim=0)
+            log_norm_factor             = torch.logsumexp(prior_predictions_log_joint, dim=0)
+            log_posteriors              = prior_predictions_log_joint - log_norm_factor
+            posterior_predictions       = log_posteriors.exp()
+            return posterior_predictions
+        def quantile(prior_predictions,theshold):
+            return torch.quantile(prior_predictions,q=theshold, dim=0)
+
+        print(clip_predictions.shape)
+        exit()
+
         # Hardcoded logic for different consensus types
+        encoding_type = 'attention'
         consensus_type = 'weighted_sleep_stage'
 
         # Loop over each patient to make the consensus layer
@@ -564,8 +583,17 @@ class train_pnes:
             categorical_by_uid = categorcial_block[unique_uid_indices]
             prediction_by_uid  = clip_predictions[unique_uid_indices]
 
-            print(categorical_by_uid.shape)
-            exit()
+            # Apply logic based on the consensus type
+            if consensus_type == 'weighted_sleep_stage':
+                if encoding_type == 'attention':
+                    middle             = categorical_by_uid.shape[1]//2
+                    categorical_by_uid = categorical_by_uid[:,middle-1:middle+2]
+            elif consensus_type == 'attention':
+                print(prediction_by_uid)
+                print(prediction_by_uid.shape)
+                exit()
+
+
 
     def backup_clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
 
