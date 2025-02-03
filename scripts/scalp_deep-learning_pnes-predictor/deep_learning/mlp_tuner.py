@@ -250,9 +250,6 @@ class train_pnes:
         self.raytuning         = raytuning
         self.checkpoint_path   = checkpoint_path
 
-        print(self.model_block['categorical'])
-        exit()
-
         # Initialize some classwide variables
         self.nepoch_clip         = 20
         self.nepoch_patient      = 20
