@@ -585,7 +585,7 @@ class train_pnes:
             if encoding_type == 'attention':
                 mid_ind                     = n_attention//2
                 centered_categorical_labels = []
-                for ilabel in self.model_blocks['categorical']:
+                for ilabel in self.model_block['categorical']:
                     if int(ilabel.split('_')[-1])==mid_ind:
                         centered_categorical_labels.append(ilabel)
                 print(centered_categorical_labels)                
