@@ -582,8 +582,8 @@ class train_pnes:
 
             # Apply logic based on the consensus type
             if encoding_type == 'attention':
-                print(categorical_by_uid)
-                print(prediction_by_uid)
+                print(categorical_by_uid.shape)
+                print(self.model_block['categorical'])
                 exit()
 
             """
