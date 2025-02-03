@@ -250,6 +250,9 @@ class train_pnes:
         self.raytuning         = raytuning
         self.checkpoint_path   = checkpoint_path
 
+        print(self.model_block['categorical'])
+        exit()
+
         # Initialize some classwide variables
         self.nepoch_clip         = 20
         self.nepoch_patient      = 20
@@ -580,16 +583,17 @@ class train_pnes:
             categorical_by_uid = categorcial_block[unique_uid_indices]
             prediction_by_uid  = clip_predictions[unique_uid_indices]
 
-            print(clip_predictions.shape)
-            print(unique_uid_indices.shape)
-            print(prediction_by_uid.shape)
-            exit()
-
             # Apply logic based on the consensus type
             if consensus_type == 'weighted_sleep_stage':
                 if encoding_type == 'attention':
+                    
+                    # Get the different sleep stages
                     middle             = categorical_by_uid.shape[1]//2
                     categorical_by_uid = categorical_by_uid[:,middle-1:middle+2]
+
+                    print(categorical_by_uid)
+                    exit()
+
             elif consensus_type == 'attention':
                 print(prediction_by_uid)
                 print(prediction_by_uid.shape)
