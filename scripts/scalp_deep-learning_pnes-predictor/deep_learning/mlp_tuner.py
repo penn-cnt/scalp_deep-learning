@@ -566,9 +566,6 @@ class train_pnes:
         def quantile(prior_predictions,theshold):
             return torch.quantile(prior_predictions,q=theshold, dim=0)
 
-        print(clip_predictions.shape)
-        exit()
-
         # Hardcoded logic for different consensus types
         encoding_type = 'attention'
         consensus_type = 'weighted_sleep_stage'
@@ -580,8 +577,8 @@ class train_pnes:
 
             # Break up the user ids and get the indices we need to subslice
             unique_uid_indices = uid_indices[unique_uid]
-            categorical_by_uid = categorcial_block[unique_uid_indices]
-            prediction_by_uid  = clip_predictions[unique_uid_indices]
+            categorical_by_uid = categorcial_block[unique_uid_indices,:]
+            prediction_by_uid  = clip_predictions[unique_uid_indices,:]
 
             # Apply logic based on the consensus type
             if consensus_type == 'weighted_sleep_stage':
