@@ -567,8 +567,9 @@ class train_pnes:
             return torch.quantile(prior_predictions,q=theshold, dim=0)
 
         # Hardcoded logic for different consensus types
-        encoding_type = 'attention'
+        encoding_type  = 'attention'
         consensus_type = 'weighted_sleep_stage'
+        n_attention    = 9
 
         # Loop over each patient to make the consensus layer
         patient_features  = []
@@ -582,10 +583,12 @@ class train_pnes:
 
             # Apply logic based on the consensus type
             if encoding_type == 'attention':
-                print(categorical_by_uid.shape)
-                print(self.model_block['categorical'])
-                print(len(self.model_block['categorical']))
-                exit()
+                mid_ind                     = n_attention//2
+                centered_categorical_labels = []
+                for ilabel in self.model_blocks['categorical']:
+                    if int(ilabel.split('_')[-1])==mid_ind:
+                        centered_categorical_labels.append(ilabel)
+                print(centered_categorical_labels)                
 
             """
             if consensus_type == 'weighted_sleep_stage':
