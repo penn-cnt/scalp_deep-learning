@@ -261,10 +261,22 @@ class clip_to_consensus:
         """
         No weighting of the probabilities
         """
+
+        # Create the weighting list for train and test
+        train_inds_by_uid = []
+        test_inds_by_uid  = []
+
+        # Populate unweighted train index list
         for uid_key in self.uid_train_indices.keys():
-            uid_indices = self.uid_train_indices[uid_key]
-            print(uid_indices)
-            exit()
+            train_inds_by_uid.append(self.uid_train_indices[uid_key])
+
+        # Populate unweighted test index list
+        for uid_key in self.uid_test_indices.keys():
+            test_inds_by_uid.append(self.uid_test_indices[uid_key])
+        
+        print(train_inds_by_uid)
+        print(test_inds_by_uid)
+        exit()
 
     ################################################################
     ### Methods for creating a single probability from all clips ###
