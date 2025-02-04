@@ -284,7 +284,7 @@ class clip_to_consensus:
             test_inds_by_uid.append([[] for icol in range(test_categorical.shape[1])])
 
         # Populate the weighted train index list
-        for jj,uid_key in enumerate(self.uid_train_indices.keys()):
+        for jj,uid_key in enumerate(list(self.uid_train_indices.keys())):
 
             # Get all the indices for this patient
             all_train_uid_indices = self.uid_train_indices[uid_key]
