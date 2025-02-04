@@ -257,8 +257,9 @@ class clip_to_consensus:
         It also returns a N(Sleep Stage Clips)/N(Patient Total Clips) for weighting the relative importance of each stage for a given patient.
         """
 
-        # Apply logic based on the consensus type
+        # Some clean up of attention inputs down to a singular consensus
         if self.attention:
+            # Get the current sleep stage if using attention vector
             mid_ind                      = self.n_attention//2
             centered_categorical_indices = []
             for ilabel in self.model_block['categorical']:
@@ -266,7 +267,11 @@ class clip_to_consensus:
                     centered_categorical_indices.append(True)
                 else:
                     centered_categorical_indices.append(False)
-            print(centered_categorical_indices)
+
+            # Get the categorical vector centered on the current time point
+            foo = self.train_datasets['categorical'][:,centered_categorical_indices]
+            print(foo)
+            print(foo.shape)
             exit()
         pass
 
