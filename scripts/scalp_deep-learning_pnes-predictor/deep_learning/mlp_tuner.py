@@ -751,7 +751,7 @@ class train_pnes(clip_to_consensus):
             patient_features.append(torch.cat(predictions_by_categorical))
         
         print(predictions_by_categorical)
-        print(patient_features)
+        #print(patient_features)
         exit()
 
         # Make the patient level features into a tensor object
