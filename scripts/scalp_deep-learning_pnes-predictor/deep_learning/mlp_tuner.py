@@ -283,12 +283,8 @@ class clip_to_consensus:
         for irow in range(len(self.uid_test_indices.keys())):
             test_inds_by_uid.append([[] for icol in range(test_categorical.shape[1])])
 
-        print(len(self.uid_train_indices.keys()))
-        print(len(train_inds_by_uid))
-        exit()
-
         # Populate the weighted train index list
-        for jj,uid_key in enumerate(list(self.uid_train_indices.keys())):
+        for ii,uid_key in enumerate(list(self.uid_train_indices.keys())):
 
             # Get all the indices for this patient
             all_train_uid_indices = self.uid_train_indices[uid_key]
@@ -297,13 +293,13 @@ class clip_to_consensus:
             train_categorical_slice = train_categorical[all_train_uid_indices]
 
             # Loop over each individual indes to figure out which categorical bin to put it in
-            for uid_key_ii in all_train_uid_indices:
+            for jj,uid_key_jj in enumerate(all_train_uid_indices):
 
                 # Get the categorical index for sorting
-                cat_ind = np.where(train_categorical_slice[uid_key_ii]==1)[0][0]
+                cat_ind = np.where(train_categorical_slice[jj]==1)[0][0]
 
                 # Append the index to the right categorical index
-                train_inds_by_uid[jj][cat_ind].append(uid_key_ii)
+                train_inds_by_uid[ii][cat_ind].append(uid_key_jj)
         print(train_inds_by_uid)
         exit()
 
