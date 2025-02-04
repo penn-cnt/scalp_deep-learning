@@ -245,7 +245,8 @@ class clip_to_consensus:
     def handler(self):
 
         # Get the probability 
-        self.weighting_none()
+        #train_inds, test_inds = self.weighting_none()
+        self.weighting_sleep_stage()
 
     #################################################
     ### Methods for creating the consensus vector ###
@@ -255,6 +256,18 @@ class clip_to_consensus:
         Returns a final vector for each patient with P(PNES),P(Epilepsy) for each sleep stage.
         It also returns a N(Sleep Stage Clips)/N(Patient Total Clips) for weighting the relative importance of each stage for a given patient.
         """
+
+        # Apply logic based on the consensus type
+        if self.attention:
+            mid_ind                      = self.n_attention//2
+            centered_categorical_indices = []
+            for ilabel in self.model_block['categorical']:
+                if int(ilabel.split('_')[-1])==mid_ind:
+                    centered_categorical_indices.append(True)
+                else:
+                    centered_categorical_indices.append(False)
+            print(centered_categorical_indices)
+            exit()
         pass
 
     def weighting_none(self):
@@ -274,9 +287,7 @@ class clip_to_consensus:
         for uid_key in self.uid_test_indices.keys():
             test_inds_by_uid.append(self.uid_test_indices[uid_key])
         
-        print(train_inds_by_uid)
-        print(test_inds_by_uid)
-        exit()
+        return train_inds_by_uid,test_inds_by_uid
 
     ################################################################
     ### Methods for creating a single probability from all clips ###
@@ -331,6 +342,7 @@ class train_pnes(clip_to_consensus):
         self.comb_loss           = []
         self.con_loss            = []
         self.attention           = True
+        self.n_attention         = 9
 
         # Get the user id indices
         self.get_uids()
