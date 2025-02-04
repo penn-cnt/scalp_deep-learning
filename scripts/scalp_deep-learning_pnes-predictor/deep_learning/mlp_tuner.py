@@ -239,47 +239,43 @@ class ConsensusNetwork(nn.Module):
 
 class clip_to_consensus:
 
-    #def __init__(self,training_predictions,training_categoricals,training_uid_indices,training_targets,
-    #             testing_predictions,testing_categoricals,testing_uid_indices,testing_targets):
-    #    
-    #    # Store variables to local instance
-    #    self.training_predictions  = training_predictions
-    #    self.training_categoricals = training_categoricals
-    #    self.training_uid_indices  = training_uid_indices
-    #    self.training_targets      = training_targets
-    #    self.testing_predictions   = testing_predictions
-    #    self.testing_categoricals  = testing_categoricals
-    #    self.testing_uid_indices   = testing_uid_indices
-    #    self.testing_targets       = testing_targets
-
     def __init__(self):
         pass
 
     def handler(self):
 
-        print(self.config)
-        exit()
+        # Get the probability 
+        self.weighting_none()
 
     #################################################
     ### Methods for creating the consensus vector ###
     #################################################
-    def weighted_sleep_stage(self):
+    def weighting_sleep_stage(self):
         """
         Returns a final vector for each patient with P(PNES),P(Epilepsy) for each sleep stage.
         It also returns a N(Sleep Stage Clips)/N(Patient Total Clips) for weighting the relative importance of each stage for a given patient.
         """
         pass
 
-    def quantile_vector(self,qvals=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
+    def weighting_none(self):
         """
-        Returns a vector with the value at a given quantile in list qvals. Helps describe shape of distribution.
+        No weighting of the probabilities
         """
-
-        pass
+        for uid_key in self.uid_train_indices.keys():
+            uid_indices = self.uid_train_indices[uid_key]
+            print(uid_indices)
+            exit()
 
     ################################################################
     ### Methods for creating a single probability from all clips ###
     ################################################################
+    def probability_handler(self):
+        """
+        Returns a vector with the value at a given quantile in list qvals. Helps describe shape of distribution.
+        """
+        #def quantile_vector(self,qvals=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
+        pass
+
     def posterior_selection(self):
         # Find the most predictive entires
         diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
@@ -322,6 +318,7 @@ class train_pnes(clip_to_consensus):
         self.subnetwork_size_out = 0
         self.comb_loss           = []
         self.con_loss            = []
+        self.attention           = True
 
         # Get the user id indices
         self.get_uids()
