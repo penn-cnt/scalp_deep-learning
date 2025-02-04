@@ -347,7 +347,7 @@ class train_pnes(clip_to_consensus):
 
         # Make a consensus tensor
         if self.patient_level:
-            clip_to_consensus.handler()
+            clip_to_consensus.handler(self)
             exit()
 
             #self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
