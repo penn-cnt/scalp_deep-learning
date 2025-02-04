@@ -596,7 +596,7 @@ class train_pnes(clip_to_consensus):
 
     def clip_to_patient_transform(self,clip_predictions,categorical_block,uid_indices,targets=None):
 
-        clip_to_consensus.handler()
+        clip_to_consensus.handler(self)
         exit()
 
     def backup_clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
