@@ -276,8 +276,15 @@ class clip_to_consensus:
             test_categorical  = self.test_datasets['categorical']
 
         # Create the weighting list for train and test
-        train_inds_by_uid = [[] for ii in range(train_categorical.shape[1])]
-        test_inds_by_uid  = [[] for ii in range(train_categorical.shape[1])]
+        train_inds_by_uid = []
+        test_inds_by_uid  = []
+        for irow in range(len(self.uid_train_indices.keys())):
+            train_inds_by_uid.append([[] for icol in range(train_categorical.shape[1])])
+        for irow in range(len(self.uid_test_indices.keys())):
+            test_inds_by_uid.append([[] for icol in range(test_categorical.shape[1])])
+        
+        print(train_inds_by_uid)
+        exit()
 
         # Populate the weighted train index list
         for uid_key in self.uid_train_indices.keys():
@@ -291,8 +298,11 @@ class clip_to_consensus:
             # Loop over each individual indes to figure out which categorical bin to put it in
             for uid_key_ii in all_train_uid_indices:
 
-                print(train_categorical_slice[uid_key_ii])
-                print(np.where(train_categorical_slice[uid_key_ii]==1))
+                # Get the categorical index for sorting
+                cat_ind = np.where(train_categorical_slice[uid_key_ii]==1)[0][0]
+
+                # Append the index to the right categorical index
+                train_inds_by_uid
                 exit()
 
     def weighting_none(self):
