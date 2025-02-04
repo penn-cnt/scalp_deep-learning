@@ -300,7 +300,25 @@ class clip_to_consensus:
 
                 # Append the index to the right categorical index
                 train_inds_by_uid[ii][cat_ind].append(uid_key_jj)
-        print(train_inds_by_uid)
+
+        # Populate the weighted test index list
+        for ii,uid_key in enumerate(list(self.uid_test_indices.keys())):
+
+            # Get all the indices for this patient
+            all_test_uid_indices = self.uid_test_indices[uid_key]
+
+            # Get the categorical slice
+            test_categorical_slice = test_categorical[all_test_uid_indices]
+
+            # Loop over each individual indes to figure out which categorical bin to put it in
+            for jj,uid_key_jj in enumerate(all_test_uid_indices):
+
+                # Get the categorical index for sorting
+                cat_ind = np.where(test_categorical_slice[jj]==1)[0][0]
+
+                # Append the index to the right categorical index
+                test_inds_by_uid[ii][cat_ind].append(uid_key_jj)
+        print(test_inds_by_uid)
         exit()
 
     def weighting_none(self):
