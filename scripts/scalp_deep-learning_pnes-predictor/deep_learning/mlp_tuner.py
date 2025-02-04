@@ -282,12 +282,9 @@ class clip_to_consensus:
             train_inds_by_uid.append([[] for icol in range(train_categorical.shape[1])])
         for irow in range(len(self.uid_test_indices.keys())):
             test_inds_by_uid.append([[] for icol in range(test_categorical.shape[1])])
-        
-        print(train_inds_by_uid)
-        exit()
 
         # Populate the weighted train index list
-        for uid_key in self.uid_train_indices.keys():
+        for jj,uid_key in enumerate(self.uid_train_indices.keys()):
 
             # Get all the indices for this patient
             all_train_uid_indices = self.uid_train_indices[uid_key]
@@ -302,8 +299,9 @@ class clip_to_consensus:
                 cat_ind = np.where(train_categorical_slice[uid_key_ii]==1)[0][0]
 
                 # Append the index to the right categorical index
-                train_inds_by_uid
-                exit()
+                train_inds_by_uid[jj][cat_ind].append(uid_key_ii)
+        print(train_inds_by_uid)
+        exit()
 
     def weighting_none(self):
         """
