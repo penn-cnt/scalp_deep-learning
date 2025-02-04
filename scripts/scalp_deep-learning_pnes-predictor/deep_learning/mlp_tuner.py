@@ -244,9 +244,12 @@ class clip_to_consensus:
 
     def handler(self):
 
-        # Get the probability 
-        #train_inds, test_inds = self.weighting_none()
-        self.weighting_sleep_stage()
+        # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
+        train_inds, test_inds = self.weighting_none()
+        #train_inds, test_inds = self.weighting_sleep_stage()
+
+        # Get the probability vector
+
 
     #################################################
     ### Methods for creating the consensus vector ###
@@ -318,8 +321,8 @@ class clip_to_consensus:
 
                 # Append the index to the right categorical index
                 test_inds_by_uid[ii][cat_ind].append(uid_key_jj)
-        print(test_inds_by_uid)
-        exit()
+        
+        return train_inds_by_uid,test_inds_by_uid
 
     def weighting_none(self):
         """
@@ -343,12 +346,6 @@ class clip_to_consensus:
     ################################################################
     ### Methods for creating a single probability from all clips ###
     ################################################################
-    def probability_handler(self):
-        """
-        Returns a vector with the value at a given quantile in list qvals. Helps describe shape of distribution.
-        """
-        #def quantile_vector(self,qvals=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
-        pass
 
     def posterior_selection(self):
         # Find the most predictive entires
@@ -363,8 +360,11 @@ class clip_to_consensus:
         posterior_predictions       = log_posteriors.exp()
         return posterior_predictions
 
-    def quantile(self):
-        return torch.quantile(prior_predictions,q=theshold, dim=0)
+    def quantile_vector(self,input_vector,qvec=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
+        return nn.ModuleList([torch.quantile(input_vector,q=threshold, dim=0) for threshold in qvec])
+
+    def quantile(self,input_vector,threshold):
+        return torch.quantile(input_vector,q=threshold, dim=0)
 
 class train_pnes(clip_to_consensus):
 
@@ -683,7 +683,7 @@ class train_pnes(clip_to_consensus):
         self.clip_testing_predictions_tensor  = test_outputs
         self.clip_training_predictions_array  = y_pred
 
-    def backup_clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
+    def clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
 
         def posterior_selection(prior_predictions,threshold):
             # Find the most predictive entires
