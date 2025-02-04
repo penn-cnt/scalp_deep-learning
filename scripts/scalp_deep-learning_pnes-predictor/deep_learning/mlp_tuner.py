@@ -283,6 +283,10 @@ class clip_to_consensus:
         for irow in range(len(self.uid_test_indices.keys())):
             test_inds_by_uid.append([[] for icol in range(test_categorical.shape[1])])
 
+        print(len(self.uid_train_indices.keys()))
+        print(len(train_inds_by_uid))
+        exit()
+
         # Populate the weighted train index list
         for jj,uid_key in enumerate(list(self.uid_train_indices.keys())):
 
