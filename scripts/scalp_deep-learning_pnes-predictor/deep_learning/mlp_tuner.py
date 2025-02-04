@@ -269,11 +269,21 @@ class clip_to_consensus:
                     centered_categorical_indices.append(False)
 
             # Get the categorical vector centered on the current time point
-            foo = self.train_datasets['categorical'][:,centered_categorical_indices]
-            print(foo)
-            print(foo.shape)
-            exit()
-        pass
+            train_categorical = self.train_datasets['categorical'][:,centered_categorical_indices]
+            test_categorical  = self.test_datasets['categorical'][:,centered_categorical_indices]
+        else:
+            train_categorical = self.train_datasets['categorical']
+            test_categorical  = self.test_datasets['categorical']
+
+        # Create the weighting list for train and test
+        train_inds_by_uid = [[] for ii in range(train_categorical.shape[1])]
+        test_inds_by_uid  = [[] for ii in range(train_categorical.shape[1])]
+
+        print(train_inds_by_uid)
+        exit()
+
+        # Populate the weighted train index list
+        #for uid_key in self.uid_train_indices.keys():
 
     def weighting_none(self):
         """
