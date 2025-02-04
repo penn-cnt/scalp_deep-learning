@@ -237,7 +237,52 @@ class ConsensusNetwork(nn.Module):
 
         return x
 
-class train_pnes:
+class clip_to_consensus:
+
+    def __init__(self):
+        pass
+
+    def handler(self):
+        print("Hello")
+        exit()
+
+    #################################################
+    ### Methods for creating the consensus vector ###
+    #################################################
+    def weighted_sleep_stage(self):
+        """
+        Returns a final vector for each patient with P(PNES),P(Epilepsy) for each sleep stage.
+        It also returns a N(Sleep Stage Clips)/N(Patient Total Clips) for weighting the relative importance of each stage for a given patient.
+        """
+        pass
+
+    def quantile_vector(self,qvals=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
+        """
+        Returns a vector with the value at a given quantile in list qvals. Helps describe shape of distribution.
+        """
+
+        pass
+
+    ################################################################
+    ### Methods for creating a single probability from all clips ###
+    ################################################################
+    def posterior_selection(self):
+        # Find the most predictive entires
+        diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
+        diff_inds = (diffs>threshold).squeeze()
+
+        # Get the posterior distribution
+        prior_predictions_log       = prior_predictions[diff_inds].log()
+        prior_predictions_log_joint = prior_predictions_log.sum(dim=0)
+        log_norm_factor             = torch.logsumexp(prior_predictions_log_joint, dim=0)
+        log_posteriors              = prior_predictions_log_joint - log_norm_factor
+        posterior_predictions       = log_posteriors.exp()
+        return posterior_predictions
+
+    def quantile(self):
+        return torch.quantile(prior_predictions,q=theshold, dim=0)
+
+class train_pnes(clip_to_consensus):
 
     def __init__(self,config,DL_object,patient_level=False,raytuning=True,checkpoint_path=None):
         
@@ -551,66 +596,8 @@ class train_pnes:
 
     def clip_to_patient_transform(self,clip_predictions,categorical_block,uid_indices,targets=None):
 
-        def posterior_selection(prior_predictions,threshold):
-            # Find the most predictive entires
-            diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
-            diff_inds = (diffs>threshold).squeeze()
-
-            # Get the posterior distribution
-            prior_predictions_log       = prior_predictions[diff_inds].log()
-            prior_predictions_log_joint = prior_predictions_log.sum(dim=0)
-            log_norm_factor             = torch.logsumexp(prior_predictions_log_joint, dim=0)
-            log_posteriors              = prior_predictions_log_joint - log_norm_factor
-            posterior_predictions       = log_posteriors.exp()
-            return posterior_predictions
-        def quantile(prior_predictions,theshold):
-            return torch.quantile(prior_predictions,q=theshold, dim=0)
-
-        # Hardcoded logic for different consensus types
-        encoding_type  = 'attention'
-        consensus_type = 'weighted_sleep_stage'
-        n_attention    = 9
-
-        # Loop over each patient to make the consensus layer
-        patient_features  = []
-        patient_targets   = []
-        for unique_uid in uid_indices.keys():
-
-            # Break up the user ids and get the indices we need to subslice
-            unique_uid_indices = uid_indices[unique_uid]
-            categorical_by_uid = categorical_block[unique_uid_indices]
-            prediction_by_uid  = clip_predictions[unique_uid_indices]
-
-            # Apply logic based on the consensus type
-            if encoding_type == 'attention':
-                mid_ind                      = n_attention//2
-                centered_categorical_indices = []
-                for ilabel in self.model_block['categorical']:
-                    if int(ilabel.split('_')[-1])==mid_ind:
-                        centered_categorical_indices.append(True)
-                    else:
-                        centered_categorical_indices.append(False)
-                print(centered_categorical_indices)
-                exit()
-
-            """
-            if consensus_type == 'weighted_sleep_stage':
-                if encoding_type == 'attention':
-                    
-                    # Get the different sleep stages
-                    middle             = categorical_by_uid.shape[1]//2
-                    categorical_by_uid = categorical_by_uid[:,middle-1:middle+2]
-
-                    print(categorical_by_uid)
-                    exit()
-
-            elif consensus_type == 'attention':
-                print(prediction_by_uid)
-                print(prediction_by_uid.shape)
-                exit()
-            """
-
-
+        clip_to_consensus.handler()
+        exit()
 
     def backup_clip_to_patient_transform(self,clip_predictions,categorcial_block,uid_indices,targets=None):
 
