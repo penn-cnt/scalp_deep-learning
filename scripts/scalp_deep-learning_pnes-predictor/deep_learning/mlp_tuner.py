@@ -279,11 +279,23 @@ class clip_to_consensus:
         train_inds_by_uid = [[] for ii in range(train_categorical.shape[1])]
         test_inds_by_uid  = [[] for ii in range(train_categorical.shape[1])]
 
-        print(train_inds_by_uid)
-        exit()
-
         # Populate the weighted train index list
-        #for uid_key in self.uid_train_indices.keys():
+        for uid_key in self.uid_train_indices.keys():
+
+            # Get all the indices for this patient
+            all_train_uid_indices = self.uid_train_indices[uid_key]
+            all_test_uid_indices  = self.uid_test_indices[uid_key]
+
+            # Get the categorical slice
+            train_categorical_slice = train_categorical[all_train_uid_indices]
+            test_categorical_slice  = test_categorical[all_test_uid_indices]
+
+            # Loop over each individual indes to figure out which categorical bin to put it in
+            for uid_key_ii in all_train_uid_indices:
+
+                print(train_categorical_slice[uid_key_ii])
+                print(np.where(train_categorical_slice[uid_key_ii]==1))
+                exit()
 
     def weighting_none(self):
         """
