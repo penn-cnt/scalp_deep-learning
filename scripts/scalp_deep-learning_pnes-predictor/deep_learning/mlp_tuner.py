@@ -276,12 +276,11 @@ class clip_to_consensus:
 
                 # Add this info to the tracking dictionary
                 train_posterior_raw[ikey].append(posterior_prediction)    
-
-                print(posterior_prediction)
-                print(ikey,jkey)
-                print("===")
-            print(train_posterior_raw)
-            exit()
+        train_posterior_raw = list(train_posterior_raw.values())
+        train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw],dim=0)
+        print(train_posterior_raw)
+        print(train_features)
+        exit()
 
 
 
