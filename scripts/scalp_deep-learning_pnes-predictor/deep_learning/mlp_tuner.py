@@ -268,6 +268,7 @@ class clip_to_consensus:
 
         # Get the probability vector for training data loop over user and possible weighting structure
         consensus_posterior_raw = {ikey:[] for ikey in input_inds.keys()}
+        consensus_weighting_raw = {ikey:[] for ikey in input_inds.keys()}
         for ikey in input_inds.keys():
 
             # Get the current user indices
@@ -278,13 +279,10 @@ class clip_to_consensus:
 
                 # Get the current user ids for this weight
                 current_user_inds = consensus_ind_slice[jkey]
-                fraction          = len(consensus_ind_slice[jkey])/sum([len(ival) for ival in consensus_ind_slice.values()])
-                print(fraction)
-                exit()
-
-                for ii in consensus_ind_slice.values():
-                    print(ii)
-                exit()
+                
+                # Get the fraction of all patient entires with this weighting type
+                fraction                      = torch.tensor([len(consensus_ind_slice[jkey])/sum([len(ival) for ival in consensus_ind_slice.values()])])
+                consensus_weighting_raw[ikey] = fraction
 
                 # Get the list of priors
                 prior_predictions = input_predictions[current_user_inds]
@@ -296,7 +294,7 @@ class clip_to_consensus:
                         if self.reference_tensor == None:self.reference_tensor=torch.zeros_like(posterior_prediction)
                 else:
                     posterior_prediction = None
-
+                
                 # Add this info to the tracking dictionary
                 consensus_posterior_raw[ikey].append(posterior_prediction)    
         
@@ -305,6 +303,9 @@ class clip_to_consensus:
             for jdx,jvalue in enumerate(ivalue):
                 if jvalue == None:
                     consensus_posterior_raw[ikey][jdx] = self.reference_tensor
+
+        print(consensus_weighting_raw)
+        exit()
 
         # Convert to a tensor
         consensus_posterior_raw_list = list(consensus_posterior_raw.values())
