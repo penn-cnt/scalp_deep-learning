@@ -298,13 +298,14 @@ class clip_to_consensus:
                 # Add this info to the tracking dictionary
                 consensus_posterior_raw[ikey].append(posterior_prediction)    
         
-        # Update any missing entries with the back gradient compatible zero tensor
+        # Update any missing entries with the back gradient compatible zero tensor. Add weights
         for ikey,ivalue in consensus_posterior_raw.items():
             for jdx,jvalue in enumerate(ivalue):
                 if jvalue == None:
                     consensus_posterior_raw[ikey][jdx] = self.reference_tensor
+                consensus_posterior_raw[ikey][jdx] = torch.cat([consensus_posterior_raw[ikey][jdx],consensus_weighting_raw[ikey][jdx]],dim=1)
 
-        print(consensus_weighting_raw)
+        print(consensus_posterior_raw)
         exit()
 
         # Convert to a tensor
