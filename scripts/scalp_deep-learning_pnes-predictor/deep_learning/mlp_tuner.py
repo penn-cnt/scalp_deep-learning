@@ -303,10 +303,13 @@ class clip_to_consensus:
             for jdx,jvalue in enumerate(ivalue):
                 if jvalue == None:
                     consensus_posterior_raw[ikey][jdx] = self.reference_tensor
-                foo = [consensus_posterior_raw[ikey][jdx],consensus_weighting_raw[ikey][jdx]]
-                print(foo)
-                exit()
-                consensus_posterior_raw[ikey][jdx] = torch.cat([consensus_posterior_raw[ikey][jdx],consensus_weighting_raw[ikey][jdx]],dim=1)
+                
+                try:
+                    foo = [consensus_posterior_raw[ikey][jdx],consensus_weighting_raw[ikey][jdx]]
+                    consensus_posterior_raw[ikey][jdx] = torch.cat(foo,dim=1)
+                except:
+                    print(foo)
+                    exit()
 
         print(consensus_posterior_raw)
         exit()
