@@ -280,7 +280,7 @@ class clip_to_consensus:
                 current_user_inds = consensus_ind_slice[jkey]
                 fraction          = len(consensus_ind_slice[jkey])/1
 
-                for ii in consensus_ind_slice.items():
+                for ii in consensus_ind_slice.values():
                     print(ii)
                 exit()
 
