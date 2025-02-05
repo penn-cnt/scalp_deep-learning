@@ -244,7 +244,7 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method = 'sleep_stage'
+        weight_method = None #'sleep_stage'
         prob_method   = 'quantile'
         qthreshold    = 0.8
 
@@ -362,11 +362,11 @@ class clip_to_consensus:
 
         # Populate unweighted train index list
         for uid_key in self.uid_train_indices.keys():
-            train_inds_by_uid[uid_key] = self.uid_train_indices[uid_key]
+            train_inds_by_uid[uid_key] = {0:self.uid_train_indices[uid_key]}
 
         # Populate unweighted test index list
         for uid_key in self.uid_test_indices.keys():
-            test_inds_by_uid[uid_key] = self.uid_test_indices[uid_key]
+            test_inds_by_uid[uid_key] = {0:self.uid_test_indices[uid_key]}
         
         return train_inds_by_uid,test_inds_by_uid
 
