@@ -255,7 +255,7 @@ class clip_to_consensus:
             train_inds, test_inds = self.weighting_sleep_stage()
 
         print(len(train_inds))
-        print(len(train_inds[0])+len(train_inds[1])+len(train_inds[2]))
+        print(len(train_inds[0][0])+len(train_inds[0][1])+len(train_inds[0][2]))
         exit()
 
         # Get the probability vector for training data
