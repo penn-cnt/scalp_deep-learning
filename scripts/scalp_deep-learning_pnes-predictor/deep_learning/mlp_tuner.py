@@ -290,7 +290,8 @@ class clip_to_consensus:
 
         # Convert to a tensor
         train_posterior_raw_list = list(train_posterior_raw.values())
-        train_features           = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
+        #train_features           = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
+        train_features           = torch.stack([torch.cat(row, dim=0) for row in train_posterior_raw_list],dim=0)
         print(train_features)
         exit()
 
