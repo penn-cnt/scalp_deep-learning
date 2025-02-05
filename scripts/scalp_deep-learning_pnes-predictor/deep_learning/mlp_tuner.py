@@ -286,7 +286,7 @@ class clip_to_consensus:
                 if prior_predictions.shape[0] > 0:
                     if self.prob_method == 'quantile':
                         posterior_prediction = self.quantile(prior_predictions,threshold=self.qthreshold)
-                        if reference_tensor == None:reference_tensor=torch.zeros_like(posterior_prediction)
+                        if self.reference_tensor == None:self.reference_tensor=torch.zeros_like(posterior_prediction)
                 else:
                     posterior_prediction = None
 
@@ -297,7 +297,7 @@ class clip_to_consensus:
         for ikey,ivalue in consensus_posterior_raw.items():
             for jdx,jvalue in enumerate(ivalue):
                 if jvalue == None:
-                    consensus_posterior_raw[ikey][jdx] = reference_tensor
+                    consensus_posterior_raw[ikey][jdx] = self.reference_tensor
 
         # Convert to a tensor
         consensus_posterior_raw_list = list(consensus_posterior_raw.values())
