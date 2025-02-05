@@ -271,15 +271,20 @@ class clip_to_consensus:
                 prior_predictions = self.clip_training_predictions_tensor[current_user_inds]
 
                 # Get the result using the requested method
-                if prob_method == 'quantile':
-                    posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
+                if prior_predictions.shape[0] > 0:
+                    if prob_method == 'quantile':
+                        posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
+                else:
+                    posterior_prediction = None
 
                 # Add this info to the tracking dictionary
                 train_posterior_raw[ikey].append(posterior_prediction)    
-        train_posterior_raw = list(train_posterior_raw.values())
-        train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw],dim=0)
+        
+        
+        #train_posterior_raw = list(train_posterior_raw.values())
+        #train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw],dim=0)
         print(train_posterior_raw)
-        print(train_features)
+        #print(train_features)
         exit()
 
 
