@@ -282,7 +282,7 @@ class clip_to_consensus:
                 
                 # Get the fraction of all patient entires with this weighting type
                 fraction                      = torch.tensor([len(consensus_ind_slice[jkey])/sum([len(ival) for ival in consensus_ind_slice.values()])])
-                consensus_weighting_raw[ikey] = fraction
+                consensus_weighting_raw[ikey].append(fraction)
 
                 # Get the list of priors
                 prior_predictions = input_predictions[current_user_inds]
