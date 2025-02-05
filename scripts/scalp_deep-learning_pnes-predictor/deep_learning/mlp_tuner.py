@@ -244,7 +244,7 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method = None #'sleep_stage'
+        weight_method = 'sleep_stage'
         prob_method   = 'quantile'
         qthreshold    = 0.8
 
