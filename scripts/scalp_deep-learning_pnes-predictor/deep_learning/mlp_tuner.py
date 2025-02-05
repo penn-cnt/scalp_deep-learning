@@ -278,6 +278,11 @@ class clip_to_consensus:
 
                 # Get the current user ids for this weight
                 current_user_inds = consensus_ind_slice[jkey]
+                fraction          = len(consensus_ind_slice[jkey])/1
+
+                for ii in consensus_ind_slice.items():
+                    print(ii)
+                exit()
 
                 # Get the list of priors
                 prior_predictions = input_predictions[current_user_inds]
