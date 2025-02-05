@@ -276,15 +276,14 @@ class clip_to_consensus:
                         posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
                 else:
                     posterior_prediction = None
-                    print(ikey)
 
                 # Add this info to the tracking dictionary
                 train_posterior_raw[ikey].append(posterior_prediction)    
         
         
-        #train_posterior_raw = list(train_posterior_raw.values())
-        #train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw],dim=0)
-        #print(train_posterior_raw)
+        #train_posterior_raw_list = list(train_posterior_raw.values())
+        #train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
+        print(train_posterior_raw[76])
         #print(train_features)
         exit()
 
