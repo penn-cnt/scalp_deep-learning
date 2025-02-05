@@ -244,7 +244,7 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method = None #'sleep_stage'
+        weight_method = 'sleep_stage'
         prob_method   = 'quantile'
         qthreshold    = 0.8
 
@@ -306,12 +306,12 @@ class clip_to_consensus:
             test_categorical  = self.test_datasets['categorical']
 
         # Create the weighting list for train and test
-        train_inds_by_uid = []
-        test_inds_by_uid  = []
-        for irow in range(len(self.uid_train_indices.keys())):
-            train_inds_by_uid.append([[] for icol in range(train_categorical.shape[1])])
-        for irow in range(len(self.uid_test_indices.keys())):
-            test_inds_by_uid.append([[] for icol in range(test_categorical.shape[1])])
+        train_inds_by_uid = {}
+        test_inds_by_uid  = {}
+        for ikey in self.uid_train_indices.keys():
+            train_inds_by_uid[ikey] = {icol:[] for icol in train_categorical.shape[1]}
+        print(train_inds_by_uid)
+        exit()
 
         # Populate the weighted train index list
         for ii,uid_key in enumerate(list(self.uid_train_indices.keys())):
