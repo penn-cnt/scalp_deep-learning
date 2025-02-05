@@ -278,7 +278,9 @@ class clip_to_consensus:
 
                 # Get the current user ids for this weight
                 current_user_inds = consensus_ind_slice[jkey]
-                fraction          = len(consensus_ind_slice[jkey])/1
+                fraction          = len(consensus_ind_slice[jkey])/sum([len(ival) for ival in consensus_ind_slice.values()])
+                print(fraction)
+                exit()
 
                 for ii in consensus_ind_slice.values():
                     print(ii)
