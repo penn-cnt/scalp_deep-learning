@@ -244,7 +244,7 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method = None #'sleep_stage'
+        weight_method = 'sleep_stage'
         prob_method   = 'quantile'
         qthreshold    = 0.8
 
@@ -255,7 +255,7 @@ class clip_to_consensus:
             train_inds, test_inds = self.weighting_sleep_stage()
 
         # Get the probability vector for training data loop over user and possible weighting structure
-        posterior_probability_list = []
+        train_posterior_raw = {ikey:[] for ikey in train_inds.keys()}
         for ikey in train_inds.keys():
 
             # Get the current user indices
@@ -273,10 +273,14 @@ class clip_to_consensus:
                 # Get the result using the requested method
                 if prob_method == 'quantile':
                     posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
-                
+
+                # Add this info to the tracking dictionary
+                train_posterior_raw[ikey].append(posterior_prediction)    
+
                 print(posterior_prediction)
                 print(ikey,jkey)
                 print("===")
+            print(train_posterior_raw)
             exit()
 
 
