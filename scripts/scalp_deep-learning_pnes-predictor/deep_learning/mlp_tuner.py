@@ -244,9 +244,10 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method = 'sleep_stage'
-        prob_method   = 'quantile'
-        qthreshold    = 0.8
+        weight_method    = 'sleep_stage'
+        prob_method      = 'quantile'
+        qthreshold       = 0.8
+        reference_tensor = None
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
         if weight_method == None:
@@ -274,16 +275,23 @@ class clip_to_consensus:
                 if prior_predictions.shape[0] > 0:
                     if prob_method == 'quantile':
                         posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
+                        if reference_tensor == None:reference_tensor=torch.zeros_like(posterior_prediction)
                 else:
                     posterior_prediction = None
 
                 # Add this info to the tracking dictionary
                 train_posterior_raw[ikey].append(posterior_prediction)    
         
-        
+        # Update any missing entries with the back gradient compatible zero tensor
+        for ikey,ivalue in train_posterior_raw.items():
+            for jdx,jvalue in enumerate(ivalue):
+                if jvalue == None:
+                    train_posterior_raw[ikey][jdx] = reference_tensor
+
+        print(train_posterior_raw[76])
+
         #train_posterior_raw_list = list(train_posterior_raw.values())
         #train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
-        print(train_posterior_raw[76])
         #print(train_features)
         exit()
 
