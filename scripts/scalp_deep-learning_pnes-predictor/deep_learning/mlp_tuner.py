@@ -244,59 +244,66 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method    = 'sleep_stage'
-        prob_method      = 'quantile'
-        qthreshold       = 0.8
-        reference_tensor = None
+        self.weight_method    = 'sleep_stage'
+        self.prob_method      = 'quantile'
+        self.qthreshold       = 0.8
+        self.reference_tensor = None
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
-        if weight_method == None:
+        if self.weight_method == None:
             train_inds, test_inds = self.weighting_none()
-        elif weight_method == 'sleep_stage':
+        elif self.weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
 
+        # Get the new consensus tensors
+        train_features = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor)
+        print(train_features)
+        exit()
+
+    ########################################################
+    ### Creation of a new tensor with correct leaf nodes ###
+    ########################################################
+    
+    def make_consensus_tensor(self,input_inds,input_predictions):
+
         # Get the probability vector for training data loop over user and possible weighting structure
-        train_posterior_raw = {ikey:[] for ikey in train_inds.keys()}
-        for ikey in train_inds.keys():
+        consensus_posterior_raw = {ikey:[] for ikey in input_inds.keys()}
+        for ikey in input_inds.keys():
 
             # Get the current user indices
-            train_ind_slice = train_inds[ikey]
+            consensus_ind_slice = input_inds[ikey]
 
             # Loop over possible weighting axis
-            for jkey in train_ind_slice.keys():
+            for jkey in consensus_ind_slice.keys():
 
                 # Get the current user ids for this weight
-                current_user_inds = train_ind_slice[jkey]
+                current_user_inds = consensus_ind_slice[jkey]
 
                 # Get the list of priors
-                prior_predictions = self.clip_training_predictions_tensor[current_user_inds]
+                prior_predictions = input_predictions[current_user_inds]
 
                 # Get the result using the requested method
                 if prior_predictions.shape[0] > 0:
-                    if prob_method == 'quantile':
-                        posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
+                    if self.prob_method == 'quantile':
+                        posterior_prediction = self.quantile(prior_predictions,threshold=self.qthreshold)
                         if reference_tensor == None:reference_tensor=torch.zeros_like(posterior_prediction)
                 else:
                     posterior_prediction = None
 
                 # Add this info to the tracking dictionary
-                train_posterior_raw[ikey].append(posterior_prediction)    
+                consensus_posterior_raw[ikey].append(posterior_prediction)    
         
         # Update any missing entries with the back gradient compatible zero tensor
-        for ikey,ivalue in train_posterior_raw.items():
+        for ikey,ivalue in consensus_posterior_raw.items():
             for jdx,jvalue in enumerate(ivalue):
                 if jvalue == None:
-                    train_posterior_raw[ikey][jdx] = reference_tensor
+                    consensus_posterior_raw[ikey][jdx] = reference_tensor
 
         # Convert to a tensor
-        train_posterior_raw_list = list(train_posterior_raw.values())
-        #train_features           = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
-        train_features           = torch.stack([torch.cat(row, dim=0) for row in train_posterior_raw_list],dim=0)
-        print(train_features)
-        exit()
+        consensus_posterior_raw_list = list(consensus_posterior_raw.values())
+        consensus_features           = torch.stack([torch.cat(row, dim=0) for row in consensus_posterior_raw_list],dim=0)
 
-
-
+        return consensus_features
 
     #################################################
     ### Methods for creating the consensus vector ###
