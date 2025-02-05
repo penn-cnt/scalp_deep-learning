@@ -246,6 +246,7 @@ class clip_to_consensus:
 
         weight_method = None
         prob_method   = 'quantile'
+        qthreshold    = 0.8
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
         if weight_method == None:
@@ -259,12 +260,13 @@ class clip_to_consensus:
             
             # Get the list of priors
             prior_predictions = self.clip_training_predictions_tensor[current_user_inds]
-            print(prior_predictions)
-            exit()
 
             # Get the result using the requested method
-            #if prob_method == 'quantile':
-                #self.quantile()
+            if prob_method == 'quantile':
+                posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
+            
+            print(posterior_prediction)
+            exit()
 
 
     #################################################
