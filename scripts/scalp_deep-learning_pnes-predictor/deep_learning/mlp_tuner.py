@@ -244,7 +244,7 @@ class clip_to_consensus:
 
     def handler(self):
 
-        weight_method = 'sleep_stage'
+        weight_method = None #'sleep_stage'
         prob_method   = 'quantile'
         qthreshold    = 0.8
 
@@ -254,8 +254,10 @@ class clip_to_consensus:
         elif weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
 
-        print(train_inds)
-        print(train_inds.keys())
+        scnt = 0
+        for ikey in train_inds[1].keys():
+            scnt+=len(train_inds[1][ikey])
+        print(scnt)
         exit()
 
         # Get the probability vector for training data
@@ -330,8 +332,6 @@ class clip_to_consensus:
 
                 # Append the index to the right categorical index
                 train_inds_by_uid[uid_key][cat_ind].append(uid_key_jj)
-        print(train_inds_by_uid)
-        exit()
 
         # Populate the weighted test index list
         for ii,uid_key in enumerate(list(self.uid_test_indices.keys())):
@@ -349,7 +349,7 @@ class clip_to_consensus:
                 cat_ind = np.where(test_categorical_slice[jj]==1)[0][0]
 
                 # Append the index to the right categorical index
-                test_inds_by_uid[ii][cat_ind].append(uid_key_jj)
+                test_inds_by_uid[uid_key][cat_ind].append(uid_key_jj)
         
         return train_inds_by_uid,test_inds_by_uid
 
