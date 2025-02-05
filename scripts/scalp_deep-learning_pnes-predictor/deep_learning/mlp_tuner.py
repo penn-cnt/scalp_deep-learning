@@ -309,7 +309,7 @@ class clip_to_consensus:
         train_inds_by_uid = {}
         test_inds_by_uid  = {}
         for ikey in self.uid_train_indices.keys():
-            train_inds_by_uid[ikey] = {icol:[] for icol in train_categorical.shape[1]}
+            train_inds_by_uid[ikey] = {icol:[] for icol in range(train_categorical.shape[1])}
         print(train_inds_by_uid)
         exit()
 
