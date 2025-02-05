@@ -288,11 +288,10 @@ class clip_to_consensus:
                 if jvalue == None:
                     train_posterior_raw[ikey][jdx] = reference_tensor
 
-        print(train_posterior_raw[76])
-
-        #train_posterior_raw_list = list(train_posterior_raw.values())
-        #train_features      = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
-        #print(train_features)
+        # Convert to a tensor
+        train_posterior_raw_list = list(train_posterior_raw.values())
+        train_features           = torch.cat([t.unsqueeze(0) for t in train_posterior_raw_list],dim=0)
+        print(train_features)
         exit()
 
 
