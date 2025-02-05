@@ -244,11 +244,27 @@ class clip_to_consensus:
 
     def handler(self):
 
-        # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
-        train_inds, test_inds = self.weighting_none()
-        #train_inds, test_inds = self.weighting_sleep_stage()
+        weight_method = None
+        prob_method   = 'quantile'
 
-        # Get the probability vector
+        # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
+        if weight_method == None:
+            train_inds, test_inds = self.weighting_none()
+        elif weight_method == 'sleep_stage':
+            train_inds, test_inds = self.weighting_sleep_stage()
+
+        # Get the probability vector for training data
+        probability_list = []
+        for current_user_inds in train_inds:
+            
+            # Get the list of priors
+            prior_predictions = self.clip_training_predictions_tensor[current_user_inds]
+            print(prior_predictions)
+            exit()
+
+            # Get the result using the requested method
+            #if prob_method == 'quantile':
+                #self.quantile()
 
 
     #################################################
@@ -419,8 +435,8 @@ class train_pnes(clip_to_consensus):
 
         # Make a consensus tensor
         if self.patient_level:
-            #clip_to_consensus.handler(self)
-            #exit()
+            clip_to_consensus.handler(self)
+            exit()
 
             self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
             self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
@@ -749,10 +765,6 @@ class train_pnes(clip_to_consensus):
             
             # Store the patient level features to a list
             patient_features.append(torch.cat(predictions_by_categorical))
-        
-        print(type(predictions_by_categorical))
-        print(type(patient_features))
-        exit()
 
         # Make the patient level features into a tensor object
         patient_features = torch.cat([t.unsqueeze(0) for t in patient_features],dim=0)
