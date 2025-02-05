@@ -330,6 +330,9 @@ class clip_to_consensus:
                 # Append the index to the right categorical index
                 train_inds_by_uid[ii][cat_ind].append(uid_key_jj)
 
+        print(train_inds_by_uid)
+        exit()
+
         # Populate the weighted test index list
         for ii,uid_key in enumerate(list(self.uid_test_indices.keys())):
 
