@@ -310,8 +310,8 @@ class clip_to_consensus:
         test_inds_by_uid  = {}
         for ikey in self.uid_train_indices.keys():
             train_inds_by_uid[ikey] = {icol:[] for icol in range(train_categorical.shape[1])}
-        print(train_inds_by_uid)
-        exit()
+        for ikey in self.uid_test_indices.keys():
+            test_inds_by_uid[ikey] = {icol:[] for icol in range(test_categorical.shape[1])}
 
         # Populate the weighted train index list
         for ii,uid_key in enumerate(list(self.uid_train_indices.keys())):
@@ -329,7 +329,9 @@ class clip_to_consensus:
                 cat_ind = np.where(train_categorical_slice[jj]==1)[0][0]
 
                 # Append the index to the right categorical index
-                train_inds_by_uid[ii][cat_ind].append(uid_key_jj)
+                train_inds_by_uid[uid_key][cat_ind].append(uid_key_jj)
+        print(train_inds_by_uid)
+        exit()
 
         # Populate the weighted test index list
         for ii,uid_key in enumerate(list(self.uid_test_indices.keys())):
@@ -362,11 +364,11 @@ class clip_to_consensus:
 
         # Populate unweighted train index list
         for uid_key in self.uid_train_indices.keys():
-            train_inds_by_uid[uid_key] = {0:self.uid_train_indices[uid_key]}
+            train_inds_by_uid[uid_key] = {0:list(self.uid_train_indices[uid_key])}
 
         # Populate unweighted test index list
         for uid_key in self.uid_test_indices.keys():
-            test_inds_by_uid[uid_key] = {0:self.uid_test_indices[uid_key]}
+            test_inds_by_uid[uid_key] = {0:list(self.uid_test_indices[uid_key])}
         
         return train_inds_by_uid,test_inds_by_uid
 
