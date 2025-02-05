@@ -254,30 +254,32 @@ class clip_to_consensus:
         elif weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
 
-        scnt = 0
-        for ikey in train_inds[1].keys():
-            scnt+=len(train_inds[1][ikey])
-        print(scnt)
-        exit()
-
-        # Get the probability vector for training data
+        # Get the probability vector for training data loop over user and possible weighting structure
         posterior_probability_list = []
-        for current_user_inds in train_inds:
-            
-            # Get the list of priors
-            prior_predictions = self.clip_training_predictions_tensor[current_user_inds]
+        for ikey in train_inds.keys():
 
-            # Get the result using the requested method
-            if prob_method == 'quantile':
-                posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
-            
-            print(posterior_prediction)
+            # Get the current user indices
+            train_ind_slice = train_inds[ikey]
+
+            # Loop over possible weighting axis
+            for jkey in train_ind_slice.keys():
+
+                # Get the current user ids for this weight
+                current_user_inds = train_ind_slice[jkey]
+
+                # Get the list of priors
+                prior_predictions = self.clip_training_predictions_tensor[current_user_inds]
+
+                # Get the result using the requested method
+                if prob_method == 'quantile':
+                    posterior_prediction = self.quantile(prior_predictions,threshold=qthreshold)
+                
+                print(posterior_prediction)
+                print(ikey,jkey)
+                print("===")
             exit()
 
-            # Add the posterior to our tracking list
-            posterior_probability_list.append(posterior_prediction)
-            
-        exit()
+
 
 
     #################################################
