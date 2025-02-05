@@ -254,7 +254,8 @@ class clip_to_consensus:
         elif weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
 
-        print(train_inds)
+        print(len(train_inds))
+        print(len(train_inds[0]))
         exit()
 
         # Get the probability vector for training data
@@ -329,9 +330,6 @@ class clip_to_consensus:
 
                 # Append the index to the right categorical index
                 train_inds_by_uid[ii][cat_ind].append(uid_key_jj)
-
-        print(train_inds_by_uid)
-        exit()
 
         # Populate the weighted test index list
         for ii,uid_key in enumerate(list(self.uid_test_indices.keys())):
