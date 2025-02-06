@@ -259,6 +259,9 @@ class clip_to_consensus:
         train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor,self.train_targets)
         test_features,test_targets   = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor,self.test_targets)
 
+        print(train_targets)
+        exit()
+
         return train_features,test_features
 
     ########################################################
@@ -278,8 +281,6 @@ class clip_to_consensus:
 
             # Add the targets to the tracking dictionary
             consensus_target_raw[ikey] = input_targets[consensus_ind_slice[0]][0]
-            print(consensus_target_raw)
-            exit()
 
             # Loop over possible weighting axis
             for jkey in consensus_ind_slice.keys():
@@ -312,11 +313,15 @@ class clip_to_consensus:
                     consensus_posterior_raw[ikey][jdx] = self.reference_tensor
                 consensus_posterior_raw[ikey][jdx] = torch.cat([consensus_posterior_raw[ikey][jdx],consensus_weighting_raw[ikey][jdx]])
 
-        # Convert to a tensor
+        # Convert features to a tensor
         consensus_posterior_raw_list = list(consensus_posterior_raw.values())
         consensus_features           = torch.stack([torch.cat(row, dim=0) for row in consensus_posterior_raw_list],dim=0)
 
-        return consensus_features
+        # Convert targets to a tensor
+        consensus_target_raw_list = list(consensus_target_raw.values())
+        consensus_targets         = torch.stack([torch.cat(row, dim=0) for row in consensus_targets_raw_list],dim=0)
+
+        return consensus_features,consensus_targets
 
     #################################################
     ### Methods for creating the consensus vector ###
