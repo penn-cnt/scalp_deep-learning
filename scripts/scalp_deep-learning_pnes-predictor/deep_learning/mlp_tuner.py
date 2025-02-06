@@ -256,8 +256,8 @@ class clip_to_consensus:
             train_inds, test_inds = self.weighting_sleep_stage()
 
         # Get the new consensus tensors
-        train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor)
-        test_features,test_targets   = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor)
+        train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor,self.train_targets)
+        test_features,test_targets   = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor,self.test_targets)
 
         return train_features,test_features
 
@@ -265,18 +265,21 @@ class clip_to_consensus:
     ### Creation of a new tensor with correct leaf nodes ###
     ########################################################
     
-    def make_consensus_tensor(self,input_inds,input_predictions):
-
-        print(self.train_targets)
-        exit()
+    def make_consensus_tensor(self,input_inds,input_predictions,input_targets):
 
         # Get the probability vector for training data loop over user and possible weighting structure
         consensus_posterior_raw = {ikey:[] for ikey in input_inds.keys()}
         consensus_weighting_raw = {ikey:[] for ikey in input_inds.keys()}
+        consensus_target_raw    = {ikey:[] for ikey in input_inds.keys()}
         for ikey in input_inds.keys():
 
             # Get the current user indices
             consensus_ind_slice = input_inds[ikey]
+
+            # Add the targets to the tracking dictionary
+            #consensus_target_raw[ikey] = input_targets[con]
+            print(ikey)
+            exit()
 
             # Loop over possible weighting axis
             for jkey in consensus_ind_slice.keys():
