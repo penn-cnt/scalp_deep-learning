@@ -280,14 +280,8 @@ class clip_to_consensus:
             consensus_ind_slice = input_inds[ikey]
 
             # Add the targets to the tracking dictionary
-            try:
-                tind                       = [jval for ival in consensus_ind_slice.values() for jval in ival][0]
-                consensus_target_raw[ikey] = input_targets[tind]
-            except:
-                print(input_targets)
-                print(input_targets.shape)
-                print(tind)
-                exit()
+            tind                       = [jval for ival in consensus_ind_slice.values() for jval in ival][0]
+            consensus_target_raw[ikey] = input_targets[tind]
 
             # Loop over possible weighting axis
             for jkey in consensus_ind_slice.keys():
@@ -325,8 +319,8 @@ class clip_to_consensus:
         consensus_features           = torch.stack([torch.cat(row, dim=0) for row in consensus_posterior_raw_list],dim=0)
 
         # Convert targets to a tensor
-        consensus_target_raw_list = list(consensus_target_raw.values())
-        consensus_targets         = torch.stack([torch.cat(row, dim=0) for row in consensus_targets_raw_list],dim=0)
+        consensus_targets_raw_list = list(consensus_target_raw.values())
+        consensus_targets          = torch.stack([torch.cat(row, dim=0) for row in consensus_targets_raw_list],dim=0)
 
         return consensus_features,consensus_targets
 
