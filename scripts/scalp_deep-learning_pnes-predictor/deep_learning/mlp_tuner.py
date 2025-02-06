@@ -278,8 +278,8 @@ class clip_to_consensus:
 
             # Add the targets to the tracking dictionary
             #consensus_target_raw[ikey] = input_targets[con]
-            print(consensus_ind_slice[0])
-            #print(input_targets[consensus_ind_slice][0][0])
+            inds = consensus_ind_slice[0]
+            print(input_targets[inds])
             exit()
 
             # Loop over possible weighting axis
