@@ -257,7 +257,8 @@ class clip_to_consensus:
 
         # Get the new consensus tensors
         train_features = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor)
-        print(train_features)
+        test_features  = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor)
+        print(test_features)
         exit()
 
     ########################################################
