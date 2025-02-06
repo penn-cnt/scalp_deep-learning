@@ -281,9 +281,12 @@ class clip_to_consensus:
 
             # Add the targets to the tracking dictionary
             try:
-                consensus_target_raw[ikey] = input_targets[consensus_ind_slice[0]][0]
+                tind                       = [jval for ival in consensus_ind_slice.values() for jval in ival][0]
+                consensus_target_raw[ikey] = input_targets[tind]
             except:
-                print(consensus_ind_slice)
+                print(input_targets)
+                print(input_targets.shape)
+                print(tind)
                 exit()
 
             # Loop over possible weighting axis
