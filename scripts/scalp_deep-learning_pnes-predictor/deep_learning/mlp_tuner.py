@@ -256,16 +256,19 @@ class clip_to_consensus:
             train_inds, test_inds = self.weighting_sleep_stage()
 
         # Get the new consensus tensors
-        train_features = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor)
-        test_features  = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor)
-        print(test_features)
-        exit()
+        train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor)
+        test_features,test_targets   = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor)
+
+        return train_features,test_features
 
     ########################################################
     ### Creation of a new tensor with correct leaf nodes ###
     ########################################################
     
     def make_consensus_tensor(self,input_inds,input_predictions):
+
+        print(self.train_targets)
+        exit()
 
         # Get the probability vector for training data loop over user and possible weighting structure
         consensus_posterior_raw = {ikey:[] for ikey in input_inds.keys()}
