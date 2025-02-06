@@ -305,9 +305,6 @@ class clip_to_consensus:
                     consensus_posterior_raw[ikey][jdx] = self.reference_tensor
                 consensus_posterior_raw[ikey][jdx] = torch.cat([consensus_posterior_raw[ikey][jdx],consensus_weighting_raw[ikey][jdx]])
 
-        print(consensus_posterior_raw[1])
-        exit()
-
         # Convert to a tensor
         consensus_posterior_raw_list = list(consensus_posterior_raw.values())
         consensus_features           = torch.stack([torch.cat(row, dim=0) for row in consensus_posterior_raw_list],dim=0)
