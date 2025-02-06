@@ -278,7 +278,7 @@ class clip_to_consensus:
 
             # Add the targets to the tracking dictionary
             #consensus_target_raw[ikey] = input_targets[con]
-            print(input_targets[consensus_ind_slice][0])
+            print(consensus_ind_slice[0])
             #print(input_targets[consensus_ind_slice][0][0])
             exit()
 
