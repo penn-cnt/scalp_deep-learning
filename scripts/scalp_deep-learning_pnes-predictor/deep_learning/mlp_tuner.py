@@ -319,7 +319,7 @@ class clip_to_consensus:
         consensus_features           = torch.stack([torch.cat(row, dim=0) for row in consensus_posterior_raw_list],dim=0)
 
         # Convert targets to a tensor
-        consensus_targets_raw_list = consensus_target_raw.values()
+        consensus_targets_raw_list = [[ival] for ival in consensus_target_raw.values()]
         #foo = [torch.cat(row, dim=0) for row in consensus_targets_raw_list]
         
         print(consensus_posterior_raw_list)
