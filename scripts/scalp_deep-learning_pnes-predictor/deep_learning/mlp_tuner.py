@@ -246,8 +246,11 @@ class clip_to_consensus:
 
         self.weight_method    = 'sleep_stage'
         self.prob_method      = 'quantile'
-        self.qthreshold       = [0.8,0.8,0.8]
+        self.thresholds       = [0.8,0.8,0.8]
         self.reference_tensor = None
+
+        print(self.model_block['categorical'])
+        exit()
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
         if self.weight_method == None:
@@ -296,7 +299,7 @@ class clip_to_consensus:
                 # Get the result using the requested method
                 if prior_predictions.shape[0] > 0:
                     if self.prob_method == 'quantile':
-                        posterior_prediction = self.quantile(prior_predictions,threshold=self.qthreshold[jkey])
+                        posterior_prediction = self.quantile(prior_predictions,threshold=self.thresholds[jkey])
                         if self.reference_tensor == None:self.reference_tensor=torch.zeros_like(posterior_prediction)
                 else:
                     posterior_prediction = None
@@ -489,16 +492,16 @@ class train_pnes(clip_to_consensus):
 
         # Make a consensus tensor
         if self.patient_level:
+
+            # Get the consensus formatted tensors
             packed_results                         = clip_to_consensus.handler(self)
             self.training_consensus_tensor         = packed_results[0]
             self.training_consensus_tensor_targets = packed_results[1]
             self.testing_consensus_tensor          = packed_results[2]
             self.testing_consensus_tensor_targets  = packed_results[3]
-            print(self.training_consensus_tensor_targets)
-            exit()
 
-            self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
-            self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
+            #self.training_consensus_tensor,self.training_consensus_tensor_targets = self.clip_to_patient_transform(self.clip_training_predictions_tensor,self.train_datasets['categorical'],self.uid_train_indices,targets=self.train_targets)
+            #self.testing_consensus_tensor,self.testing_consensus_tensor_targets   = self.clip_to_patient_transform(self.clip_testing_predictions_tensor,self.test_datasets['categorical'],self.uid_test_indices,targets=self.test_targets)
 
             # Make the consensus hidden states
             self.create_consensus_datasets()
