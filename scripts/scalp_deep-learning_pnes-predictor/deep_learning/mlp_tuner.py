@@ -255,7 +255,10 @@ class clip_to_consensus:
         elif self.weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
 
-        print(self.consensus_colnames)
+
+        # Get the thresholds for consensus
+        self.thresholds = [self.config[icol] for icol in self.consensus_colnames]
+        print(self.thresholds)
         exit()
 
         # Get the new consensus tensors
