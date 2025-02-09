@@ -249,14 +249,14 @@ class clip_to_consensus:
         self.thresholds       = [0.8,0.8,0.8]
         self.reference_tensor = None
 
-        #print(self.model_block['categorical'])
-        #exit()
-
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
         if self.weight_method == None:
             train_inds, test_inds = self.weighting_none()
         elif self.weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
+
+        print(self.consensus_colnames)
+        exit()
 
         # Get the new consensus tensors
         train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor,self.train_targets)
@@ -345,8 +345,6 @@ class clip_to_consensus:
                     categorical_colnames.append('_'.join(ilabel.split('_')[:-1]))
                 else:
                     centered_categorical_indices.append(False)
-            print(categorical_colnames)
-            exit()
 
             # Get the categorical vector centered on the current time point
             train_categorical = self.train_datasets['categorical'][:,centered_categorical_indices]
@@ -355,6 +353,9 @@ class clip_to_consensus:
             train_categorical    = self.train_datasets['categorical']
             test_categorical     = self.test_datasets['categorical']
             categorical_colnames = self.model_block['categorical']
+
+        # Clean up the categorical column names to match the config
+        self.categorical_colnames = ["consensus_theshold_{ival}" for ival in categorical_colnames]
 
         # Create the weighting list for train and test
         train_inds_by_uid = {}
@@ -419,6 +420,9 @@ class clip_to_consensus:
         for uid_key in self.uid_test_indices.keys():
             test_inds_by_uid[uid_key] = {0:list(self.uid_test_indices[uid_key])}
         
+        # Grab the consensus theshold from config
+        self.categorical_colnames = ["consensus_theshold"]
+
         return train_inds_by_uid,test_inds_by_uid
 
     ################################################################

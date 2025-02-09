@@ -53,6 +53,7 @@
     "consensus_drop_2": 0.05, 
     "consensus_drop_3": 0.05, 
     "consensus_theshold_method": "quantile", 
+    "consensus_theshold": 0.8,
     "consensus_theshold_yasa_prediction_00": 0.5750000000000001,
     "consensus_theshold_yasa_prediction_01": 0.625, 
     "consensus_theshold_yasa_prediction_02": 0.5,
