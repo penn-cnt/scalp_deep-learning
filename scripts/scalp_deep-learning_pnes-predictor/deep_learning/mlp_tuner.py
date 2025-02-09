@@ -263,9 +263,6 @@ class clip_to_consensus:
         train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor,self.train_targets)
         test_features,test_targets   = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor,self.test_targets)
 
-        print(train_features)
-        exit()
-
         return train_features,train_targets,test_features,test_targets
 
     ########################################################
