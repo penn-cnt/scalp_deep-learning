@@ -338,20 +338,23 @@ class clip_to_consensus:
             # Get the current sleep stage if using attention vector
             mid_ind                      = self.n_attention//2
             centered_categorical_indices = []
+            categorical_colnames         = []
             for ilabel in self.model_block['categorical']:
-                print(ilabel)
                 if int(ilabel.split('_')[-1])==mid_ind:
                     centered_categorical_indices.append(True)
+                    categorical_colnames.append('_'.join(ilabel.split('_')[:-1]))
                 else:
                     centered_categorical_indices.append(False)
+            print(categorical_colnames)
             exit()
 
             # Get the categorical vector centered on the current time point
             train_categorical = self.train_datasets['categorical'][:,centered_categorical_indices]
             test_categorical  = self.test_datasets['categorical'][:,centered_categorical_indices]
         else:
-            train_categorical = self.train_datasets['categorical']
-            test_categorical  = self.test_datasets['categorical']
+            train_categorical    = self.train_datasets['categorical']
+            test_categorical     = self.test_datasets['categorical']
+            categorical_colnames = self.model_block['categorical']
 
         # Create the weighting list for train and test
         train_inds_by_uid = {}
