@@ -249,8 +249,8 @@ class clip_to_consensus:
         self.thresholds       = [0.8,0.8,0.8]
         self.reference_tensor = None
 
-        print(self.model_block['categorical'])
-        exit()
+        #print(self.model_block['categorical'])
+        #exit()
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
         if self.weight_method == None:
@@ -339,10 +339,12 @@ class clip_to_consensus:
             mid_ind                      = self.n_attention//2
             centered_categorical_indices = []
             for ilabel in self.model_block['categorical']:
+                print(ilabel)
                 if int(ilabel.split('_')[-1])==mid_ind:
                     centered_categorical_indices.append(True)
                 else:
                     centered_categorical_indices.append(False)
+            exit()
 
             # Get the categorical vector centered on the current time point
             train_categorical = self.train_datasets['categorical'][:,centered_categorical_indices]
