@@ -355,7 +355,7 @@ class clip_to_consensus:
             categorical_colnames = self.model_block['categorical']
 
         # Clean up the categorical column names to match the config
-        self.consensus_colnames = ["consensus_theshold_{ival}" for ival in categorical_colnames]
+        self.consensus_colnames = [f"consensus_theshold_{ival}" for ival in categorical_colnames]
 
         # Create the weighting list for train and test
         train_inds_by_uid = {}
