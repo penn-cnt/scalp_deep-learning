@@ -475,7 +475,7 @@ class train_pnes(clip_to_consensus):
         self.subnetwork_size_out = 0
         self.comb_loss           = []
         self.con_loss            = []
-        self.attention           = True
+        self.attention           = False
         self.n_attention         = 9
 
         # Get the user id indices
