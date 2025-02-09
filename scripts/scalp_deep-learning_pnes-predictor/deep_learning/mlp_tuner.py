@@ -244,9 +244,9 @@ class clip_to_consensus:
 
     def handler(self):
 
+        # A few hard-coded values for now, until we expand the search criteria
         self.weight_method    = 'sleep_stage'
         self.prob_method      = 'quantile'
-        self.thresholds       = [0.8,0.8,0.8]
         self.reference_tensor = None
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
@@ -258,12 +258,13 @@ class clip_to_consensus:
 
         # Get the thresholds for consensus
         self.thresholds = [self.config[icol] for icol in self.consensus_colnames]
-        print(self.thresholds)
-        exit()
 
         # Get the new consensus tensors
         train_features,train_targets = self.make_consensus_tensor(train_inds,self.clip_training_predictions_tensor,self.train_targets)
         test_features,test_targets   = self.make_consensus_tensor(test_inds,self.clip_testing_predictions_tensor,self.test_targets)
+
+        print(train_features)
+        exit()
 
         return train_features,train_targets,test_features,test_targets
 
