@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, confusion_matrix
 
 # Torch loaders
 import torch
@@ -703,6 +703,11 @@ class train_pnes(clip_to_consensus):
 
         # Measure the auc
         auc = roc_auc_score(truth_arr,y_pred_clean)
+
+        # Get the confusion matrix
+        tn, fp, fn, tp = confusion_matrix(truth_max, y_pred_max).ravel()
+        npv            = tn / (tn + fn)
+        print("NPV:",npv)
 
         return acc,auc,y_pred
 
