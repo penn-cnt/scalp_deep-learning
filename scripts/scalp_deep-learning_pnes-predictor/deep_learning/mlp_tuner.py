@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-from sklearn.metrics import roc_auc_score, confusion_matrix
+from sklearn.metrics import roc_auc_score, confusion_matrix, recall_score
 
 # Torch loaders
 import torch
@@ -704,12 +704,15 @@ class train_pnes(clip_to_consensus):
         # Measure the auc
         auc = roc_auc_score(truth_arr,y_pred_clean)
 
-        # Get the confusion matrix
+        # Get the confusion matrix and npv
         tn, fp, fn, tp = confusion_matrix(truth_max, y_pred_max).ravel()
         npv            = tn / (tn + fn)
+
+        # Get the sensitivity
+        sensitivity = recall_score(y_true, y_pred)
         print("NPV:",npv)
 
-        return acc,auc,y_pred
+        return acc,auc, sensitivity, npv, y_pred
 
     def run_combination_model(self,checkpoint_path):
         
@@ -748,8 +751,8 @@ class train_pnes(clip_to_consensus):
         test_outputs  = self.combine_model([*self.test_datasets.values()])
 
         # Measure the accuracy
-        train_acc_clip, train_auc_clip,y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
-        test_acc_clip, test_auc_clip,_        = self.get_acc_auc(test_outputs,self.test_target_array)
+        train_acc_clip, train_auc_clip, train_sensitivity_clip, train_npv_clip, y_pred = self.get_acc_auc(train_outputs,self.train_target_array)
+        test_acc_clip, test_auc_clip, test_sensitivity_clip, test_npv_clip,_           = self.get_acc_auc(test_outputs,self.test_target_array)
 
         # Make a checkpoint for RAY tuning
         if self.raytuning and not self.patient_level:
@@ -762,10 +765,14 @@ class train_pnes(clip_to_consensus):
                 # Send the current training result back to Tune
                 train.report({"Train_AUC": train_auc_clip,"Test_ACC":train_acc_clip}, checkpoint=checkpoint)
         elif not self.raytuning and not self.patient_level:
-            print(f"Training Accuracy (Clip): {train_acc_clip:0.3f}")
-            print(f"Training AUC      (Clip): {train_auc_clip:0.3f}")
-            print(f"Testing Accuracy  (Clip): {test_acc_clip:0.3f}")
-            print(f"Testing AUC       (Clip): {test_auc_clip:0.3f}")
+            print(f"Training Accuracy    (Clip): {train_acc_clip:0.3f}")
+            print(f"Training AUC         (Clip): {train_auc_clip:0.3f}")
+            print(f"Training Sensitivity (Clip): {train_sensitivity_clip:0.3f}")
+            print(f"Training NPV         (Clip): {train_npv_clip:0.3f}")
+            print(f"Testing Accuracy     (Clip): {test_acc_clip:0.3f}")
+            print(f"Testing AUC          (Clip): {test_auc_clip:0.3f}")
+            print(f"Testing Sensitivity  (Clip): {test_sensitivity_clip:0.3f}")
+            print(f"Testing NPV          (Clip): {test_npv_clip:0.3f}")
 
         # Store the clip layer predictions to the class instance
         self.train_acc_clip = train_acc_clip
@@ -947,9 +954,9 @@ class train_pnes(clip_to_consensus):
         train_outputs = self.consensus_model(self.training_consensus_tensor)
         test_outputs  = self.consensus_model(self.testing_consensus_tensor)
         
-        # Measure the accuracy)
-        train_acc, train_auc,y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
-        test_acc, test_auc,_        = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
+        # Measure the accuracy
+        train_acc, train_auc, train_sensitivity, train_npv = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
+        test_acc, test_auc, test_sensitivity, test_npv, _  = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
 
         # Make a checkpoint for RAY tuning
         if self.raytuning:
@@ -966,10 +973,14 @@ class train_pnes(clip_to_consensus):
                             "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
                             "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}, checkpoint=checkpoint)
         elif not self.raytuning:
-            print(f"Training Accuracy (Patient): {train_acc:0.3f}")
-            print(f"Training AUC      (Patient): {train_auc:0.3f}")
-            print(f"Testing Accuracy  (Patient): {test_acc:0.3f}")
-            print(f"Testing AUC       (Patient): {test_auc:0.3f}")
+            print(f"Training Accuracy     (Patient): {train_acc:0.3f}")
+            print(f"Training AUC          (Patient): {train_auc:0.3f}")
+            print(f"Training Sensitivity  (Patient): {train_sensitivity:0.3f}")
+            print(f"Training NPV          (Patient): {train_npv:0.3f}")
+            print(f"Testing Accuracy      (Patient): {test_acc:0.3f}")
+            print(f"Testing AUC           (Patient): {test_auc:0.3f}")
+            print(f"Testing Sensitivity   (Patient): {test_sensitivity:0.3f}")
+            print(f"Testing NPV           (Patient): {test_npv:0.3f}")
 
     def update_tensors_w_probs(self):
         # Return updated dataframe with the probs
