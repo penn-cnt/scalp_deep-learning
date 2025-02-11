@@ -1105,7 +1105,8 @@ class tuning_manager:
         current_best_params = [self.hotconfig]
 
         # Define the search parameters
-        hyperopt_search = HyperOptSearch(metric="Test_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
+        #hyperopt_search = HyperOptSearch(metric="Test_AUC", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
+        hyperopt_search = HyperOptSearch(metric="Test_Sen", mode="max", points_to_evaluate=current_best_params, random_state_seed=42)
 
         # Set the number of cpus to use
         trainable_with_resources = tune.with_resources(train_pnes_handler, {"cpu": 0.5})
