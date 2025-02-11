@@ -969,6 +969,7 @@ class train_pnes(clip_to_consensus):
 
                 # Send the current training result back to Tune
                 train.report({"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc,
+                              "Train_Sen": train_sensitivity, "Train_NPV": train_npv,"Test_Sen": test_sensitivity, "Test_NPV": test_npv,
                             "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
                             "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}, checkpoint=checkpoint)
         elif not self.raytuning:
