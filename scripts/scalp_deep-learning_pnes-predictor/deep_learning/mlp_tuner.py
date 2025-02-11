@@ -709,7 +709,7 @@ class train_pnes(clip_to_consensus):
         npv            = tn / (tn + fn)
 
         # Get the sensitivity
-        sensitivity = recall_score(y_true, y_pred)
+        sensitivity = recall_score(truth_max, y_pred_max)
         print("NPV:",npv)
 
         return acc,auc, sensitivity, npv, y_pred
