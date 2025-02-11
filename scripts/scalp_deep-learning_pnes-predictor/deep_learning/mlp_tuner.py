@@ -710,9 +710,8 @@ class train_pnes(clip_to_consensus):
 
         # Get the sensitivity
         sensitivity = recall_score(truth_max, y_pred_max)
-        print("NPV:",npv)
 
-        return acc,auc, sensitivity, npv, y_pred
+        return acc, auc, sensitivity, npv, y_pred
 
     def run_combination_model(self,checkpoint_path):
         
@@ -955,8 +954,8 @@ class train_pnes(clip_to_consensus):
         test_outputs  = self.consensus_model(self.testing_consensus_tensor)
         
         # Measure the accuracy
-        train_acc, train_auc, train_sensitivity, train_npv = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
-        test_acc, test_auc, test_sensitivity, test_npv, _  = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
+        train_acc, train_auc, train_sensitivity, train_npv, y_pred = self.get_acc_auc(train_outputs,self.training_consensus_tensor_targets.detach().numpy())
+        test_acc, test_auc, test_sensitivity, test_npv, _          = self.get_acc_auc(test_outputs,self.testing_consensus_tensor_targets.detach().numpy())
 
         # Make a checkpoint for RAY tuning
         if self.raytuning:
