@@ -411,6 +411,10 @@ class vector_manager:
                 transformer_list.append((f"{itransformer}_{method}", 'passthrough', self.model_block[itransformer]))
 
         # Create the column transformation actions
+        for ival in transformer_list:
+            print(ival,ival in self.train_raw.columns)
+        print("========")
+
         ct = ColumnTransformer(transformer_list)
 
         # Apply the log transforms if requested
@@ -421,14 +425,9 @@ class vector_manager:
                     self.test_raw[icol]  = np.log10(self.test_raw[icol].values)
 
         # Convert the data
-        print(self.train_raw.iloc[0])
-        print("Applying distribution scaling.")
         ct.fit(self.train_raw)
         train_transformed = ct.transform(self.train_raw)
         test_transformed  = ct.transform(self.test_raw)
-        print("==")
-        print(self.train_raw.iloc[0])
-        print("++++++++++")
 
         # Make a new flat column header
         flat_cols = [x for xs in ct._columns for x in xs]
