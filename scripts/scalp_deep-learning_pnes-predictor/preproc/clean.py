@@ -252,6 +252,15 @@ class vector_manager:
                 if self.vector_plot_dir != None:
                     self.vector_plots()
 
+                # Try to downcast the columns slightly for memory improvement and speed
+                for icol in self.train_transformed.columns:
+                    if self.train_transformed[icol].dtype == 'int64':
+                        self.train_transformed[icol] = PD.to_numeric(self.train_transformed[icol],downcast='integer')
+                        self.test_transformed[icol]  = PD.to_numeric(self.test_transformed[icol],downcast='integer')
+                    if self.train_transformed[icol].dtype == 'float64':
+                        self.train_transformed[icol] = PD.to_numeric(self.train_transformed[icol],downcast='float')
+                        self.test_transformed[icol]  = PD.to_numeric(self.test_transformed[icol],downcast='float')
+
                 # Append the batch dataset to the output list
                 train_datasets.append(self.train_transformed)
                 test_datasets.append(self.test_transformed)
