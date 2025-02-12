@@ -234,23 +234,30 @@ class vector_manager:
         if not os.path.exists(self.vector_path):
             
             print("Creating Vector data.")
+            train_datasets = []
+            test_datasets  = []
 
             # Create the MLP input
             self.apply_criteria()
             self.select_target()
             self.map_columns()
             self.define_column_groups()
-            self.split_model_group()
-            self.outlier_rejection()
-            self.apply_column_transform()
-            self.encode_categoricals()
+            for batch_num in range(10):
+                self.split_model_group(batch_num)
+                self.outlier_rejection()
+                self.apply_column_transform()
+                self.encode_categoricals()
 
-            # Plot the vectors as need
-            if self.vector_plot_dir != None:
-                self.vector_plots()
+                # Plot the vectors as need
+                if self.vector_plot_dir != None:
+                    self.vector_plots()
+
+                # Append the batch dataset to the output list
+                train_datasets.append(self.train_transformed)
+                test_datasets.append(self.test_transformed)
 
             # Package the DL input object
-            DL_object = (self.model_block,self.train_transformed,self.test_transformed)
+            DL_object = (self.model_block,train_datasets,test_datasets)
             
             # Save the DL object
             pickle.dump(DL_object,open(self.vector_path,"wb"))
@@ -321,7 +328,7 @@ class vector_manager:
             if passflag:
                 self.model_block['passthrough'].append(icol)
     
-    def split_model_group(self):
+    def split_model_group(self,batch_num):
         """
         Split the model group randomly, by patient, or by time.
         """
@@ -331,10 +338,10 @@ class vector_manager:
             DF_inds = np.arange(self.DF.shape[0])
 
             #self.train_raw, self.test_raw = train_test_split(self.DF, test_size=0.33, random_state=42)
-            train_inds, test_inds = train_test_split(DF_inds, test_size=0.33, random_state=42)
+            train_inds, test_inds = train_test_split(DF_inds, test_size=0.33, random_state=42+batch_num)
         elif self.split_method == 'uid':
             # Split on uid
-            splitter              = GroupShuffleSplit(test_size=.33, n_splits=1, random_state = 42)
+            splitter              = GroupShuffleSplit(test_size=.33, n_splits=1, random_state = 42+batch_num)
             split                 = splitter.split(self.DF, groups=self.DF['uid'])
             train_inds, test_inds = next(split)
 
