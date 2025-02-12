@@ -360,7 +360,8 @@ class vector_manager:
         self.train_raw = self.DF.iloc[train_inds]
         self.test_raw  = self.DF.iloc[test_inds]
 
-        print(self.train_raw.shape)
+        print(self.train_raw)
+        exit()
         print("====")
 
     def outlier_rejection(self,contamination_factor=0.05):
