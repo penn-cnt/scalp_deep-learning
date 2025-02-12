@@ -268,7 +268,7 @@ class vector_manager:
                 test_datasets.append(self.test_transformed)
 
             # Package the DL input object
-            DL_object = (self.model_block,train_datasets,test_datasets)
+            DL_object = (self.out_model_block,train_datasets,test_datasets)
             
             # Save the DL object
             pickle.dump(DL_object,open(self.vector_path,"wb"))
@@ -410,11 +410,6 @@ class vector_manager:
             else:
                 transformer_list.append((f"{itransformer}_{method}", 'passthrough', self.model_block[itransformer]))
 
-        # Create the column transformation actions
-        for ival in transformer_list:
-            print(ival,ival in self.train_raw.columns)
-        print("========")
-
         ct = ColumnTransformer(transformer_list)
 
         # Apply the log transforms if requested
@@ -457,6 +452,7 @@ class vector_manager:
         """
 
         # Find the transformer blocks that need encoding
+        self.out_model_block = self.model_block.copy()
         for itransformer in self.transformer_config.keys():
             if self.transformer_config[itransformer]['method'] == 'encoder':
 
@@ -464,7 +460,7 @@ class vector_manager:
                 new_model_block = []
 
                 # Loop over the columns in this model block
-                for icol in self.model_block[itransformer]:
+                for icol in self.out_model_block[itransformer]:
 
                     # Apply the label binarizer to the sleep labels
                     LB = LabelBinarizer()
@@ -489,7 +485,7 @@ class vector_manager:
                     self.test_transformed = PD.concat((self.test_transformed,test_vectors),axis=1)
 
                 # Update the stored model block
-                self.model_block[itransformer] = new_model_block
+                self.out_model_block[itransformer] = new_model_block
 
     def vector_plots(self):
         """
