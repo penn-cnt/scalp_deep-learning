@@ -360,10 +360,6 @@ class vector_manager:
         self.train_raw = self.DF.iloc[train_inds]
         self.test_raw  = self.DF.iloc[test_inds]
 
-        print(self.train_raw)
-        exit()
-        print("====")
-
     def outlier_rejection(self,contamination_factor=0.05):
         """
         Apply outlier rejection to the dataset
@@ -425,10 +421,14 @@ class vector_manager:
                     self.test_raw[icol]  = np.log10(self.test_raw[icol].values)
 
         # Convert the data
+        print(self.train_raw.iloc[0])
         print("Applying distribution scaling.")
         ct.fit(self.train_raw)
         train_transformed = ct.transform(self.train_raw)
         test_transformed  = ct.transform(self.test_raw)
+        print("==")
+        print(self.train_raw.iloc[0])
+        print("++++++++++")
 
         # Make a new flat column header
         flat_cols = [x for xs in ct._columns for x in xs]
