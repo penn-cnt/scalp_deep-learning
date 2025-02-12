@@ -237,11 +237,13 @@ class vector_manager:
             train_datasets = []
             test_datasets  = []
 
-            # Create the MLP input
+            # Create the MLP input up to the branching point for batch scoring
             self.apply_criteria()
             self.select_target()
             self.map_columns()
             self.define_column_groups()
+
+            # 
             for batch_num in range(10):
                 self.split_model_group(batch_num)
                 self.outlier_rejection()
@@ -357,6 +359,9 @@ class vector_manager:
         # get the train and test indices
         self.train_raw = self.DF.iloc[train_inds]
         self.test_raw  = self.DF.iloc[test_inds]
+
+        print(self.train_raw.shape)
+        print("====")
 
     def outlier_rejection(self,contamination_factor=0.05):
         """
