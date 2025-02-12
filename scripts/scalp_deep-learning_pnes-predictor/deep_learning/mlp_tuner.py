@@ -451,7 +451,7 @@ class clip_to_consensus:
 
 class train_pnes(clip_to_consensus):
 
-    def __init__(self,config,DL_object,patient_level=False,raytuning=True,checkpoint_path=None):
+    def __init__(self,config,DL_object,patient_level=False,raytuning=True,checkpoint_path=None,bidx=0):
         
         # Save important variables from handler input to the class instance
         self.config            = config
@@ -461,6 +461,7 @@ class train_pnes(clip_to_consensus):
         self.patient_level     = patient_level
         self.raytuning         = raytuning
         self.checkpoint_path   = checkpoint_path
+        self.batch_index       = bidx
 
         # Initialize some classwide variables
         self.nepoch_clip         = 20
@@ -755,7 +756,7 @@ class train_pnes(clip_to_consensus):
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                 checkpoint = None
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),'comb_loss':self.comb_loss, 'config':self.config}
-                torch.save(outdict,os.path.join(temp_checkpoint_dir, "consensus_model.pth"))
+                torch.save(outdict,os.path.join(temp_checkpoint_dir, f"consensus_model_{self.batch_index:02d}.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
@@ -961,7 +962,7 @@ class train_pnes(clip_to_consensus):
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
                               'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
                               'comb_loss':self.comb_loss,'con_loss':self.con_loss, 'config':self.config}
-                torch.save(outdict,os.path.join(temp_checkpoint_dir, "full_model.pth"))
+                torch.save(outdict,os.path.join(temp_checkpoint_dir, f"full_model_{self.batch_index:02d}.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
@@ -989,8 +990,9 @@ def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,check
     Function that manages the workflow for the MLP model.
     """
 
-    TP = train_pnes(config,DL_object,patient_level,raytuning,checkpoint_path)
-    TP.run_basemodel_pipeline()
+    for bidx in range(len(DL_object)):
+        TP = train_pnes(config,DL_object[bidx],patient_level,raytuning,checkpoint_path,bidx)
+        TP.run_basemodel_pipeline()
 
 def update_pnes_handler(config,DL_object,patient_level=True,raytuning=False,checkpoint_path=None):
 

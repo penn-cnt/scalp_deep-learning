@@ -234,8 +234,7 @@ class vector_manager:
         if not os.path.exists(self.vector_path):
             
             print("Creating Vector data.")
-            train_datasets = []
-            test_datasets  = []
+            batch_list = []
 
             # Create the MLP input up to the branching point for batch scoring
             self.apply_criteria()
@@ -264,11 +263,10 @@ class vector_manager:
                         self.test_transformed[icol]  = PD.to_numeric(self.test_transformed[icol],downcast='float')
 
                 # Append the batch dataset to the output list
-                train_datasets.append(self.train_transformed)
-                test_datasets.append(self.test_transformed)
+                batch_list.append((self.out_model_block,self.train_transformed,self.test_transformed))
 
             # Package the DL input object
-            DL_object = (self.out_model_block,train_datasets,test_datasets)
+            DL_object = batch_list
             
             # Save the DL object
             pickle.dump(DL_object,open(self.vector_path,"wb"))
