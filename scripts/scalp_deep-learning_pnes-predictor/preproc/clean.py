@@ -234,7 +234,7 @@ class vector_manager:
         if not os.path.exists(self.vector_path):
             
             print("Creating Vector data.")
-            batch_list = []
+            batch_list = {}
 
             # Create the MLP input up to the branching point for batch scoring
             self.apply_criteria()
@@ -242,7 +242,7 @@ class vector_manager:
             self.map_columns()
             self.define_column_groups()
 
-            # 
+            # Create a batch of datasets
             for batch_num in range(10):
                 self.split_model_group(batch_num)
                 self.outlier_rejection()
@@ -263,7 +263,7 @@ class vector_manager:
                         self.test_transformed[icol]  = PD.to_numeric(self.test_transformed[icol],downcast='float')
 
                 # Append the batch dataset to the output list
-                batch_list.append((self.out_model_block,self.train_transformed,self.test_transformed))
+                batch_list[batch_num] = (self.out_model_block,self.train_transformed,self.test_transformed)
 
             # Package the DL input object
             DL_object = batch_list
