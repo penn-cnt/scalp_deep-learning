@@ -990,6 +990,9 @@ def train_pnes_handler(config,DL_object,patient_level=False,raytuning=True,check
     Function that manages the workflow for the MLP model.
     """
 
+    print(type(DL_object))
+    exit()
+
     for bidx in DL_object.keys():
         TP = train_pnes(config,DL_object[bidx],patient_level,raytuning,checkpoint_path,bidx)
         TP.run_basemodel_pipeline()
