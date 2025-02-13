@@ -1075,10 +1075,10 @@ class tuning_manager:
             self.config[f"combined_norm_order"]   = tune.choice(['before','after'])
 
             # Global fitting criteria selection
-            self.config["combination_nepoch"] = tune.randint(1,101)
-            self.config["consensus_nepoch"]   = tune.randint(1,101)
+            self.config["combination_nepoch"] = tune.randint(1,5) #101)
+            self.config["consensus_nepoch"]   = tune.randint(1,5) #101)
             self.config['lr']                 = tune.loguniform(1e-5,1e-3)
-            self.config['batchsize']          = tune.quniform(32, 1024, 32)
+            self.config['batchsize']          = tune.quniform(512, 1024, 32) #tune.quniform(32, 1024, 32)
             self.config['weight']             = tune.uniform(.1,20)
 
             # Consensus configuration
