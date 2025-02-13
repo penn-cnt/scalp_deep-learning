@@ -28,10 +28,21 @@ if __name__ == '__main__':
         DF['Test_Sensitivity'] = sensitivity
         DF['Test_NPV']         = npv
 
-        print(DF)
+        # Save the results
         DF.to_csv("nn_metrics.csv",index=False)
     else:
+
+        # Read in the data
         DF = PD.read_csv(argv[2])
 
-        sns.boxplot(data=DF,x='folder',y='Test_Sensitivity')
+        # Make a combined metrics
+        DF_long = DF.melt(id_vars=['folder', 'checknum'], value_vars=['Test_Sensitivity', 'Test_NPV'], 
+                   var_name='metric', value_name='metric_value')
+
+        fig = PLT.figure(dpi=100.,figsize=(8.,6.))
+        ax1 = fig.add_subplot(111)
+        sns.boxplot(data=DF_long,x='folder',y='metric_value',hue='metric',ax=ax1)
+
+        PLT.xticks(rotation='vertical')
+        PLT.legend(loc='lower right')
         PLT.show()
