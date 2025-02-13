@@ -969,7 +969,7 @@ class train_pnes(clip_to_consensus):
                 checkpoint = None
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
                               'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
-                              'comb_loss':self.comb_loss,'con_loss':self.con_loss, 'config':self.config}
+                              'comb_loss':self.comb_loss,'con_loss':self.con_loss, 'config':self.config, 'metrics':metrics}
                 torch.save(outdict,os.path.join(temp_checkpoint_dir, f"full_model_{self.batch_index:02d}.pth"))
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
