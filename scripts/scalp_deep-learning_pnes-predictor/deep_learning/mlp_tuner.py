@@ -324,7 +324,7 @@ class clip_to_consensus:
         consensus_targets_raw_list = [[ival] for ival in consensus_target_raw.values()]
         consensus_targets          = torch.stack([torch.cat(row, dim=0) for row in consensus_targets_raw_list],dim=0)
 
-        print(consensus_features)
+        print(consensus_features.shape)
         exit()
 
         return consensus_features,consensus_targets
