@@ -5,6 +5,6 @@ if __name__ == '__main__':
 
     # get the list of checkpoints
     files = []
-    for path in Path(argv[1]).rglob('*check*'):
+    for path in Path(argv[1]).rglob('*.pth'):
         files.append(path)
     print(files)
