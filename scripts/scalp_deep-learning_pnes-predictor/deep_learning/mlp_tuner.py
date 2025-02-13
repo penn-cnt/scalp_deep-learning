@@ -448,7 +448,8 @@ class clip_to_consensus:
 
     def quantile_vector(self,input_vector,qvec=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
         foo = [torch.quantile(input_vector,q=threshold, dim=0) for threshold in qvec]
-        print(foo)
+        bar = torch.cat(foo)
+        print(bar)
         exit()
         return nn.ModuleList([])
 
