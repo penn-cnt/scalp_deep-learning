@@ -245,8 +245,8 @@ class clip_to_consensus:
     def handler(self):
 
         # A few hard-coded values for now, until we expand the search criteria
-        self.weight_method    = 'sleep_stage'
-        self.prob_method      = 'quantile_vector'
+        self.weight_method    = self.config["consensus_theshold_weighting"]
+        self.prob_method      = self.config['consensus_theshold_method']
         self.reference_tensor = None
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
