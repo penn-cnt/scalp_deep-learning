@@ -324,9 +324,6 @@ class clip_to_consensus:
         consensus_targets_raw_list = [[ival] for ival in consensus_target_raw.values()]
         consensus_targets          = torch.stack([torch.cat(row, dim=0) for row in consensus_targets_raw_list],dim=0)
 
-        print(consensus_features)
-        exit()
-
         return consensus_features,consensus_targets
 
     #################################################
@@ -435,6 +432,10 @@ class clip_to_consensus:
     ################################################################
 
     def posterior_selection(self):
+        """
+        Currently not implemented.
+        """
+
         # Find the most predictive entires
         diffs     = torch.abs(torch.diff(prior_predictions,axis=1))
         diff_inds = (diffs>threshold).squeeze()
@@ -1100,7 +1101,7 @@ class tuning_manager:
             self.config[f"consensus_drop_2"]   = tune.quniform(0.05, .5, .01)
             self.config[f"consensus_drop_3"]   = tune.quniform(0.05, .5, .01)
             self.config["consensus_theshold_weighting"]          = tune.choice([None,'sleep_stage'])
-            self.config['consensus_theshold_method']             = tune.choice(['posterior','quantile','quantile_vector'])
+            self.config['consensus_theshold_method']             = tune.choice(['quantile','quantile_vector'])
             self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.01, 1.0, .01)
             self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.01, 1.0, .01)
             self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.01, 1.0, .01)
