@@ -246,7 +246,7 @@ class clip_to_consensus:
 
         # A few hard-coded values for now, until we expand the search criteria
         self.weight_method    = 'sleep_stage'
-        self.prob_method      = 'quantile'
+        self.prob_method      = 'quantile_vector'
         self.reference_tensor = None
 
         # Get indices for each patient, structured to allow for weighting or passing all indices to some probability vector method
@@ -254,7 +254,6 @@ class clip_to_consensus:
             train_inds, test_inds = self.weighting_none()
         elif self.weight_method == 'sleep_stage':
             train_inds, test_inds = self.weighting_sleep_stage()
-
 
         # Get the thresholds for consensus
         self.thresholds = [self.config[icol] for icol in self.consensus_colnames]
@@ -302,6 +301,10 @@ class clip_to_consensus:
                     if self.prob_method == 'quantile':
                         posterior_prediction = self.quantile(prior_predictions,threshold=self.thresholds[jkey])
                         if self.reference_tensor == None:self.reference_tensor=torch.zeros_like(posterior_prediction)
+                    elif self.prob_method == 'quantile_vector':
+                        posterior_prediction = self.quantile_vector(prior_predictions)
+                        print(posterior_prediction)
+                        exit()
                 else:
                     posterior_prediction = None
                 
