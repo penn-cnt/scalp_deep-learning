@@ -1,7 +1,7 @@
 import pandas as PD
 from sys import argv
-from torch import load
 from pathlib import Path
+from torch import load as tload
 
 if __name__ == '__main__':
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     sensitivity = []
     npv         = []
     for ifile in files:
-        metrics = torch.load(ifile)['metrics']
+        metrics = tload(ifile)['metrics']
         sensitivity.append(metrics["Test_Sen"])
         npv.append(metrics["Test_NPV"])
     DF['Test_Sensitivity'] = sensitivity
