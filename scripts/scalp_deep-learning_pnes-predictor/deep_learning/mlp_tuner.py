@@ -300,11 +300,9 @@ class clip_to_consensus:
                 if prior_predictions.shape[0] > 0:
                     if self.prob_method == 'quantile':
                         posterior_prediction = self.quantile(prior_predictions,threshold=self.thresholds[jkey])
-                        if self.reference_tensor == None:self.reference_tensor=torch.zeros_like(posterior_prediction)
                     elif self.prob_method == 'quantile_vector':
                         posterior_prediction = self.quantile_vector(prior_predictions)
-                        print(posterior_prediction)
-                        exit()
+                    if self.reference_tensor == None:self.reference_tensor=torch.zeros_like(posterior_prediction)
                 else:
                     posterior_prediction = None
                 
@@ -325,6 +323,9 @@ class clip_to_consensus:
         # Convert targets to a tensor
         consensus_targets_raw_list = [[ival] for ival in consensus_target_raw.values()]
         consensus_targets          = torch.stack([torch.cat(row, dim=0) for row in consensus_targets_raw_list],dim=0)
+
+        print(consensus_features)
+        exit()
 
         return consensus_features,consensus_targets
 
@@ -447,11 +448,7 @@ class clip_to_consensus:
         return posterior_predictions
 
     def quantile_vector(self,input_vector,qvec=[0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99]):
-        foo = [torch.quantile(input_vector,q=threshold, dim=0) for threshold in qvec]
-        bar = torch.cat(foo)
-        print(bar)
-        exit()
-        return nn.ModuleList([])
+        return torch.cat([torch.quantile(input_vector,q=threshold, dim=0) for threshold in qvec])
 
     def quantile(self,input_vector,threshold):
         return torch.quantile(input_vector,q=threshold, dim=0)
