@@ -1068,22 +1068,22 @@ class tuning_manager:
                 self.config[f"{iblock}_norm_order"]   = tune.choice(['before','after'])
 
             # Define the combination configuration block
-            self.config[f"combined_nlayer"]       = tune.randint(1, 4)
-            self.config[f"combined_hsize_1"]      = tune.quniform(0.05, 1.5, .01)
-            self.config[f"combined_hsize_2"]      = tune.quniform(0.05, 1.5, .01)
-            self.config[f"combined_hsize_3"]      = tune.quniform(0.05, 1.5, .01)
-            self.config[f"combined_drop_1"]       = tune.quniform(0.05, .5, .01)
-            self.config[f"combined_drop_2"]       = tune.quniform(0.05, .5, .01)
-            self.config[f"combined_drop_3"]       = tune.quniform(0.05, .5, .01)
-            self.config[f"combined_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
+            self.config[f"combined_nlayer"]        = tune.randint(1, 4)
+            self.config[f"combined_hsize_1"]       = tune.quniform(0.05, 1.5, .01)
+            self.config[f"combined_hsize_2"]       = tune.quniform(0.05, 1.5, .01)
+            self.config[f"combined_hsize_3"]       = tune.quniform(0.05, 1.5, .01)
+            self.config[f"combined_drop_1"]        = tune.quniform(0.05, .5, .01)
+            self.config[f"combined_drop_2"]        = tune.quniform(0.05, .5, .01)
+            self.config[f"combined_drop_3"]        = tune.quniform(0.05, .5, .01)
+            self.config[f"combined_activation"]    = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
             self.config[f"combined_normalization"] = tune.choice(['batch1d','pass'])
-            self.config[f"combined_norm_order"]   = tune.choice(['before','after'])
+            self.config[f"combined_norm_order"]    = tune.choice(['before','after'])
 
             # Global fitting criteria selection
-            self.config["combination_nepoch"] = tune.randint(1,5) #101)
-            self.config["consensus_nepoch"]   = tune.randint(1,5) #101)
+            self.config["combination_nepoch"] = tune.randint(1,51)
+            self.config["consensus_nepoch"]   = tune.randint(1,51)
             self.config['lr']                 = tune.loguniform(1e-5,1e-3)
-            self.config['batchsize']          = tune.quniform(512, 1024, 32) #tune.quniform(32, 1024, 32)
+            self.config['batchsize']          = tune.quniform(32, 1024, 32)
             self.config['weight']             = tune.uniform(.1,20)
 
             # Consensus configuration
