@@ -1014,9 +1014,9 @@ class tuning_manager:
 
         # Save variables from the front end
         self.DL_object         = DL_object
-        self.model_block       = DL_object[0]
-        self.train_transformed = DL_object[1]
-        self.test_transformed  = DL_object[2]
+        self.model_block       = DL_object[0][0]
+        #self.train_transformed = DL_object[1]
+        #self.test_transformed  = DL_object[2]
         self.ncpu              = ncpu
         self.ntrial            = ntrial
         self.raydir            = raydir
