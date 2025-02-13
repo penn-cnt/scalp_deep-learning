@@ -2,7 +2,7 @@
     "lr": 0.0008712789690647122, 
     "batchsize": 256,
     "weight": 1.3708866252744654, 
-    "combination_nepoch": 1,
+    "combination_nepoch": 10,
     "consensus_nepoch": 10,
     "frequency_nlayer": 1, 
     "frequency_hsize_1": 1.125, 
