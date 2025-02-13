@@ -499,7 +499,7 @@ class train_pnes(clip_to_consensus):
         self.run_combination_model(self.checkpoint_path)
 
         # Update tensors to return to user for possible downstream analysis
-        self.update_tensors_w_probs()
+        #self.update_tensors_w_probs()
 
         # Make a consensus tensor
         if self.patient_level:
@@ -958,6 +958,14 @@ class train_pnes(clip_to_consensus):
         # Make a checkpoint for RAY tuning
         if self.raytuning:
             with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                
+                # Store the metrics for the run
+                metrics = {"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc,
+                           "Train_Sen": train_sensitivity, "Train_NPV": train_npv,"Test_Sen": test_sensitivity, "Test_NPV": test_npv,
+                           "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
+                           "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}
+
+                # Create checkpoint
                 checkpoint = None
                 outdict    = {'combine_model': self.combine_model.state_dict(),'combine_optimizer': self.combine_optimizer.state_dict(),
                               'consensus_model': self.consensus_model.state_dict(),'consensus_optimizer': self.consensus_optimizer.state_dict(),
@@ -966,10 +974,7 @@ class train_pnes(clip_to_consensus):
                 checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
                 # Send the current training result back to Tune
-                train.report({"Train_AUC": train_auc,"Train_ACC":train_acc, "Test_AUC":test_auc, "Test_ACC":test_acc,
-                              "Train_Sen": train_sensitivity, "Train_NPV": train_npv,"Test_Sen": test_sensitivity, "Test_NPV": test_npv,
-                            "Train_AUC_clip": self.train_auc_clip,"Train_ACC_clip":self.train_acc_clip,
-                            "Test_AUC_clip":self.test_auc_clip, "Test_ACC_clip":self.test_acc_clip}, checkpoint=checkpoint)
+                train.report(metrics, checkpoint=checkpoint)
         elif not self.raytuning:
             print(f"Training Accuracy     (Patient): {train_acc:0.3f}")
             print(f"Training AUC          (Patient): {train_auc:0.3f}")
