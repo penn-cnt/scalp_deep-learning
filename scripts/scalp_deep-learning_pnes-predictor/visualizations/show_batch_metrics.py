@@ -29,6 +29,7 @@ if __name__ == '__main__':
         DF['Test_NPV']         = npv
 
         # Save the results
+        print(f"{DF.shape[0]} Records")
         DF.to_csv("nn_metrics.csv",index=False)
     else:
 
@@ -39,7 +40,7 @@ if __name__ == '__main__':
         DF_long = DF.melt(id_vars=['folder', 'checknum'], value_vars=['Test_Sensitivity', 'Test_NPV'], 
                    var_name='metric', value_name='metric_value')
 
-        fig = PLT.figure(dpi=100.,figsize=(8.,6.))
+        fig = PLT.figure(dpi=100.,figsize=(12.,8.))
         ax1 = fig.add_subplot(111)
         sns.boxplot(data=DF_long,x='folder',y='metric_value',hue='metric',ax=ax1)
 
