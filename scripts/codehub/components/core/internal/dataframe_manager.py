@@ -40,15 +40,3 @@ class dataframe_manager:
         # Get the columns to drop
         drop_cols  = np.setdiff1d(self.dataframe.columns,keep_columns)
         self.dataframe = self.dataframe.drop(drop_cols, axis=1)
-
-    def montaged_dataframe(self,data,columns):
-        """
-        Create a dataframe that stores the montaged data.
-        DEPRECIATE AFTER BETA PIPELINE RELEASE!
-
-        Args:
-            data (array): array of montaged data
-            columns (list): List of column names
-        """
-
-        self.montaged_dataframe = PD.DataFrame(data,columns=columns)
