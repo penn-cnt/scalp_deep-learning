@@ -68,10 +68,14 @@ if __name__ == '__main__':
     duration_group.add_argument("--dur", type=float, default=10, help="Duration to plot in seconds.")
     duration_group.add_argument("--dur_frac", action='store_true', default=False, help="Flag. Duration is interpreted as a fraction of total data.")
 
+    enrichment_group = parser.add_argument_group('Add any data enrichment.')
+    enrichment_group.add_argument("--epilepsy_prob_file", type=str, default=None, help="Path to probability of epilepsy enrichment vectors.")
+
     misc_group = parser.add_argument_group('Misc options')
     misc_group.add_argument("--winfrac", type=float, default=0.9, help="Fraction of the window for the plot.")
     misc_group.add_argument("--nstride", type=int, default=8, help="Stride factor for plotting.")
     misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. Save no outputs.")
+    misc_group.add_argument("--shade", action='store_true', default=False, help="Shade the original viewing region.")
     args = parser.parse_args()
 
     # Clean up some argument types

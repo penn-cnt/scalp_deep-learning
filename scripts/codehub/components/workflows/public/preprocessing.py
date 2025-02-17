@@ -155,8 +155,8 @@ class signal_processing:
         Signal proecessing initilization.
 
         Args:
-            data (_type_): _description_
-            fs (_type_): _description_
+            data (array): Single channel data array
+            fs (int): Sampling frequency for the channel
         """
 
         self.data = data

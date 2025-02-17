@@ -52,6 +52,10 @@ class data_viewer(Subject,event_handler):
         Workflow for plotting data and managing flow of information.
         """
 
+        # Data Enrichment options
+        if self.args.epilepsy_prob_file!=None:
+            self.enrich_dataframe_epilepsy()
+
         # Attach the observers
         self.attach_objects()
 
@@ -64,6 +68,34 @@ class data_viewer(Subject,event_handler):
         # Save the annotations, if any
         if self.plot_info['annots'].keys():
             self.save_annotations()
+
+    def enrich_dataframe_epilepsy(self):
+
+        # Make a running time column for the plot data
+        tvals = np.arange(self.DF.shape[0])/self.fs
+
+        # Read in the probability data
+        probability_df = PD.read_pickle(self.args.epilepsy_prob_file)
+        
+        # get the right dataslice
+        basefile = self.args.infile.split('/')[-1]
+        probability_df = probability_df.loc[probability_df.file==basefile]
+
+        # get the time ranges
+        prob_times  = probability_df['t_start'].values
+        prob_times  = np.concatenate((prob_times,[tvals[-1]]))
+        time_ranges = np.hstack((prob_times[:-1].reshape(-1,1),prob_times[1:].reshape(-1,1))) 
+
+        # Populate the probabilities into a vector
+        probs   = probability_df['Epilepsy_Prob'].values
+        outvals = [] 
+        for ival in tvals:
+            mask  = (ival>=time_ranges[:,0])&(ival<=time_ranges[:,1])
+            iprob = probs[mask][0]
+            outvals.append(iprob)
+
+        # Add the epilepsy info to the dataframe
+        self.DF['P_epi'] = outvals
 
     def attach_objects(self):
         """
@@ -138,16 +170,33 @@ class data_viewer(Subject,event_handler):
             else:
                 self.plot_info['axes'][ichan] = self.fig.add_subplot(gs[idx, 0],sharex=self.plot_info['axes'][self.first_chan])
 
-            # Get the data stats 
-            idata,ymin,ymax = self.get_stats(ichan)
+            # Get the data stats
+            if ichan not in ['P_epi']:
+                idata,ymin,ymax = self.get_stats(ichan)
+            else:
+                idata = self.DF[ichan].values
 
             # Plot the data
             self.plot_info['axes'][ichan].plot(self.plot_info['xvals'][::self.args.nstride],idata[::self.args.nstride],color='k')
-            self.plot_info['axes'][ichan].set_ylim([ymin,ymax])
+            if ichan not in ['P_epi']:
+                self.plot_info['axes'][ichan].set_ylim([ymin,ymax])
+            else:
+
+                # Figure out the best ymin and ymax for this larger dynamic range
+                ymin, ymax = self.plot_info['axes'][ichan].get_ylim()
+
+                # Some conditionals on allowed ranges
+                delta   = 0.00001
+                new_min = 1-delta
+                new_max = 1+delta
+                if ymin<new_min:new_min = ymin
+                if ymax>new_max:new_max = ymax
+                self.plot_info['axes'][ichan].set_ylim([new_min,new_max])
             self.plot_info['ylim'][ichan] = [ymin,ymax]
 
             # Add in shading for the original axes limits
-            self.plot_info['shade'][ichan] = self.plot_info['axes'][ichan].axvspan(self.plot_info['xlim_orig'][0], self.plot_info['xlim_orig'][1], facecolor='orange',alpha=0.2)
+            if self.args.shade:
+                self.plot_info['shade'][ichan] = self.plot_info['axes'][ichan].axvspan(self.plot_info['xlim_orig'][0], self.plot_info['xlim_orig'][1], facecolor='orange',alpha=0.2)
 
             # Clean up the plot
             for label in self.plot_info['axes'][ichan].get_xticklabels():
@@ -155,7 +204,7 @@ class data_viewer(Subject,event_handler):
             self.plot_info['axes'][ichan].set_yticklabels([])
             self.plot_info['axes'][ichan].set_ylabel(ichan,fontsize=12,rotation=0,labelpad=npnt)
             self.plot_info['axes'][ichan].xaxis.grid(True)
-        
+
         # X-axis cleanup
         self.last_chan = ichan
         self.plot_info['axes'][ichan].set_xlim(self.plot_info['xlim_orig'])
