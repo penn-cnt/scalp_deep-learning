@@ -189,7 +189,7 @@ class signal_processing:
         except KeyError:
             bandpass_b, bandpass_a = butter(butterorder,freq_filter_array, btype=filter_type, fs=self.fs)
             persistance_dict[keyname] = (bandpass_b,bandpass_a)
-            
+           
         return filtfilt(bandpass_b, bandpass_a, self.data, axis=0)
 
     def frequency_downsample(self,output_hz,input_hz=None):
