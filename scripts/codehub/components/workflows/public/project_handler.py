@@ -86,10 +86,10 @@ class project_handlers:
                 # At present you cannot mix these steps. But later updates will allow
                 # to provide the ability to define multiple preprocessing blocks that
                 # can be ordered independently.
-                df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
+                self.premontage_df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 
                 # Montage the data
-                self.montaged_dataframe = channel_montage.pipeline(self,df)
+                self.montaged_dataframe = channel_montage.pipeline(self,self.premontage_df)
 
                 # Store the data to the output handler so we can pass everything to the feature extractor
                 # Returning to a list of arrays so it can be passed to different modeling back-ends like PyTorch.
@@ -146,10 +146,10 @@ class project_handlers:
                 self.mne_channels = channel_clean.direct_inputs(self,mne_channels)
 
                 # Preprocess the data
-                df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
+                self.premontage_df = preprocessing.__init__(self, self.dataframe, self.metadata[self.file_cntr]['fs'])
 
                 # Put the data into a specific montage
-                self.montaged_dataframe = channel_montage.pipeline(self,df)
+                self.montaged_dataframe = channel_montage.pipeline(self,self.premontage_df)
 
                 # Update the output list
                 output_manager.update_output_list(self,self.montaged_dataframe.values)
