@@ -9,6 +9,7 @@ import numpy as np
 import pandas as PD
 from tqdm import tqdm
 from fooof import FOOOF
+from functools import wraps
 from scipy.stats import mode
 from scipy.integrate import simpson
 from scipy.signal import welch, find_peaks, detrend
@@ -27,12 +28,37 @@ from sklearn.exceptions import InconsistentVersionWarning
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=InconsistentVersionWarning)
 
+def channel_wrapper(method):
+    """Decorator to apply a method to each column unless the user directly passes the column to analyze."""
+    @wraps(method)
+    def wrapper(self, channel=None, *args, **kwargs):
+        if channel is not None:
+            # Run method on a specific column
+            return [method(self, channel, *args, **kwargs)]
+        else:
+            # Run method on all columns and return results as a dictionary
+            return [method(self, col, *args, **kwargs) for col in self.data.columns]
+    return wrapper
+
 class YASA_processing:
+    """
+    Yasa sleep staging feature extraction.
+    """
     
-    def __init__ (self,data,channels,fs):
-        self.data        = data
-        self.channels    = channels
-        self.fs          = fs
+    def __init__ (self, data, fs, channels=None, trace=False):
+        # Manage data typing and form a dataframe as needed
+        if isinstance(data, np.ndarray):
+            if channels == None:
+                raise ValueError("If passing a numpy array, channels must not be None.")
+            self.data     = data
+            self.channels = channels
+        elif isinstance(data,PD.DataFrame):
+            self.data = data.values
+            self.channels = self.data.columns
+
+        # Save remaining keywords
+        self.fs       = fs
+        self.trace    = trace
 
     def make_montage_object(self,config_path):
 
@@ -257,14 +283,37 @@ class FOOOF_processing:
 class signal_processing:
     """
     Class devoted to basic signal processing tasks. (Band-power/peak-finder/etc.)
+
+    Uses only one channel at a time.
     """
     
-    def __init__(self, data, fs, trace=False):
-        self.data  = data
-        self.fs    = fs
-        self.trace = trace
+    def __init__(self, data, fs, channels=None, trace=False):
+        """
+        Store the dataframe object to the signal processing class for use in different methods.
+
+        Args:
+            data (array or dataframe): Array/DataFrame of timeseries data. Row=Sample, Column=Channel.
+            fs (float): Sampling Frequency
+            channels (list): List of channel names. Same order as columns in data.
+            trace (bool, optional): _description_. Defaults to False.
+        """
+
+        # manage data typing and form a dataframe as needed
+        if isinstance(data, np.ndarray):
+            if channels == None:
+                raise ValueError("If passing a numpy array, channels must not be None.")
+            self.data     = PD.DataFrame(data,columns=channels)
+            self.channels = channels
+        elif isinstance(data,PD.DataFrame):
+            self.data = data
+            self.channels = self.data.columns
+
+        # Save remaining keywords
+        self.fs       = fs
+        self.trace    = trace
     
-    def spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
+    @channel_wrapper
+    def spectral_energy_welch(self, channel, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
         """
         Returns the spectral energy using the Welch method.
 
@@ -290,7 +339,8 @@ class signal_processing:
         noverlap = int(float(win_stride) * self.fs)
 
         # Calculate the welch periodogram
-        frequencies, initial_power_spectrum = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
+        idata                               = self.data[channel].values
+        frequencies, initial_power_spectrum = welch(x=idata.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
         initial_power_spectrum              = initial_power_spectrum.flatten()
         inds                                = (frequencies>=0.5)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
         freqs                               = frequencies[inds]
@@ -306,7 +356,8 @@ class signal_processing:
         else:
             return spectral_energy,self.optional_tag,(['freqs','psd_welch'],frequencies.astype('float16'),psd.astype('float32'))
 
-    def normalized_spectral_energy_welch(self, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
+    @channel_wrapper
+    def normalized_spectral_energy_welch(self, channel, low_freq=-np.inf, hi_freq=np.inf, win_size=2., win_stride=1.):
         """
         Returns the spectral energy using the Welch method.
 
@@ -332,7 +383,8 @@ class signal_processing:
         noverlap = int(float(win_stride) * self.fs)
 
         # Calculate the welch periodogram
-        frequencies, initial_power_spectrum = welch(x=self.data.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
+        idata                               = self.data[channel].values
+        frequencies, initial_power_spectrum = welch(x=idata.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
         initial_power_spectrum              = initial_power_spectrum.flatten()
         inds                                = (frequencies>=0.5)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
         freqs                               = frequencies[inds]
@@ -348,7 +400,8 @@ class signal_processing:
         else:
             return spectral_energy,self.optional_tag,(['freqs','psd_welch'],frequencies.astype('float16'),psd.astype('float32'))
 
-    def topographic_peaks(self,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
+    @channel_wrapper
+    def topographic_peaks(self,channel,prominence_height,min_width,height_unit='zscore',width_unit='seconds',detrend_flag=False):
         """
         Find the topographic peaks in channel data. This is a naive/fast way of finding spikes or slowing.
 
@@ -369,9 +422,9 @@ class signal_processing:
 
         # Detrend as needed
         if detrend_flag:
-            data = detrend(self.data)
+            data = detrend(self.data[channel].values)
         else:
-            data = np.copy(self.data)
+            data = np.copy(self.data[channel].values)
 
         # Recast height into a pure number as needed
         if height_unit == 'zscore':
@@ -404,7 +457,8 @@ class signal_processing:
         # Return a tuple of (peak, left width, right width) to store all of the peak info
         return out,self.optional_tag
     
-    def line_length(self):
+    @channel_wrapper
+    def line_length(self,channel):
         """
         Return the line length along the given channel.
 
@@ -413,18 +467,42 @@ class signal_processing:
             optional_tag (string): Optional tag
         """
 
-        LL           = np.sum(np.abs(np.ediff1d(self.data)))
+        LL           = np.sum(np.abs(np.ediff1d(self.data[channel].values)))
         optional_tag = ''
         return LL,optional_tag
 
 class basic_statistics:
+    """
+    Basic features that can be extracted from the raw time series data.
+    """
 
-    def __init__(self, data, fs, trace=False):
-        self.data  = data
-        self.fs    = fs
-        self.trace = trace
+    def __init__(self, data, fs, channels=None, trace=False):
+        """
+        Store the dataframe object to the signal processing class for use in different methods.
 
-    def mean(self):
+        Args:
+            data (array or dataframe): Array/DataFrame of timeseries data. Row=Sample, Column=Channel.
+            fs (float): Sampling Frequency
+            channels (list): List of channel names. Same order as columns in data.
+            trace (bool, optional): _description_. Defaults to False.
+        """
+        
+        # manage data typing and form a dataframe as needed
+        if isinstance(data, np.ndarray):
+            if channels == None:
+                raise ValueError("If passing a numpy array, channels must not be None.")
+            self.data     = PD.DataFrame(data,columns=channels)
+            self.channels = channels
+        elif isinstance(data,PD.DataFrame):
+            self.data = data
+            self.channels = self.data.columns
+
+        # Save remaining keywords
+        self.fs       = fs
+        self.trace    = trace
+
+    @channel_wrapper
+    def mean(self,channel):
         """
         Returns the mean value in a channel.
 
@@ -432,9 +510,10 @@ class basic_statistics:
             float: Mean channel intensity.
         """
 
-        return np.mean(self.data),'mean'
+        return np.mean(self.data[channel].values),'mean'
 
-    def median(self):
+    @channel_wrapper
+    def median(self,channel):
         """
         Returns the median value in a channel.
 
@@ -442,9 +521,10 @@ class basic_statistics:
             float: Median channel intensity.
         """
 
-        return np.median(self.data),'median'
+        return np.median(self.data[channel].values),'median'
     
-    def stdev(self):
+    @channel_wrapper
+    def stdev(self,channel):
         """
         Returns the standard deviation in a channel.
 
@@ -452,9 +532,10 @@ class basic_statistics:
             float: Standard deviation in a channel.
         """
 
-        return np.std(self.data),'stdev'
+        return np.std(self.data[channel].values),'stdev'
     
-    def quantile(self,q,method='median_unbiased'):
+    @channel_wrapper
+    def quantile(self,q,channel,method='median_unbiased'):
         """
         Returns the q-th quantile of the data.
 
@@ -464,14 +545,15 @@ class basic_statistics:
         """
 
         optional_tag = f"quantile_{q:.2f}"
-        return np.quantile(self.data,q=q,method=method),optional_tag
+        return np.quantile(self.data[channel].values,q=q,method=method),optional_tag
     
-    def rms(self):
+    @channel_wrapper
+    def rms(self,channel):
         """
         Returns the mean root mean square of the channel.
         """
 
-        val = np.sum(self.data**2)/self.data.size
+        val = np.sum(self.data[channel].values**2)/self.data[channel].values.size
         return np.sqrt(val),'rms'
 
 class features:
@@ -534,99 +616,73 @@ class features:
                         imeta = self.metadata[idx]
 
                         # Get the input frequencies
-                        fs = imeta['fs']
+                        fs = imeta['fs'][0]
 
-                        # Loop over the channels and get the updated values
-                        output         = []
-                        reprocess_flag = True
-                        for ichannel in range(dataset.shape[1]):
-
+                        # Obtain the features
+                        output = []
+                        try:
+                            # Get the input arguments for the current step
                             for key, value in method_args.items():
                                 try:
                                     method_args[key] = ast.literal_eval(value)
                                 except:
                                     pass
 
-                            # Perform preprocessing step
+                            # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
+                            if cls.__name__ == 'FOOOF_processing':
+                                namespace = cls(idata,fs,[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
+                            else:
+                                namespace = cls(dataset,fs,channels,self.args.trace)
+
+                            # Get the method name and return results from the method
+                            method_call = getattr(namespace,method_name)
+                            results     = method_call(**method_args)
+                            result_a    = [iresult[0] for iresult in results]
+                            result_b    = results[0][1]
+
+                            # If the user wants to trace some values (see the results as they are processed), they can return result_c
+                            if len(results[0]) == 3:
+                                for ii,ichannel in enumerate(channels):
+                                    # Get the lower level column labels
+                                    cols = results[ii][2][0]
+                                    vals = results[ii][2][1:]
+
+                                    # Make the dictionary to nest into metadata
+                                    inner_dict = dict(zip(cols,vals))
+                                    tracemeta  = {ichannel:inner_dict}
+
+                                    # Add the trace to the metadata
+                                    metadata_handler.add_metadata(self,idx,method_name,tracemeta)
+
+                            # Extend the output with results
+                            output.extend(result_a)
+                        except ValueError: #Exception as e:
+
+                            # Add the ability to see the error if debugging
+                            if self.args.debug and not self.args.silent:
+                                fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
+                                error_type  = sys.exc_info()[0]
+                                line_number = sys.exc_info()[2].tb_lineno
+                                print(f"Error {error_type} in line {line_number}.")
+
+                            # We need a flexible solution to errors, so just populating a nan value
+                            output.extend([None for ii in range(len(channels))])
                             try:
+                                result_b = getattr(namespace,'optional_tag')
+                            except:
+                                result_b = "None"
+                            
+                            # Save the error for this step
+                            if not error_flag and not self.args.debug:
+                                error_dir = f"{self.args.outdir}errors/"
+                                if not os.path.exists(error_dir):
+                                    os.system(f"mkdir -p {error_dir}")
 
-                                # Grab the data and give it a first pass check for all zeros
-                                idata = dataset[:,ichannel]
-                                if not np.any(idata):
-                                    result_a = np.nan
-                                    result_b = ""
-                                    output.append(np.nan)
-                                else:
+                                fp = open(f"{error_dir}{self.worker_number}_features.error","a")
+                                fp.write(f"Step {istep:02}/{method_name}: Error {e}\n")
+                                fp.close()
+                                error_flag = True
 
-                                    #################################
-                                    ###### CLASS INITILIZATION ######
-                                    #################################
-                                    # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
-                                    if cls.__name__ == 'FOOOF_processing':
-                                        namespace = cls(idata,fs[ichannel],[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
-                                    elif cls.__name__ == 'YASA_processing':
-                                        namespace = cls(dataset,channels,fs[ichannel])
-                                    else:
-                                        namespace = cls(idata,fs[ichannel],self.args.trace)
-
-                                    if reprocess_flag:
-                                        # Get the method name and return results from the method
-                                        method_call = getattr(namespace,method_name)
-                                        results     = method_call(**method_args)
-                                        result_a    = results[0]
-                                        result_b    = results[1]
-
-                                        # Check if we can avoid reprocessing this feature step
-                                        if cls.__name__ in avoid_reprocessing_classes: reprocess_flag=False
-
-                                    # If the user wants to trace some values (see the results as they are processed), they can return result_c
-                                    if len(results) == 3:
-
-                                        # Get the lower level column labels
-                                        cols = results[2][0]
-                                        vals = results[2][1:]
-
-                                        # Make the dictionary to nest into metadata
-                                        inner_dict = dict(zip(cols,vals))
-                                        tracemeta  = {ichannel:inner_dict}
-
-                                        # Add the trace to the metadata
-                                        metadata_handler.add_metadata(self,idx,method_name,tracemeta)
-
-                                    # Check if we have a multivalue output
-                                    if type(result_a) == list:
-                                        metadata_handler.add_metadata(self,idx,method_name,result_a)
-                                        result_a = result_a[0]
-
-                                    # Add the results to the output object
-                                    output.append(result_a)
-
-                            except Exception as e:
-
-                                # Add the ability to see the error if debugging
-                                if self.args.debug and not self.args.silent:
-                                    fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
-                                    error_type  = sys.exc_info()[0]
-                                    line_number = sys.exc_info()[2].tb_lineno
-                                    print(f"Error {error_type} in line {line_number}.")
-
-                                # We need a flexible solution to errors, so just populating a nan value
-                                output.append(None)
-                                try:
-                                    result_b = getattr(namespace,'optional_tag')
-                                except:
-                                    result_b = "None"
-                                
-                                # Save the error for this step
-                                if not error_flag and not self.args.debug:
-                                    error_dir = f"{self.args.outdir}errors/"
-                                    if not os.path.exists(error_dir):
-                                        os.system(f"mkdir -p {error_dir}")
-
-                                    fp = open(f"{error_dir}{self.worker_number}_features.error","a")
-                                    fp.write(f"Step {istep:02}/{method_name}: Error {e}\n")
-                                    fp.close()
-                                    error_flag = True
 
                         # Use metadata to allow proper feature grouping
                         meta_arr = [imeta['file'].split('/')[-1],imeta['t_start'],imeta['t_end'],imeta['t_window'],method_name,result_b]

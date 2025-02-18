@@ -217,7 +217,7 @@ class signal_processing:
             return resample_poly(self.data, up=frac.numerator, down=frac.denominator)
         else:
             return self.data
-
+        
 class noise_reduction:
     
     def __init__(self, data, fs):
