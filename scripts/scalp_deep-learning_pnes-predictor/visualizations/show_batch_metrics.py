@@ -36,13 +36,23 @@ if __name__ == '__main__':
         # Read in the data
         DF = PD.read_csv(argv[2])
 
+        # Get the median sensitivity
+        DF['median'] = DF.groupby('folder')['Test_Sensitivity'].transform('median')
+
+        # Apply filtering as needed
+        DF = DF.loc[(DF['median']>0.7)]
+        #DF = DF.groupby("folder").filter(lambda group: group['Test_Sensitivity'].min() > 0.5)
+        DF = DF.groupby("folder").filter(lambda group: group['Test_Sensitivity'].nsmallest(2).iloc[-1] > 0)
+
+
         # Make a combined metrics
-        DF_long = DF.melt(id_vars=['folder', 'checknum'], value_vars=['Test_Sensitivity', 'Test_NPV'], 
+        DF_long = DF.melt(id_vars=['folder', 'checknum','median'], value_vars=['Test_Sensitivity', 'Test_NPV'], 
                    var_name='metric', value_name='metric_value')
 
+        # Plot results        
         fig = PLT.figure(dpi=100.,figsize=(12.,8.))
         ax1 = fig.add_subplot(111)
-        sns.boxplot(data=DF_long,x='folder',y='metric_value',hue='metric',ax=ax1)
+        sns.boxplot(data=DF_long,x='folder',y='metric_value',hue='metric',ax=ax1,whis=(2.5, 97.5))
 
         PLT.xticks(rotation='vertical')
         PLT.legend(loc='lower right')
