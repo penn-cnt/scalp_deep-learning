@@ -1109,7 +1109,7 @@ class tuning_manager:
         elif granularity == 'deep':
 
             # Frequency block
-            self.config[f"frequency_nlayer"]        = tune.choice([2])
+            self.config[f"frequency_nlayer"]        = tune.randint(2, 3)
             self.config[f"frequency_hsize_1"]       = tune.quniform(0.4, 0.6, .01)
             self.config[f"frequency_hsize_2"]       = tune.quniform(0.05, 1.5, .01)
             self.config[f"frequency_hsize_3"]       = tune.choice([1.])
@@ -1121,7 +1121,7 @@ class tuning_manager:
             self.config[f"frequency_norm_order"]    = tune.choice(['before'])
 
             # Time block
-            self.config[f"time_nlayer"]        = tune.choice([2])
+            self.config[f"time_nlayer"]        = tune.randint(2, 3)
             self.config[f"time_hsize_1"]       = tune.quniform(0.5, 1.0, .01)
             self.config[f"time_hsize_2"]       = tune.quniform(0.8, 1.3, .01)
             self.config[f"time_hsize_3"]       = tune.choice([1.])
@@ -1133,7 +1133,7 @@ class tuning_manager:
             self.config[f"time_norm_order"]    = tune.choice(['before'])
 
             # Categorical block
-            self.config[f"categorical_nlayer"]        = tune.choice([2])
+            self.config[f"categorical_nlayer"]        = tune.randint(2, 3)
             self.config[f"categorical_hsize_1"]       = tune.quniform(.4, 1.2, .01)
             self.config[f"categorical_hsize_2"]       = tune.quniform(.05, 0.7, .01)
             self.config[f"categorical_hsize_3"]       = tune.choice([1.])
@@ -1166,7 +1166,7 @@ class tuning_manager:
 
             # Consensus configuration
             self.config["consensus_batchsize"] = tune.quniform(32, 256, 8)
-            self.config[f"consensus_nlayer"]   = tune.choice([2])
+            self.config[f"consensus_nlayer"]   = tune.randint(2, 3)
             self.config[f"consensus_hsize_1"]  = tune.quniform(0.5, 1.5, .01)
             self.config[f"consensus_hsize_2"]  = tune.quniform(0.05, 0.35, .01)
             self.config[f"consensus_hsize_3"]  = tune.choice([1])
