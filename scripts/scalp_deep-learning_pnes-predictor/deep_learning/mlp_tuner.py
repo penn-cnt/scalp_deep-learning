@@ -1109,13 +1109,13 @@ class tuning_manager:
         elif granularity == 'deep':
 
             # Frequency block
-            self.config[f"frequency_nlayer"]        = 2
+            self.config[f"frequency_nlayer"]        = tune.choice([2])
             self.config[f"frequency_hsize_1"]       = tune.quniform(0.4, 0.6, .01)
             self.config[f"frequency_hsize_2"]       = tune.quniform(0.05, 1.5, .01)
-            self.config[f"frequency_hsize_3"]       = 1
+            self.config[f"frequency_hsize_3"]       = tune.choice([1])
             self.config[f"frequency_drop_1"]        = tune.quniform(0.1, 0.3, .01)
             self.config[f"frequency_drop_2"]        = tune.quniform(0.2, 0.5, .01)
-            self.config[f"frequency_drop_3"]        = 0.5
+            self.config[f"frequency_drop_3"]        = tune.choice([0.5])
             self.config[f"frequency_activation"]    = tune.choice(['sigmoid'])
             self.config[f"frequency_normalization"] = tune.choice(['batch1d'])
             self.config[f"frequency_norm_order"]    = tune.choice(['before'])
