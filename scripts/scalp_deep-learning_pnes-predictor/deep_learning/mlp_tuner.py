@@ -1217,3 +1217,5 @@ class tuning_manager:
             # Find any excluded keys
             print(np.setdiff1d(evaluate_keys,raykeys))
             print(np.setdiff1d(raykeys,evaluate_keys))
+
+            print(e)
