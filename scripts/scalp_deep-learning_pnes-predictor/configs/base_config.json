@@ -33,7 +33,7 @@
     "categorical_drop_3": 0.5, 
     "categorical_activation": "sigmoid", 
     "categorical_normalization": "batch1d",
-    "categorical_norm_order": "after",
+    "categorical_norm_order": "before",
     "combined_nlayer": 1, 
     "combined_hsize_1": 1.425, 
     "combined_hsize_2": 0.8250000000000001, 
