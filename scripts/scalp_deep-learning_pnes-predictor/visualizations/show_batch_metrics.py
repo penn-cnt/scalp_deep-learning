@@ -13,9 +13,6 @@ if __name__ == '__main__':
         for path in Path(argv[1]).rglob('*.pth'):
             files.append(str(path))
 
-        print(files)
-        exit()
-
         # Make a dataframe
         DF             = PD.DataFrame()
         DF['folder']   = [ival.split('/train_pnes_handler_')[1].split('_')[0] for ival in files]
