@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as PD
 from tqdm import tqdm
+import multiprocessing
 from sys import argv,exit
 
 class marsh_rejection:
@@ -9,25 +10,71 @@ class marsh_rejection:
     Looks for dt=-1 from the pipeline manager to reference against the full file.
     """
 
-    def __init__(self,DF,channels):
+    def __init__(self,DF,channels,multithread,ncpu):
 
         # Save the input data to class instance
-        self.DF       = DF
-        self.channels = channels
+        self.DF          = DF
+        self.channels    = channels
+        self.multithread = multithread
+        self.ncpu        = ncpu
+        self.bar_frmt    = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
 
         # Find the channel labels
         self.ref_cols     = np.setdiff1d(self.DF.columns, self.channels)
         self.merge_labels = np.concatenate((['file', 'method', 'tag'],self.channels))
 
     def workflow(self):
-        self.calculate_marsh()
+
+        if self.multithread:
+
+            # Make the keys to break up
+            marsh_lookup_dict = self.DF.groupby(['file']).indices
+            marsh_lookup_keys = list(marsh_lookup_dict.keys())
+
+            # Make the initial subset proposal
+            subset_size  = len(marsh_lookup_keys) // self.ncpu
+            list_subsets = [marsh_lookup_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
+
+            # Handle leftovers
+            remainder = list_subsets[self.ncpu*subset_size:]
+            for idx,ival in enumerate(remainder):
+                list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
+
+            # Convert to indices
+            list_subsets_indices = [[] for idx in range(len(list_subsets))]
+            for idx,subset in enumerate(list_subsets):
+                for ifile in subset:
+                    list_subsets_indices[idx].extend(marsh_lookup_dict[ifile])
+
+            # Create processes and start workers
+            processes   = []
+            manager     = multiprocessing.Manager()
+            return_dict = manager.dict()
+            for worker_id, data_chunk in enumerate(list_subsets_indices):
+                process = multiprocessing.Process(target=self.calculate_marsh, args=(worker_id,data_chunk,return_dict))
+                processes.append(process)
+                process.start()
+
+            # Wait for all processes to complete
+            for process in processes:
+                process.join()
+        else:
+            marsh_keys  = list(self.DF.index)
+            return_dict = self.calculate_marsh(0,marsh_keys,{})
+        
+        # Reformat the output
+        self.DF = PD.concat(return_dict.values()).reset_index(drop=True)
+
         return self.DF
 
-    def calculate_marsh(self):
+    def calculate_marsh(self,worker_num, DF_inds, return_dict):
+
+        # Get the data slice to work on
+        current_DF = self.DF.loc[DF_inds]
 
         # Make a dataslice just for rms and just for ll
-        DF_rms = self.DF.loc[self.DF.method=='rms']
-        DF_ll  = self.DF.loc[self.DF.method=='line_length']
+        DF_rms = current_DF.loc[current_DF.method=='rms']
+        DF_ll  = current_DF.loc[current_DF.method=='line_length']
 
         # Get the group level values
         rms_obj      = DF_rms.groupby(['file'])[self.channels]
@@ -46,7 +93,9 @@ class marsh_rejection:
         DF_ll.set_index(['file'],inplace=True)
         DF_rms = DF_rms.sort_values(by=['t_start','t_end','t_window'])
         DF_ll  = DF_ll.sort_values(by=['t_start','t_end','t_window'])
-        for ifile in tqdm(DF_rms_mean.index,desc='Applying filter',total=len(DF_rms_mean.index)):
+
+        # Apply the filter for each group
+        for ifile in tqdm(DF_rms_mean.index, desc='Applying Marsh Filter', total=len(DF_rms_mean.index),bar_format=self.bar_frmt, position=worker_num, leave=False, dynamic_ncols=True):
             
             # Get the reference values
             ref_rms_mean  = DF_rms_mean.loc[ifile]
@@ -81,5 +130,11 @@ class marsh_rejection:
         DF_ll          = DF_ll.reset_index(drop=True)
 
         # Append the results to input
-        self.DF = PD.concat((self.DF,DF_rms)).reset_index(drop=True)
-        self.DF = PD.concat((self.DF,DF_ll)).reset_index(drop=True)
+        current_DF = PD.concat((current_DF,DF_rms)).reset_index(drop=True)
+        current_DF = PD.concat((current_DF,DF_ll)).reset_index(drop=True)
+
+        # Save the results to the output object
+        return_dict[worker_num] = current_DF
+
+        if not self.multithread:
+            return return_dict

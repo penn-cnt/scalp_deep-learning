@@ -1,14 +1,19 @@
 import numpy as np
 import pandas as PD
+from tqdm import tqdm
+import multiprocessing
 from sys import argv,exit
 from collections import Counter
 
 class yasa_reformat:
 
-    def __init__(self,DF,channels):
+    def __init__(self,DF,channels,multithread,ncpu):
 
         # Save input data to instance
-        self.channels = channels
+        self.channels    = channels
+        self.multithread = multithread
+        self.ncpu        = ncpu
+        self.bar_frmt    = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
 
         # Make a yasa lookup df slice
         self.YASA_DF = DF.loc[(DF.method == 'yasa_sleep_stage')&(DF.t_window==300)]
@@ -17,8 +22,43 @@ class yasa_reformat:
         self.DF = DF.drop(self.YASA_DF.index)
 
     def workflow(self):
+
+        # Clean the lookup data
         self.cleanup()
-        self.reformat()
+
+        # Get the indices for the lookup groups
+        self.YASA_lookup_dict = self.YASA_DF.groupby(['file','t_start','t_end']).indices
+        YASA_keys             = list(self.YASA_lookup_dict.keys())
+
+        if self.multithread:
+
+            # Make the initial subset proposal
+            subset_size  = len(YASA_keys) // self.ncpu
+            list_subsets = [YASA_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
+
+            # Handle leftovers
+            remainder = list_subsets[self.ncpu*subset_size:]
+            for idx,ival in enumerate(remainder):
+                list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
+
+            # Create processes and start workers
+            processes   = []
+            manager     = multiprocessing.Manager()
+            return_dict = manager.dict()
+            for worker_id, data_chunk in enumerate(list_subsets):
+                process = multiprocessing.Process(target=self.reformat, args=(worker_id,data_chunk,return_dict))
+                processes.append(process)
+                process.start()
+
+            # Wait for all processes to complete
+            for process in processes:
+                process.join()
+        else:
+            return_dict = self.reformat(0,YASA_keys,{})
+        
+        # Reformat the output
+        self.DF = PD.concat(return_dict.values()).reset_index(drop=True)
+        
         return self.DF
 
     def cleanup(self):
@@ -79,21 +119,36 @@ class yasa_reformat:
         self.YASA_DF['t_end']   = self.YASA_DF['t_end'].astype('int16')
         self.YASA_DF            = self.YASA_DF.drop_duplicates(subset=['file','t_start'],keep='first').reset_index(drop=True)
 
-    def reformat(self):
-
-        # Get the indices for the lookup groups
-        YASA_lookup_dict = self.YASA_DF.groupby(['file','t_start','t_end']).indices
+    def reformat(self,worker_num,inkeys,return_dict):
 
         # Loop over the keys
-        for ikey in YASA_lookup_dict.keys():
+        output = []
+        for ikey in tqdm(inkeys, desc='Applying YASA Restructure', total=len(inkeys),bar_format=self.bar_frmt, position=worker_num, leave=False, dynamic_ncols=True):
 
             # Get the value to propagate
-            newval = self.YASA_DF.loc[YASA_lookup_dict[ikey]][self.channels[0]].values[0]
+            newval = self.YASA_DF.loc[self.YASA_lookup_dict[ikey]][self.channels[0]].values[0]
 
             # Get the indices to update
-            slice_logic = (self.DF.file==ikey[0])&(self.DF.t_start>=ikey[1])&(self.DF.t_start<ikey[2])&(self.DF.method=='yasa_sleep_stage')
+            base_slice     = (self.DF.file==ikey[0])&(self.DF.t_start>=ikey[1])&(self.DF.t_start<ikey[2])
+            yasa_slice     = base_slice&(self.DF.method=='yasa_sleep_stage')
+            non_yasa_slice = base_slice&(self.DF.method!='yasa_sleep_stage')
 
             # Get the dataslice from the main dataframe
-            self.DF.loc[slice_logic,self.channels] = newval
+            iDF = self.DF.loc[yasa_slice]
+            jDF = self.DF.loc[non_yasa_slice]
+
+            # Put the new values into the slice
+            iDF.loc[:,self.channels] = newval
+
+            # Store the results to the output
+            output.append(PD.concat((iDF,jDF)))
+
+        # Merge all the results for this worker
+        return_dict[worker_num] = PD.concat(output)
+
+        # Return the return dict if not multiprocessing
+        if not self.multithread:
+            return return_dict
+        
 
                 

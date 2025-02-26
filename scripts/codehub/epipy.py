@@ -107,7 +107,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
             if self.args.clean_save:
                 output_manager.save_output_list(self)
-
+        
     def feature_manager(self):
         """
         Kick off function for feature extraction if requested by the user.
@@ -122,9 +122,9 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
                 time.sleep(self.worker_number)
 
                 # Clean up the screen
-                if self.worker_number == 0:
-                    sys.stdout.write("\033[H")
-                    sys.stdout.flush()
+                #if self.worker_number == 0:
+                #    sys.stdout.write("\033[H")
+                #    sys.stdout.flush()
 
             # In the case that all of the data is removed, skip the feature step
             if len(self.metadata.keys()) > 0:
@@ -347,7 +347,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     misc_group.add_argument("--nfreq_window", type=int, default=8, help="Optional. Minimum number of samples required to send to preprocessing and feature extraction.")
     misc_group.add_argument("--input_str", type=str, help="Optional. If glob input, wildcard path. If csv/manual, filepath to input csv/raw data.")
     misc_group.add_argument("--silent", action='store_true', default=False, help="Silent mode.")
-    misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code.")
+    misc_group.add_argument("--debug", action='store_true', default=False, help="Debug mode. If set, does not save results. Useful for testing code. Cannot perform posthoc with this option on.")
     misc_group.add_argument("--trace", action='store_true', default=False, help="Trace data through the code. If selected, any user function that looks for trace can return extra information (i.e. intermediate calculations) to the metadata object.")
     args = parser.parse_args()
 
@@ -527,13 +527,13 @@ if __name__ == "__main__":
 
         # Perform post-hoc yasa cleanup
         if args.yasa_cleanup:
-            YR          = yasa_reformat(feature_df,channels)
+            YR          = yasa_reformat(feature_df,channels,args.multithread,args.ncpu)
             feature_df  = YR.workflow()
             newsaveflag = True
 
         # Perform post-hoc marsh analysis
         if args.nomarsh:
-            MR          = marsh_rejection(feature_df,channels)
+            MR          = marsh_rejection(feature_df,channels,args.multithread,args.ncpu)
             feature_df  = MR.workflow()
             newsaveflag = True
 
