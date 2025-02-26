@@ -44,10 +44,14 @@ class output_manager:
         """
 
         if not self.args.debug and not self.args.no_feature_flag:
-            #timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+
+            # Pickled objects
             pickle.dump(self.metadata,open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
-            pickle.dump(self.feature_df,open("%s/%s_%s_features.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
             pickle.dump(self.feature_commands,open("%s/%s_%s_fconfigs.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
+            pickle.dump(self.feature_df,open("%s/%s_%s_features.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
+
+            # CSV object
+            #self.feature_df.to_csv("%s/%s_%s_features.pickle" %(self.args.outdir,self.timestamp,self.unique_id),index=False)
 
     def save_output_list(self):
         """
@@ -55,6 +59,5 @@ class output_manager:
         """
 
         if not self.args.debug:
-            #timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             pickle.dump(self.output_list,open("%s/%s_%s_data.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
             pickle.dump(self.metadata,open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))

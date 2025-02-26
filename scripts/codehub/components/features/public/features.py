@@ -12,6 +12,7 @@ from fooof import FOOOF
 from functools import wraps
 from scipy.stats import mode
 from scipy.integrate import simpson
+from sklearn.linear_model import LinearRegression
 from scipy.signal import welch, find_peaks, detrend
 from neurodsp.spectral import compute_spectrum_welch
 
@@ -40,6 +41,178 @@ def channel_wrapper(method):
             return [method(self, col, *args, **kwargs) for col in self.data.columns]
     return wrapper
 
+class channel_wise_metrics:
+
+    def __init__ (self, data, fs, file, fidx, channels=None, trace=False):
+        # Manage data typing and form a dataframe as needed
+        if isinstance(data, np.ndarray):
+            if channels == None:
+                raise ValueError("If passing a numpy array, channels must not be None.")
+            self.data     = data
+            self.channels = channels
+        elif isinstance(data,PD.DataFrame):
+            self.data     = data.values
+            self.channels = list(data.columns)
+
+        # Save remaining keywords
+        self.fs       = fs
+        self.file     = file
+        self.fidx     = fidx
+        self.trace    = trace
+        
+        # Because we are using the unmontaged data to infer this feature, we want to map the results to the output channel mapping
+        self.outchannel = channels
+
+    def check_persistance(self):
+        
+        self.channelwise_key = f"channelwise_{self.file}_{self.fidx}_{self.window_length}"
+        if self.channelwise_key not in persistance_dict.keys():
+            persistance_dict[self.channelwise_key] = {}
+            self.fit_ar_model()
+            self.calculate_source_sink_space()
+        else:
+            self.Avg_A = persistance_dict[self.channelwise_key]['Avg_A']
+            self.rr    = persistance_dict[self.channelwise_key]['rr']
+            self.cr    = persistance_dict[self.channelwise_key]['cr']
+
+    def source_index(self,window_length=0.5):
+        """
+        Calculate the source index for each channel.
+
+        Args:
+            window_length (float, optional): Window length for auto regression in seconds. Defaults to 0.5.
+        """
+
+        # Save the window length to the class instance
+        self.window_length = window_length
+
+        # Check for any pre-calculated metrics
+        self.check_persistance()
+
+        # Get the sink index
+        source_index = self.source_fnc()
+
+        # Make the optional tag
+        optional_str = f"windowlength_{self.window_length}"
+
+        # Make the output results
+        results = [(i_index,optional_str) for i_index in source_index]
+
+        return results
+
+    def sink_index(self,window_length=0.5):
+        """
+        Calculate the sink index for each channel.
+
+        Args:
+            window_length (float, optional): Window length for auto regression in seconds. Defaults to 0.5.
+        """
+
+        # Save the window length to the class instance
+        self.window_length = window_length
+
+        # Check for any pre-calculated metrics
+        self.check_persistance()
+
+        # Get the sink index
+        sink_index = self.sink_fnc()
+
+        # Make the optional tag
+        optional_str = f"windowlength_{self.window_length}"
+
+        # Make the output results
+        results = [(i_index,optional_str) for i_index in sink_index]
+
+        return results
+
+    def fit_ar_model(self):
+
+        # Get window properties
+        window_size = self.window_length*self.fs
+        n_windows   = self.data.shape[0] // window_size
+        
+        # Initialize the model insance
+        model = LinearRegression()
+        
+        # Get the auto-regression across windows
+        A_all = []
+        for i in range(int(n_windows)):
+
+            # Get the current window data
+            window_data = self.data[int(i * window_size):int((i + 1) * window_size), :]
+
+            # Get the input vectors
+            X = window_data[:-1]
+
+            # Get the output vectors
+            y = window_data[1:]
+
+            # Fit the model
+            model.fit(X, y)
+            
+            # Get the slope and store the running list
+            A = model.coef_
+            A_all.append(A)
+        
+        # Get the absolute mean of all linear slopes
+        A_all = np.array(A_all)
+        Avg_A = np.mean(A_all, axis=0)
+        Avg_A = np.abs(Avg_A)
+
+        # Store result to class instance
+        self.Avg_A = Avg_A
+
+        # Store to persistance dict
+        persistance_dict[self.channelwise_key]['Avg_A'] = self.Avg_A
+
+    def calculate_source_sink_space(self):
+        
+        # Update the main diagonal to avoid self-same calculatuon
+        np.fill_diagonal(self.Avg_A, 0)
+
+        # Get the node strength for column and row-wise
+        i_node_strength = np.sum(self.Avg_A, axis=0)
+        j_node_strength = np.sum(self.Avg_A, axis=1)
+
+        # rank node strengths to get row rank (rr) and column rank (cr)
+        self.rr = self.calculate_rank(i_node_strength)
+        self.cr = self.calculate_rank(j_node_strength)
+
+        # Store to persistance dict
+        persistance_dict[self.channelwise_key]['rr'] = self.rr
+        persistance_dict[self.channelwise_key]['cr'] = self.cr
+
+    def calculate_rank(self,arr): 
+
+        # Get the indices that would sort the array in descending order
+        sorted_indices = np.argsort(arr)[::-1]
+
+        # Create a ranking array
+        ranks                 = np.zeros_like(arr, dtype=float)
+        ranks[sorted_indices] = np.arange(1, len(arr) + 1) / len(ranks)
+
+        return ranks
+
+    def source_fnc(self):
+
+        # Calculate the source index
+        N             = len(self.rr)
+        x             = self.rr - (1/N)
+        y             = self.cr - 1
+        vector_length = np.sqrt(x**2 + y**2)
+        source_index  = np.sqrt(2) - vector_length
+        return source_index
+
+    def sink_fnc(self):
+
+        # Calculate source sink
+        N             = len(self.rr)
+        x             = self.rr - 1
+        y             = self.cr - (1/N)
+        vector_length = np.sqrt(x**2 + y**2)
+        sink_index    = np.sqrt(2) - vector_length
+        return sink_index
+
 class YASA_processing:
     """
     Yasa sleep staging feature extraction.
@@ -53,12 +226,15 @@ class YASA_processing:
             self.data     = data
             self.channels = channels
         elif isinstance(data,PD.DataFrame):
-            self.data = data.values
-            self.channels = self.data.columns
+            self.data     = data.values
+            self.channels = list(data.columns)
 
         # Save remaining keywords
         self.fs       = fs
         self.trace    = trace
+        
+        # Because we are using the unmontaged data to infer this feature, we want to map the results to the output channel mapping
+        self.outchannel = channels
 
     def make_montage_object(self,config_path):
 
@@ -88,36 +264,43 @@ class YASA_processing:
 
     def yasa_sleep_stage(self,config_path,consensus_channels=['CZ','C03','C04']):
 
-        # Make the raw object for YASA to work with
-        self.make_raw_object(config_path)
+        # Check for a long enough duration
+        if (self.data.shape[0]/self.fs/60 >=5):
+            # Make the raw object for YASA to work with
+            self.make_raw_object(config_path)
 
-        # Set the right reference for eyeblink removal (CAR by default)
-        self.raw = self.raw.set_eeg_reference('average',verbose=False)
+            # Set the right reference for eyeblink removal (CAR by default)
+            self.raw = self.raw.set_eeg_reference('average',verbose=False)
 
-        # Apply the minimum needed filter for eyeblink removal
-        self.raw = self.raw.filter(0.5,30,verbose=False)
+            # Apply the minimum needed filter for eyeblink removal
+            self.raw = self.raw.filter(0.5,30,verbose=False)
 
-        # Resample down to 100 HZ
-        self.raw = self.raw.resample(100)
+            # Resample down to 100 HZ
+            self.raw = self.raw.resample(100)
 
-        # Get the yasa prediction
-        results = []
-        for ichannel in consensus_channels:
-            sls = yasa.SleepStaging(self.raw, eeg_name=ichannel)
-            results.append(list(sls.predict()))
-        results = np.array(results)
+            # Get the yasa prediction
+            results = []
+            for ichannel in consensus_channels:
+                sls = yasa.SleepStaging(self.raw, eeg_name=ichannel)
+                results.append(list(sls.predict()))
+            results = np.array(results)
 
-        # Get the epipy formatted output
-        output = ''
-        for irow in results.T:
-            output += ','.join(irow)
-            output += '|'
-        output = output[:-1]
-
+            # Get the epipy formatted output
+            output = ''
+            for irow in results.T:
+                output += ','.join(irow)
+                output += '|'
+            output = output[:-1]
+        else:
+            output = None
+        
         # Make the optional string. In this case, the consensus channel list
         optional_str = ','.join(consensus_channels)
         
-        return output,optional_str
+        # Reformat the output to match the output structure
+        results = [(output,optional_str) for ichannel in self.outchannel]
+
+        return results
  
 class FOOOF_processing:
 
@@ -305,8 +488,8 @@ class signal_processing:
             self.data     = PD.DataFrame(data,columns=channels)
             self.channels = channels
         elif isinstance(data,PD.DataFrame):
-            self.data = data
-            self.channels = self.data.columns
+            self.data     = data
+            self.channels = list(data.columns)
 
         # Save remaining keywords
         self.fs       = fs
@@ -494,8 +677,8 @@ class basic_statistics:
             self.data     = PD.DataFrame(data,columns=channels)
             self.channels = channels
         elif isinstance(data,PD.DataFrame):
-            self.data = data
-            self.channels = self.data.columns
+            self.data     = data
+            self.channels = list(data.columns)
 
         # Save remaining keywords
         self.fs       = fs
@@ -535,7 +718,7 @@ class basic_statistics:
         return np.std(self.data[channel].values),'stdev'
     
     @channel_wrapper
-    def quantile(self,q,channel,method='median_unbiased'):
+    def quantile(self,channel,q,method='median_unbiased'):
         """
         Returns the q-th quantile of the data.
 
@@ -576,9 +759,6 @@ class features:
         Use the feature extraction configuration file to step through the preprocessing pipeline on each data array
         in the output data container.
         """
-
-        # Define the classes that only need to process the data once. (i.e. Use all channels, cannot go channel-wise.)
-        avoid_reprocessing_classes = ['YASA_processing']
 
         # Initialize some variables
         channels  = self.montage_channels.copy()
@@ -630,7 +810,12 @@ class features:
 
                             # Create namespaces for each class. Then choose which style of initilization is used by logic gate.
                             if cls.__name__ == 'FOOOF_processing':
+                                # DEPRECIATED FORMAT! Will not work. Should mirror channel_wise metrics going forward.
                                 namespace = cls(idata,fs,[0.5,32], imeta['file'], idx, ichannel, self.args.trace)
+                            elif cls.__name__ == 'channel_wise_metrics':
+                                namespace = cls(dataset,fs,imeta['file'], idx, channels, self.args.trace)
+                            elif cls.__name__ == 'YASA_processing':
+                                namespace = cls(imeta['unmontaged_data'],fs,channels,self.args.trace)
                             else:
                                 namespace = cls(dataset,fs,channels,self.args.trace)
 
@@ -656,7 +841,7 @@ class features:
 
                             # Extend the output with results
                             output.extend(result_a)
-                        except ValueError: #Exception as e:
+                        except Exception as e:
 
                             # Add the ability to see the error if debugging
                             if self.args.debug and not self.args.silent:
@@ -682,7 +867,6 @@ class features:
                                 fp.write(f"Step {istep:02}/{method_name}: Error {e}\n")
                                 fp.close()
                                 error_flag = True
-
 
                         # Use metadata to allow proper feature grouping
                         meta_arr = [imeta['file'].split('/')[-1],imeta['t_start'],imeta['t_end'],imeta['t_window'],method_name,result_b]

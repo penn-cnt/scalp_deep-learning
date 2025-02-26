@@ -47,6 +47,10 @@ from components.workflows.public.channel_mapping import *
 from components.workflows.public.channel_montage import *
 from components.workflows.public.project_handler import *
 
+# Post hoc analysis imports
+from components.posthoc.public.marsh_filter import *
+from components.posthoc.public.yasa_reformat import *
+
 # Import the configuration maker
 from configs.makeconfigs import *
 
@@ -221,7 +225,8 @@ def merge_outputs(args,timestamp):
                 output_DF = PD.concat((output_DF,iDF))
         
         # Make the new output and only remove files once things were confirmed to work
-        output_DF.to_pickle(f"{args.outdir}/{timestamp}_features.pickle")
+        base_path = f"{args.outdir}/{timestamp}_features_"
+        output_DF.to_csv(f"{args.outdir}/{timestamp}_features.csv", index=False)
         for ifile in feature_files:os.remove(ifile)
 
     # Clean up the feature config files (if present)
@@ -256,6 +261,7 @@ def merge_outputs(args,timestamp):
         pickle.dump(data,open(f"{args.outdir}/{timestamp}_data.pickle","wb"))
         for ifile in data_list:os.remove(ifile)
 
+    return output_DF,metadata[0]['montage_channels'],base_path
 
 def argument_handler(argument_dir='./',require_flag=True):
 
@@ -332,6 +338,10 @@ def argument_handler(argument_dir='./',require_flag=True):
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
     output_group.add_argument("--nomerge", action='store_true', default=False, help="Do not merge the outputs from multiprocessing into one final set of files.")
     output_group.add_argument("--clean_save", action='store_true', default=False, help="Save cleaned up raw data. Mostly useful if you need time series and not just features.")
+
+    posthoc_group = parser.add_argument_group('Posthoc analysis Options')
+    posthoc_group.add_argument("--yasa_cleanup", action='store_true', default=True, help="Restructure YASA data to have staging at other time part levels. Requires t=300 run.")
+    posthoc_group.add_argument("--nomarsh", action='store_false', default=True, help="Do not run posthoc analysis.")
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--nfreq_window", type=int, default=8, help="Optional. Minimum number of samples required to send to preprocessing and feature extraction.")
@@ -512,4 +522,22 @@ if __name__ == "__main__":
     
     # Perform merge if requested
     if not args.nomerge:
-        merge_outputs(args,timestamp)
+        newsaveflag                   = False
+        feature_df,channels,base_path = merge_outputs(args,timestamp)
+
+        # Perform post-hoc yasa cleanup
+        if args.yasa_cleanup:
+            YR          = yasa_reformat(feature_df,channels)
+            feature_df  = YR.workflow()
+            newsaveflag = True
+
+        # Perform post-hoc marsh analysis
+        if args.nomarsh:
+            MR          = marsh_rejection(feature_df,channels)
+            feature_df  = MR.workflow()
+            newsaveflag = True
+
+        if newsaveflag:
+            outpath = base_path+'clean.csv'
+            feature_df.to_csv(outpath,index=False)
+        
