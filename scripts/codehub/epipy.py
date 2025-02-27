@@ -122,9 +122,9 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
                 time.sleep(self.worker_number)
 
                 # Clean up the screen
-                #if self.worker_number == 0:
-                #    sys.stdout.write("\033[H")
-                #    sys.stdout.flush()
+                if self.worker_number == 0:
+                    sys.stdout.write("\033[H")
+                    sys.stdout.flush()
 
             # In the case that all of the data is removed, skip the feature step
             if len(self.metadata.keys()) > 0:
