@@ -56,7 +56,7 @@ from configs.makeconfigs import *
 
 class data_manager(project_handlers, metadata_handler, data_loader, channel_mapping, dataframe_manager, channel_clean, channel_montage, output_manager, data_viability, target_loader):
 
-    def __init__(self, input_params, args, timestamp, worker_number, barrier):
+    def __init__(self, input_params, args, timestamp, worker_number, barrier, active_workers):
         """
         Initialize parent class for data loading.
         Store pathing for different data type loads.
@@ -66,16 +66,17 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         """
 
         # Make args visible across inheritance
-        self.infiles       = input_params[:,0]
-        self.start_times   = input_params[:,1].astype('float')
-        self.end_times     = input_params[:,2].astype('float')
-        self.ref_windows   = input_params[:,3]
-        self.args          = args
-        self.unique_id     = uuid.uuid4()
-        self.bar_frmt      = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
-        self.timestamp     = timestamp
-        self.worker_number = worker_number
-        self.barrier       = barrier
+        self.infiles        = input_params[:,0]
+        self.start_times    = input_params[:,1].astype('float')
+        self.end_times      = input_params[:,2].astype('float')
+        self.ref_windows    = input_params[:,3]
+        self.args           = args
+        self.unique_id      = uuid.uuid4()
+        self.bar_frmt       = '{l_bar}{bar}| {n_fmt}/{total_fmt}|'
+        self.timestamp      = timestamp
+        self.worker_number  = worker_number
+        self.barrier        = barrier
+        self.active_workers = active_workers
 
         # Create the metalevel container
         metadata_handler.__init__(self)
@@ -183,12 +184,12 @@ def parse_list(input_str):
     values = input_str.replace(',', ' ').split()
     return [float(value) for value in values]
 
-def start_analysis(data_chunk,args,timestamp,worker_id,barrier):
+def start_analysis(data_chunk,args,timestamp,worker_id,barrier,active_workers):
     """
     Helper function to allow for easy multiprocessing initialization.
     """
 
-    DM = data_manager(data_chunk,args,timestamp,worker_id,barrier)
+    DM = data_manager(data_chunk,args,timestamp,worker_id,barrier,active_workers)
 
 def merge_outputs(args,timestamp):
     """
@@ -504,12 +505,14 @@ if __name__ == "__main__":
             list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
 
         # Create a barrier for synchronization
-        barrier = multiprocessing.Barrier(args.ncpu)
+        manager        = Manager()
+        active_workers = manager.Value("i", args.ncpu)
+        barrier        = multiprocessing.Barrier(active_workers)
 
         # Create processes and start workers
         processes = []
         for worker_id, data_chunk in enumerate(list_subsets):
-            process = multiprocessing.Process(target=start_analysis, args=(data_chunk,args,timestamp,worker_id,barrier))
+            process = multiprocessing.Process(target=start_analysis, args=(data_chunk,args,timestamp,worker_id,barrier,active_workers))
             processes.append(process)
             process.start()
         
@@ -518,7 +521,7 @@ if __name__ == "__main__":
             process.join()
     else:
         # Run a non parallel version.
-        start_analysis(input_parameters, args, timestamp, 0, None)
+        start_analysis(input_parameters, args, timestamp, 0, None, None)
     
     # Perform merge if requested
     if not args.nomerge:

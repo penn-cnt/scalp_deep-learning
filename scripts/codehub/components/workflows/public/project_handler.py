@@ -49,7 +49,12 @@ class project_handlers:
             self.file_cntr = ii
 
             # Apply project specific pipeline
-            self.project_logic()
+            try:
+                self.project_logic()
+            except Exception as e:
+                if self.args.debug:
+                    print("Encountered preprocessing error {e}.")
+                self.active_workers.value -= 1
             
             # Update file strings for cached read in
             self.oldfile = self.infile
