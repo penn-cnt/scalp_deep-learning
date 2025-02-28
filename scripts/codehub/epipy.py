@@ -505,7 +505,7 @@ if __name__ == "__main__":
             list_subsets[idx] = np.concatenate((list_subsets[idx],np.array([ival])))
 
         # Create a barrier for synchronization
-        manager        = Manager()
+        manager        = multiprocessing.Manager()
         active_workers = manager.Value("i", args.ncpu)
         barrier        = multiprocessing.Barrier(active_workers)
 
