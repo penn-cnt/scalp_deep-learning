@@ -88,6 +88,10 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         ##### Start the actual project workflows #####
         ##############################################
 
+        fp = open(f"{self.unique_id}.history",'a')
+        fp.write('Processing Started\n')
+        fp.close()
+
         # File management
         project_handlers.file_manager(self)
         fp = open(f"{self.unique_id}.history",'a')
