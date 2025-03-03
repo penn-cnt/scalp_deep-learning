@@ -89,7 +89,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         ##############################################
 
         fp = open(f"{self.unique_id}.history",'a')
-        fp.write('Processing Started\n')
+        fp.write(f"{self.unique_id} Started\n")
         fp.close()
 
         # File management

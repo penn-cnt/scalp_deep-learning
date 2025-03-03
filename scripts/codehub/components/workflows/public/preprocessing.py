@@ -381,6 +381,9 @@ class preprocessing:
 
             # Search the available classes for the user requested method
             for cls in classes:
+                fp = open(f"{self.unique_id}.history",'a')
+                fp.write(f"{self.file_cntr} | {method_name}\n")
+                fp.close()
                 if hasattr(cls,method_name):
 
                     #################################
