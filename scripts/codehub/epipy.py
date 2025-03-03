@@ -88,21 +88,11 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         ##### Start the actual project workflows #####
         ##############################################
 
-        fp = open(f"{self.unique_id}.history",'a')
-        fp.write(f"{self.unique_id} Started\n")
-        fp.close()
-
         # File management
         project_handlers.file_manager(self)
-        fp = open(f"{self.unique_id}.history",'a')
-        fp.write('Project Handler Done\n')
-        fp.close()
 
         # Select valid data slices
         data_viability.__init__(self)
-        fp = open(f"{self.unique_id}.history",'a')
-        fp.write('Data Viability Done\n')
-        fp.close()
 
         # Pass to feature selection managers
         self.feature_manager()
