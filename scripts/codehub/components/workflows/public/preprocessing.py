@@ -437,6 +437,8 @@ class preprocessing:
                         except Exception as e:
                             if self.args.debug:
                                 print(f"MNE Error {e}")
+                                print(filename,self.t_start,self.t_end)
+                                exit()
                             dataset *= np.nan
         return dataset
 
