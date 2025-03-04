@@ -121,8 +121,8 @@ class mne_processing:
             nc = len(ch_types)-1
         else:
             nc = n_components
-        ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
-        #ica = ICA(n_components=nc, method='picard', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
+        #ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
+        ica = ICA(n_components=nc, method='picard', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
         ica.fit(raw,verbose=False)
         print(ica.n_iter_)
 
