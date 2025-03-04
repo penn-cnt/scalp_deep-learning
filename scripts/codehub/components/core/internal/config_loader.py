@@ -27,7 +27,9 @@ class config_loader:
             self.yaml_step = config
         else:
             # Read in and typecast the yaml file
-            config = yaml.safe_load(open(input_file,'r'))
+            fp     = open(input_file,'r')
+            config = yaml.safe_load(fp)
+            fp.close()
 
             # Add in any looped steps to the correct yaml input format
             self.loop_handler(config)
