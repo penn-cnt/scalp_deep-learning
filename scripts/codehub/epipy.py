@@ -268,7 +268,7 @@ def argument_handler(argument_dir='./',require_flag=True):
 
     # Read in the allowed arguments
     fp        = open(f"{argument_dir}allowed_arguments.yaml","r")
-    raw_args  = yaml.safe_load()
+    raw_args  = yaml.safe_load(fp)
     for key, inner_dict in raw_args.items():
         globals()[key] = inner_dict
     fp.close()
