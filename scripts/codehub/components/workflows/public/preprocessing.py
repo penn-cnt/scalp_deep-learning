@@ -124,7 +124,6 @@ class mne_processing:
         #ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
         ica = ICA(n_components=nc, method='picard', fit_params=dict(ortho=False, extended=True), random_state=42, max_iter=max_iter,verbose=False)
         ica.fit(raw,verbose=False)
-        print(ica.n_iter_)
 
         # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
         with contextlib.redirect_stdout(StringIO()):
