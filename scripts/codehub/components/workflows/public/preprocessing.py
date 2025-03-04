@@ -21,6 +21,9 @@ from prompt_toolkit.completion import PathCompleter
 from components.core.internal.error_logging import *
 from components.core.internal.config_loader import *
 
+import warnings
+warnings.filterwarnings('error')
+
 # In some cases, we want variables to persist through steps. (i.e. A solver, fitting class, disk i/o, etc.) Persistance_dict can store results across steps.
 global persistance_dict
 persistance_dict = {}
@@ -113,7 +116,11 @@ class mne_processing:
         else:
             nc = n_components
         ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
-        ica.fit(raw,verbose=False)
+        try:
+            ica.fit(raw,verbose=False)
+        except RuntimeWarning:
+            print(self.dataset)
+            exit()
 
         # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
         with contextlib.redirect_stdout(StringIO()):
