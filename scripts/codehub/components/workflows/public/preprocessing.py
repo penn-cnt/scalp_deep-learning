@@ -122,44 +122,44 @@ class mne_processing:
         ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
         try:
             ica.fit(raw,verbose=False)
-        except RuntimeWarning:
-            print(self.dataset)
-            print(self.dataset.min())
-            print(self.dataset.max())
-            exit()
 
-        # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
-        with contextlib.redirect_stdout(StringIO()):
-            ic_labels=label_components(raw, ica, method="iclabel")
+            # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
+            with contextlib.redirect_stdout(StringIO()):
+                ic_labels=label_components(raw, ica, method="iclabel")
 
-        # Get labels as a list
-        labels = ic_labels['labels']
+            # Get labels as a list
+            labels = ic_labels['labels']
 
-        # Get the probability for each label
-        y_pred_prob = ic_labels['y_pred_proba']
+            # Get the probability for each label
+            y_pred_prob = ic_labels['y_pred_proba']
 
-        # Get the exclusion indices
-        eye_inds = []
-        for idx in range(len(labels)):
-            ilabel = labels[idx]
-            ipred  = y_pred_prob[idx]
-            if ilabel not in ["brain","other"]:
-                if ilabel == "other" and ipred<0.3:
-                    eye_inds.append(False)
+            # Get the exclusion indices
+            eye_inds = []
+            for idx in range(len(labels)):
+                ilabel = labels[idx]
+                ipred  = y_pred_prob[idx]
+                if ilabel not in ["brain","other"]:
+                    if ilabel == "other" and ipred<0.3:
+                        eye_inds.append(False)
+                    else:
+                        eye_inds.append(True)
                 else:
-                    eye_inds.append(True)
-            else:
-                eye_inds.append(False)
-        labels   = np.array(labels)
-        eye_inds = np.array(eye_inds) 
+                    eye_inds.append(False)
+            labels   = np.array(labels)
+            eye_inds = np.array(eye_inds) 
 
-        # Copy the raw data
-        raw_copy = raw.copy()
+            # Copy the raw data
+            raw_copy = raw.copy()
 
-        # Exclude eye blinks
-        ica.apply(raw_copy,exclude=np.where(eye_inds)[0],verbose=False)
-        
-        return PD.DataFrame(raw_copy.get_data().T,columns=self.ppchannels)
+            # Exclude eye blinks
+            ica.apply(raw_copy,exclude=np.where(eye_inds)[0],verbose=False)
+            
+            return PD.DataFrame(raw_copy.get_data().T,columns=self.ppchannels)
+        except RuntimeWarning:
+            foo = np.nan*self.dataset
+            print(foo)
+            exit()
+            return foo
 
 class signal_processing:
     
