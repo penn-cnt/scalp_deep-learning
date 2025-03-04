@@ -121,6 +121,7 @@ class mne_processing:
         try:
             ica.fit(raw,verbose=False)
         except RuntimeWarning:
+            print(self.dataset)
             print(self.dataset.min())
             print(self.dataset.max())
             exit()
