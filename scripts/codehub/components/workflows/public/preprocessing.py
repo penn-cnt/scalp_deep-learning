@@ -67,7 +67,7 @@ class mne_processing:
         fp.close()
 
     # @silence_mne_warnings
-    def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
+    def eyeblink_removal(self,config_path,n_components=None,max_iter=5000):
         """
         Remove eyeblinks from the data.
 
