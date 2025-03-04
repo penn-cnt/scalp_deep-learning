@@ -434,8 +434,8 @@ class preprocessing:
                             method_call = getattr(MP,method_name)
                             dataset     = method_call(**method_args)
                         except Exception as e:
-                            print(f"MNE Error {e}")
+                            if self.args.debug:
+                                print(f"MNE Error {e}")
                             dataset *= np.nan
-                            exit()
         return dataset
 
