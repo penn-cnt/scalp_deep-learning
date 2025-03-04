@@ -155,7 +155,8 @@ class mne_processing:
             return PD.DataFrame(raw_copy.get_data().T,columns=self.ppchannels)
         except RuntimeWarning:
             #foo = np.nan*self.dataset
-            print(self.dataset.nunique(axis=1))
+            foo = (self.dataset.nunique(axis=1).values==1)
+            print(foo,foo.any())
             exit()
             return foo
 
