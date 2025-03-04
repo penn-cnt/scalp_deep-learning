@@ -43,6 +43,10 @@ class mne_processing:
             IndexError: _description_
         """
 
+        # Quick data check to avoid obvious bad data segments
+        if (dataset.nunique(axis=1).values==1).any():
+            raise Exception("Monotonic dataset.")
+
         self.dataset      = dataset
         self.ppchannels   = list(dataset.columns)
         self.mne_channels = mne_channels
@@ -118,47 +122,40 @@ class mne_processing:
         else:
             nc = n_components
         ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
-        try:
-            ica.fit(raw,verbose=False)
+        ica.fit(raw,verbose=False)
 
-            # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
-            with contextlib.redirect_stdout(StringIO()):
-                ic_labels=label_components(raw, ica, method="iclabel")
+        # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
+        with contextlib.redirect_stdout(StringIO()):
+            ic_labels=label_components(raw, ica, method="iclabel")
 
-            # Get labels as a list
-            labels = ic_labels['labels']
+        # Get labels as a list
+        labels = ic_labels['labels']
 
-            # Get the probability for each label
-            y_pred_prob = ic_labels['y_pred_proba']
+        # Get the probability for each label
+        y_pred_prob = ic_labels['y_pred_proba']
 
-            # Get the exclusion indices
-            eye_inds = []
-            for idx in range(len(labels)):
-                ilabel = labels[idx]
-                ipred  = y_pred_prob[idx]
-                if ilabel not in ["brain","other"]:
-                    if ilabel == "other" and ipred<0.3:
-                        eye_inds.append(False)
-                    else:
-                        eye_inds.append(True)
-                else:
+        # Get the exclusion indices
+        eye_inds = []
+        for idx in range(len(labels)):
+            ilabel = labels[idx]
+            ipred  = y_pred_prob[idx]
+            if ilabel not in ["brain","other"]:
+                if ilabel == "other" and ipred<0.3:
                     eye_inds.append(False)
-            labels   = np.array(labels)
-            eye_inds = np.array(eye_inds) 
+                else:
+                    eye_inds.append(True)
+            else:
+                eye_inds.append(False)
+        labels   = np.array(labels)
+        eye_inds = np.array(eye_inds) 
 
-            # Copy the raw data
-            raw_copy = raw.copy()
+        # Copy the raw data
+        raw_copy = raw.copy()
 
-            # Exclude eye blinks
-            ica.apply(raw_copy,exclude=np.where(eye_inds)[0],verbose=False)
-            
-            return PD.DataFrame(raw_copy.get_data().T,columns=self.ppchannels)
-        except RuntimeWarning:
-            #foo = np.nan*self.dataset
-            foo = (self.dataset.nunique(axis=1).values==1)
-            print(foo,foo.any())
-            exit()
-            return foo
+        # Exclude eye blinks
+        ica.apply(raw_copy,exclude=np.where(eye_inds)[0],verbose=False)
+        
+        return PD.DataFrame(raw_copy.get_data().T,columns=self.ppchannels)
 
 class signal_processing:
     
