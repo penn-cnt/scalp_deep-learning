@@ -43,6 +43,8 @@ class mne_processing:
             IndexError: _description_
         """
 
+        print(dataset)
+
         self.dataset      = dataset
         self.ppchannels   = list(dataset.columns)
         self.mne_channels = mne_channels
