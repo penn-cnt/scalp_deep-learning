@@ -267,9 +267,11 @@ def merge_outputs(args,timestamp):
 def argument_handler(argument_dir='./',require_flag=True):
 
     # Read in the allowed arguments
-    raw_args  = yaml.safe_load(open(f"{argument_dir}allowed_arguments.yaml","r"))
+    fp        = open(f"{argument_dir}allowed_arguments.yaml","r")
+    raw_args  = yaml.safe_load()
     for key, inner_dict in raw_args.items():
         globals()[key] = inner_dict
+    fp.close()
 
     # Make a useful help string for each keyword
     allowed_project_help   = make_help_str(allowed_project_args)
