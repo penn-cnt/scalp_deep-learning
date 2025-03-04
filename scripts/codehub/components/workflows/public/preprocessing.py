@@ -57,8 +57,10 @@ class mne_processing:
     def make_montage_object(self,config_path):
 
         #Create the mne channel types
-        mapping = yaml.safe_load(open(config_path,'r'))
+        fp      = open(config_path,'r')
+        mapping = yaml.safe_load(fp)
         persistance_dict['mne_mapping'] = mapping
+        fp.close()
 
     # @silence_mne_warnings
     def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
