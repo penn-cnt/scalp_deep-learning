@@ -121,7 +121,8 @@ class mne_processing:
         try:
             ica.fit(raw,verbose=False)
         except RuntimeWarning:
-            print(self.dataset)
+            print(self.dataset.min())
+            print(self.dataset.max())
             exit()
 
         # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
