@@ -114,14 +114,13 @@ class mne_processing:
         raw = raw.set_eeg_reference(verbose=False)
 
         # Apply the minimum needed filter for eyeblink removal
-        raw = raw.filter(1,100,verbose=False)
+        #raw = raw.filter(1,100,verbose=False)
 
         # Create the ICA object and fit
         if n_components == None:
             nc = len(ch_types)-1
         else:
             nc = n_components
-        #ica = ICA(n_components=nc, method='infomax', fit_params=dict(extended=True), random_state=42, max_iter=max_iter,verbose=False)
         ica = ICA(n_components=nc, method='picard', fit_params=dict(ortho=False, extended=True), random_state=42, max_iter=max_iter,verbose=False)
         ica.fit(raw,verbose=False)
 
