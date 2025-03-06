@@ -72,9 +72,15 @@ class data_loader:
         self.ssh_username = self.args.ssh_username
 
         # Logic gate for filetyping, returns if load succeeded
-        flag = self.data_loader_logic(self.args.datatype)
+        readflag = self.data_loader_logic(self.args.datatype)
 
-        if flag:
+        # Get the data slice now so we can do a quick quality check
+        if readflag:
+            sample_frequency = np.array([self.sfreq for ichannel in self.channel_metadata])
+            setflag          = self.raw_dataslice(sample_frequency,majoraxis=self.args.orientation)
+
+        # Set the information to our metadata object if it passes all tests
+        if setflag:
             # Create the metadata handler
             metadata_handler.highlevel_info(self)
 
@@ -83,11 +89,7 @@ class data_loader:
             metadata_handler.set_channels(self,self.channels)
 
             # Calculate the sample frequencies to save the information and make time cuts
-            sample_frequency = np.array([self.sfreq for ichannel in self.channel_metadata])
             metadata_handler.set_sampling_frequency(self,sample_frequency)
-
-            # Get the rawdata
-            self.raw_dataslice(sample_frequency,majoraxis=self.args.orientation)
 
             # Set the clip duration referenced to the whole file
             metadata_handler.set_ref_window(self)
@@ -171,6 +173,11 @@ class data_loader:
         elif majoraxis.lower() == 'row':
             self.duration = (samp_end-samp_start)/self.indata.shape[1]
 
+        if self.infile == '/mnt/sauce/littlab/data/Human_Data/BIDS/scalp/data/sub-HUP00014/ses-emu1829day26file1/eeg/sub-HUP00014_ses-emu1829day26file1_task-rest_run-0001_eeg.edf':
+            print(self.rawdata)
+            print(self.rawdata.shape)
+            exit()
+
     ###################################
     #### User Provided Logic Below ####
     ###################################
@@ -207,14 +214,6 @@ class data_loader:
                 # Read in the data via mne backend
                 raw           = read_raw_edf(self.infile,verbose=False)
                 self.indata   = raw.get_data().T
-
-                if self.infile == '/mnt/sauce/littlab/data/Human_Data/BIDS/scalp/data/sub-HUP00014/ses-emu1829day26file1/eeg/sub-HUP00014_ses-emu1829day26file1_task-rest_run-0001_eeg.edf':
-                    print(self.indata.shape)
-                    exit()
-
-                # Quick check to make sure we arent using monotonic or zero data
-                if (np.ptp(self.indata,axis=0)==0).all():
-                    return False
 
                 # Make the MNE objects
                 self.channels = raw.ch_names
