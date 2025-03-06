@@ -139,8 +139,9 @@ class mne_processing:
         ica.fit(raw,verbose=False)
 
         # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
-        with contextlib.redirect_stdout(StringIO()):
-            ic_labels=label_components(raw, ica, method="iclabel")
+        #with contextlib.redirect_stdout(StringIO()):
+        #    ic_labels=label_components(raw, ica, method="iclabel")
+        ic_labels=label_components(raw, ica, method="iclabel")
 
         # Get labels as a list
         labels = ic_labels['labels']
