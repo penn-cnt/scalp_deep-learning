@@ -176,7 +176,7 @@ class data_loader:
 
         if self.infile == '/mnt/sauce/littlab/data/Human_Data/BIDS/scalp/data/sub-HUP00014/ses-emu1829day26file1/eeg/sub-HUP00014_ses-emu1829day26file1_task-rest_run-0001_eeg.edf':
             print(self.raw_data)
-            print(self.raw_data.shape)
+            print(len(self.raw_data))
             exit()
 
     ###################################
