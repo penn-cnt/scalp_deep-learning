@@ -207,6 +207,12 @@ class data_loader:
                 # Read in the data via mne backend
                 raw           = read_raw_edf(self.infile,verbose=False)
                 self.indata   = raw.get_data().T
+
+                # Quick check to make sure we arent using monotonic or zero data
+                if (np.ptp(self.indata,axis=0)==0).all():
+                    return False
+
+                # Make the MNE objects
                 self.channels = raw.ch_names
                 self.sfreq    = raw.info.get('sfreq')
 
