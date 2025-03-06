@@ -87,6 +87,12 @@ class mne_processing:
         # Create the info
         persistance_dict['mne_info'] = mne.create_info(self.ppchannels, self.fs, ch_types=ch_types,verbose=False)
 
+        # Make the montage object
+        montage      = mne.channels.make_standard_montage("standard_1020")
+        mne_chan_map = dict(zip(montage.ch_names,self.mne_channels))
+        montage.rename_channels(mne_chan_map)
+        persistance_dict['mne_montage'] = montage
+
     # @silence_mne_warnings
     def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
         """
@@ -116,10 +122,7 @@ class mne_processing:
         raw  = mne.io.RawArray(self.dataset.T, info,verbose=False)
 
         # Set the montage
-        montage      = mne.channels.make_standard_montage("standard_1020")
-        mne_chan_map = dict(zip(montage.ch_names,self.mne_channels))
-        montage.rename_channels(mne_chan_map)
-        raw.set_montage(montage)
+        raw.set_montage(persistance_dict['mne_montage'])
 
         # Set the right reference for eyeblink removal
         raw = raw.set_eeg_reference(verbose=False)
