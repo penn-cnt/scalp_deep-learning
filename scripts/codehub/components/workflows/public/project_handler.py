@@ -51,7 +51,7 @@ class project_handlers:
             # Apply project specific pipeline
             try:
                 self.project_logic()
-            except Exception as e:
+            except ValueError: #Exception as e:
                 if self.args.debug:
                     print("Encountered preprocessing error {e}.")
                 self.active_workers.value -= 1
