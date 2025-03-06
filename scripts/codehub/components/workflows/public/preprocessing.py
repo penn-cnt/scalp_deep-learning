@@ -67,7 +67,7 @@ class mne_processing:
         fp.close()
 
     # @silence_mne_warnings
-    def eyeblink_removal(self,lowpass,highpass,config_path,n_components=None,max_iter=5000):
+    def eyeblink_removal(self,config_path,n_components=None,max_iter=5000):
         """
         Remove eyeblinks from the data.
 
@@ -114,7 +114,7 @@ class mne_processing:
         raw = raw.set_eeg_reference(verbose=False)
 
         # Apply the minimum needed filter for eyeblink removal
-        raw = raw.filter(lowpass,highpass,verbose=False)
+        raw = raw.filter(1,100,verbose=False)
 
         # Create the ICA object and fit
         if n_components == None:
