@@ -209,8 +209,7 @@ class data_loader:
                 self.indata   = raw.get_data().T
 
                 if self.infile == '/mnt/sauce/littlab/data/Human_Data/BIDS/scalp/data/sub-HUP00014/ses-emu1829day26file1/eeg/sub-HUP00014_ses-emu1829day26file1_task-rest_run-0001_eeg.edf':
-                    print(self.indata)
-                    print(np.ptp(self.indata,axis=0))
+                    print(self.indata.shape)
                     exit()
 
                 # Quick check to make sure we arent using monotonic or zero data
