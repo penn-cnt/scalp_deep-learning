@@ -158,6 +158,7 @@ class data_loader:
             else:
                 samp_end = int(isamp*self.t_end)
 
+            # Get the dataslice
             if majoraxis.lower() == 'column':
                 self.raw_data.append(self.indata[samp_start:samp_end,ii])
             elif majoraxis.lower() == 'row':
@@ -174,8 +175,8 @@ class data_loader:
             self.duration = (samp_end-samp_start)/self.indata.shape[1]
 
         if self.infile == '/mnt/sauce/littlab/data/Human_Data/BIDS/scalp/data/sub-HUP00014/ses-emu1829day26file1/eeg/sub-HUP00014_ses-emu1829day26file1_task-rest_run-0001_eeg.edf':
-            print(self.rawdata)
-            print(self.rawdata.shape)
+            print(self.raw_data)
+            print(self.raw_data.shape)
             exit()
 
     ###################################
