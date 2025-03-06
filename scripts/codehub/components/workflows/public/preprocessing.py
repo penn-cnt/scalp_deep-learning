@@ -112,9 +112,8 @@ class mne_processing:
         # Create the raw mne object and set the reference
         if 'mne_info' not in persistance_dict.keys():
             self.make_persistance_object(config_path)
-        else:
-            info = persistance_dict['mne_info']
-        raw = mne.io.RawArray(self.dataset.T, info,verbose=False)
+        info = persistance_dict['mne_info']
+        raw  = mne.io.RawArray(self.dataset.T, info,verbose=False)
 
         # Set the montage
         montage      = mne.channels.make_standard_montage("standard_1020")
