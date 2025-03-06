@@ -174,11 +174,11 @@ class data_loader:
         elif majoraxis.lower() == 'row':
             self.duration = (samp_end-samp_start)/self.indata.shape[1]
 
-        if self.infile == '/mnt/sauce/littlab/data/Human_Data/BIDS/scalp/data/sub-HUP00014/ses-emu1829day26file1/eeg/sub-HUP00014_ses-emu1829day26file1_task-rest_run-0001_eeg.edf':
-            print(self.raw_data)
-            print(len(self.raw_data))
-            print(len(self.raw_data[0]))
-            exit()
+        # Check for monotonic or zero data
+        if (np.ptp(self.raw_data,axis=1)==0).all():
+            return False
+        else:
+            return True
 
     ###################################
     #### User Provided Logic Below ####
