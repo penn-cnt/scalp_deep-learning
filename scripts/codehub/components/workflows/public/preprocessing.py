@@ -66,8 +66,29 @@ class mne_processing:
         persistance_dict['mne_mapping'] = mapping
         fp.close()
 
+    def make_persistance_object(self,config_path):
+
+        # Create the mne channel type mapping
+        fp      = open(config_path,'r')
+        mapping = yaml.safe_load(fp)
+        persistance_dict['mne_mapping'] = mapping
+        fp.close()
+
+        # Create the channel types object
+        mapping_keys = list(mapping.keys())
+        ch_types     = []
+        for ichannel in self.ppchannels:
+            if ichannel in mapping_keys:
+                ch_types.append(mapping[ichannel])
+            else:
+                ch_types.append('eeg')
+        persistance_dict['mne_ch_types'] = ch_types
+
+        # Create the info
+        persistance_dict['mne_info'] = mne.create_info(self.ppchannels, self.fs, ch_types=ch_types,verbose=False)
+
     # @silence_mne_warnings
-    def eyeblink_removal(self,config_path,n_components=None,max_iter=5000):
+    def eyeblink_removal(self,config_path,n_components=None,max_iter=1000):
         """
         Remove eyeblinks from the data.
 
@@ -88,21 +109,12 @@ class mne_processing:
             if config_path.lower() == 'q':
                 raise FileNotFoundError("No valid MNE channel configuration file provided. Quitting.")
 
-        # Get the channel mappings in mne compliant form
-        if 'mne_mapping' not in persistance_dict.keys():
-            self.make_montage_object(config_path)
-        mapping      = persistance_dict['mne_mapping']
-        mapping_keys = list(mapping.keys())
-        ch_types     = []
-        for ichannel in self.ppchannels:
-            if ichannel in mapping_keys:
-                ch_types.append(mapping[ichannel])
-            else:
-                ch_types.append('eeg')
-
         # Create the raw mne object and set the reference
-        info    = mne.create_info(self.ppchannels, self.fs, ch_types=ch_types,verbose=False)
-        raw     = mne.io.RawArray(self.dataset.T, info,verbose=False)
+        if 'mne_info' not in persistance_dict.keys():
+            self.make_persistance_object(config_path)
+        else:
+            info = persistance_dict['mne_info']
+        raw = mne.io.RawArray(self.dataset.T, info,verbose=False)
 
         # Set the montage
         montage      = mne.channels.make_standard_montage("standard_1020")
@@ -118,7 +130,7 @@ class mne_processing:
 
         # Create the ICA object and fit
         if n_components == None:
-            nc = len(ch_types)-1
+            nc = len(persistance_dict['mne_ch_types'])-1
         else:
             nc = n_components
         ica = ICA(n_components=nc, method='picard', fit_params=dict(ortho=False, extended=True), random_state=42, max_iter=max_iter,verbose=False)
