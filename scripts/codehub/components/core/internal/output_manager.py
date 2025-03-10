@@ -46,9 +46,15 @@ class output_manager:
         if not self.args.debug and not self.args.no_feature_flag:
 
             # Pickled objects
-            pickle.dump(self.metadata,open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
-            pickle.dump(self.feature_commands,open("%s/%s_%s_fconfigs.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
-            pickle.dump(self.feature_df,open("%s/%s_%s_features.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
+            fp1 = open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb")
+            fp2 = open("%s/%s_%s_fconfigs.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb")
+            fp3 = open("%s/%s_%s_features.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb")
+            pickle.dump(self.metadata,fp1)
+            pickle.dump(self.feature_commands,fp2)
+            pickle.dump(self.feature_df,fp3)
+            fp1.close()
+            fp2.close()
+            fp3.close()
 
             # CSV object
             #self.feature_df.to_csv("%s/%s_%s_features.pickle" %(self.args.outdir,self.timestamp,self.unique_id),index=False)
@@ -59,5 +65,9 @@ class output_manager:
         """
 
         if not self.args.debug:
-            pickle.dump(self.output_list,open("%s/%s_%s_data.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
-            pickle.dump(self.metadata,open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb"))
+            fp1 = open("%s/%s_%s_data.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb")
+            fp2 = open("%s/%s_%s_meta.pickle" %(self.args.outdir,self.timestamp,self.unique_id),"wb")
+            pickle.dump(self.output_list,fp1)
+            pickle.dump(self.metadata,fp2)
+            fp1.close()
+            fp2.close()
