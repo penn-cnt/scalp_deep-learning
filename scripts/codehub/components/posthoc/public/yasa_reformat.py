@@ -30,13 +30,16 @@ class yasa_reformat:
         self.YASA_lookup_dict = self.YASA_DF.groupby(['file','t_start','t_end']).indices
         YASA_keys             = list(self.YASA_lookup_dict.keys())
 
+        print(self.DF)
+        print(self.YASA_DF)
+        print(subset_size)
+        print(self.ncpu)
+        exit()
+
         if self.multithread:
 
             # Make the initial subset proposal
             subset_size  = len(YASA_keys) // self.ncpu
-            print(subset_size)
-            print(self.ncpu)
-            exit()
             list_subsets = [YASA_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
 
             # Handle leftovers
