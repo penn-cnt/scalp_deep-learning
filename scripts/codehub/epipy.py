@@ -117,7 +117,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
 
         if not self.args.no_feature_flag:
             if self.args.multithread:
-                self.barrier.wait()
+                #self.barrier.wait()
 
                 # Add a wait for proper progress bars
                 time.sleep(self.worker_number)

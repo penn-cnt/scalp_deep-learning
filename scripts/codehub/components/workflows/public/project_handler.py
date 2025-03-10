@@ -37,7 +37,7 @@ class project_handlers:
         # Loop over files to read and store each ones data
         nfile = len(self.infiles)
         desc  = "Initial load with id %s:" %(self.unique_id)
-        for ii,ifile in tqdm(enumerate(self.infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=True, disable=self.args.silent,dynamic_ncols=True):            
+        for ii,ifile in tqdm(enumerate(self.infiles), desc=desc, total=nfile, bar_format=self.bar_frmt, position=self.worker_number, leave=False, disable=self.args.silent,dynamic_ncols=True):            
         
             # Save current file info
             self.infile   = ifile
@@ -58,7 +58,6 @@ class project_handlers:
             
             # Update file strings for cached read in
             self.oldfile = self.infile
-        print(f"{self.unique_id} Completed")
 
     ##########################
     #### Template Project ####
