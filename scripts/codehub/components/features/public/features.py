@@ -238,8 +238,10 @@ class YASA_processing:
 
     def make_montage_object(self,config_path):
 
-        #Create the mne channel types
-        mapping = yaml.safe_load(open(config_path,'r'))
+        # Create the mne channel types
+        fp      = open(config_path,'r')
+        mapping = yaml.safe_load(fp)
+        fp.close()
         persistance_dict['mne_mapping'] = mapping
 
     def make_raw_object(self,config_path):
