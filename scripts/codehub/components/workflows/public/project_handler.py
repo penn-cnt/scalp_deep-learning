@@ -58,6 +58,7 @@ class project_handlers:
             
             # Update file strings for cached read in
             self.oldfile = self.infile
+        print(f"{self.unique_id} Completed")
 
     ##########################
     #### Template Project ####

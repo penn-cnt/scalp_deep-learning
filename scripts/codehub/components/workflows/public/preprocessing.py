@@ -455,6 +455,5 @@ class preprocessing:
                                 print(self.t_start,self.t_end)
                                 exit()
                             dataset *= np.nan
-        print(f"{self.unique_id} Completed")
         return dataset
 
