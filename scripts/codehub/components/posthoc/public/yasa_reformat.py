@@ -34,6 +34,9 @@ class yasa_reformat:
 
             # Make the initial subset proposal
             subset_size  = len(YASA_keys) // self.ncpu
+            print(subset_size)
+            print(self.ncpu)
+            exit()
             list_subsets = [YASA_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
 
             # Handle leftovers
