@@ -238,7 +238,9 @@ def merge_outputs(args,timestamp):
     # Clean up the meta files as needed
     if len(metadata_files) > 0:
         for idx,ifile in enumerate(metadata_files):
-            imeta = pickle.load(open(ifile,"rb"))
+            fp    = open(ifile,"rb")
+            imeta = pickle.load(fp)
+            fp.close()
             if idx == 0:
                 metadata = imeta.copy()
             else:
@@ -248,7 +250,9 @@ def merge_outputs(args,timestamp):
                 for ikey in newkeys:
                     imeta[ikey+offset] = imeta.pop(ikey)
                 metadata = {**metadata,**imeta}
-        pickle.dump(metadata,open(f"{args.outdir}/{timestamp}_meta.pickle","wb"))
+        fp = open(f"{args.outdir}/{timestamp}_meta.pickle","wb")
+        pickle.dump(metadata,fp)
+        fp.close()
         for ifile in metadata_files:os.remove(ifile)
 
     # Clean up the raw data files as needed
@@ -259,7 +263,9 @@ def merge_outputs(args,timestamp):
                 data = idata.copy()
             else:
                 data.extend(idata)
-        pickle.dump(data,open(f"{args.outdir}/{timestamp}_data.pickle","wb"))
+        fp = open(f"{args.outdir}/{timestamp}_data.pickle","wb")
+        pickle.dump(data,fp)
+        fp.close()
         for ifile in data_list:os.remove(ifile)
 
     return output_DF,metadata[0]['montage_channels'],base_path
