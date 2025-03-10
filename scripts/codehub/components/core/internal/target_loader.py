@@ -43,7 +43,9 @@ class target_loader:
         if self.target_file != None:
             
             # Load the data
-            raw_targets = pickle.load(open(self.target_file,"rb"))
+            fp          = open(self.target_file,"rb")
+            raw_targets = pickle.load(fp)
+            fp.close()
             
             # Apply logic to known target types
             self.target_logic(raw_targets,current_edf)
