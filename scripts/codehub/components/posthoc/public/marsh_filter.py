@@ -80,6 +80,10 @@ class marsh_rejection:
             # Get the group level values
             rms_obj      = DF_rms.groupby(['file'])[self.channels]
             ll_obj       = DF_ll.groupby(['file'])[self.channels]
+
+            print(rms_obj)
+            exit()
+
             DF_rms_mean  = rms_obj.mean()
             DF_rms_stdev = rms_obj.std()
             DF_ll_mean   = ll_obj.mean()
