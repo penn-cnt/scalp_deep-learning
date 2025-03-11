@@ -12,6 +12,9 @@ class marsh_rejection:
 
     def __init__(self,DF,channels,multithread,ncpu):
 
+        print(DF.dtypes)
+        exit()
+
         # Save the input data to class instance
         self.DF          = DF
         self.channels    = channels
