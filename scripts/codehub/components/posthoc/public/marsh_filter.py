@@ -79,8 +79,8 @@ class marsh_rejection:
 
             # Convert the data types to numeric
             for ichannel in self.channels:
-                DF_rms[ichannel] = DF_rms[ichannel].astype('float32')
-                DF_ll[ichannel]  = DF_ll[ichannel].astype('float32')
+                DF_rms.loc[:,ichannel] = DF_rms[ichannel].astype('float32')
+                DF_ll.loc[:,ichannel]  = DF_ll[ichannel].astype('float32')
 
             # Get the group level values
             rms_obj      = DF_rms.groupby(['file'])[self.channels]
