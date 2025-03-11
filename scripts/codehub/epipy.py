@@ -338,8 +338,12 @@ def argument_handler(argument_dir='./',require_flag=True):
     output_group.add_argument("--clean_save", action='store_true', default=False, help="Save cleaned up raw data. Mostly useful if you need time series and not just features.")
 
     posthoc_group = parser.add_argument_group('Posthoc analysis Options')
+    posthoc_group.add_argument("--postprocess_only", action='store_true', default=False, help="Perform post processing only.")
+    posthoc_group.add_argument("--postprocess_feature_file", type=str,  help="Path to feature dataframe to postprocess. Only for --postprocess_only use.")
+    posthoc_group.add_argument("--postprocess_meta_file", type=str,  help="Path to feature metadata to postprocess. Only for --postprocess_only use.")
     posthoc_group.add_argument("--yasa_cleanup", action='store_true', default=True, help="Restructure YASA data to have staging at other time part levels. Requires t=300 run.")
     posthoc_group.add_argument("--nomarsh", action='store_false', default=True, help="Do not run posthoc analysis.")
+
 
     misc_group = parser.add_argument_group('Misc Options')
     misc_group.add_argument("--nfreq_window", type=int, default=8, help="Optional. Minimum number of samples required to send to preprocessing and feature extraction.")
@@ -383,10 +387,48 @@ def argument_handler(argument_dir='./',require_flag=True):
                 type_info[action.dest] = str
     return args,(help_info,type_info,default_info,raw_args)
 
+def postprocessing(args,feature_df,channels,base_path):
+
+    # Perform post-hoc yasa cleanup
+    if args.yasa_cleanup:
+        YR          = yasa_reformat(feature_df,channels,args.multithread,args.ncpu)
+        feature_df  = YR.workflow()
+        newsaveflag = True
+
+    # Perform post-hoc marsh analysis
+    if args.nomarsh:
+        MR          = marsh_rejection(feature_df,channels,args.multithread,args.ncpu)
+        feature_df  = MR.workflow()
+        newsaveflag = True
+
+    if newsaveflag:
+        outpath = base_path+'clean.csv'
+        feature_df.to_csv(outpath,index=False)
+
 if __name__ == "__main__":
 
     # Get the argument handler
     args,_ = argument_handler()
+
+    # If performing post processing only, do so here and exit
+    if args.postprocess_only:
+        
+        # Get the features out
+        feature_df = PD.read_csv(args.postprocess_feature_file)
+        
+        # Get the channel info out
+        fp       = open(args.postprocess_meta_file,'rb')
+        metadata = pickle.load(fp)
+        channels = metadata[0]['montage_channels'] 
+        fp.close()
+
+        # Get the basepath
+        base_path = args.postprocess_feature_file.strip('.csv')+'_'
+
+        print(base_path)
+        exit()
+    exit()
+
 
     # Make the output directory as needed
     if not os.path.exists(args.outdir) and not args.debug:
@@ -525,19 +567,5 @@ if __name__ == "__main__":
         newsaveflag                   = False
         feature_df,channels,base_path = merge_outputs(args,timestamp)
 
-        # Perform post-hoc yasa cleanup
-        if args.yasa_cleanup:
-            YR          = yasa_reformat(feature_df,channels,args.multithread,args.ncpu)
-            feature_df  = YR.workflow()
-            newsaveflag = True
-
-        # Perform post-hoc marsh analysis
-        if args.nomarsh:
-            MR          = marsh_rejection(feature_df,channels,args.multithread,args.ncpu)
-            feature_df  = MR.workflow()
-            newsaveflag = True
-
-        if newsaveflag:
-            outpath = base_path+'clean.csv'
-            feature_df.to_csv(outpath,index=False)
+        postprocessing(args,feature_df,channels,base_path)
         
