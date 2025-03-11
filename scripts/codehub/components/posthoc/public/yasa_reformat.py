@@ -96,9 +96,11 @@ class yasa_reformat:
                 input_yasa = replace_stages(input_yasa)
 
                 # get the consensus
-                print(input_yasa)
-                exit()
-                output_yasa = consensus_stage(input_yasa)
+                try:
+                    output_yasa = consensus_stage(input_yasa)
+                except:
+                    print(input_yasa)
+                    exit()
 
                 # Get the time offsets for the new rows
                 dt = 30*np.arange(len(output_yasa))
