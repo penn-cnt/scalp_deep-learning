@@ -414,6 +414,7 @@ if __name__ == "__main__":
     if args.postprocess_only:
         
         # Get the features out
+        """
         print("Reading in features...")
         feature_df = PD.read_csv(args.postprocess_feature_file)
         
@@ -423,6 +424,7 @@ if __name__ == "__main__":
         metadata = pickle.load(fp)
         channels = metadata[0]['montage_channels'] 
         fp.close()
+        """
 
         # Get the basepath
         base_path = args.postprocess_feature_file.strip('.csv')+'_'
