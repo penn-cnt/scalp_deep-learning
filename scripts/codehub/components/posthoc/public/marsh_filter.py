@@ -69,75 +69,76 @@ class marsh_rejection:
 
     def calculate_marsh(self,worker_num, DF_inds, return_dict):
 
-        # Get the data slice to work on
-        current_DF = self.DF.loc[DF_inds]
+        try:
+            # Get the data slice to work on
+            current_DF = self.DF.loc[DF_inds]
 
-        # Make a dataslice just for rms and just for ll
-        DF_rms = current_DF.loc[current_DF.method=='rms']
-        DF_ll  = current_DF.loc[current_DF.method=='line_length']
+            # Make a dataslice just for rms and just for ll
+            DF_rms = current_DF.loc[current_DF.method=='rms']
+            DF_ll  = current_DF.loc[current_DF.method=='line_length']
 
-        print(DF_rms)
-        exit()
+            # Get the group level values
+            rms_obj      = DF_rms.groupby(['file'])[self.channels]
+            ll_obj       = DF_ll.groupby(['file'])[self.channels]
+            DF_rms_mean  = rms_obj.mean()
+            DF_rms_stdev = rms_obj.std()
+            DF_ll_mean   = ll_obj.mean()
+            DF_ll_stdev  = ll_obj.std()
 
-        # Get the group level values
-        rms_obj      = DF_rms.groupby(['file'])[self.channels]
-        ll_obj       = DF_ll.groupby(['file'])[self.channels]
-        DF_rms_mean  = rms_obj.mean()
-        DF_rms_stdev = rms_obj.std()
-        DF_ll_mean   = ll_obj.mean()
-        DF_ll_stdev  = ll_obj.std()
+            # Make output lists
+            rms_output = []
+            ll_output  = []
 
-        # Make output lists
-        rms_output = []
-        ll_output  = []
+            # Apply the filter
+            DF_rms.set_index(['file'],inplace=True)
+            DF_ll.set_index(['file'],inplace=True)
+            DF_rms = DF_rms.sort_values(by=['t_start','t_end','t_window'])
+            DF_ll  = DF_ll.sort_values(by=['t_start','t_end','t_window'])
 
-        # Apply the filter
-        DF_rms.set_index(['file'],inplace=True)
-        DF_ll.set_index(['file'],inplace=True)
-        DF_rms = DF_rms.sort_values(by=['t_start','t_end','t_window'])
-        DF_ll  = DF_ll.sort_values(by=['t_start','t_end','t_window'])
+            # Apply the filter for each group
+            for ifile in tqdm(DF_rms_mean.index, desc='Applying Marsh Filter', total=len(DF_rms_mean.index),bar_format=self.bar_frmt, position=worker_num, leave=False, dynamic_ncols=True):
+                
+                # Get the reference values
+                ref_rms_mean  = DF_rms_mean.loc[ifile]
+                ref_rms_stdev = DF_rms_stdev.loc[ifile]
+                ref_ll_mean   = DF_ll_mean.loc[ifile]
+                ref_ll_stdev  = DF_ll_stdev.loc[ifile]
+                
+                # Get the rms mask
+                DF_rms_slice                      = DF_rms.loc[[ifile]]
+                channel_rms_marsh                 = DF_rms_slice[self.channels]/(ref_rms_mean+2*ref_rms_stdev).values
+                DF_rms_slice.loc[:,self.channels] = channel_rms_marsh[self.channels].values
+                DF_rms_slice.loc[:,['method']]    = 'marsh_filter'
+                DF_rms_slice.loc[:,['tag']]       = 'rms'
+                rms_output.append(DF_rms_slice)
 
-        # Apply the filter for each group
-        for ifile in tqdm(DF_rms_mean.index, desc='Applying Marsh Filter', total=len(DF_rms_mean.index),bar_format=self.bar_frmt, position=worker_num, leave=False, dynamic_ncols=True):
+                # Get the line length mask
+                DF_ll_slice                      = DF_ll.loc[[ifile]]
+                channel_ll_marsh                 = DF_ll_slice[self.channels]/(ref_ll_mean+2*ref_ll_stdev).values
+                DF_ll_slice.loc[:,self.channels] = channel_ll_marsh[self.channels].values
+                DF_ll_slice.loc[:,['method']]    = 'marsh_filter'
+                DF_ll_slice.loc[:,['tag']]       = 'line_length'
+                ll_output.append(DF_ll_slice)
             
-            # Get the reference values
-            ref_rms_mean  = DF_rms_mean.loc[ifile]
-            ref_rms_stdev = DF_rms_stdev.loc[ifile]
-            ref_ll_mean   = DF_ll_mean.loc[ifile]
-            ref_ll_stdev  = DF_ll_stdev.loc[ifile]
+            # make the output dataframes 
+            DF_rms = PD.concat(rms_output)
+            DF_ll  = PD.concat(ll_output)
             
-            # Get the rms mask
-            DF_rms_slice                      = DF_rms.loc[[ifile]]
-            channel_rms_marsh                 = DF_rms_slice[self.channels]/(ref_rms_mean+2*ref_rms_stdev).values
-            DF_rms_slice.loc[:,self.channels] = channel_rms_marsh[self.channels].values
-            DF_rms_slice.loc[:,['method']]    = 'marsh_filter'
-            DF_rms_slice.loc[:,['tag']]       = 'rms'
-            rms_output.append(DF_rms_slice)
+            # Clean up the outputs
+            DF_rms['file'] = DF_rms.index
+            DF_ll['file']  = DF_ll.index
+            DF_rms         = DF_rms.reset_index(drop=True)
+            DF_ll          = DF_ll.reset_index(drop=True)
 
-            # Get the line length mask
-            DF_ll_slice                      = DF_ll.loc[[ifile]]
-            channel_ll_marsh                 = DF_ll_slice[self.channels]/(ref_ll_mean+2*ref_ll_stdev).values
-            DF_ll_slice.loc[:,self.channels] = channel_ll_marsh[self.channels].values
-            DF_ll_slice.loc[:,['method']]    = 'marsh_filter'
-            DF_ll_slice.loc[:,['tag']]       = 'line_length'
-            ll_output.append(DF_ll_slice)
-        
-        # make the output dataframes 
-        DF_rms = PD.concat(rms_output)
-        DF_ll  = PD.concat(ll_output)
-        
-        # Clean up the outputs
-        DF_rms['file'] = DF_rms.index
-        DF_ll['file']  = DF_ll.index
-        DF_rms         = DF_rms.reset_index(drop=True)
-        DF_ll          = DF_ll.reset_index(drop=True)
+            # Append the results to input
+            current_DF = PD.concat((current_DF,DF_rms)).reset_index(drop=True)
+            current_DF = PD.concat((current_DF,DF_ll)).reset_index(drop=True)
 
-        # Append the results to input
-        current_DF = PD.concat((current_DF,DF_rms)).reset_index(drop=True)
-        current_DF = PD.concat((current_DF,DF_ll)).reset_index(drop=True)
+            # Save the results to the output object
+            return_dict[worker_num] = current_DF
 
-        # Save the results to the output object
-        return_dict[worker_num] = current_DF
-
-        if not self.multithread:
-            return return_dict
+            if not self.multithread:
+                return return_dict
+        except Exception as e:
+            print(e)
+            exit()
