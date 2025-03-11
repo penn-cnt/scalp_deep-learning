@@ -140,5 +140,9 @@ class marsh_rejection:
             if not self.multithread:
                 return return_dict
         except Exception as e:
-            print(e)
+            import os,sys
+            fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
+            error_type  = sys.exc_info()[0]
+            line_number = sys.exc_info()[2].tb_lineno
+            print(f"Error {error_type} in line {line_number}.")
             exit()
