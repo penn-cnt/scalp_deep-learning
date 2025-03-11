@@ -80,10 +80,6 @@ class marsh_rejection:
             # Get the group level values
             rms_obj      = DF_rms.groupby(['file'])[self.channels]
             ll_obj       = DF_ll.groupby(['file'])[self.channels]
-
-            print(rms_obj)
-            exit()
-
             DF_rms_mean  = rms_obj.mean()
             DF_rms_stdev = rms_obj.std()
             DF_ll_mean   = ll_obj.mean()
@@ -144,6 +140,9 @@ class marsh_rejection:
             if not self.multithread:
                 return return_dict
         except Exception as e:
+
+            print(DF_rms)
+
             import os,sys
             fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
             error_type  = sys.exc_info()[0]
