@@ -93,14 +93,10 @@ class yasa_reformat:
                 input_yasa = original_slice[ichannel]
 
                 # Update the mapping labels in the lookup table
-                input_yasa = replace_stages(input_yasa)
+                mapped_yasa = replace_stages(input_yasa)
 
                 # get the consensus
-                try:
-                    output_yasa = consensus_stage(input_yasa)
-                except:
-                    print(input_yasa)
-                    exit()
+                output_yasa = consensus_stage(mapped_yasa)
 
                 # Get the time offsets for the new rows
                 dt = 30*np.arange(len(output_yasa))
