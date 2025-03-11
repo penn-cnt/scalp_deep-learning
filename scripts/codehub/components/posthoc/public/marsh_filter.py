@@ -141,7 +141,9 @@ class marsh_rejection:
                 return return_dict
         except Exception as e:
 
-            print(DF_rms[self.channels])
+            print(DF_rms[self.channels].columns)
+            print(DF_rms[self.channels].min())
+            print(DF_rms[self.channels].max())
 
             import os,sys
             fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
