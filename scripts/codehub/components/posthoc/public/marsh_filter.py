@@ -76,6 +76,9 @@ class marsh_rejection:
         DF_rms = current_DF.loc[current_DF.method=='rms']
         DF_ll  = current_DF.loc[current_DF.method=='line_length']
 
+        print(DF_rms)
+        exit()
+
         # Get the group level values
         rms_obj      = DF_rms.groupby(['file'])[self.channels]
         ll_obj       = DF_ll.groupby(['file'])[self.channels]
