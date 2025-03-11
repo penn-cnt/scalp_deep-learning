@@ -21,9 +21,6 @@ from prompt_toolkit.completion import PathCompleter
 from components.core.internal.error_logging import *
 from components.core.internal.config_loader import *
 
-import warnings
-warnings.filterwarnings('error')
-
 # In some cases, we want variables to persist through steps. (i.e. A solver, fitting class, disk i/o, etc.) Persistance_dict can store results across steps.
 global persistance_dict
 persistance_dict = {}
