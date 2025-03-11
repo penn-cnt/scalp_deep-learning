@@ -12,9 +12,6 @@ class marsh_rejection:
 
     def __init__(self,DF,channels,multithread,ncpu):
 
-        print(DF.dtypes)
-        exit()
-
         # Save the input data to class instance
         self.DF          = DF
         self.channels    = channels
@@ -79,6 +76,11 @@ class marsh_rejection:
             # Make a dataslice just for rms and just for ll
             DF_rms = current_DF.loc[current_DF.method=='rms']
             DF_ll  = current_DF.loc[current_DF.method=='line_length']
+
+            # Convert the data types to numeric
+            for ichannel in self.channels:
+                DF_rms[ichannel] = DF_rms[ichannel].astype('float32')
+                DF_ll[ichannel]  = DF_ll[ichannel].astype('float32')
 
             # Get the group level values
             rms_obj      = DF_rms.groupby(['file'])[self.channels]
