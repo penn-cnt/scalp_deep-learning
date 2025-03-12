@@ -23,13 +23,12 @@ class metadata_handler:
         self.metadata[self.file_cntr] = {}
 
         # Other high level dataset info
-        self.metadata[self.file_cntr]['file']    = self.infile
-        self.metadata[self.file_cntr]['t_start'] = self.t_start
-        self.metadata[self.file_cntr]['t_end']   = self.t_end
-        self.metadata[self.file_cntr]['history'] = self.args
+        self.metadata[self.file_cntr]['file']    = str(self.infile)
+        self.metadata[self.file_cntr]['t_start'] = self.t_start.astype(np.float16)
+        self.metadata[self.file_cntr]['t_end']   = self.t_end.astype(np.float16)
 
     def set_ref_window(self):
-        self.metadata[self.file_cntr]['t_window'] = self.t_window
+        self.metadata[self.file_cntr]['t_window'] = self.t_window.astype(np.float16)
 
     def set_channels(self,inputs):
 
@@ -41,11 +40,11 @@ class metadata_handler:
 
     def set_sampling_frequency(self,inputs):
 
-        self.metadata[self.file_cntr]['fs'] = inputs
+        self.metadata[self.file_cntr]['fs'] = inputs.astype(np.float16)
 
     def set_target_file(self,inputs):
 
-        self.metadata[self.file_cntr]['target_file'] = inputs
+        self.metadata[self.file_cntr]['target_file'] = str(inputs)
     
     def add_metadata(self,file_cntr,key,values):
         """
