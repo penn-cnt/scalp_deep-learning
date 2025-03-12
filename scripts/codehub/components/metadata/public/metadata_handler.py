@@ -40,7 +40,7 @@ class metadata_handler:
 
     def set_sampling_frequency(self,inputs):
 
-        self.metadata[self.file_cntr]['fs'] = inputs[0].astype(np.float16)
+        self.metadata[self.file_cntr]['fs'] = inputs
 
     def set_target_file(self,inputs):
 
