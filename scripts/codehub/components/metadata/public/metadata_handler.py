@@ -60,8 +60,8 @@ class metadata_handler:
     def drop_metadata(self,key):
         
         for icntr in self.metadata.keys():
-            print(self.metadata[icntr])
             if key in self.metadata[icntr]:
+                print(self.metadata[icntr].keys())
                 del self.metadata[icntr][key]
-            print(self.metadata[icntr])
-            exit()
+                print(self.metadata[icntr].keys())
+        exit()
