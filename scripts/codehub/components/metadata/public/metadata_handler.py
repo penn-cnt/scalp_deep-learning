@@ -64,4 +64,3 @@ class metadata_handler:
                 print(self.metadata[icntr].keys())
                 del self.metadata[icntr][key]
                 print(self.metadata[icntr].keys())
-        exit()
