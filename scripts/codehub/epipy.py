@@ -194,7 +194,8 @@ def merge_outputs(args,timestamp):
     # Make a merged downcasted feature file
     if len(feature_files) > 0:
         for idx,ifile in enumerate(feature_files):
-            
+
+            # In case the feature file was empty due to malformed data inputs.            
             if os.path.getsize(ifile) > 0:
                 # Read in the dataframe
                 iDF = PD.read_pickle(ifile)
