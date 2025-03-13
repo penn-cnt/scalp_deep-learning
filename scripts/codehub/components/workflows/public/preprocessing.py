@@ -452,5 +452,13 @@ class preprocessing:
                                 print(self.t_start,self.t_end)
                                 exit()
                             dataset *= np.nan
+        
+        # Attempt to downcast to reduce memory usage
+        for icol in dataset.columns:
+            try:
+                dataset[icol] = PD.to_numeric(dataset[icol],downcast='float')
+            except ValueError:
+                pass
+        
         return dataset
 
