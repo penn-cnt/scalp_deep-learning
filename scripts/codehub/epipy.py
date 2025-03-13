@@ -195,24 +195,25 @@ def merge_outputs(args,timestamp):
     if len(feature_files) > 0:
         for idx,ifile in enumerate(feature_files):
             
-            # Read in the dataframe
-            iDF = PD.read_pickle(ifile)
-            
-            # Attempt downcasting as much as possible
-            for icol in iDF.columns:
-                itype = iDF[icol].dtype
-                try:
-                    iDF[icol] = PD.to_numeric(iDF[icol],downcast='integer')
-                    if iDF[icol].dtype == itype:
-                        iDF[icol] = PD.to_numeric(iDF[icol],downcast='float')
-                except ValueError:
-                    pass
+            if os.path.getsize(ifile) > 0:
+                # Read in the dataframe
+                iDF = PD.read_pickle(ifile)
+                
+                # Attempt downcasting as much as possible
+                for icol in iDF.columns:
+                    itype = iDF[icol].dtype
+                    try:
+                        iDF[icol] = PD.to_numeric(iDF[icol],downcast='integer')
+                        if iDF[icol].dtype == itype:
+                            iDF[icol] = PD.to_numeric(iDF[icol],downcast='float')
+                    except ValueError:
+                        pass
 
-            # Merge the outputs to one final file
-            if idx == 0:
-                output_DF = iDF.copy()
-            else:
-                output_DF = PD.concat((output_DF,iDF))
+                # Merge the outputs to one final file
+                if idx == 0:
+                    output_DF = iDF.copy()
+                else:
+                    output_DF = PD.concat((output_DF,iDF))
         
         # Make the new output and only remove files once things were confirmed to work
         base_path = f"{args.outdir}/{timestamp}_features_"
