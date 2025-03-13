@@ -105,7 +105,7 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
             
             # Remove unwanted metadata
             for dropkey in self.args.dropkeys:
-                metadata_handler.drop_metadata(dropkey)
+                metadata_handler.drop_metadata(self,dropkey)
 
             # Save the results
             output_manager.save_features(self)
