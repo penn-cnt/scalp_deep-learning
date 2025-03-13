@@ -103,6 +103,10 @@ class data_manager(project_handlers, metadata_handler, data_loader, channel_mapp
         # In the case that all of the data is removed, skip write step
         if len(self.metadata.keys()) > 0:
             
+            # Remove unwanted metadata
+            for dropkey in self.args.dropkeys:
+                metadata_handler.drop_metadata(dropkey)
+
             # Save the results
             output_manager.save_features(self)
 
@@ -338,6 +342,7 @@ def argument_handler(argument_dir='./',require_flag=True):
                               Also allows for skipping on subsequent loads. Default=outdir+excluded.txt (In Dev. Just gets initial load fails.)") 
     output_group.add_argument("--nomerge", action='store_true', default=False, help="Do not merge the outputs from multiprocessing into one final set of files.")
     output_group.add_argument("--clean_save", action='store_true', default=False, help="Save cleaned up raw data. Mostly useful if you need time series and not just features.")
+    output_group.add_argument("--dropkeys", type=parse_list, default=['unmontaged_data'], help="Drop these keys from the output metadata. Useful if your workflow has some unique entries for processing")
 
     posthoc_group = parser.add_argument_group('Posthoc analysis Options')
     posthoc_group.add_argument("--postprocess_only", action='store_true', default=False, help="Perform post processing only.")

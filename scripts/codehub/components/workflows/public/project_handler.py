@@ -159,9 +159,6 @@ class project_handlers:
                 # Update the output list
                 output_manager.update_output_list(self,self.montaged_dataframe.values)
 
-                print(self.premontage_df.dtypes)
-                exit()
-
                 # Update the metadata handler with the unmontaged data. Some features require specific montages to function
                 metadata_handler.add_metadata(self,self.file_cntr,'unmontaged_data',self.premontage_df) 
 

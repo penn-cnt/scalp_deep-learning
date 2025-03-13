@@ -56,3 +56,12 @@ class metadata_handler:
                 olddict = self.metadata[file_cntr][key]
                 values  = {**olddict,**values}
         self.metadata[file_cntr][key] = values
+
+    def drop_metadata(self,key):
+        
+        for icntr in self.metadata.keys():
+            print(self.metadata[icntr])
+            if key in self.metadata[icntr]:
+                del self.metadata[icntr][key]
+            print(self.metadata[icntr])
+            exit()
