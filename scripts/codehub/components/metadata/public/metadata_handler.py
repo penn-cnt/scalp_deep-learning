@@ -61,6 +61,4 @@ class metadata_handler:
         
         for icntr in self.metadata.keys():
             if key in self.metadata[icntr]:
-                print(self.metadata[icntr].keys())
                 del self.metadata[icntr][key]
-                print(self.metadata[icntr].keys())
