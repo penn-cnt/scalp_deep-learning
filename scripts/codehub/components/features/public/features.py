@@ -46,10 +46,16 @@ class channel_wise_metrics:
     def __init__ (self, data, fs, file, fidx, channels=None, trace=False):
         # Manage data typing and form a dataframe as needed
         if isinstance(data, np.ndarray):
-            if channels == None:
-                raise ValueError("If passing a numpy array, channels must not be None.")
-            self.data     = data
-            self.channels = channels
+            if isinstance(channels,list) or isinstance(channels,np.ndarray):
+                if isinstance(channels,np.ndarray):
+                    if channels.ndim == 1:
+                        channels = list(channels)
+                    else:
+                        raise ValueError("If passing a numpy arra as channel names, channels must be a 1-d array.")
+                self.data     = data
+                self.channels = channels
+            else:
+                raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
             self.data     = data.values
             self.channels = list(data.columns)
@@ -221,10 +227,16 @@ class YASA_processing:
     def __init__ (self, data, fs, channels=None, trace=False):
         # Manage data typing and form a dataframe as needed
         if isinstance(data, np.ndarray):
-            if channels == None:
-                raise ValueError("If passing a numpy array, channels must not be None.")
-            self.data     = data
-            self.channels = channels
+            if isinstance(channels,list) or isinstance(channels,np.ndarray):
+                if isinstance(channels,np.ndarray):
+                    if channels.ndim == 1:
+                        channels = list(channels)
+                    else:
+                        raise ValueError("If passing a numpy arra as channel names, channels must be a 1-d array.")
+                self.data     = data
+                self.channels = channels
+            else:
+                raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
             self.data     = data.values
             self.channels = list(data.columns)
@@ -483,14 +495,20 @@ class signal_processing:
             trace (bool, optional): _description_. Defaults to False.
         """
 
-        # manage data typing and form a dataframe as needed
+        # Manage data typing and form a dataframe as needed
         if isinstance(data, np.ndarray):
-            if channels == None:
-                raise ValueError("If passing a numpy array, channels must not be None.")
-            self.data     = PD.DataFrame(data,columns=channels)
-            self.channels = channels
+            if isinstance(channels,list) or isinstance(channels,np.ndarray):
+                if isinstance(channels,np.ndarray):
+                    if channels.ndim == 1:
+                        channels = list(channels)
+                    else:
+                        raise ValueError("If passing a numpy arra as channel names, channels must be a 1-d array.")
+                self.data     = data
+                self.channels = channels
+            else:
+                raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
-            self.data     = data
+            self.data     = data.values
             self.channels = list(data.columns)
 
         # Save remaining keywords
@@ -672,14 +690,20 @@ class basic_statistics:
             trace (bool, optional): _description_. Defaults to False.
         """
         
-        # manage data typing and form a dataframe as needed
+        # Manage data typing and form a dataframe as needed
         if isinstance(data, np.ndarray):
-            if channels == None:
-                raise ValueError("If passing a numpy array, channels must not be None.")
-            self.data     = PD.DataFrame(data,columns=channels)
-            self.channels = channels
+            if isinstance(channels,list) or isinstance(channels,np.ndarray):
+                if isinstance(channels,np.ndarray):
+                    if channels.ndim == 1:
+                        channels = list(channels)
+                    else:
+                        raise ValueError("If passing a numpy arra as channel names, channels must be a 1-d array.")
+                self.data     = data
+                self.channels = channels
+            else:
+                raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
-            self.data     = data
+            self.data     = data.values
             self.channels = list(data.columns)
 
         # Save remaining keywords
