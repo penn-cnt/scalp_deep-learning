@@ -263,7 +263,14 @@ def merge_outputs(args,timestamp):
         fp.close()
         for ifile in data_list:os.remove(ifile)
 
-    return output_DF,metadata[0]['montage_channels'],base_path
+    # Find the first key with montage channels
+    ### SHOULD BE DEPRECIATED ONCE KEY DELETION IS QAed.
+    for ikey in metadata.keys():
+        if 'montage_channels' in meta[ikey].keys():
+            mkey=ikey
+            break
+
+    return output_DF,metadata[mkey]['montage_channels'],base_path
 
 def argument_handler(argument_dir='./',require_flag=True):
 
@@ -428,6 +435,13 @@ if __name__ == "__main__":
         print("Reading in metadata....")
         fp       = open(args.postprocess_meta_file,'rb')
         metadata = pickle.load(fp)
+
+        # Find the first key with montage channels
+        ### SHOULD BE DEPRECIATED ONCE KEY DELETION IS QAed.
+        for ikey in metadata.keys():
+            if 'montage_channels' in meta[ikey].keys():
+                mkey=ikey
+                break
         channels = metadata[0]['montage_channels'] 
         fp.close()
 
