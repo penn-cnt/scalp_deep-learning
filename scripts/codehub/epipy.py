@@ -266,7 +266,7 @@ def merge_outputs(args,timestamp):
     # Find the first key with montage channels
     ### SHOULD BE DEPRECIATED ONCE KEY DELETION IS QAed.
     for ikey in metadata.keys():
-        if 'montage_channels' in meta[ikey].keys():
+        if 'montage_channels' in metadata[ikey].keys():
             mkey=ikey
             break
 
@@ -439,10 +439,10 @@ if __name__ == "__main__":
         # Find the first key with montage channels
         ### SHOULD BE DEPRECIATED ONCE KEY DELETION IS QAed.
         for ikey in metadata.keys():
-            if 'montage_channels' in meta[ikey].keys():
+            if 'montage_channels' in metadata[ikey].keys():
                 mkey=ikey
                 break
-        channels = metadata[0]['montage_channels'] 
+        channels = metadata[mkey]['montage_channels'] 
         fp.close()
 
         # Get the basepath
