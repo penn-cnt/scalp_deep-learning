@@ -46,3 +46,8 @@ The utility scripts are not built into the epipy framework, and do not require s
 
 ### Pull Requests
 Submit a pull request to share your changes with the lab as a whole. The data team will review the request before merging it, or sending it back to you for more clarity or bug fixes.
+
+
+## Remaining Updates/Fixes
+
+- Remove keys from metadata handler if they do not get promoted to the feature extraction step.
