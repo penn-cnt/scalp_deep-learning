@@ -3,7 +3,7 @@ import mne
 import sys
 import pickle
 import inspect
-import contextlib
+import warnings
 import numpy as np
 import pandas as PD
 from io import StringIO
@@ -132,8 +132,12 @@ class mne_processing:
             nc = len(persistance_dict['mne_ch_types'])-1
         else:
             nc = n_components
-        ica = ICA(n_components=nc, method='picard', fit_params=dict(ortho=False, extended=True), random_state=42, max_iter=max_iter,verbose=False)
-        ica.fit(raw,verbose=False)
+
+        # Run the ICA fit
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            ica = ICA(n_components=nc, method='picard', fit_params=dict(ortho=False, extended=True), random_state=42, max_iter=max_iter,verbose=False)
+            ica.fit(raw,verbose=False)
 
         # Get the ica labels. Have to wrap it since MNE has random print statements we cant silence easily
         #with contextlib.redirect_stdout(StringIO()):
