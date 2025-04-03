@@ -62,8 +62,9 @@ class marsh_rejection:
             for process in processes:
                 process.join()
         else:
-            marsh_keys  = list(self.DF.index)
-            return_dict = self.calculate_marsh(0,marsh_keys,{})
+            self.multithread = False
+            marsh_keys       = list(self.DF.index)
+            return_dict      = self.calculate_marsh(0,marsh_keys,{})
         print(return_dict)
         exit()
         
