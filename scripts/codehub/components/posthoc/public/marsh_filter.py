@@ -31,11 +31,12 @@ class marsh_rejection:
             marsh_lookup_dict = self.DF.groupby(['file']).indices
             marsh_lookup_keys = list(marsh_lookup_dict.keys())
 
-            print(marsh_lookup_dict)
-            exit()
-
             # Make the initial subset proposal
             subset_size  = len(marsh_lookup_keys) // self.ncpu
+
+            print(subset_size)
+            exit()
+
             list_subsets = [marsh_lookup_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
 
             # Handle leftovers
