@@ -875,7 +875,7 @@ class features:
                                 fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
                                 error_type  = sys.exc_info()[0]
                                 line_number = sys.exc_info()[2].tb_lineno
-                                print(f"Error {error_type} in line {line_number}.")
+                                print(f"Error {error_type} in line {line_number} for {method_name}.")
 
                             # We need a flexible solution to errors, so just populating a nan value
                             output.extend([None for ii in range(len(channels))])
