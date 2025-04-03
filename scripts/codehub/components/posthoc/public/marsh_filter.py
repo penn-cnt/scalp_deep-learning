@@ -33,6 +33,7 @@ class marsh_rejection:
         subset_size = len(marsh_lookup_keys) // self.ncpu
 
         if self.multithread and subset_size>0:
+            print("A")
 
             # get the subset list
             list_subsets = [marsh_lookup_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
@@ -61,8 +62,11 @@ class marsh_rejection:
             for process in processes:
                 process.join()
         else:
+            print("B")
             marsh_keys  = list(self.DF.index)
             return_dict = self.calculate_marsh(0,marsh_keys,{})
+        print(return_dict)
+        exit()
         
         # Reformat the output
         self.DF = PD.concat(return_dict.values()).reset_index(drop=True)
