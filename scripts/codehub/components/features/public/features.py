@@ -503,12 +503,11 @@ class signal_processing:
                         channels = list(channels)
                     else:
                         raise ValueError("If passing a numpy arra as channel names, channels must be a 1-d array.")
-                self.data     = data
+                self.data     = PD.DataFrame(data,columns=channels)
                 self.channels = channels
             else:
                 raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
-            self.data     = data.values
             self.channels = list(data.columns)
 
         # Save remaining keywords
@@ -541,11 +540,10 @@ class signal_processing:
         nperseg = int(float(win_size) * self.fs)
         noverlap = int(float(win_stride) * self.fs)
 
-        print(channel)
-        exit()
-
         # Calculate the welch periodogram
         idata                               = self.data[channel].values
+        print(idata)
+        exit()
         frequencies, initial_power_spectrum = welch(x=idata.reshape((-1,1)), fs=self.fs, nperseg=nperseg, noverlap=noverlap, axis=0)
         initial_power_spectrum              = initial_power_spectrum.flatten()
         inds                                = (frequencies>=0.5)&np.isfinite(initial_power_spectrum)&(initial_power_spectrum>0)
