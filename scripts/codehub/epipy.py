@@ -355,7 +355,7 @@ def argument_handler(argument_dir='./',require_flag=True):
     posthoc_group.add_argument("--postprocess_only", action='store_true', default=False, help="Perform post processing only.")
     posthoc_group.add_argument("--postprocess_feature_file", type=str,  help="Path to feature dataframe to postprocess. Only for --postprocess_only use.")
     posthoc_group.add_argument("--postprocess_meta_file", type=str,  help="Path to feature metadata to postprocess. Only for --postprocess_only use.")
-    posthoc_group.add_argument("--no_yasa_cleanup", action='store_false', default=True, help="Don't restructure YASA data to have staging at other time part levels. Requires t=300 run.")
+    posthoc_group.add_argument("--yasa_cleanup", action='store_true', default=False, help="Don't restructure YASA data to have staging at other time part levels. Requires t=300 run.")
     posthoc_group.add_argument("--nomarsh", action='store_false', default=True, help="Do not run posthoc analysis.")
 
 
@@ -404,7 +404,7 @@ def argument_handler(argument_dir='./',require_flag=True):
 def postprocessing(args,feature_df,channels,base_path):
 
     # Perform post-hoc yasa cleanup
-    if args.no_yasa_cleanup:
+    if args.yasa_cleanup:
         YR          = yasa_reformat(feature_df,channels,args.multithread,args.ncpu)
         feature_df  = YR.workflow()
         newsaveflag = True
