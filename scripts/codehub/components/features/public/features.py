@@ -786,9 +786,6 @@ class features:
         in the output data container.
         """
 
-        print(self.output_list)
-        exit()
-
         # Initialize some variables
         channels  = self.montage_channels.copy()
         outcols   = ['file','t_start','t_end','t_window','method','tag']+channels
