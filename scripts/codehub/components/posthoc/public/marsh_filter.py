@@ -25,18 +25,16 @@ class marsh_rejection:
 
     def workflow(self):
 
-        if self.multithread:
+        # Make the keys to break up
+        marsh_lookup_dict = self.DF.groupby(['file']).indices
+        marsh_lookup_keys = list(marsh_lookup_dict.keys())
 
-            # Make the keys to break up
-            marsh_lookup_dict = self.DF.groupby(['file']).indices
-            marsh_lookup_keys = list(marsh_lookup_dict.keys())
+        # Make the initial subset proposal size. If 0, just use single core
+        subset_size = len(marsh_lookup_keys) // self.ncpu
 
-            # Make the initial subset proposal
-            subset_size  = len(marsh_lookup_keys) // self.ncpu
+        if self.multithread and subset_size>0:
 
-            print(subset_size)
-            exit()
-
+            # get the subset list
             list_subsets = [marsh_lookup_keys[i:i + subset_size] for i in range(0, subset_size*self.ncpu, subset_size)]
 
             # Handle leftovers
@@ -63,6 +61,8 @@ class marsh_rejection:
             for process in processes:
                 process.join()
         else:
+            print("redirect")
+            exit()
             marsh_keys  = list(self.DF.index)
             return_dict = self.calculate_marsh(0,marsh_keys,{})
         
