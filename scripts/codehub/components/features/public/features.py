@@ -38,7 +38,7 @@ def channel_wrapper(method):
             return [method(self, channel, *args, **kwargs)]
         else:
             # Run method on all columns and return results as a dictionary
-            return [method(self, col, *args, **kwargs) for col in self.data.columns]
+            return [method(self, col, *args, **kwargs) for col in self.channels]
     return wrapper
 
 class channel_wise_metrics:
@@ -508,7 +508,6 @@ class signal_processing:
             else:
                 raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
-            print("Shallow copy")
             self.data     = data.values
             self.channels = list(data.columns)
 
@@ -541,6 +540,9 @@ class signal_processing:
         # Get the number of samples in each window for welch average and the overlap
         nperseg = int(float(win_size) * self.fs)
         noverlap = int(float(win_stride) * self.fs)
+
+        print(channel)
+        exit()
 
         # Calculate the welch periodogram
         idata                               = self.data[channel].values
@@ -790,9 +792,6 @@ class features:
         # Initialize some variables
         channels  = self.montage_channels.copy()
         outcols   = ['file','t_start','t_end','t_window','method','tag']+channels
-
-        print(channels)
-        exit()
 
         # Read in the feature configuration
         YL = config_loader(self.args.feature_file)
