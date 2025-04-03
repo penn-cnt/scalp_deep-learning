@@ -585,7 +585,7 @@ if __name__ == "__main__":
         start_analysis(input_parameters, args, timestamp, 0, None, None)
     
     # Perform merge if requested
-    if not args.nomerge:
+    if not args.nomerge and not args.debug:
         newsaveflag                   = False
         feature_df,channels,base_path = merge_outputs(args,timestamp)
 
