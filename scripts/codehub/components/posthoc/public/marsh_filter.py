@@ -63,11 +63,6 @@ class marsh_rejection:
                 process.join()
         else:
             marsh_keys  = list(self.DF.index)
-
-            print(self.DF)
-            print(marsh_keys)
-            exit()
-
             return_dict = self.calculate_marsh(0,marsh_keys,{})
         print(return_dict)
         exit()
@@ -82,6 +77,9 @@ class marsh_rejection:
         try:
             # Get the data slice to work on
             current_DF = self.DF.loc[DF_inds]
+
+            print(current_DF)
+            exit()
 
             # Make a dataslice just for rms and just for ll
             DF_rms = current_DF.loc[current_DF.method=='rms']
