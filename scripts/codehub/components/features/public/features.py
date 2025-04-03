@@ -791,6 +791,9 @@ class features:
         channels  = self.montage_channels.copy()
         outcols   = ['file','t_start','t_end','t_window','method','tag']+channels
 
+        print(channels)
+        exit()
+
         # Read in the feature configuration
         YL = config_loader(self.args.feature_file)
         config,self.feature_commands = YL.return_handler()
