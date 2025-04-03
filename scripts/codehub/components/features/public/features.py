@@ -508,6 +508,7 @@ class signal_processing:
             else:
                 raise ValueError("Channels must not be None and be a list or a 1-d array if passing data as a numpy array.")
         elif isinstance(data,PD.DataFrame):
+            print("Shallow copy")
             self.data     = data.values
             self.channels = list(data.columns)
 
