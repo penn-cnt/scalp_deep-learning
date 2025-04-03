@@ -78,9 +78,6 @@ class marsh_rejection:
             # Get the data slice to work on
             current_DF = self.DF.loc[DF_inds]
 
-            print(current_DF)
-            exit()
-
             # Make a dataslice just for rms and just for ll
             DF_rms = current_DF.loc[current_DF.method=='rms']
             DF_ll  = current_DF.loc[current_DF.method=='line_length']
@@ -148,6 +145,9 @@ class marsh_rejection:
             current_DF = PD.concat((current_DF,DF_ll)).reset_index(drop=True)
 
             # Save the results to the output object
+            print(current_DF)
+            exit()
+
             return_dict[worker_num] = current_DF
 
             if not self.multithread:
