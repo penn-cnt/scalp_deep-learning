@@ -145,10 +145,10 @@ class marsh_rejection:
             current_DF = PD.concat((current_DF,DF_ll)).reset_index(drop=True)
 
             # Save the results to the output object
-            print(current_DF)
-            exit()
-
             return_dict[worker_num] = current_DF
+
+            print(return_dict)
+            exit()
 
             if not self.multithread:
                 return return_dict
