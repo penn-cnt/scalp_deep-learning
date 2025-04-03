@@ -871,7 +871,7 @@ class features:
                         except Exception as e:
 
                             # Add the ability to see the error if debugging
-                            if self.args.debug and not self.args.silent:
+                            if self.args.debug:
                                 fname       = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
                                 error_type  = sys.exc_info()[0]
                                 line_number = sys.exc_info()[2].tb_lineno
