@@ -146,9 +146,6 @@ class marsh_rejection:
             # Save the results to the output object
             return_dict[worker_num] = current_DF
 
-            print(return_dict)
-            exit()
-
             if not self.multithread:
                 return return_dict
         except Exception as e:
