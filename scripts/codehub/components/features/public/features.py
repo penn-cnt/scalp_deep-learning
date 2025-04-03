@@ -869,7 +869,7 @@ class features:
 
                             # Extend the output with results
                             output.extend(result_a)
-                        except Exception as e:
+                        except IndexError:#Exception as e:
 
                             # Add the ability to see the error if debugging
                             if self.args.debug:
