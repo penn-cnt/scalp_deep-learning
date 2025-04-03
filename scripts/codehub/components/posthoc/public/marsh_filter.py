@@ -65,8 +65,6 @@ class marsh_rejection:
             self.multithread = False
             marsh_keys       = list(self.DF.index)
             return_dict      = self.calculate_marsh(0,marsh_keys,{})
-        print(return_dict)
-        exit()
         
         # Reformat the output
         self.DF = PD.concat(return_dict.values()).reset_index(drop=True)
