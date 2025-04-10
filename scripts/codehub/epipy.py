@@ -415,9 +415,8 @@ def postprocessing(args,feature_df,channels,base_path):
         feature_df  = MR.workflow()
         newsaveflag = True
 
-    if newsaveflag:
-        outpath = base_path+'clean.csv'
-        feature_df.to_csv(outpath,index=False)
+    outpath = base_path+'clean.csv'
+    feature_df.to_csv(outpath,index=False)
 
 if __name__ == "__main__":
 
