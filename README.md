@@ -8,16 +8,7 @@ This code is designed to help with the processing of epilepsy datasets commonly 
 
 This code is meant to be researcher driven, allowing new code libraries to be added to modules that represent common research tasks (i.e. Channel Cleaning, Montaging, Preprocessing, Feature Extraction, etc.). The code can be accessed both as independent libraries that can be called on for a range of tasks, or as part of a large framework meant to ingest, clean, and prepare data for analysis or deep-learning tasks.
 
-We also provide a number of additional scripts to help with common/important tasks. A few of particular note are:
-- [Data Acquisition/BIDS Generation](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/acquisition/BIDS)
-    - Creates local BIDS datasets from iEEG.org or converts local timeseries files to a BIDS format.
-- [Search Data Cache](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/acquisition/SEARCH)
-    - Searches CNT data cache (across different servers) to find user requested data. Meant to reduce duplicate downloads.
-- [Time Series Viewer/Annnotator](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/visualization/edf_viewer)
-    - View and annotate timeseries files locally.
-
-For more information on how to use our code, please see the examples folder for specific use-cases and common practices.
-
+We also provide a number of additional scripts to help with common/important tasks. For more information, please refer [here](https://github.com/penn-cnt/CNT-codehub/tree/main/scripts/codehub/utils/) for what scripts are currently available. 
 
 # Installation
 
