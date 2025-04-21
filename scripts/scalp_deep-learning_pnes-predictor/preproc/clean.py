@@ -54,17 +54,21 @@ class pivot_manager:
             self.keep_clips_only()
             self.define_pivot()
             self.pivot()
+            self.fix_typing()
             self.get_alpha_delta()
             self.shift_ref()
             self.expand_targets()
             self.make_uid()
             self.drop_extra_pivot_labels()
+            self.apply_marsh()
+            self.clean_yasa()
             self.DF.dropna(inplace=True)
             
             # Save the pivot dataset
             self.DF.to_pickle(self.pivotpath)
         else:
             self.DF = PD.read_pickle(self.pivotpath)
+
         return self.DF
 
     def drop_extra_raw_labels(self):
@@ -72,7 +76,7 @@ class pivot_manager:
         Drop a few unnecessary columns from the raw feature dataframe.
         """
 
-        self.DF.drop(['annotation','marsh_rejection'],axis=1,inplace=True)
+        self.DF.drop(['annotation'],axis=1,inplace=True)
 
     def drop_failed_runs(self):
         """
@@ -94,13 +98,13 @@ class pivot_manager:
         """
 
         # Columns with known identifiers (not channel features)
-        blacklist       = ['file', 't_start', 't_end', 't_window', 'method', 'tag', 'target','yasa_prediction']
+        blacklist       = ['file', 't_start', 't_end', 't_window', 'method', 'tag', 'target']
 
         # GHHet the channel column names
         self.channels   = np.setdiff1d(self.DF.columns,blacklist)
 
         # Define the reference columns and the pivot columns
-        self.ref_cols   = ['file', 't_start', 't_end', 't_window', 'target','yasa_prediction']
+        self.ref_cols   = ['file', 't_start', 't_end', 't_window', 'target']
         self.pivot_cols = ['method', 'tag'] 
 
     def pivot(self):
@@ -111,6 +115,17 @@ class pivot_manager:
         pivot_df         = self.DF.pivot_table(index=self.ref_cols,columns=self.pivot_cols,values=self.channels,aggfunc='first')
         pivot_df.columns = [f'{val}_{method}_{tag}' for val, method, tag in pivot_df.columns]
         self.DF          = pivot_df.reset_index()
+
+    def fix_typing(self):
+        """
+        Some features are not originally numeric. Now that features are pivoted, we can recast them.
+        """
+
+        for icol in self.DF.columns:
+            try:
+                self.DF[icol] = self.DF[icol].astype('float32')
+            except ValueError:
+                pass
 
     def get_alpha_delta(self):
         """
@@ -133,8 +148,9 @@ class pivot_manager:
             blank_ad[:,idx] = self.DF[alpha_col].values/self.DF[delta_col].values
 
         # Store the stat to the model dataframe
-        for idx,ichannel in enumerate(self.channels):
-            self.DF[f"{ichannel}_AD_AD"] = blank_ad[:,idx]
+        new_colnames = [f"{ichannel}_AD_AD" for ichannel in self.channels]
+        iDF          = PD.DataFrame(blank_ad,columns=new_colnames)
+        self.DF      = PD.concat((self.DF,iDF),axis=1)
 
     def shift_ref(self):
         """
@@ -200,6 +216,53 @@ class pivot_manager:
         """
 
         self.DF.drop(['t_end', 't_window','target'],axis=1,inplace=True)
+
+    def apply_marsh(self):
+        """
+        Apply marsh filter to the dataset.
+        """
+
+        # Grab the marsh columns
+        marsh_cols_rms         = [icol for icol in self.DF.columns if 'marsh' in icol and 'rms' in icol]
+        marsh_cols_rms_cleaned = [icol.removesuffix('_rms') for icol in marsh_cols_rms]
+        marsh_cols_ll          = [icol for icol in self.DF.columns if 'marsh' in icol and 'line_length' in icol]
+        marsh_cols_ll_cleaned  = [icol.removesuffix('_line_length') for icol in marsh_cols_ll]
+
+        # Make data slices of the marsh criteria
+        DF_rms = self.DF[marsh_cols_rms]
+        DF_ll  = self.DF[marsh_cols_ll]
+
+        # Rename the columns to get an inner join
+        DF_rms.rename(columns=dict(zip(marsh_cols_rms,marsh_cols_rms_cleaned)),inplace=True)
+        DF_ll.rename(columns=dict(zip(marsh_cols_ll,marsh_cols_ll_cleaned)),inplace=True)
+        
+        # Get the combined score
+        DF_marsh = DF_rms+DF_ll
+
+        # Find the indices that obey the condition
+        mask     = ((DF_marsh<2).all(axis=1)).values
+        DF_marsh = DF_marsh.iloc[mask]
+
+        # get the values that pass the marsh criteria, update the data object
+        self.DF = self.DF.loc[DF_marsh.index]
+
+        # Drop the marsh columns
+        self.DF.drop(marsh_cols_rms,axis=1,inplace=True)
+        self.DF.drop(marsh_cols_ll,axis=1,inplace=True)
+    
+    def clean_yasa(self):
+        """
+        Clean up the yasa labels to a single feature vector.
+        """
+
+        # Grab the yasa columns
+        yasa_cols = [icol for icol in self.DF.columns if 'yasa' in icol]
+
+        # Make a new column with the simpler naming
+        self.DF['yasa_sleep_stage'] = self.DF[yasa_cols[0]]
+
+        # Drop the unneeded columns now
+        self.DF.drop(yasa_cols,axis=1,inplace=True)
 
 class vector_manager:
     """

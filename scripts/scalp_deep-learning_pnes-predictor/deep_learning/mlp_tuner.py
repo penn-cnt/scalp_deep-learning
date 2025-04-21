@@ -1103,9 +1103,9 @@ class tuning_manager:
             self.config["consensus_theshold_yasa_prediction_00"] = tune.quniform(0.01, 1.0, .01)
             self.config["consensus_theshold_yasa_prediction_01"] = tune.quniform(0.01, 1.0, .01)
             self.config["consensus_theshold_yasa_prediction_02"] = tune.quniform(0.01, 1.0, .01)
-            self.config[f"consensus_activation"]   = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
+            self.config[f"consensus_activation"]    = tune.choice(['relu','tanh','sigmoid','softmax','lrelu','pass'])
             self.config[f"consensus_normalization"] = tune.choice(['batch1d','pass'])
-            self.config[f"consensus_norm_order"]   = tune.choice(['before','after'])
+            self.config[f"consensus_norm_order"]    = tune.choice(['before','after'])
         elif granularity == 'deep':
 
             # Frequency block

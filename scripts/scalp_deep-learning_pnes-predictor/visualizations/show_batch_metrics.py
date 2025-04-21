@@ -40,14 +40,17 @@ if __name__ == '__main__':
         DF['median'] = DF.groupby('folder')['Test_Sensitivity'].transform('median')
 
         # Apply filtering as needed
+        print(DF['folder'].nunique())
         DF = DF.loc[(DF['median']>0.7)]
-        #DF = DF.groupby("folder").filter(lambda group: group['Test_Sensitivity'].min() > 0.5)
-        DF = DF.groupby("folder").filter(lambda group: group['Test_Sensitivity'].nsmallest(2).iloc[-1] > 0)
-
+        print(DF['folder'].nunique())
+        DF = DF.groupby("folder").filter(lambda group: group['Test_Sensitivity'].nsmallest(2).iloc[-1] > 0.05)
 
         # Make a combined metrics
         DF_long = DF.melt(id_vars=['folder', 'checknum','median'], value_vars=['Test_Sensitivity', 'Test_NPV'], 
                    var_name='metric', value_name='metric_value')
+
+        # Give a metric to user
+        print(DF['folder'].nunique())
 
         # Plot results        
         fig = PLT.figure(dpi=100.,figsize=(12.,8.))

@@ -17,6 +17,7 @@ if __name__ == '__main__':
     pivot_group = parser.add_argument_group('Pivot Options')
     pivot_group.add_argument("--pivot_file", type=str, help="Intermediate file with pivoted inputs. Can be used for different models like LR, ANOVA, etc. Provide to skip generation.")
     pivot_group.add_argument("--clip_length", type=int, default=30, help="Expected clip length for the study. Used to remove other clips used for baseline stats (like Marsh)")
+    pivot_group.add_argument("--marsh_threshold", type=float, default=2.0, help="Threshold for marsh criterion. Original marsh=2, lower removes more outliers, larger allows more outliers.")
 
     vector_group = parser.add_argument_group('DL Vector Options')
     vector_group.add_argument("--vector_file", type=str, help="Intermediate file with DL vectors.")

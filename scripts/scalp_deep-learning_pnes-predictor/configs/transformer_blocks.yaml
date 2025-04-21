@@ -6,6 +6,8 @@ frequency:
     pca: False
     cols:
         - spectral_energy_welch
+        - index
+        
   
 time:
     method: yeo-johnson
