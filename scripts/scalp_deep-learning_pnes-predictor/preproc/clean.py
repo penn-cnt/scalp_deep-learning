@@ -23,7 +23,7 @@ class pivot_manager:
     Class for cleaning and pivoting the raw feature data to make columns for all features in one row for each clip (versus unique rows for each feature and clip).
     """
 
-    def __init__(self,inpath,pivotpath,clip_length):
+    def __init__(self,inpath,pivotpath,clip_length,map_path):
         """
         Initialize the pivot manager class with some relevant filepaths.
 
@@ -35,6 +35,7 @@ class pivot_manager:
         self.inpath      = inpath
         self.pivotpath   = pivotpath
         self.clip_length = clip_length
+        self.map_path    = map_path
 
     def workflow(self):
         """
@@ -199,16 +200,30 @@ class pivot_manager:
         # Concatenate the results
         self.DF = PD.concat((self.DF,PD.DataFrame(output)),axis=1)
 
-    def make_uid(self):
+    def make_uid(self,fullfile=False):
         """
         Make a unique identifier for each patient based on the filepath.
         """
 
-        # Define the regular expression used to find the subject number
-        pattern = r'HUP(\d+)_'
+        if fullfile:
+            # Define the regular expression used to find the subject number
+            pattern = r'HUP(\d+)_'
 
-        # Loop over the filenames to get the new uid column
-        self.DF['uid'] = self.DF['file'].apply(lambda x:int(re.search(pattern, x).group(1)))
+            # Loop over the filenames to get the new uid column
+            self.DF['uid'] = self.DF['file'].apply(lambda x:int(re.search(pattern, x).group(1)))
+        else:
+            
+            # Load the mapping of file values to path
+            mapping = pickle.load(open(self.map_path,'rb'))
+
+            # Map the files to raw strings, we will clean it up in a second
+            self.DF['uid'] = self.DF['file'].map(mapping)
+
+            # Define the regular expression used to find the subject number
+            pattern = r'HUP(\d+)_'
+
+            # Loop over the filenames to get the new uid column
+            self.DF['uid'] = self.DF['uid'].apply(lambda x:int(re.search(pattern, x).group(1)))
 
     def drop_extra_pivot_labels(self):
         """
