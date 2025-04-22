@@ -391,6 +391,7 @@ class vector_manager:
                 print(self.DF[icol].unique())
                 print(e)
                 print(icol)
+                exit()
 
     def define_column_groups(self):
         """
