@@ -388,7 +388,7 @@ class vector_manager:
             try:
                 self.DF[icol] = self.DF[icol].apply(lambda x:mapping_config[icol][x])
             except:
-                print(self.DF[icol])
+                print(self.DF[icol].unique())
                 exit()
 
     def define_column_groups(self):
