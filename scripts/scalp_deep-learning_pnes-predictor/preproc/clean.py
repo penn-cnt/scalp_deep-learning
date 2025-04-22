@@ -385,7 +385,12 @@ class vector_manager:
 
         # Apply the mappings
         for icol in mapping_config.keys():
-            self.DF[icol] = self.DF[icol].apply(lambda x:mapping_config[icol][x])
+            try:
+                self.DF[icol] = self.DF[icol].apply(lambda x:mapping_config[icol][x])
+            except Exception as e:
+                print(self.DF[icol].unique())
+                print(e)
+                print(icol)
 
     def define_column_groups(self):
         """
