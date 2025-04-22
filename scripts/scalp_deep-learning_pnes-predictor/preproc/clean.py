@@ -388,6 +388,9 @@ class vector_manager:
             try:
                 self.DF[icol] = self.DF[icol].apply(lambda x:mapping_config[icol][x])
             except:
+                for jcol in self.DF.columns:
+                    print(jcol)
+                print("====")
                 print(icol)
                 exit()
 
