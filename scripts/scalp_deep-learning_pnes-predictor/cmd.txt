@@ -20,3 +20,7 @@ python pnes_predictor.py --feature_file ../../user_data/derivative/FEATURE_EXTRA
 
 # Corrected DATA
 python pnes_predictor.py --feature_file /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/SSL/DATA/PNES_FEATURES.csv --pivot_file /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/SSL/DATA/pivot_data.pickle --vector_file /Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/SSL/DATA/vector_data.pickle --criteria_file configs/criteria.yaml --test_config
+
+
+# Updated as of 042225
+python pnes_predictor.py --feature_file /mnt/sauce/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/merged_features.csv --pivot_file /mnt/sauce/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/pivot_data.pickle --vector_file /mnt/sauce/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/vector_data.pickle --filemap_path /mnt/sauce/littlab/users/bjprager/GitHub/scalp_deep-learning/user_data/derivative/FEATURE_EXTRACTION/outputs/file_mapping.pickle 
