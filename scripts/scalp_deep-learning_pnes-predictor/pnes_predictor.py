@@ -46,12 +46,12 @@ if __name__ == '__main__':
     misc_group.add_argument("--debug", action='store_true', default=False, help="Show extra debugging info.")
     misc_group.add_argument("--track_weights", action='store_true', default=False, help="Track if the model is updating weights at each epoch.")
     misc_group.add_argument("--outdir", type=str, default='/Users/bjprager/Documents/GitHub/scalp_deep-learning/user_data/derivative/MODELS/', help="Output directory for any miscelaneous info.")
-    misc_group.add_argument("--map_path", type=str, default=None, help="Optional file mapping for original filename to integer. Used if reducing feature file size.")
+    misc_group.add_argument("--filemap_path", type=str, default=None, help="Optional file mapping for original filename to integer. Used if reducing feature file size.")
 
     args = parser.parse_args()
 
     # Initialize the pivot workflow
-    PM       = pivot_manager(args.feature_file, args.pivot_file, args.clip_length, args.map_path)
+    PM       = pivot_manager(args.feature_file, args.pivot_file, args.clip_length, args.filemap_path)
     pivot_DF = PM.workflow()
 
     # Make the DL vectors
