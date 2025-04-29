@@ -1,3 +1,18 @@
+# Each outer key corresponds to a block that dictates how any member feature column is presented to the neural network.
+# At present, the expected outer keys are (frequency,time,categorical) for the input features, (target) for the target variables, and passthrough for columns to ignore.
+#
+# Inner keys are defined as:
+### method: How to scale the features. The available methods are described below and enacted at clean.py:vector_manager:apply_column_transform (see encoder for unique location)
+###### standard_scaler_w_log10: Perform standard scaling and take a log 10 transform.
+###### yeo-johnson: Perform a yeo-johnson scaling.
+###### encoder: Use a label binarization to turn categorical variables into multi-column binary feature space. (clean.py:vector_manager:encode_categoricals)
+###### passthrough: Perform no transformation.
+### log10: Get log base 10 of values after transformation
+### iso: Run an isolation forest outlier rejection on feature set.
+### plot: If vector_plot_dir argument is passed to pnes_predictor.py, plot the features for visual inspection.
+### pca: Perform a pca on the features before sending to the model.
+### cols: List of substrings to use to identify feature columns that belong to this transformer block.
+
 frequency:
     method: standard_scaler_wlog10
     log10: True
