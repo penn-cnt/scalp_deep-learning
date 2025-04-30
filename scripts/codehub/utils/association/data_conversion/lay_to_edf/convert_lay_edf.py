@@ -7,6 +7,12 @@ from mne.io import read_raw_persyst
 from mne_bids import BIDSPath, write_raw_bids
 
 def DateException(inpath):
+    """
+    LAY data can have a float type for its date, which is not allowed for MNE's read raw PERSYST. So we need to clean it up and remove the float.
+
+    Args:
+        inpath (filepath,string): Path to the lay file.
+    """
 
     # Read in the lay file
     DF = PD.read_csv(inpath,delimiter='=',names=['key','value'])
